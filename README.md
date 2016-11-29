@@ -1,5 +1,5 @@
 # vue-virtual-scroller
-Smooth scroll with any amount of data
+Smooth scroll with any amount of data ([demo](https://akryum.github.io/vue-virtual-scroller/)).
 
 ```
 npm install --save vue-virtual-scroller
