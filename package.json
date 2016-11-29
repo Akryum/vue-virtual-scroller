@@ -1,0 +1,45 @@
+{
+  "name": "vue-virtual-scroller",
+  "version": "0.0.1",
+  "description": "Smooth scrolling for any amount of data",
+  "main": "index.js",
+  "scripts": {
+    "demo": "webpack-dev-server --inline --hot --open --port 3000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Akryum/vue-virtual-scroller.git"
+  },
+  "author": "Guillaume CHAU",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Akryum/vue-virtual-scroller/issues"
+  },
+  "homepage": "https://github.com/Akryum/vue-virtual-scroller#readme",
+  "peerDependencies": {
+    "vue": "^2.0.1"
+  },
+  "devDependencies": {
+    "babel-core": "^6.0.0",
+    "babel-eslint": "^7.1.0",
+    "babel-loader": "^6.0.0",
+    "babel-polyfill": "^6.16.0",
+    "babel-preset-es2015": "^6.0.0",
+    "babel-preset-stage-0": "^6.16.0",
+    "cross-env": "^3.0.0",
+    "css-loader": "^0.26.0",
+    "eslint": "^3.9.1",
+    "eslint-config-standard": "^6.2.1",
+    "eslint-loader": "^1.6.1",
+    "eslint-plugin-html": "^1.6.0",
+    "eslint-plugin-promise": "^3.3.1",
+    "eslint-plugin-standard": "^2.0.1",
+    "faker": "^3.1.0",
+    "file-loader": "^0.8.4",
+    "vue": "^2.0.1",
+    "vue-loader": "^9.7.0",
+    "webpack": "^2.1.0-beta.25",
+    "webpack-dev-server": "^2.1.0-beta.0"
+  }
+}
