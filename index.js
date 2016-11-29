@@ -1,1 +1,3 @@
-export { VirtualScroller } from './src/VirtualScroller.vue'
+import Component from './src/VirtualScroller.vue'
+
+export const VirtualScroller = Component

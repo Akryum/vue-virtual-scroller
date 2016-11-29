@@ -1,6 +1,6 @@
 {
   "name": "vue-virtual-scroller",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Smooth scrolling for any amount of data",
   "main": "index.js",
   "scripts": {
