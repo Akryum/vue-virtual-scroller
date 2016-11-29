@@ -4,8 +4,8 @@
   "description": "Smooth scrolling for any amount of data",
   "main": "index.js",
   "scripts": {
-    "demo": "webpack-dev-server --inline --hot --open --port 3000",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "demo": "cross-env NODE_ENV=development webpack-dev-server --inline --hot --open --port 3000",
+    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
   },
   "repository": {
     "type": "git",
