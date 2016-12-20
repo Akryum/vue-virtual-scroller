@@ -1,4 +1,8 @@
 # vue-virtual-scroller
+
+[![npm](https://img.shields.io/npm/v/vue-virtual-scroller.svg) ![npm](https://img.shields.io/npm/dm/vue-virtual-scroller.svg)](https://www.npmjs.com/package/vue-virtual-scroller)
+[![vue2](https://img.shields.io/badge/vue-2.x-brightgreen.svg)](https://vuejs.org/)
+
 Smooth scroll with any amount of data ([demo](https://akryum.github.io/vue-virtual-scroller/)).
 
 ```
