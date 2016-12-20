@@ -1,5 +1,6 @@
 import Vue from 'vue'
-import VirtualScroller from '../src/VirtualScroller.vue'
+// import VirtualScroller from '../src/VirtualScroller.vue'
+import { VirtualScroller } from '../../template-test'
 import * as Index from '../'
 
 console.log(Index)

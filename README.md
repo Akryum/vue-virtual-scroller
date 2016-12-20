@@ -13,6 +13,14 @@ import { VirtualScroller } from 'vue-virtual-scroller'
 Vue.component('virtual-scroller', VirtualScroller)
 ```
 
+Or install it as a plugin:
+
+```javascript
+import VirtualScroller from 'vue-virtual-scroller'
+
+Vue.use(VirtualScroller)
+```
+
 ```html
 <template>
   <div class="demo">
@@ -52,3 +60,9 @@ export default {
 ```
 
 Finally, set the size of the virtual-scroller element (for example, with CSS).
+
+---
+
+## License
+
+[MIT](http://opensource.org/licenses/MIT)

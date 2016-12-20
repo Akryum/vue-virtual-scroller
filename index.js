@@ -1,3 +1,3 @@
-import Component from './src/VirtualScroller.vue'
-
-export const VirtualScroller = Component
+export default from './dist/vue-virtual-scroller'
+export * from './dist/vue-virtual-scroller'
+import './dist/vue-virtual-scroller.css'
