@@ -1,7 +1,7 @@
 import _VirtualScroller from './components/VirtualScroller.vue'
 
 export function install (Vue) {
-  Vue.component('test', _VirtualScroller)
+  Vue.component('virtual-scroller', _VirtualScroller)
 }
 
 export const VirtualScroller = _VirtualScroller

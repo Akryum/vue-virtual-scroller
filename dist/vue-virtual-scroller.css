@@ -1,12 +1,12 @@
 
 .virtual-scroller[data-v-5594e8c4] {
   overflow-y: auto;
-  position: relative;
 }
 .item-container[data-v-5594e8c4] {
   box-sizing: border-box;
 }
-.resize-observer[data-v-5594e8c4] {
+
+.resize-observer[data-v-c7b3205a] {
   position: absolute;
   top: 0;
   left: 0;
