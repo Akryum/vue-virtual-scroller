@@ -42,7 +42,7 @@ There are additional props you can use:
 
 The `renderers` map is an object containing a component definition for each possible value of the item type. **The component definition must have an `item` prop, that will get the item object to render in the scroller.**
 
-Also, you need to set the size of the virtual-scroller element and the items elements (for example, with CSS).
+Also, you need to set the size of the virtual-scroller element and the items elements (for example, with CSS). All items should have the same height to prevent display glitches.
 
 # Example
 
@@ -86,7 +86,7 @@ export default {
 
 <style>
 .scroller {
-  height: 300px;
+  height: 100%;
 }
 
 .scroller .item {
