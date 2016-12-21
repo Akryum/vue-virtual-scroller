@@ -20,4 +20,7 @@
   height: 100%;
   border: none;
   background-color: transparent;
+  pointer-events: none;
+  display: block;
+  overflow: hidden;
 }
