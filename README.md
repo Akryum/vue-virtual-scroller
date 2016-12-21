@@ -35,6 +35,10 @@ The virtual scroller has three required props:
 - `renderers` is a map of component definitions objects or names for each item type.
 - `itemHeight` is the display height of the items in pixels used to calculate the scroll height and position.
 
+The `renderers` map is an object containing a component definition for each possible value of the item type. **The component definition must have an `item` prop, that will get the item object to render in the scroller.**
+
+Also, you need to set the size of the virtual-scroller element and the items elements (for example, with CSS). All items should have the same height to prevent display glitches.
+
 There are additional props you can use:
 
 - `typeField` to customize which field is used on the items to get their type and use the corresponding definition in the `renderers` map. The default is `'type'`.
@@ -55,7 +59,7 @@ The component template is structured like this:
 </main>
 ```
 
-If you set `contentTag` to `'table'`, the actual result in the DOM will bu the following:
+If you set `contentTag` to `'table'`, the actual result in the DOM will look like the following:
 
 ```html
 <div>
@@ -66,10 +70,6 @@ If you set `contentTag` to `'table'`, the actual result in the DOM will bu the f
   </div>
 </div>
 ```
-
-The `renderers` map is an object containing a component definition for each possible value of the item type. **The component definition must have an `item` prop, that will get the item object to render in the scroller.**
-
-Also, you need to set the size of the virtual-scroller element and the items elements (for example, with CSS). All items should have the same height to prevent display glitches.
 
 > The browsers have a height limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
 
