@@ -95,6 +95,39 @@ export default {
 </style>
 ```
 
+`Letter.vue` source:
+
+```html
+<template>
+  <div class="letter">({{item.index}}) {{item.value}}</div>
+</template>
+
+<script>
+export default {
+  props: ['item'],
+}
+</script>
+```
+
+`Item.vue` source:
+
+```html
+<template>
+  <div class="person" @click="edit">({{item.index}}) {{item.value.name}}</div>
+</template>
+
+<script>
+export default {
+  props: ['item'],
+  methods: {
+    edit () {
+      this.item.value.name += '*'
+    },
+  },
+}
+</script>
+```
+
 ---
 
 ## License
