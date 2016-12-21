@@ -5,6 +5,8 @@
 
 Smooth scroll with any amount of data ([demo](https://akryum.github.io/vue-virtual-scroller/)).
 
+# Installation
+
 ```
 npm install --save vue-virtual-scroller
 ```
@@ -25,10 +27,30 @@ import VirtualScroller from 'vue-virtual-scroller'
 Vue.use(VirtualScroller)
 ```
 
+# Usage
+
+The virtual scroller has three required props:
+
+- `items` is the list of items you want to display in the scroller. There can be several types of item.
+- `renderers` is a map of component definitions objects or names for each item type.
+- `itemHeight` is the display height of the items in pixels used to calculate the scroll height and position.
+
+There are additional props you can use:
+
+- `typeField` to customize which field is used on the items to get their type and use the corresponding definition in the `renderers` map. The default is `'type'`.
+- `keyField` to customize which field is used on the items to set their `key` special attribute (see [the documation](https://vuejs.org/v2/api/#key)). The default is `'id'`.
+
+The `renderers` map is an object containing a component definition for each possible value of the item type. **The component definition must have an `item` prop, that will get the item object to render in the scroller.**
+
+Also, you need to set the size of the virtual-scroller element and the items elements (for example, with CSS).
+
+# Example
+
 ```html
 <template>
   <div class="demo">
     <virtual-scroller
+      class="scroller"
       :items="items"
       :renderers="renderers"
       item-height="22"
@@ -61,9 +83,17 @@ export default {
   }),
 }
 </script>
-```
 
-Finally, set the size of the virtual-scroller element (for example, with CSS).
+<style>
+.scroller {
+  height: 300px;
+}
+
+.scroller .item {
+  height: 22px;
+}
+</style>
+```
 
 ---
 

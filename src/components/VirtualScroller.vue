@@ -2,7 +2,7 @@
   <div class="virtual-scroller" @scroll="updateVisibleItems">
     <div class="item-container" :style="itemContainerStyle">
       <div class="items">
-        <component class="item" v-for="item in visibleItems" :key="item.index" :is="renderers[item[typeField]]" :item="item"></component>
+        <component class="item" v-for="item in visibleItems" :key="item[keyField]" :is="renderers[item[typeField]]" :item="item"></component>
       </div>
     </div>
 
@@ -28,6 +28,10 @@ export default {
     typeField: {
       type: String,
       default: 'type',
+    },
+    keyField: {
+      type: String,
+      default: 'id',
     },
   },
   data: () => ({
