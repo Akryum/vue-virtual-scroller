@@ -10,8 +10,11 @@
       <span v-if="updateTime !== null">
         Virtual scroller update: {{ updateTime }} ms
       </span>
+      <span>
+        <button @click="showScroller = !showScroller">Toggle scroller</button>
+      </span>
     </div>
-    <div class="content">
+    <div class="content" v-if="showScroller">
       <virtual-scroller class="scroller" :items="items" :renderers="renderers" item-height="42" type-field="type" key-field="index"></virtual-scroller>
     </div>
   </div>
@@ -35,6 +38,7 @@ export default {
     count: 10000,
     generateTime: null,
     updateTime: null,
+    showScroller: true,
   }),
 
   watch: {
