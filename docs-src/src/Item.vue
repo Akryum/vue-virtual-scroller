@@ -1,5 +1,12 @@
 <template>
-  <div class="person" @click="edit"><span class="index">{{item.index}}</span> {{item.value.name}}</div>
+  <tr class="person" @click="edit">
+    <td class="index">
+      {{item.index}}
+    </td>
+    <td>
+      {{item.value.name}}
+    </td>
+  </tr>
 </template>
 
 <script>

@@ -39,6 +39,33 @@ There are additional props you can use:
 
 - `typeField` to customize which field is used on the items to get their type and use the corresponding definition in the `renderers` map. The default is `'type'`.
 - `keyField` to customize which field is used on the items to set their `key` special attribute (see [the documation](https://vuejs.org/v2/api/#key)). The default is `'id'`.
+- `mainTag` to change the DOM tag of the component root element. The default is `'div'`.
+- `containerTag` to change the DOM tag of the element simulating the height. The default is `'div'`.
+- `contentTag` to change the DOM tag of the element containing the items. The default is `'div'`. For example, you can change this to `'table'`.
+
+The component template is structured like this:
+
+```html
+<main>
+  <container>
+    <content>
+      <!-- Your items here -->
+    </content>
+  </container>
+</main>
+```
+
+If you set `contentTag` to `'table'`, the actual result in the DOM will bu the following:
+
+```html
+<div>
+  <div>
+    <table>
+      <!-- Your items here -->
+    </table>
+  </div>
+</div>
+```
 
 The `renderers` map is an object containing a component definition for each possible value of the item type. **The component definition must have an `item` prop, that will get the item object to render in the scroller.**
 

@@ -1,13 +1,12 @@
 <template>
-  <div class="virtual-scroller" @scroll="updateVisibleItems">
-    <div class="item-container" :style="itemContainerStyle">
-      <div class="items">
+  <component :is="mainTag" class="virtual-scroller" @scroll="updateVisibleItems">
+    <component :is="containerTag" class="item-container" :style="itemContainerStyle">
+      <component :is="contentTag" class="items" :style="itemsStyle">
         <component class="item" v-for="item in visibleItems" :key="item[keyField]" :is="renderers[item[typeField]]" :item="item"></component>
-      </div>
-    </div>
-
+      </component>
+    </component>
     <resize-observer @notify="updateVisibleItems" />
-  </div>
+  </component>
 </template>
 
 <script>
@@ -40,11 +39,24 @@ export default {
       type: String,
       default: 'id',
     },
+    mainTag: {
+      type: String,
+      default: 'div',
+    },
+    containerTag: {
+      type: String,
+      default: 'div',
+    },
+    contentTag: {
+      type: String,
+      default: 'div',
+    },
   },
 
   data: () => ({
     visibleItems: [],
     itemContainerStyle: null,
+    itemsStyle: null,
   }),
 
   watch: {
@@ -74,7 +86,9 @@ export default {
       this.visibleItems = this.items.slice(startIndex, endIndex)
       this.itemContainerStyle = {
         height: l * this.itemHeight + 'px',
-        paddingTop: startIndex * this.itemHeight + 'px',
+      }
+      this.itemsStyle = {
+        marginTop: startIndex * this.itemHeight + 'px',
       }
       this.$forceUpdate()
     },
@@ -97,5 +111,11 @@ export default {
 
 .item-container {
   box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
+}
+
+.items {
+  width: 100%;
 }
 </style>

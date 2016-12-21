@@ -1,5 +1,12 @@
 <template>
-  <div class="letter"><span class="index">{{item.index}}</span> {{item.value}}</div>
+  <tr class="letter">
+    <td class="index">
+      {{item.index}}
+    </td>
+    <td>
+      {{item.value}}
+    </td>
+  </tr>
 </template>
 
 <script>

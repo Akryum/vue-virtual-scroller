@@ -4,6 +4,11 @@
 }
 .item-container[data-v-5594e8c4] {
   box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
+}
+.items[data-v-5594e8c4] {
+  width: 100%;
 }
 
 .resize-observer[data-v-c7b3205a] {

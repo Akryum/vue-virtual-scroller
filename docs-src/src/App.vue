@@ -11,11 +11,13 @@
         Virtual scroller update: {{ updateTime }} ms
       </span>
       <span>
-        <button @click="showScroller = !showScroller">Toggle scroller</button>
+        <button @mousedown="showScroller = !showScroller">Toggle scroller</button>
       </span>
     </div>
     <div class="content" v-if="showScroller">
-      <virtual-scroller class="scroller" :items="items" :renderers="renderers" item-height="42" type-field="type" key-field="index"></virtual-scroller>
+      <div class="wrapper">
+        <virtual-scroller class="scroller" :items="items" :renderers="renderers" item-height="42" type-field="type" key-field="index" main-tag="section" content-tag="table"></virtual-scroller>
+      </div>
     </div>
   </div>
 </template>
@@ -130,13 +132,18 @@ body {
   position: relative;
 }
 
-.scroller {
-  overflow: auto;
+.wrapper {
+  overflow: hidden;
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
+}
+
+.scroller {
+  width: 100%;
+  height: 100%;
 }
 
 .item-container {
@@ -145,7 +152,6 @@ body {
 
 .item {
   height: 42px;
-  padding: 12px;
   box-sizing: border-box;
   cursor: pointer;
   user-select: none;
@@ -165,9 +171,16 @@ body {
 }
 
 .index {
-  display: inline-block;
   color: rgba(0, 0, 0, 0.2);
   width: 55px;
   text-align: right;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+td {
+  padding: 12px;
 }
 </style>
