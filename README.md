@@ -108,17 +108,52 @@ Vue.component('virtual-scroller', VirtualScroller)
 The virtual scroller has three main props:
 
 - `items` is the list of items you want to display in the scroller. There can be several types of item.
-- `renderers` is a map of component definitions objects or names for each item type. If you don't define `renderers`, the scroller will use *scoped slots* ([see below](#scoped-slots)).
 - `itemHeight` is the display height of the items in pixels used to calculate the scroll height and position.
+- `renderers` is a map of component definitions objects or names for each item type ([more details](#renderers)). If you don't define `renderers`, the scroller will use *scoped slots* ([see below](#scoped-slots)).
 
-The `renderers` map is an object containing a component definition for each possible value of the item type. **The component definition must have an `item` prop, that will get the item object to render in the scroller.**
+You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). All items should have the same height to prevent display glitches.
 
-Also, you need to set the size of the virtual-scroller element and the items elements (for example, with CSS). All items should have the same height to prevent display glitches.
+> The browsers have a height limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
+
+## Renderers
+
+The optional `renderers` prop is an object containing a component definition for each possible value of the item type. If you don't set this prop, [scoped slots](#scoped-slots) will be used instead. **The component definition must have an `item` prop, that will get the item object to render in the scroller.**
 
 There are additional props you can use:
 
 - `typeField` to customize which field is used on the items to get their type and use the corresponding definition in the `renderers` map. The default is `'type'`.
 - `keyField` to customize which field is used on the items to set their `key` special attribute (see [the documation](https://vuejs.org/v2/api/#key)). The default is `'id'`.
+
+## Scoped slots
+
+Alternatively, you can use [scoped slots](https://vuejs.org/v2/guide/components.html#Scoped-Slots) instead of `renderers`. This is active when you don't define the `renderers` prop on the virtual scroller.
+
+The scope will contain the row's item in the `item` attribute, so you can write `scope="props"` and then use `props.item`.
+
+Here is an example:
+
+```html
+<virtual-scroller class="scroller" :items="items" item-height="42" content-tag="table">
+  <template scope="props">
+    <tr v-if="props.item.type === 'letter'" class="letter">
+      <td>
+        {{props.item.value}} Scoped
+      </td>
+    </tr>
+
+    <tr v-if="props.item.type === 'person'" class="person">
+      <td>
+        {{props.item.value.name}}
+      </td>
+    </tr>
+  </template>
+</virtual-scroller>
+```
+
+## Customizing the tags
+
+These are optional props you can use to change the DOM tags used in the virtual scroller:
+
 - `mainTag` to change the DOM tag of the component root element. The default is `'div'`.
 - `containerTag` to change the DOM tag of the element simulating the height. The default is `'div'`.
 - `contentTag` to change the DOM tag of the element containing the items. The default is `'div'`. For example, you can change this to `'table'`.
@@ -145,34 +180,6 @@ If you set `contentTag` to `'table'`, the actual result in the DOM will look lik
     </table>
   </div>
 </div>
-```
-
-> The browsers have a height limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
-
-## Scoped slots
-
-Alternatively, you can use [scoped slots](https://vuejs.org/v2/guide/components.html#Scoped-Slots) instead of `renderers`. This is active when you don't define the `renderers` prop on the virtual scroller.
-
-The scope will contain the row's item in the `item` attribute, so you can write `scope="props"` and then use `props.item`.
-
-Here is an example:
-
-```html
-<virtual-scroller class="scroller" :items="items" item-height="42" content-tag="table">
-  <template scope="props">
-    <tr v-if="props.item.type === 'letter'" class="letter">
-      <td>
-        {{props.item.value}} Scoped
-      </td>
-    </tr>
-
-    <tr v-if="props.item.type === 'person'" class="person">
-      <td>
-        {{props.item.value.name}}
-      </td>
-    </tr>
-  </template>
-</virtual-scroller>
 ```
 
 # Example
