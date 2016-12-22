@@ -2,7 +2,12 @@
   <component :is="mainTag" class="virtual-scroller" @scroll="updateVisibleItems">
     <component :is="containerTag" class="item-container" :style="itemContainerStyle">
       <component :is="contentTag" class="items" :style="itemsStyle">
-        <component class="item" v-for="item in visibleItems" :key="item[keyField]" :is="renderers[item[typeField]]" :item="item"></component>
+        <template v-if="renderers">
+          <component class="item" v-for="item in visibleItems" :key="item[keyField]" :is="renderers[item[typeField]]" :item="item"></component>
+        </template>
+        <template v-else>
+          <slot class="item" v-for="item in visibleItems" :item="item"></slot>
+        </template>
       </component>
     </component>
     <resize-observer @notify="updateVisibleItems" />
@@ -25,7 +30,7 @@ export default {
       required: true,
     },
     renderers: {
-      required: true,
+      default: null,
     },
     itemHeight: {
       type: [Number, String],

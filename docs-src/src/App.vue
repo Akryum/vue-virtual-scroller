@@ -12,11 +12,29 @@
       </span>
       <span>
         <button @mousedown="showScroller = !showScroller">Toggle scroller</button>
+        <label><input type="checkbox" v-model="scopedSlots" /> Scoped slots</label>
       </span>
     </div>
     <div class="content" v-if="showScroller">
       <div class="wrapper">
-        <virtual-scroller class="scroller" :items="items" :renderers="renderers" item-height="42" type-field="type" key-field="index" main-tag="section" content-tag="table"></virtual-scroller>
+        <!-- Scoped slots -->
+        <virtual-scroller v-if="scopedSlots" class="scroller" :items="items" item-height="42" main-tag="section" content-tag="table">
+          <template scope="props">
+            <!-- <letter v-if="props.item.type === 'letter'" :item="props.item"></letter>-->
+            <tr v-if="props.item.type === 'letter'" class="letter">
+              <td class="index">
+                {{props.item.index}}
+              </td>
+              <td>
+                {{props.item.value}} Scoped
+              </td>
+            </tr>
+            <item v-if="props.item.type === 'person'" :item="props.item"></item>
+          </template>
+        </virtual-scroller>
+
+        <!-- Renderers -->
+        <virtual-scroller v-else class="scroller" :items="items" :renderers="renderers" item-height="42" type-field="type" key-field="index" main-tag="section" content-tag="table"></virtual-scroller>
       </div>
     </div>
   </div>
@@ -34,6 +52,11 @@ const renderers = {
 }
 
 export default {
+  components: {
+    Letter,
+    Item,
+  },
+
   data: () => ({
     items: [],
     renderers,
@@ -41,6 +64,7 @@ export default {
     generateTime: null,
     updateTime: null,
     showScroller: true,
+    scopedSlots: false,
   }),
 
   watch: {
