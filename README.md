@@ -5,6 +5,12 @@
 
 Smooth scroll with any amount of data ([demo](https://akryum.github.io/vue-virtual-scroller/)).
 
+## Table of contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Example](#example)
+
 # Installation
 
 ```
