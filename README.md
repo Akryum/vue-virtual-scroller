@@ -10,22 +10,92 @@ Smooth scroll with any amount of data ([demo](https://akryum.github.io/vue-virtu
 ```
 npm install --save vue-virtual-scroller
 ```
+## Default import
 
-Use the component in your app. For example, register it as a global component:
+Install all the components:
 
 ```javascript
+import Vue from 'vue'
+import VueVirtualScroller from 'vue-virtual-scroller'
+
+Vue.use(VueVirtualScroller)
+```
+
+Use specific components:
+
+```javascript
+import Vue from 'vue'
 import { VirtualScroller } from 'vue-virtual-scroller'
 
 Vue.component('virtual-scroller', VirtualScroller)
 ```
 
-Or install it as a plugin:
+**⚠️ A css file is included when importing the package. You may have to setup your bundler to embed the css in your page.**
+
+## Distribution import
+
+Install all the components:
 
 ```javascript
-import VirtualScroller from 'vue-virtual-scroller'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+import VueVirtualScroller from 'vue-virtual-scroller/dist/vue-virtual-scroller'
 
-Vue.use(VirtualScroller)
+Vue.use(VueVirtualScroller)
 ```
+
+Use specific components:
+
+```javascript
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+import { VirtualScroller } from 'vue-virtual-scroller/dist/vue-virtual-scroller'
+
+Vue.component('virtual-scroller', VirtualScroller)
+```
+
+**⚠️ You may have to setup your bundler to embed the css file in your page.**
+
+## Browser
+
+```html
+<link rel="stylesheet" href="vue-virtual-scroller/dist/vue-virtual-scroller.css"/>
+
+<script src="vue.js"></script>
+<script src="vue-virtual-scroller/dist/vue-virtual-scroller.js"></script>
+```
+
+Install all the components:
+
+```javascript
+Vue.use(VueVirtualScroller)
+```
+
+Use specific components:
+
+```javascript
+Vue.component('virtual-scroller', VueVirtualScroller.VirtualScroller)
+```
+
+## Source import
+
+Install all the components:
+
+```javascript
+import Vue from 'vue'
+import VueVirtualScroller from 'vue-virtual-scroller/src'
+
+Vue.use(VueVirtualScroller)
+```
+
+Use specific components:
+
+```javascript
+import Vue from 'vue'
+import { VirtualScroller } from 'vue-virtual-scroller/src'
+
+Vue.component('virtual-scroller', VirtualScroller)
+```
+
+**⚠️ You need to configure your bundler to compile `.vue` files.** More info [in the official documentation](https://vuejs.org/v2/guide/single-file-components.html).
 
 # Usage
 
