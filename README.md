@@ -108,7 +108,7 @@ Vue.component('virtual-scroller', VirtualScroller)
 The virtual scroller has three main props:
 
 - `items` is the list of items you want to display in the scroller. There can be several types of item.
-- `renderers` is a map of component definitions objects or names for each item type. If you don't define `renderers`, the scroller will use *scoped slots* ([see below](#scoped_slots)).
+- `renderers` is a map of component definitions objects or names for each item type. If you don't define `renderers`, the scroller will use *scoped slots* ([see below](#scoped-slots)).
 - `itemHeight` is the display height of the items in pixels used to calculate the scroll height and position.
 
 The `renderers` map is an object containing a component definition for each possible value of the item type. **The component definition must have an `item` prop, that will get the item object to render in the scroller.**
