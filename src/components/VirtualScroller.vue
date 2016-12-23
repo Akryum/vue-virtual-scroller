@@ -1,5 +1,5 @@
 <template>
-  <component :is="mainTag" class="virtual-scroller" @scroll="updateVisibleItems">
+  <component :is="mainTag" class="virtual-scroller" @scroll="updateVisibleItems" v-observe-visibility="handleVisibilityChange">
     <component :is="containerTag" class="item-container" :style="itemContainerStyle">
       <component :is="contentTag" class="items" :style="itemsStyle">
         <template v-if="renderers">
@@ -16,12 +16,17 @@
 
 <script>
 import { ResizeObserver } from 'vue-resize'
+import { ObserveVisibility } from 'vue-observe-visibility'
 
 export default {
   name: 'virtual-scroller',
 
   components: {
     ResizeObserver,
+  },
+
+  directives: {
+    ObserveVisibility,
   },
 
   props: {
@@ -100,6 +105,12 @@ export default {
 
     scrollToItem (index) {
       this.$el.scrollTop = index * this.itemHeight
+    },
+
+    handleVisibilityChange (isVisible) {
+      if (isVisible) {
+        this.updateVisibleItems()
+      }
     },
   },
 

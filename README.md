@@ -16,6 +16,9 @@ Smooth scroll with any amount of data ([demo](https://akryum.github.io/vue-virtu
 ```
 npm install --save vue-virtual-scroller
 ```
+
+**⚠️ `vue-virtual-scroller` now uses [vue-observe-visibility](https://github.com/Akryum/vue-observe-visibility) to automatically refresh itself when shown to prevent display glitches. This means you need to include the polyfills needed by `vue-observe-visibility` for this to work.**
+
 ## Default import
 
 Install all the components:
