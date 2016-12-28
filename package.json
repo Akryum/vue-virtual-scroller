@@ -1,7 +1,7 @@
 {
   "name": "vue-virtual-scroller",
   "description": "Smooth scrolling for any amount of data",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": {
     "name": "Guillaume Chau",
     "email": "guillaume.b.chau@gmail.com"
@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/Akryum/vue-virtual-scroller#readme",
   "peerDependencies": {
-    "vue": "^2.1.6"
+    "vue": "^2.1.7"
   },
   "devDependencies": {
     "babel-core": "^6.0.0",
@@ -46,7 +46,7 @@
     "eslint-plugin-standard": "^2.0.1",
     "extract-text-webpack-plugin": "^2.0.0-beta.4",
     "vue-loader": "^10.0.0",
-    "vue-template-compiler": "^2.1.6",
+    "vue-template-compiler": "^2.1.7",
     "webpack": "^2.1.0-beta.28",
     "webpack-merge": "^1.1.2"
   },
