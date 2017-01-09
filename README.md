@@ -127,6 +127,8 @@ There are additional props you can use:
 - `typeField` to customize which field is used on the items to get their type and use the corresponding definition in the `renderers` map. The default is `'type'`.
 - `keyField` to customize which field is used on the items to set their `key` special attribute (see [the documation](https://vuejs.org/v2/api/#key)). The default is `'id'`.
 
+**For better performance, you should use the `keyField` prop that whill set the `key` attribute. Warning! You shouldn't expect items to have the key set at all times, since the scroller may disable them depending on the situation.**
+
 ## Scoped slots
 
 Alternatively, you can use [scoped slots](https://vuejs.org/v2/guide/components.html#Scoped-Slots) instead of `renderers`. This is active when you don't define the `renderers` prop on the virtual scroller.
@@ -138,13 +140,13 @@ Here is an example:
 ```html
 <virtual-scroller class="scroller" :items="items" item-height="42" content-tag="table">
   <template scope="props">
-    <tr v-if="props.item.type === 'letter'" class="letter">
+    <tr v-if="props.item.type === 'letter'" class="letter" :key="props.itemKey">
       <td>
         {{props.item.value}} Scoped
       </td>
     </tr>
 
-    <tr v-if="props.item.type === 'person'" class="person">
+    <tr v-if="props.item.type === 'person'" class="person" :key="props.itemKey">
       <td>
         {{props.item.value.name}}
       </td>
@@ -152,6 +154,8 @@ Here is an example:
   </template>
 </virtual-scroller>
 ```
+
+**For better performance, you should set the `key` attribute on direct children using the `itemKey` field from the scoped slot and set the `keyField` prop on the virtual scroller.**
 
 ## Page mode
 

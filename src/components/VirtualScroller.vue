@@ -6,7 +6,7 @@
           <component class="item" v-for="item in visibleItems" :key="keysEnabled && item[keyField]" :is="renderers[item[typeField]]" :item="item"></component>
         </template>
         <template v-else>
-          <slot class="item" v-for="item in visibleItems" :item="item"></slot>
+          <slot class="item" v-for="item in visibleItems" :item="item" :item-key="keysEnabled && item[keyField]"></slot>
         </template>
       </component>
     </component>
