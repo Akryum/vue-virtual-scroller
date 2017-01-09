@@ -153,6 +153,22 @@ Here is an example:
 </virtual-scroller>
 ```
 
+## Page mode
+
+The page mode expand the virtual-scroller and use the page viewport to compute which items are visible. That way, you can use it in a big page with HTML elements before or after (like a header and a footer). Just set the `page-mode` props to `true`:
+
+```html
+<header>
+  <menu></menu>
+</header>
+
+<virtual-scroller page-mode></virtual-scroller>
+
+<footer>
+  Copyright 2017 - Cat
+</footer>
+```
+
 ## Customizing the tags
 
 These are optional props you can use to change the DOM tags used in the virtual scroller:

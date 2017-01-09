@@ -1,5 +1,5 @@
 
-.virtual-scroller[data-v-5594e8c4] {
+.virtual-scroller[data-v-5594e8c4]:not(.page-mode) {
   overflow-y: auto;
 }
 .item-container[data-v-5594e8c4] {

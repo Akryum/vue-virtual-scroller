@@ -1,9 +1,9 @@
 <template>
-  <component :is="mainTag" class="virtual-scroller" @scroll="updateVisibleItems" v-observe-visibility="handleVisibilityChange">
+  <component :is="mainTag" class="virtual-scroller" :class="cssClass" @scroll="updateVisibleItems" v-observe-visibility="handleVisibilityChange">
     <component :is="containerTag" class="item-container" :style="itemContainerStyle">
       <component :is="contentTag" class="items" :style="itemsStyle">
         <template v-if="renderers">
-          <component class="item" v-for="item in visibleItems" :key="item[keyField]" :is="renderers[item[typeField]]" :item="item"></component>
+          <component class="item" v-for="item in visibleItems" :key="keysEnabled && item[keyField]" :is="renderers[item[typeField]]" :item="item"></component>
         </template>
         <template v-else>
           <slot class="item" v-for="item in visibleItems" :item="item"></slot>
@@ -61,46 +61,97 @@ export default {
       type: String,
       default: 'div',
     },
+    pageMode: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   data: () => ({
     visibleItems: [],
     itemContainerStyle: null,
     itemsStyle: null,
+    keysEnabled: true,
   }),
+
+  computed: {
+    cssClass () {
+      return {
+        'page-mode': this.pageMode,
+      }
+    },
+  },
 
   watch: {
     items () {
       this.updateVisibleItems()
     },
+    pageMode () {
+      this.applyPageMode()
+      this.updateVisibleItems()
+    },
   },
 
   methods: {
+    getScroll () {
+      const el = this.$el
+      let scroll
+
+      if (this.pageMode) {
+        const rect = el.getBoundingClientRect()
+        let top = -rect.top
+        let height = window.innerHeight
+        if (top < 0) {
+          height += top
+          top = 0
+        }
+        if (top + height > rect.height) {
+          height = rect.height - top
+        }
+        scroll = {
+          top: top,
+          bottom: top + height,
+        }
+      } else {
+        scroll = {
+          top: el.scrollTop,
+          bottom: el.scrollTop + el.clientHeight,
+        }
+      }
+
+      if (scroll.bottom >= 0 && scroll.top <= scroll.bottom) {
+        return scroll
+      } else {
+        return null
+      }
+    },
+
     updateVisibleItems () {
       const l = this.items.length
-      const el = this.$el
-      const scroll = {
-        top: el.scrollTop,
-        bottom: el.scrollTop + el.clientHeight,
+      const scroll = this.getScroll()
+      if (scroll) {
+        let startIndex = Math.floor(scroll.top / this.itemHeight)
+        let endIndex = Math.ceil(scroll.bottom / this.itemHeight)
+        startIndex -= 1
+        if (startIndex < 0) {
+          startIndex = 0
+        }
+        endIndex += 2
+        if (endIndex > l) {
+          endIndex = l
+        }
+        this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
+        this._startIndex = startIndex
+        this._endIndex = endIndex
+        this.visibleItems = this.items.slice(startIndex, endIndex)
+        this.itemContainerStyle = {
+          height: l * this.itemHeight + 'px',
+        }
+        this.itemsStyle = {
+          marginTop: startIndex * this.itemHeight + 'px',
+        }
+        this.$forceUpdate()
       }
-      this._startIndex = Math.floor(scroll.top / this.itemHeight)
-      this._endIndex = Math.ceil(scroll.bottom / this.itemHeight)
-      let startIndex = this._startIndex - 1
-      if (startIndex < 0) {
-        startIndex = 0
-      }
-      let endIndex = this._endIndex + 2
-      if (endIndex > l) {
-        endIndex = l
-      }
-      this.visibleItems = this.items.slice(startIndex, endIndex)
-      this.itemContainerStyle = {
-        height: l * this.itemHeight + 'px',
-      }
-      this.itemsStyle = {
-        marginTop: startIndex * this.itemHeight + 'px',
-      }
-      this.$forceUpdate()
     },
 
     scrollToItem (index) {
@@ -114,16 +165,37 @@ export default {
         })
       }
     },
+
+    applyPageMode () {
+      if (this.pageMode) {
+        this.addWindowScroll()
+      } else {
+        this.removeWindowScroll()
+      }
+    },
+
+    addWindowScroll () {
+      window.addEventListener('scroll', this.updateVisibleItems, true)
+    },
+
+    removeWindowScroll () {
+      window.removeEventListener('scroll', this.updateVisibleItems, true)
+    },
   },
 
   mounted () {
     this.updateVisibleItems()
+    this.applyPageMode()
+  },
+
+  beforeDestroy () {
+    this.removeWindowScroll()
   },
 }
 </script>
 
 <style scoped>
-.virtual-scroller {
+.virtual-scroller:not(.page-mode) {
   overflow-y: auto;
 }
 
