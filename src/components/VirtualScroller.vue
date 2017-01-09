@@ -107,9 +107,11 @@ export default {
       this.$el.scrollTop = index * this.itemHeight
     },
 
-    handleVisibilityChange (isVisible) {
-      if (isVisible) {
-        this.updateVisibleItems()
+    handleVisibilityChange (isVisible, entry) {
+      if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {
+        this.$nextTick(() => {
+          this.updateVisibleItems()
+        })
       }
     },
   },
