@@ -3,10 +3,10 @@
     <component :is="containerTag" class="item-container" :style="itemContainerStyle">
       <component :is="contentTag" class="items" :style="itemsStyle">
         <template v-if="renderers">
-          <component class="item" v-for="item in visibleItems" :key="keysEnabled && item[keyField]" :is="renderers[item[typeField]]" :item="item"></component>
+          <component class="item" v-for="(item, index) in visibleItems" :key="keysEnabled && item[keyField]" :is="renderers[item[typeField]]" :item="item" :item-index="_startIndex + index"></component>
         </template>
         <template v-else>
-          <slot class="item" v-for="item in visibleItems" :item="item" :item-key="keysEnabled && item[keyField]"></slot>
+          <slot class="item" v-for="(item, index) in visibleItems" :item="item" :item-index="_startIndex + index" :item-key="keysEnabled && item[keyField]"></slot>
         </template>
       </component>
     </component>

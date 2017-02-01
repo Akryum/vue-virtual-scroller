@@ -1,13 +1,13 @@
 
-.virtual-scroller[data-v-5594e8c4]:not(.page-mode) {
+.virtual-scroller[data-v-7236941d]:not(.page-mode) {
   overflow-y: auto;
 }
-.item-container[data-v-5594e8c4] {
+.item-container[data-v-7236941d] {
   box-sizing: border-box;
   width: 100%;
   overflow: hidden;
 }
-.items[data-v-5594e8c4] {
+.items[data-v-7236941d] {
   width: 100%;
 }
 
