@@ -120,7 +120,7 @@ You need to set the size of the virtual-scroller element and the items elements 
 
 ## Renderers
 
-The optional `renderers` prop is an object containing a component definition for each possible value of the item type. If you don't set this prop, [scoped slots](#scoped-slots) will be used instead. **The component definition must have an `item` prop, that will get the item object to render in the scroller.**
+The optional `renderers` prop is an object containing a component definition for each possible value of the item type. If you don't set this prop, [scoped slots](#scoped-slots) will be used instead. **The component definition must have an `item` prop, that will get the item object to render in the scroller.** It will also receive an `index` prop.
 
 There are additional props you can use:
 
@@ -133,7 +133,7 @@ There are additional props you can use:
 
 Alternatively, you can use [scoped slots](https://vuejs.org/v2/guide/components.html#Scoped-Slots) instead of `renderers`. This is active when you don't define the `renderers` prop on the virtual scroller.
 
-The scope will contain the row's item in the `item` attribute, so you can write `scope="props"` and then use `props.item`.
+The scope will contain the row's item in the `item` attribute, so you can write `scope="props"` and then use `props.item`. It will also have an `index` attribute.
 
 Here is an example:
 
@@ -203,6 +203,24 @@ If you set `contentTag` to `'table'`, the actual result in the DOM will look lik
     </table>
   </div>
 </div>
+```
+
+## Slots
+
+There are 4 slots you can use to inject things inside the scroller (it may be usefull to add a `thead` or `tbody`):
+
+```html
+<main>
+  <slot name="before-container"></slot>
+  <container>
+    <slot name="before-content"></slot>
+    <content>
+      <!-- Your items here -->
+    </content>
+    <slot name="after-content"></slot>
+  </container>
+  <slot name="after-container"></slot>
+</main>
 ```
 
 # Example
