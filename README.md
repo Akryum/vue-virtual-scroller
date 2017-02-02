@@ -205,6 +205,14 @@ If you set `contentTag` to `'table'`, the actual result in the DOM will look lik
 </div>
 ```
 
+## Customizing the classes
+
+You can use the following props to customize the container and content elements CSS classes:
+
+- `containerClass`
+- `contentClass`
+
+
 ## Slots
 
 There are 4 slots you can use to inject things inside the scroller (it may be usefull to add a `thead` or `tbody`):

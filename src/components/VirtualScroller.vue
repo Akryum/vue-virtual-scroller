@@ -1,9 +1,9 @@
 <template>
   <component :is="mainTag" class="virtual-scroller" :class="cssClass" @scroll="updateVisibleItems" v-observe-visibility="handleVisibilityChange">
     <slot name="before-container"></slot>
-    <component :is="containerTag" class="item-container" :style="itemContainerStyle">
+    <component :is="containerTag" class="item-container" :class="containerClass" :style="itemContainerStyle">
       <slot name="before-content"></slot>
-      <component :is="contentTag" class="items" :style="itemsStyle">
+      <component :is="contentTag" class="items" :class="contentClass" :style="itemsStyle">
         <template v-if="renderers">
           <component class="item" v-for="(item, index) in visibleItems" :key="keysEnabled && item[keyField]" :is="renderers[item[typeField]]" :item="item" :item-index="_startIndex + index"></component>
         </template>
@@ -61,9 +61,15 @@ export default {
       type: String,
       default: 'div',
     },
+    containerClass: {
+      default: null,
+    },
     contentTag: {
       type: String,
       default: 'div',
+    },
+    contentClass: {
+      default: null,
     },
     pageMode: {
       type: Boolean,
