@@ -77,11 +77,11 @@ export default {
     },
     buffer: {
       type: [Number, String],
-      default: 20,
+      default: 2,
     },
     poolSize: {
       type: [Number, String],
-      default: 5,
+      default: 1,
     },
   },
 
@@ -167,7 +167,6 @@ export default {
           this.itemsStyle = {
             marginTop: startIndex * this.itemHeight + 'px',
           }
-          this.$forceUpdate()
         }
       }
     },
