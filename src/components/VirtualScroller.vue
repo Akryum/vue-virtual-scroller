@@ -75,6 +75,14 @@ export default {
       type: Boolean,
       default: false,
     },
+    buffer: {
+      type: [Number, String],
+      default: 20,
+    },
+    poolSize: {
+      type: [Number, String],
+      default: 5,
+    },
   },
 
   data: () => ({
@@ -140,27 +148,27 @@ export default {
       const l = this.items.length
       const scroll = this.getScroll()
       if (scroll) {
-        let startIndex = Math.floor(scroll.top / this.itemHeight)
-        let endIndex = Math.ceil(scroll.bottom / this.itemHeight)
-        startIndex -= 1
+        let startIndex = Math.floor((Math.floor(scroll.top / this.itemHeight) - this.buffer) / this.poolSize) * this.poolSize
+        let endIndex = Math.floor((Math.ceil(scroll.bottom / this.itemHeight) + this.buffer) / this.poolSize) * this.poolSize
         if (startIndex < 0) {
           startIndex = 0
         }
-        endIndex += 2
         if (endIndex > l) {
           endIndex = l
         }
-        this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
-        this._startIndex = startIndex
-        this._endIndex = endIndex
-        this.visibleItems = this.items.slice(startIndex, endIndex)
-        this.itemContainerStyle = {
-          height: l * this.itemHeight + 'px',
+        if (startIndex !== this._startIndex || endIndex !== this.endIndex) {
+          this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
+          this._startIndex = startIndex
+          this._endIndex = endIndex
+          this.visibleItems = this.items.slice(startIndex, endIndex)
+          this.itemContainerStyle = {
+            height: l * this.itemHeight + 'px',
+          }
+          this.itemsStyle = {
+            marginTop: startIndex * this.itemHeight + 'px',
+          }
+          this.$forceUpdate()
         }
-        this.itemsStyle = {
-          marginTop: startIndex * this.itemHeight + 'px',
-        }
-        this.$forceUpdate()
       }
     },
 
