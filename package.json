@@ -1,7 +1,7 @@
 {
   "name": "vue-virtual-scroller",
   "description": "Smooth scrolling for any amount of data",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "author": {
     "name": "Guillaume Chau",
     "email": "guillaume.b.chau@gmail.com"
@@ -31,27 +31,27 @@
     "vue": "^2.1.8"
   },
   "devDependencies": {
-    "babel-core": "^6.0.0",
+    "babel-core": "^6.23.1",
     "babel-eslint": "^7.1.1",
-    "babel-loader": "^6.0.0",
-    "babel-preset-es2015": "^6.14.0",
-    "babel-preset-stage-0": "^6.16.0",
-    "cross-env": "^3.1.3",
-    "css-loader": "^0.26.1",
-    "eslint": "^3.12.1",
+    "babel-loader": "^6.4.0",
+    "babel-preset-es2015": "^6.22.0",
+    "babel-preset-stage-0": "^6.22.0",
+    "cross-env": "^3.2.3",
+    "css-loader": "^0.26.2",
+    "eslint": "^3.17.1",
     "eslint-config-standard": "^6.2.1",
-    "eslint-loader": "^1.6.1",
+    "eslint-loader": "^1.6.3",
     "eslint-plugin-html": "^1.6.0",
-    "eslint-plugin-promise": "^3.4.0",
-    "eslint-plugin-standard": "^2.0.1",
-    "extract-text-webpack-plugin": "^2.0.0-beta.4",
-    "vue-loader": "^10.0.0",
-    "vue-template-compiler": "^2.1.8",
-    "webpack": "^2.1.0-beta.28",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^2.1.1",
+    "extract-text-webpack-plugin": "^2.1.0",
+    "vue-loader": "^10.3.0",
+    "vue-template-compiler": "^2.2.1",
+    "webpack": "^2.2.1",
     "webpack-merge": "^1.1.2"
   },
   "dependencies": {
     "vue-observe-visibility": "^0.1.3",
-    "vue-resize": "^0.1.0"
+    "vue-resize": "^0.1.2"
   }
 }
