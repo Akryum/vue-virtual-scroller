@@ -109,7 +109,7 @@ export default {
     generateItems () {
       console.log('Generating ' + this.count + ' items...')
       let time = Date.now()
-      const items = Object.freeze(getData(this.count, this.enableLetters))
+      const items = getData(this.count, this.enableLetters)
       this._time = Date.now()
       this.generateTime = this._time - time
       console.log('Generated ' + items.length + ' in ' + this.generateTime + 'ms')
@@ -207,12 +207,7 @@ body {
 .letter {
   text-transform: uppercase;
   color: grey;
-  font-weight: lighter;
-  height: 200px;
-}
-
-.letter .value {
-  font-size: 120px;
+  font-weight: bold;
 }
 
 .index {

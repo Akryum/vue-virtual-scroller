@@ -104,25 +104,30 @@ export default {
     },
 
     heights () {
-      const heights = {}
-      const items = this.items
-      const field = this.heightField
-      let accumulator = 0
-      for (let i = 0; i < items.length; i++) {
-        accumulator += items[i][field]
-        heights[i] = accumulator
+      if (this.itemHeight === null) {
+        const heights = {}
+        const items = this.items
+        const field = this.heightField
+        let accumulator = 0
+        for (let i = 0; i < items.length; i++) {
+          accumulator += items[i][field]
+          heights[i] = accumulator
+        }
+        return heights
       }
-      return heights
     },
   },
 
   watch: {
-    items () {
-      this.updateVisibleItems()
+    items: {
+      handler () {
+        this.updateVisibleItems(true)
+      },
+      deep: true,
     },
     pageMode () {
       this.applyPageMode()
-      this.updateVisibleItems()
+      this.updateVisibleItems(true)
     },
   },
 
@@ -160,7 +165,7 @@ export default {
       }
     },
 
-    updateVisibleItems () {
+    updateVisibleItems (force = false) {
       const l = this.items.length
       const scroll = this.getScroll()
       const items = this.items
@@ -224,10 +229,11 @@ export default {
           containerHeight = l * itemHeight
         }
 
-        if (startIndex !== this._startIndex || endIndex !== this._endIndex) {
+        if (force || startIndex !== this._startIndex || endIndex !== this._endIndex || l !== this._length) {
           this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
           this._startIndex = startIndex
           this._endIndex = endIndex
+          this._length = l
           this.visibleItems = items.slice(startIndex, endIndex)
           this.itemContainerStyle = {
             height: containerHeight + 'px',
@@ -275,8 +281,8 @@ export default {
   },
 
   mounted () {
-    this.updateVisibleItems()
     this.applyPageMode()
+    this.updateVisibleItems()
   },
 
   beforeDestroy () {
