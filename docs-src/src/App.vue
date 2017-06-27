@@ -4,11 +4,14 @@
       <span>
         <input v-model="countInput" type="number" min="0" max="500000" /> items
       </span>
+      <span>
+        <input v-model="buffer" type="number" min="1" max="500000" /> buffer
+      </span>
+      <span>
+        <input v-model="poolSize" type="number" min="1" max="500000" /> poolSize
+      </span>
       <span v-if="generateTime !== null">
         Items generation: {{ generateTime }} ms
-      </span>
-      <span v-if="updateTime !== null">
-        Virtual scroller update: {{ updateTime }} ms
       </span>
       <span>
         <button @mousedown="showScroller = !showScroller">Toggle scroller</button>
@@ -18,10 +21,10 @@
     <div class="content" v-if="showScroller">
       <div class="wrapper">
         <!-- Scoped slots -->
-        <virtual-scroller v-if="scopedSlots" class="scroller" :items="items" item-height="42" main-tag="section" content-tag="table">
+        <virtual-scroller v-if="scopedSlots" class="scroller" :items="items" main-tag="section" content-tag="table" :buffer="buffer" :pool-size="poolSize">
           <template scope="props">
             <!-- <letter v-if="props.item.type === 'letter'" :item="props.item"></letter>-->
-            <tr v-if="props.item.type === 'letter'" class="letter">
+            <tr v-if="props.item.type === 'letter'" class="letter" :key="props.itemKey">
               <td class="index">
                 {{props.item.index}}
               </td>
@@ -29,12 +32,12 @@
                 {{props.item.value}} Scoped
               </td>
             </tr>
-            <item v-if="props.item.type === 'person'" :item="props.item"></item>
+            <item v-if="props.item.type === 'person'" :item="props.item" :key="props.itemKey"></item>
           </template>
         </virtual-scroller>
 
         <!-- Renderers -->
-        <virtual-scroller v-else class="scroller" :items="items" :renderers="renderers" item-height="42" type-field="type" key-field="index" main-tag="section" content-tag="table"></virtual-scroller>
+        <virtual-scroller v-else class="scroller" :items="items" :renderers="renderers" type-field="type" key-field="index" main-tag="section" content-tag="table"></virtual-scroller>
       </div>
     </div>
   </div>
@@ -65,6 +68,8 @@ export default {
     updateTime: null,
     showScroller: true,
     scopedSlots: false,
+    buffer: 0,
+    poolSize: 1,
   }),
 
   watch: {
@@ -191,7 +196,12 @@ body {
 .letter {
   text-transform: uppercase;
   color: grey;
-  font-weight: bold;
+  font-weight: lighter;
+  height: 200px;
+}
+
+.letter .value {
+  font-size: 120px;
 }
 
 .index {

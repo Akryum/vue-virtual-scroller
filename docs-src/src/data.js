@@ -18,7 +18,7 @@ export function getData (count) {
   }
 
   const data = []
-  let index = 0
+  let index = 1
 
   for (const l of alphabet) {
     raw[l] = raw[l].sort((a, b) => a.name < b.name ? -1 : 1)
@@ -26,12 +26,14 @@ export function getData (count) {
       index: index++,
       type: 'letter',
       value: l,
+      height: 200,
     })
     for (var item of raw[l]) {
       data.push({
         index: index++,
         type: 'person',
         value: item,
+        height: 42,
       })
     }
   }

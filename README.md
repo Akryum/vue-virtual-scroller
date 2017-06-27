@@ -111,7 +111,7 @@ Vue.component('virtual-scroller', VirtualScroller)
 The virtual scroller has three main props:
 
 - `items` is the list of items you want to display in the scroller. There can be several types of item.
-- `itemHeight` is the display height of the items in pixels used to calculate the scroll height and position.
+- `itemHeight` is the display height of the items in pixels used to calculate the scroll height and position. If it set to null (default value), it will use [variable height mode](#variable-height-mode).
 - `renderers` is a map of component definitions objects or names for each item type ([more details](#renderers)). If you don't define `renderers`, the scroller will use *scoped slots* ([see below](#scoped-slots)).
 
 You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). All items should have the same height to prevent display glitches.
@@ -171,6 +171,38 @@ The page mode expand the virtual-scroller and use the page viewport to compute w
 <footer>
   Copyright 2017 - Cat
 </footer>
+```
+
+## Variable height mode
+
+**⚠️ This mode can be performance heavy with a lot of items. Use with caution.**
+
+If the `itemHeight` prop is not set or set to `null`, the virtual scroller will switch to Variable height mode. You then need to expose a number field on the item objects with the height of the item element.
+
+**⚠️ You still need to set the height of the items with CSS correctly (with classes for example).**
+
+Use the `heightField` prop (default is `'height'`) to set the field used by the scroller to get the height for each item.
+
+Example:
+
+```javascript
+const items = [
+  {
+    id: 1,
+    label: 'Title',
+    height: 64,
+  },
+  {
+    id: 2,
+    label: 'Foo',
+    height: 32,
+  },
+  {
+    id: 3,
+    label: 'Bar',
+    height: 32,
+  },
+]
 ```
 
 ## Customizing the tags

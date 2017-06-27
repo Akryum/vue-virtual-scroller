@@ -23,6 +23,7 @@
   pointer-events: none;
   display: block;
   overflow: hidden;
+  opacity: 0;
 }
 
 .test h1[data-v-5ee0142a] {

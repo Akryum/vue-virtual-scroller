@@ -1,4 +1,5 @@
 var webpack = require('webpack')
+var path = require('path')
 var ExtractTextPlugin = require('extract-text-webpack-plugin')
 
 var outputFile = 'vue-virtual-scroller'
@@ -9,7 +10,7 @@ var config = require('../package.json')
 module.exports = {
   entry: './src/index.js',
   output: {
-    path: './dist',
+    path: path.resolve(__dirname, '../dist'),
     filename: outputFile + '.js',
     library: globalName,
     libraryTarget: 'umd',

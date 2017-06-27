@@ -43,7 +43,7 @@ export default {
     },
     itemHeight: {
       type: [Number, String],
-      required: true,
+      default: null,
     },
     typeField: {
       type: String,
@@ -52,6 +52,10 @@ export default {
     keyField: {
       type: String,
       default: 'id',
+    },
+    heightField: {
+      type: String,
+      default: 'height',
     },
     mainTag: {
       type: String,
@@ -97,6 +101,18 @@ export default {
       return {
         'page-mode': this.pageMode,
       }
+    },
+
+    heights () {
+      const heights = {}
+      const items = this.items
+      const field = this.heightField
+      let accumulator = 0
+      for (let i = 0; i < items.length; i++) {
+        accumulator += items[i][field]
+        heights[i] = accumulator
+      }
+      return heights
     },
   },
 
@@ -147,32 +163,85 @@ export default {
     updateVisibleItems () {
       const l = this.items.length
       const scroll = this.getScroll()
+      let containerHeight, offsetTop
       if (scroll) {
-        let startIndex = Math.floor((Math.floor(scroll.top / this.itemHeight) - this.buffer) / this.poolSize) * this.poolSize
-        let endIndex = Math.floor((Math.ceil(scroll.bottom / this.itemHeight) + this.buffer) / this.poolSize) * this.poolSize
+        let startIndex = -1
+        let endIndex = -1
+
+        // Variable height mode
+        if (this.itemHeight === null) {
+          const heights = this.heights
+          let h
+          let a = 0
+          let b = l
+          let i = ~~(l / 2)
+          let oldI
+
+          // Searching for startIndex
+          do {
+            oldI = i
+            h = heights[i]
+            if (h < scroll.top) {
+              a = i
+            } else if (i < l && heights[i + 1] > scroll.top) {
+              b = i
+            }
+            i = ~~((a + b) / 2)
+          } while (i !== oldI)
+          startIndex = i
+
+          // For containers style
+          offsetTop = i > 0 ? heights[i - 1] : 0
+          containerHeight = heights[l - 1]
+
+          // Searching for endIndex
+          for (endIndex = i; endIndex < l && heights[endIndex] < scroll.bottom; endIndex++);
+          if (endIndex === -1) {
+            endIndex = this.items.length - 1
+          } else {
+            endIndex++
+          }
+        } else {
+          // Fixed height mode
+          startIndex = Math.floor((Math.floor(scroll.top / this.itemHeight) - this.buffer) / this.poolSize) * this.poolSize
+          endIndex = Math.floor((Math.ceil(scroll.bottom / this.itemHeight) + this.buffer) / this.poolSize) * this.poolSize
+          containerHeight = l * this.itemHeight
+          offsetTop = startIndex * this.itemHeight
+        }
+
         if (startIndex < 0) {
           startIndex = 0
         }
         if (endIndex > l) {
           endIndex = l
         }
-        if (startIndex !== this._startIndex || endIndex !== this.endIndex) {
+
+        if (startIndex !== this._startIndex || endIndex !== this._endIndex) {
           this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
           this._startIndex = startIndex
           this._endIndex = endIndex
           this.visibleItems = this.items.slice(startIndex, endIndex)
           this.itemContainerStyle = {
-            height: l * this.itemHeight + 'px',
+            height: containerHeight + 'px',
           }
           this.itemsStyle = {
-            marginTop: startIndex * this.itemHeight + 'px',
+            marginTop: offsetTop + 'px',
           }
         }
       }
     },
 
     scrollToItem (index) {
-      this.$el.scrollTop = index * this.itemHeight
+      let scrollTop
+      if (this.itemHeight === null) {
+        scrollTop = 0
+        for (let i = 0; i < index; i++) {
+          scrollTop += this.items[i][this.heightField]
+        }
+      } else {
+        scrollTop = index * this.itemHeight
+      }
+      this.$el.scrollTop = scrollTop
     },
 
     handleVisibilityChange (isVisible, entry) {
