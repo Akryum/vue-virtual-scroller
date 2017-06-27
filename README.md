@@ -114,7 +114,7 @@ The virtual scroller has three main props:
 - `itemHeight` is the display height of the items in pixels used to calculate the scroll height and position. If it set to null (default value), it will use [variable height mode](#variable-height-mode).
 - `renderers` is a map of component definitions objects or names for each item type ([more details](#renderers)). If you don't define `renderers`, the scroller will use *scoped slots* ([see below](#scoped-slots)).
 
-You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). All items should have the same height to prevent display glitches.
+You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). Unless you are using [variable height mode](#variable-height-mode), all items should have the same height to prevent display glitches.
 
 > The browsers have a height limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
 
