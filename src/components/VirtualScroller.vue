@@ -234,10 +234,7 @@ export default {
     scrollToItem (index) {
       let scrollTop
       if (this.itemHeight === null) {
-        scrollTop = 0
-        for (let i = 0; i < index; i++) {
-          scrollTop += this.items[i][this.heightField]
-        }
+        scrollTop = index > 0 ? this.heights[index - 1] : 0
       } else {
         scrollTop = index * this.itemHeight
       }
