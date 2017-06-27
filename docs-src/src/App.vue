@@ -4,6 +4,9 @@
       <span>
         <input v-model="countInput" type="number" min="0" max="500000" /> items
       </span>
+      <label>
+        <input v-model="enableLetters" type="checkbox" /> variable height
+      </label>
       <span>
         <input v-model="buffer" type="number" min="1" max="500000" /> buffer
       </span>
@@ -21,7 +24,7 @@
     <div class="content" v-if="showScroller">
       <div class="wrapper">
         <!-- Scoped slots -->
-        <virtual-scroller v-if="scopedSlots" class="scroller" :items="items" main-tag="section" content-tag="table" :buffer="buffer" :pool-size="poolSize">
+        <virtual-scroller v-if="scopedSlots" class="scroller" :item-height="itemHeight" :items="items" main-tag="section" content-tag="table" :buffer="buffer" :pool-size="poolSize">
           <template scope="props">
             <!-- <letter v-if="props.item.type === 'letter'" :item="props.item"></letter>-->
             <tr v-if="props.item.type === 'letter'" class="letter" :key="props.itemKey">
@@ -37,7 +40,7 @@
         </virtual-scroller>
 
         <!-- Renderers -->
-        <virtual-scroller v-else class="scroller" :items="items" :renderers="renderers" type-field="type" key-field="index" main-tag="section" content-tag="table"></virtual-scroller>
+        <virtual-scroller v-else class="scroller" :item-height="itemHeight" :items="items" :renderers="renderers" type-field="type" key-field="index" main-tag="section" content-tag="table"></virtual-scroller>
       </div>
     </div>
   </div>
@@ -70,10 +73,14 @@ export default {
     scopedSlots: false,
     buffer: 0,
     poolSize: 1,
+    enableLetters: true,
   }),
 
   watch: {
     count () {
+      this.generateItems()
+    },
+    enableLetters () {
       this.generateItems()
     },
   },
@@ -92,13 +99,17 @@ export default {
         this.count = val
       },
     },
+
+    itemHeight () {
+      return this.enableLetters ? null : 42
+    },
   },
 
   methods: {
     generateItems () {
       console.log('Generating ' + this.count + ' items...')
       let time = Date.now()
-      const items = Object.freeze(getData(this.count))
+      const items = Object.freeze(getData(this.count, this.enableLetters))
       this._time = Date.now()
       this.generateTime = this._time - time
       console.log('Generated ' + items.length + ' in ' + this.generateTime + 'ms')
@@ -151,7 +162,7 @@ body {
   margin-bottom: 12px;
 }
 
-.counter > span:not(:last-child) {
+.counter > *:not(:last-child) {
   margin-right: 24px;
 }
 

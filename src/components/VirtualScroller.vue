@@ -163,13 +163,15 @@ export default {
     updateVisibleItems () {
       const l = this.items.length
       const scroll = this.getScroll()
+      const items = this.items
+      const itemHeight = this.itemHeight
       let containerHeight, offsetTop
       if (scroll) {
         let startIndex = -1
         let endIndex = -1
 
         // Variable height mode
-        if (this.itemHeight === null) {
+        if (itemHeight === null) {
           const heights = this.heights
           let h
           let a = 0
@@ -197,16 +199,16 @@ export default {
           // Searching for endIndex
           for (endIndex = i; endIndex < l && heights[endIndex] < scroll.bottom; endIndex++);
           if (endIndex === -1) {
-            endIndex = this.items.length - 1
+            endIndex = items.length - 1
           } else {
             endIndex++
           }
         } else {
           // Fixed height mode
-          startIndex = Math.floor((Math.floor(scroll.top / this.itemHeight) - this.buffer) / this.poolSize) * this.poolSize
-          endIndex = Math.floor((Math.ceil(scroll.bottom / this.itemHeight) + this.buffer) / this.poolSize) * this.poolSize
-          containerHeight = l * this.itemHeight
-          offsetTop = startIndex * this.itemHeight
+          const buffer = this.buffer
+          const poolSize = this.poolSize
+          startIndex = ~~((~~(scroll.top / itemHeight) - buffer) / poolSize) * poolSize
+          endIndex = ~~((Math.ceil(scroll.bottom / itemHeight) + buffer) / poolSize) * poolSize
         }
 
         if (startIndex < 0) {
@@ -216,11 +218,17 @@ export default {
           endIndex = l
         }
 
+        if (itemHeight !== null) {
+          // Fixed height mode
+          offsetTop = startIndex * itemHeight
+          containerHeight = l * itemHeight
+        }
+
         if (startIndex !== this._startIndex || endIndex !== this._endIndex) {
           this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
           this._startIndex = startIndex
           this._endIndex = endIndex
-          this.visibleItems = this.items.slice(startIndex, endIndex)
+          this.visibleItems = items.slice(startIndex, endIndex)
           this.itemContainerStyle = {
             height: containerHeight + 'px',
           }

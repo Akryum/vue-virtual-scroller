@@ -1,6 +1,6 @@
 import faker from 'faker'
 
-export function getData (count) {
+export function getData (count, letters) {
   const raw = {}
 
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('')
@@ -22,12 +22,14 @@ export function getData (count) {
 
   for (const l of alphabet) {
     raw[l] = raw[l].sort((a, b) => a.name < b.name ? -1 : 1)
-    data.push({
-      index: index++,
-      type: 'letter',
-      value: l,
-      height: 200,
-    })
+    if (letters) {
+      data.push({
+        index: index++,
+        type: 'letter',
+        value: l,
+        height: 200,
+      })
+    }
     for (var item of raw[l]) {
       data.push({
         index: index++,
