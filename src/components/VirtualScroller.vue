@@ -1,5 +1,5 @@
 <template>
-  <component :is="mainTag" class="virtual-scroller" :class="cssClass" @scroll="updateVisibleItems" v-observe-visibility="handleVisibilityChange">
+  <component :is="mainTag" class="virtual-scroller" :class="cssClass" @scroll="() => updateVisibleItems()" v-observe-visibility="handleVisibilityChange">
     <slot name="before-container"></slot>
     <component :is="containerTag" class="item-container" :class="containerClass" :style="itemContainerStyle">
       <slot name="before-content"></slot>
@@ -14,7 +14,7 @@
       <slot name="after-content"></slot>
     </component>
     <slot name="after-container"></slot>
-    <resize-observer @notify="updateVisibleItems" />
+    <resize-observer @notify="() => updateVisibleItems()" />
   </component>
 </template>
 
