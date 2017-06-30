@@ -5,7 +5,7 @@
       <slot name="before-content"></slot>
       <component :is="contentTag" class="items" :class="contentClass" :style="itemsStyle">
         <template v-if="renderers">
-          <component class="item" v-for="(item, index) in visibleItems" :key="keysEnabled && item ? item[keyField] : _startIndex + index" :is="item && renderers[item[typeField]] || renderers.default" :item="item" :item-index="_startIndex + index"></component>
+          <component class="item" v-for="(item, index) in visibleItems" :key="keysEnabled && item[keyField]" :is="item && renderers[item[typeField]] || renderers.default" :item="item" :item-index="_startIndex + index"></component>
         </template>
         <template v-else>
           <slot class="item" v-for="(item, index) in visibleItems" :item="item" :item-index="_startIndex + index" :item-key="keysEnabled && item[keyField]"></slot>
@@ -50,7 +50,7 @@ export default {
       default: 'type',
     },
     keyField: {
-      type: String,
+      type: [String, Boolean],
       default: 'id',
     },
     heightField: {
@@ -89,12 +89,14 @@ export default {
     },
   },
 
-  data: () => ({
-    visibleItems: [],
-    itemContainerStyle: null,
-    itemsStyle: null,
-    keysEnabled: true,
-  }),
+  data(){
+    return {
+      visibleItems: [],
+      itemContainerStyle: null,
+      itemsStyle: null,
+      keysEnabled: !!this.keyField,
+    }
+  },
 
   computed: {
     cssClass () {
@@ -230,7 +232,10 @@ export default {
         }
 
         if (force || startIndex !== this._startIndex || endIndex !== this._endIndex || l !== this._length) {
-          this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
+          if(startIndex !== this._startIndex || endIndex !== this._endIndex){
+            this.$emit('update', {startIndex, endIndex})
+          }
+          this.keysEnabled = this.keyField !== false && !(startIndex > this._endIndex || endIndex < this._startIndex)
           this._startIndex = startIndex
           this._endIndex = endIndex
           this._length = l
@@ -241,7 +246,6 @@ export default {
           this.itemsStyle = {
             marginTop: offsetTop + 'px',
           }
-          this.$emit('update', {startIndex:this._startIndex, endIndex:this._endIndex})
         }
       }
     },
@@ -273,11 +277,11 @@ export default {
     },
 
     addWindowScroll () {
-      window.addEventListener('scroll', this.updateVisibleItems, true)
+      window.addEventListener('scroll', () => this.updateVisibleItems(), true)
     },
 
     removeWindowScroll () {
-      window.removeEventListener('scroll', this.updateVisibleItems, true)
+      window.removeEventListener('scroll', () => this.updateVisibleItems(), true)
     },
   },
 
