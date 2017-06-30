@@ -272,11 +272,11 @@ export default {
     },
 
     addWindowScroll () {
-      window.addEventListener('scroll', this.updateVisibleItems, true)
+      window.addEventListener('scroll', e => this.updateVisibleItems(), true)
     },
 
     removeWindowScroll () {
-      window.removeEventListener('scroll', this.updateVisibleItems, true)
+      window.removeEventListener('scroll', e => this.updateVisibleItems(), true)
     },
   },
 
