@@ -41,6 +41,10 @@ export default {
     renderers: {
       default: null,
     },
+    perRow: {
+      type: [Number],
+      default: 1,
+    },
     itemHeight: {
       type: [Number, String],
       default: null,
@@ -170,6 +174,7 @@ export default {
       const scroll = this.getScroll()
       const items = this.items
       const itemHeight = this.itemHeight
+      const perRow = this.perRow
       let containerHeight, offsetTop
       if (scroll) {
         let startIndex = -1
@@ -212,8 +217,10 @@ export default {
           // Fixed height mode
           const buffer = this.buffer
           const poolSize = this.poolSize
-          startIndex = ~~((~~(scroll.top / itemHeight) - buffer) / poolSize) * poolSize
-          endIndex = ~~((Math.ceil(scroll.bottom / itemHeight) + buffer) / poolSize) * poolSize
+          startIndex = ~~((~~(scroll.top / itemHeight * perRow) - buffer) / poolSize) * poolSize
+          const remainer = startIndex % perRow
+          startIndex -= remainer
+          endIndex = ~~((Math.ceil(scroll.bottom / itemHeight * perRow) + buffer) / poolSize) * poolSize
         }
 
         if (startIndex < 0) {
@@ -225,8 +232,8 @@ export default {
 
         if (itemHeight !== null) {
           // Fixed height mode
-          offsetTop = startIndex * itemHeight
-          containerHeight = l * itemHeight
+          offsetTop = startIndex * itemHeight / perRow
+          containerHeight = l * itemHeight / perRow
         }
 
         if (force || startIndex !== this._startIndex || endIndex !== this._endIndex || l !== this._length) {
@@ -250,7 +257,7 @@ export default {
       if (this.itemHeight === null) {
         scrollTop = index > 0 ? this.heights[index - 1] : 0
       } else {
-        scrollTop = index * this.itemHeight
+        scrollTop = index * this.itemHeight / this.perRow
       }
       this.$el.scrollTop = scrollTop
     },
