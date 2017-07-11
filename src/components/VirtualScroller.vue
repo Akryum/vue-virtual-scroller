@@ -233,7 +233,7 @@ export default {
         if (itemHeight !== null) {
           // Fixed height mode
           offsetTop = startIndex * itemHeight / perRow
-          containerHeight = l * itemHeight / perRow
+          containerHeight = l * (~~(itemHeight / perRow) + itemHeight)
         }
 
         if (force || startIndex !== this._startIndex || endIndex !== this._endIndex || l !== this._length) {
