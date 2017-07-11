@@ -233,8 +233,7 @@ export default {
         if (itemHeight !== null) {
           // Fixed height mode
           offsetTop = startIndex * itemHeight / perRow
-          const rem = l % perRow
-          containerHeight = (l + rem) * (itemHeight / perRow)
+          containerHeight = (~~(l / perRow) + 1) * itemHeight
         }
 
         if (force || startIndex !== this._startIndex || endIndex !== this._endIndex || l !== this._length) {
