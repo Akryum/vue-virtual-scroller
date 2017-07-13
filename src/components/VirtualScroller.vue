@@ -5,10 +5,10 @@
       <slot name="before-content"></slot>
       <component :is="contentTag" class="items" :class="contentClass" :style="itemsStyle">
         <template v-if="renderers">
-          <component class="item" v-for="(item, index) in visibleItems" :key="keysEnabled && item[keyField]" :is="renderers[item[typeField]]" :item="item" :item-index="_startIndex + index"></component>
+          <component class="item" v-for="(item, index) in visibleItems" :key="keysEnabled && item[keyField] || ''" :is="renderers[item[typeField]]" :item="item" :item-index="_startIndex + index"></component>
         </template>
         <template v-else>
-          <slot class="item" v-for="(item, index) in visibleItems" :item="item" :item-index="_startIndex + index" :item-key="keysEnabled && item[keyField]"></slot>
+          <slot class="item" v-for="(item, index) in visibleItems" :item="item" :item-index="_startIndex + index" :item-key="keysEnabled && item[keyField] || ''"></slot>
         </template>
       </component>
       <slot name="after-content"></slot>
