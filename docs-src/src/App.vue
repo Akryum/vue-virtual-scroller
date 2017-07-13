@@ -160,6 +160,7 @@ body {
   flex: auto 0 0;
   text-align: center;
   margin-bottom: 12px;
+  line-height: 32px;
 }
 
 .counter > *:not(:last-child) {
