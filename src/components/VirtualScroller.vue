@@ -180,7 +180,7 @@ export default {
           const heights = this.heights
           let h
           let a = 0
-          let b = l
+          let b = l - 1
           let i = ~~(l / 2)
           let oldI
 
