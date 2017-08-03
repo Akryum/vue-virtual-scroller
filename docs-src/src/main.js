@@ -1,5 +1,7 @@
 import Vue from 'vue'
-import VirtualScroller from '../../'
+import VirtualScroller, { VirtualScroller as Comp } from '../../'
+
+console.log(VirtualScroller, Comp)
 
 Vue.use(VirtualScroller)
 
