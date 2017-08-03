@@ -263,6 +263,14 @@ There are 4 slots you can use to inject things inside the scroller (it may be us
 </main>
 ```
 
+## Server-Side Rendering
+
+The `prerender` props can be set as the number of items to render on the server inside the virtual scroller:
+
+```html
+<virtual-scroller :items="items" item-height="42" page-mode prerender="10">
+```
+
 # Example
 
 ```html
