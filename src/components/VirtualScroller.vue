@@ -1,5 +1,5 @@
 <template>
-  <component :is="mainTag" class="virtual-scroller" :class="cssClass" @scroll="() => updateVisibleItems()" v-observe-visibility="handleVisibilityChange">
+  <component :is="mainTag" class="virtual-scroller" :class="cssClass" @scroll="handleScroll" v-observe-visibility="handleVisibilityChange">
     <slot name="before-container"></slot>
     <component :is="containerTag" class="item-container" :class="containerClass" :style="itemContainerStyle">
       <slot name="before-content"></slot>
@@ -14,7 +14,7 @@
       <slot name="after-content"></slot>
     </component>
     <slot name="after-container"></slot>
-    <resize-observer @notify="() => updateVisibleItems()" />
+    <resize-observer @notify="handleResize" />
   </component>
 </template>
 
@@ -86,6 +86,10 @@ export default {
     poolSize: {
       type: [Number, String],
       default: 1,
+    },
+    prerender: {
+      type: [Number, String],
+      default: 0,
     },
   },
 
@@ -255,14 +259,6 @@ export default {
       this.$el.scrollTop = scrollTop
     },
 
-    handleVisibilityChange (isVisible, entry) {
-      if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {
-        this.$nextTick(() => {
-          this.updateVisibleItems()
-        })
-      }
-    },
-
     applyPageMode () {
       if (this.pageMode) {
         this.addWindowScroll()
@@ -272,17 +268,53 @@ export default {
     },
 
     addWindowScroll () {
-      window.addEventListener('scroll', () => this.updateVisibleItems(), true)
+      window.addEventListener('scroll', this.handleScroll, true)
+      window.addEventListener('resize', this.handleResize)
     },
 
     removeWindowScroll () {
-      window.removeEventListener('scroll', () => this.updateVisibleItems(), true)
+      window.removeEventListener('scroll', this.handleScroll, true)
+      window.removeEventListener('resize', this.handleResize)
     },
+
+    handleScroll () {
+      this.updateVisibleItems()
+    },
+
+    handleResize () {
+      this._ready && this.updateVisibleItems()
+    },
+
+    handleVisibilityChange (isVisible, entry) {
+      if (this._ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {
+        this.$nextTick(() => {
+          this.updateVisibleItems()
+        })
+      }
+    },
+  },
+
+  created () {
+    this._ready = false
+    this._startIndex = 0
+    const prerender = parseInt(this.prerender)
+    if (prerender > 0) {
+      this.visibleItems = this.items.slice(0, prerender)
+      this._length = this.visibleItems.length
+      this._endIndex = this._length - 1
+    } else {
+      this._endIndex = 0
+      this._length = 0
+    }
   },
 
   mounted () {
     this.applyPageMode()
-    this.updateVisibleItems()
+    this.$nextTick(() => {
+      this.updateVisibleItems()
+      this._ready = true
+      this.$nextTick(this.updateVisibleItems)
+    })
   },
 
   beforeDestroy () {
