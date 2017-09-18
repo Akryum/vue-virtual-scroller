@@ -1,7 +1,7 @@
 {
   "name": "vue-virtual-scroller",
   "description": "Smooth scrolling for any amount of data",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "author": {
     "name": "Guillaume Chau",
     "email": "guillaume.b.chau@gmail.com"
@@ -13,7 +13,6 @@
   ],
   "license": "MIT",
   "main": "dist/vue-virtual-scroller.js",
-  "module": "index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack --config config/webpack.dev.config.js --progress --watch",
     "build": "cross-env NODE_ENV=production webpack --config config/webpack.prod.config.js --progress --hide-modules",
