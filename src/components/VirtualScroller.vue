@@ -8,7 +8,7 @@
           <component class="item" v-for="(item, index) in visibleItems" :key="keysEnabled && item[keyField] || ''" :is="renderers[item[typeField]]" :item="item" :item-index="_startIndex + index"></component>
         </template>
         <template v-else>
-          <slot class="item" v-for="(item, index) in visibleItems" :item="item" :item-index="_startIndex + index" :item-key="keysEnabled && item[keyField] || ''"></slot>
+          <slot class="item" v-for="(item, index) in visibleItems" :item="item" :item-index="_startIndex + index" :key="keysEnabled && item[keyField] || ''"></slot>
         </template>
       </component>
       <slot name="after-content"></slot>
