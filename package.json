@@ -1,7 +1,7 @@
 {
   "name": "vue-virtual-scroller",
   "description": "Smooth scrolling for any amount of data",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "author": {
     "name": "Guillaume Chau",
     "email": "guillaume.b.chau@gmail.com"
@@ -31,18 +31,17 @@
   },
   "devDependencies": {
     "babel-core": "^6.23.1",
-    "babel-eslint": "^7.1.1",
+    "babel-eslint": "^8.0.1",
     "babel-loader": "^7.1.1",
-    "babel-preset-es2015": "^6.22.0",
     "babel-preset-stage-0": "^6.22.0",
     "cross-env": "^5.0.1",
     "css-loader": "^0.28.4",
-    "eslint": "^3.17.1",
-    "eslint-config-standard": "^6.2.1",
+    "eslint": "^4.9.0",
+    "eslint-config-standard": "^10.2.1",
     "eslint-loader": "^1.6.3",
-    "eslint-plugin-html": "^1.6.0",
+    "eslint-plugin-html": "^3.2.2",
     "eslint-plugin-promise": "^3.5.0",
-    "eslint-plugin-standard": "^2.1.1",
+    "eslint-plugin-standard": "^3.0.1",
     "extract-text-webpack-plugin": "^3.0.0",
     "vue-loader": "^13.0.1",
     "vue-template-compiler": "^2.4.1",
@@ -50,7 +49,10 @@
     "webpack-merge": "^4.1.0"
   },
   "dependencies": {
-    "vue-observe-visibility": "^0.1.3",
-    "vue-resize": "^0.1.4"
+    "babel-preset-env": "^1.6.1",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "vue-observe-visibility": "^0.3.1",
+    "vue-resize": "git+https://github.com/jrgleason/vue-resize.git"
   }
 }
