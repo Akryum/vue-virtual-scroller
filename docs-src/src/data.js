@@ -12,6 +12,7 @@ export function getData (count, letters) {
   for (var i = 0; i < count; i++) {
     const item = {
       name: faker.name.findName(),
+      avatar: faker.internet.avatar(),
     }
     const letter = item.name.charAt(0).toLowerCase()
     raw[letter].push(item)
@@ -35,7 +36,7 @@ export function getData (count, letters) {
         index: index++,
         type: 'person',
         value: item,
-        height: 42,
+        height: 50,
       })
     }
   }

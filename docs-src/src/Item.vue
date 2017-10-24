@@ -4,7 +4,14 @@
       {{item.index}}
     </td>
     <td>
-      {{item.value.name}}
+      <div class="info">
+        <img
+          class="avatar"
+          :src="item.value.avatar"
+          :key="item.value.avatar"
+        />
+        <span>{{item.value.name}}</span>
+      </div>
     </td>
   </tr>
 </template>
