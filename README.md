@@ -51,16 +51,16 @@ import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 <link rel="stylesheet" href="vue-virtual-scroller/dist/vue-virtual-scroller.css"/>
 
 <script src="vue.js"></script>
-<script src="vue-virtual-scroller/dist/vue-virtual-scroller.js"></script>
+<script src="vue-virtual-scroller/dist/vue-virtual-scroller.min.js"></script>
 ```
 
-Install all the components:
+If Vue is detected, the plugin will be installed automatically. If not, install the component:
 
 ```javascript
 Vue.use(VueVirtualScroller)
 ```
 
-Use specific components:
+Or register it with a custom name:
 
 ```javascript
 Vue.component('virtual-scroller', VueVirtualScroller.VirtualScroller)
@@ -71,10 +71,12 @@ Vue.component('virtual-scroller', VueVirtualScroller.VirtualScroller)
 The virtual scroller has three main props:
 
 - `items` is the list of items you want to display in the scroller. There can be several types of item.
-- `itemHeight` is the display height of the items in pixels used to calculate the scroll height and position. If it set to null (default value), it will use [variable height mode](#variable-height-mode).
+- `itemHeight` is the display height of the items in pixels used to calculate the scroll height and position. If it set to `null` (default value), it will use [variable height mode](#variable-height-mode).
 - `renderers` is a map of component definitions objects or names for each item type ([more details](#renderers)). If you don't define `renderers`, the scroller will use *scoped slots* ([see below](#scoped-slots)).
 
-You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). Unless you are using [variable height mode](#variable-height-mode), all items should have the same height to prevent display glitches.
+⚠️ You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). Unless you are using [variable height mode](#variable-height-mode), all items should have the same height to prevent display glitches.
+
+**It is strongly recommended to use functional components inside virtual-scroller since those are cheap to create and dispose.**
 
 > The browsers have a height limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
 
@@ -99,7 +101,7 @@ Here is an example:
 
 ```html
 <virtual-scroller class="scroller" :items="items" item-height="42" content-tag="table">
-  <template scope="props">
+  <template slot-scope="props">
     <tr v-if="props.item.type === 'letter'" class="letter" :key="props.itemKey">
       <td>
         {{props.item.value}} Scoped
@@ -163,6 +165,26 @@ const items = [
     height: 32,
   },
 ]
+```
+
+## Buffer
+
+You can set the `buffer` prop (in pixels) on the virtual-scroller to extend the viewport considered when determining the visible items. For example, if you set a buffer of 1000 pixels, the virtual-scroller will start rendering items that are 1000 pixels below the bottom of the scroller visible area, and will keep the items that are 1000 pixels above the top of the visible area.
+
+The default value is `200`.
+
+```html
+<virtual-scroller buffer="200" />
+```
+
+## Pool Size
+
+The `poolSize` prop (in pixels) is the size in pixels of the viewport pool. The computed 'visible' area can be computed step by step using this pool. This allows creating multiple row at once each in a while. For example, if you set a pool size of 2000 pixels, the rows will be grouped in pools of 2000 pixels height. When the user scrolls too far, the new batch of 2000px height is created, and so on. That way, the DOM isn't updated for each row, but in batches instead.
+
+The default value is `2000`.
+
+```html
+<virtual-scroller pool-size="2000" />
 ```
 
 ## Customizing the tags
