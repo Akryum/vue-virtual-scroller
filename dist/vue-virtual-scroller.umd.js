@@ -298,8 +298,12 @@ var VirtualScroller = { render: function render() {
   },
 
   watch: {
-    heights: function heights() {
-      this.updateVisibleItems(true);
+    items: {
+      handler: function handler() {
+        this.updateVisibleItems(true);
+      },
+
+      deep: true
     },
     pageMode: function pageMode() {
       this.applyPageMode();
@@ -512,7 +516,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "0.10.0",
+  version: "0.10.1",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
