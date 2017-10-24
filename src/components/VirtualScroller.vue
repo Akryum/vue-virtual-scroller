@@ -81,15 +81,19 @@ export default {
     },
     buffer: {
       type: [Number, String],
-      default: 2,
+      default: 200,
     },
     poolSize: {
       type: [Number, String],
-      default: 1,
+      default: 2000,
     },
     prerender: {
       type: [Number, String],
       default: 0,
+    },
+    emitUpdate: {
+      type: Boolean,
+      default: false,
     },
   },
 
@@ -123,16 +127,14 @@ export default {
   },
 
   watch: {
-    items: {
-      handler () {
-        this.updateVisibleItems(true)
-      },
-      deep: true,
+    heights () {
+      this.updateVisibleItems(true)
     },
     pageMode () {
       this.applyPageMode()
       this.updateVisibleItems(true)
     },
+    itemHeight: 'setDirty',
   },
 
   methods: {
@@ -179,6 +181,18 @@ export default {
         let startIndex = -1
         let endIndex = -1
 
+        const buffer = parseInt(this.buffer)
+        const poolSize = parseInt(this.poolSize)
+        const scrollTop = ~~((scroll.top - buffer) / poolSize) * poolSize
+        const scrollBottom = ~~(Math.ceil((scroll.bottom + buffer) / poolSize)) * poolSize
+
+        if (!force && scrollTop === this._oldScrollTop && scrollBottom === this._oldScrollBottom) {
+          return
+        } else {
+          this._oldScrollTop = scrollTop
+          this._oldScrollBottom = scrollBottom
+        }
+
         // Variable height mode
         if (itemHeight === null) {
           const heights = this.heights
@@ -192,13 +206,14 @@ export default {
           do {
             oldI = i
             h = heights[i]
-            if (h < scroll.top) {
+            if (h < scrollTop) {
               a = i
-            } else if (i < l && heights[i + 1] > scroll.top) {
+            } else if (i < l && heights[i + 1] > scrollTop) {
               b = i
             }
             i = ~~((a + b) / 2)
           } while (i !== oldI)
+          i < 0 && (i = 0)
           startIndex = i
 
           // For containers style
@@ -206,46 +221,40 @@ export default {
           containerHeight = heights[l - 1]
 
           // Searching for endIndex
-          for (endIndex = i; endIndex < l && heights[endIndex] < scroll.bottom; endIndex++);
+          for (endIndex = i; endIndex < l && heights[endIndex] < scrollBottom; endIndex++);
           if (endIndex === -1) {
             endIndex = items.length - 1
           } else {
             endIndex++
+            // Bounds
+            endIndex > l && (endIndex = l)
           }
         } else {
           // Fixed height mode
-          const buffer = this.buffer
-          const poolSize = this.poolSize
-          startIndex = ~~((~~(scroll.top / itemHeight) - buffer) / poolSize) * poolSize
-          endIndex = ~~((Math.ceil(scroll.bottom / itemHeight) + buffer) / poolSize) * poolSize
-        }
+          startIndex = ~~(scrollTop / itemHeight)
+          endIndex = Math.ceil(scrollBottom / itemHeight)
 
-        if (startIndex < 0) {
-          startIndex = 0
-        }
-        if (endIndex > l) {
-          endIndex = l
-        }
+          // Bounds
+          startIndex < 0 && (startIndex = 0)
+          endIndex > l && (endIndex = l)
 
-        if (itemHeight !== null) {
-          // Fixed height mode
           offsetTop = startIndex * itemHeight
           containerHeight = l * itemHeight
         }
 
-        if (force || startIndex !== this._startIndex || endIndex !== this._endIndex || l !== this._length) {
-          this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
-          this._startIndex = startIndex
-          this._endIndex = endIndex
-          this._length = l
-          this.visibleItems = items.slice(startIndex, endIndex)
-          this.itemContainerStyle = {
-            height: containerHeight + 'px',
-          }
-          this.itemsStyle = {
-            marginTop: offsetTop + 'px',
-          }
+        this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
+        this._startIndex = startIndex
+        this._endIndex = endIndex
+        this._length = l
+        this.visibleItems = items.slice(startIndex, endIndex)
+        this.itemContainerStyle = {
+          height: containerHeight + 'px',
         }
+        this.itemsStyle = {
+          marginTop: offsetTop + 'px',
+        }
+
+        this.emitUpdate && this.$emit('update', startIndex, endIndex)
       }
     },
 
@@ -257,6 +266,11 @@ export default {
         scrollTop = index * this.itemHeight
       }
       this.$el.scrollTop = scrollTop
+    },
+
+    setDirty () {
+      this._oldScrollTop = null
+      this._oldScrollBottom = null
     },
 
     applyPageMode () {
@@ -297,6 +311,8 @@ export default {
   created () {
     this._ready = false
     this._startIndex = 0
+    this._oldScrollTop = null
+    this._oldScrollBottom = null
     const prerender = parseInt(this.prerender)
     if (prerender > 0) {
       this.visibleItems = this.items.slice(0, prerender)
@@ -311,7 +327,7 @@ export default {
   mounted () {
     this.applyPageMode()
     this.$nextTick(() => {
-      this.updateVisibleItems()
+      this.updateVisibleItems(true)
       this._ready = true
       this.$nextTick(this.updateVisibleItems)
     })
