@@ -187,6 +187,16 @@ The default value is `2000`.
 <virtual-scroller pool-size="2000" />
 ```
 
+## Update event
+
+Set the `emitUpdate` boolean prop to `true` so that the virtual-scroller will emit an `update` event when the rendered items list is updated. The arguments are `startIndex` and `endIndex`.
+
+The default value is `false`.
+
+```html
+<virtual-scroller emit-update @update="(startIndex, endIndex) => ..." />
+```
+
 ## Customizing the tags
 
 These are optional props you can use to change the DOM tags used in the virtual scroller:
