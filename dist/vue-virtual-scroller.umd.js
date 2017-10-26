@@ -264,6 +264,10 @@ var VirtualScroller = { render: function render() {
     emitUpdate: {
       type: Boolean,
       default: false
+    },
+    delayPreviousItems: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -427,18 +431,23 @@ var VirtualScroller = { render: function render() {
         if (this._startIndex !== startIndex || this._endIndex !== endIndex || this._offsetTop !== offsetTop || this._height !== containerHeight || this._length !== l) {
           this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex);
 
-          // Add next items
-          this.visibleItems = items.slice(this._startIndex, endIndex);
           this.itemContainerStyle = {
             height: containerHeight + 'px'
           };
           this.itemsStyle = {
             marginTop: offsetTop + 'px'
+          };
 
+          if (this.delayPreviousItems) {
+            // Add next items
+            this.visibleItems = items.slice(this._startIndex, endIndex);
             // Remove previous items
-          };this.$nextTick(function () {
-            _this.visibleItems = items.slice(startIndex, endIndex);
-          });
+            this.$nextTick(function () {
+              _this.visibleItems = items.slice(startIndex, endIndex);
+            });
+          } else {
+            this.visibleItems = items.slice(startIndex, endIndex);
+          }
 
           this.emitUpdate && this.$emit('update', startIndex, endIndex);
 
@@ -489,6 +498,7 @@ var VirtualScroller = { render: function render() {
       var _this2 = this;
 
       if (this._ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {
+        this.$emit('visible');
         this.$nextTick(function () {
           _this2.updateVisibleItems();
         });
@@ -536,7 +546,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "0.10.2",
+  version: "0.10.4",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
