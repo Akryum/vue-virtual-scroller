@@ -286,19 +286,37 @@ export default {
           containerHeight = l * itemHeight
         }
 
-        this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
-        this._startIndex = startIndex
-        this._endIndex = endIndex
-        this._length = l
-        this.visibleItems = items.slice(startIndex, endIndex)
-        this.itemContainerStyle = {
-          height: containerHeight + 'px',
-        }
-        this.itemsStyle = {
-          marginTop: offsetTop + 'px',
-        }
+        if (
+          this._startIndex !== startIndex ||
+          this._endIndex !== endIndex ||
+          this._offsetTop !== offsetTop ||
+          this._height !== containerHeight ||
+          this._length !== l
+        ) {
+          this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
 
-        this.emitUpdate && this.$emit('update', startIndex, endIndex)
+          // Add next items
+          this.visibleItems = items.slice(this._startIndex, endIndex)
+          this.itemContainerStyle = {
+            height: containerHeight + 'px',
+          }
+          this.itemsStyle = {
+            marginTop: offsetTop + 'px',
+          }
+
+          // Remove previous items
+          this.$nextTick(() => {
+            this.visibleItems = items.slice(startIndex, endIndex)
+          })
+
+          this.emitUpdate && this.$emit('update', startIndex, endIndex)
+
+          this._startIndex = startIndex
+          this._endIndex = endIndex
+          this._length = l
+          this._offsetTop = offsetTop
+          this._height = containerHeight
+        }
       }
     },
 
