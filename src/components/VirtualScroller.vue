@@ -134,6 +134,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    delayPreviousItems: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   data () {
@@ -296,8 +300,6 @@ export default {
         ) {
           this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex)
 
-          // Add next items
-          this.visibleItems = items.slice(this._startIndex, endIndex)
           this.itemContainerStyle = {
             height: containerHeight + 'px',
           }
@@ -305,10 +307,16 @@ export default {
             marginTop: offsetTop + 'px',
           }
 
-          // Remove previous items
-          this.$nextTick(() => {
+          if (this.delayPreviousItems) {
+            // Add next items
+            this.visibleItems = items.slice(this._startIndex, endIndex)
+            // Remove previous items
+            this.$nextTick(() => {
+              this.visibleItems = items.slice(startIndex, endIndex)
+            })
+          } else {
             this.visibleItems = items.slice(startIndex, endIndex)
-          })
+          }
 
           this.emitUpdate && this.$emit('update', startIndex, endIndex)
 
