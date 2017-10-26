@@ -230,7 +230,8 @@ export default {
         const scrollTop = ~~(scroll.top / poolSize) * poolSize - buffer
         const scrollBottom = Math.ceil(scroll.bottom / poolSize) * poolSize + buffer
 
-        if (!force && scrollTop === this._oldScrollTop && scrollBottom === this._oldScrollBottom) {
+        if (!force && ((scrollTop === this._oldScrollTop && scrollBottom === this._oldScrollBottom) || this._skip)) {
+          this._skip = false
           return
         } else {
           this._oldScrollTop = scrollTop
@@ -375,14 +376,18 @@ export default {
     this._startIndex = 0
     this._oldScrollTop = null
     this._oldScrollBottom = null
+    this._offsetTop = 0
+    this._height = 0
     const prerender = parseInt(this.prerender)
     if (prerender > 0) {
       this.visibleItems = this.items.slice(0, prerender)
       this._length = this.visibleItems.length
       this._endIndex = this._length - 1
+      this._skip = true
     } else {
       this._endIndex = 0
       this._length = 0
+      this._skip = false
     }
   },
 
