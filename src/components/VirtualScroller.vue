@@ -136,12 +136,14 @@ export default {
     },
   },
 
-  data: () => ({
-    visibleItems: [],
-    itemContainerStyle: null,
-    itemsStyle: null,
-    keysEnabled: true,
-  }),
+  data () {
+    return {
+      visibleItems: [],
+      itemContainerStyle: null,
+      itemsStyle: null,
+      keysEnabled: true,
+    }
+  },
 
   computed: {
     cssClass () {
