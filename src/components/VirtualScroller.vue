@@ -227,8 +227,8 @@ export default {
 
         const buffer = parseInt(this.buffer)
         const poolSize = parseInt(this.poolSize)
-        const scrollTop = ~~((scroll.top - buffer) / poolSize) * poolSize
-        const scrollBottom = ~~(Math.ceil((scroll.bottom + buffer) / poolSize)) * poolSize
+        const scrollTop = ~~(scroll.top / poolSize) * poolSize - buffer
+        const scrollBottom = Math.ceil(scroll.bottom / poolSize) * poolSize + buffer
 
         if (!force && scrollTop === this._oldScrollTop && scrollBottom === this._oldScrollBottom) {
           return
