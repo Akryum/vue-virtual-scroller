@@ -1,7 +1,7 @@
 {
   "name": "vue-virtual-scroller",
   "description": "Smooth scrolling for any amount of data",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "author": {
     "name": "Guillaume Chau",
     "email": "guillaume.b.chau@gmail.com"

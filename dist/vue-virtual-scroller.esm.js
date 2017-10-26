@@ -181,11 +181,11 @@ if (GlobalVue$2) {
 }
 
 var VirtualScroller = { render: function render() {
-    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c(_vm.mainTag, { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], tag: "component", staticClass: "virtual-scroller", class: _vm.cssClass, on: { "scroll": _vm.handleScroll } }, [_vm._t("before-container"), _vm._v(" "), _c(_vm.containerTag, { tag: "component", staticClass: "item-container", class: _vm.containerClass, style: _vm.itemContainerStyle }, [_vm._t("before-content"), _vm._v(" "), _c(_vm.contentTag, { tag: "component", staticClass: "items", class: _vm.contentClass, style: _vm.itemsStyle }, [_vm.renderers ? _vm._l(_vm.visibleItems, function (item, index) {
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c(_vm.mainTag, { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], tag: "component", staticClass: "virtual-scroller", class: _vm.cssClass, on: { "scroll": _vm.handleScroll } }, [_vm._t("before-container", [_c(_vm.containerTag, { ref: "itemContainer", tag: "component", staticClass: "item-container", class: _vm.containerClass, style: _vm.itemContainerStyle }, [_vm._t("before-content", [_c(_vm.contentTag, { ref: "items", tag: "component", staticClass: "items", class: _vm.contentClass, style: _vm.itemsStyle }, [_vm.renderers ? _vm._l(_vm.visibleItems, function (item, index) {
       return _c(_vm.renderers[item[_vm.typeField]], { key: _vm.keysEnabled && item[_vm.keyField] || '', tag: "component", staticClass: "item", attrs: { "item": item, "item-index": _vm._startIndex + index } });
     }) : [_vm._l(_vm.visibleItems, function (item, index) {
       return _vm._t("default", null, { item: item, itemIndex: _vm._startIndex + index, itemKey: _vm.keysEnabled && item[_vm.keyField] || '' });
-    })]], 2), _vm._v(" "), _vm._t("after-content")], 2), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('resize-observer', { on: { "notify": _vm.handleResize } })], 2);
+    })]], 2), _vm._v(" "), _vm._t("after-content")])], 2), _vm._v(" "), _vm._t("after-container", [_c('resize-observer', { on: { "notify": _vm.handleResize } })])])], 2);
   }, staticRenderFns: [], _scopeId: 'data-v-727d6836',
   name: 'virtual-scroller',
 
@@ -270,6 +270,7 @@ var VirtualScroller = { render: function render() {
     };
   },
 
+
   computed: {
     cssClass: function cssClass() {
       return {
@@ -341,6 +342,8 @@ var VirtualScroller = { render: function render() {
       }
     },
     updateVisibleItems: function updateVisibleItems() {
+      var _this = this;
+
       var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
       var l = this.items.length;
@@ -355,10 +358,11 @@ var VirtualScroller = { render: function render() {
 
         var buffer = parseInt(this.buffer);
         var poolSize = parseInt(this.poolSize);
-        var scrollTop = ~~((scroll.top - buffer) / poolSize) * poolSize;
-        var scrollBottom = ~~Math.ceil((scroll.bottom + buffer) / poolSize) * poolSize;
+        var scrollTop = ~~(scroll.top / poolSize) * poolSize - buffer;
+        var scrollBottom = Math.ceil(scroll.bottom / poolSize) * poolSize + buffer;
 
-        if (!force && scrollTop === this._oldScrollTop && scrollBottom === this._oldScrollBottom) {
+        if (!force && (scrollTop === this._oldScrollTop && scrollBottom === this._oldScrollBottom || this._skip)) {
+          this._skip = false;
           return;
         } else {
           this._oldScrollTop = scrollTop;
@@ -414,19 +418,30 @@ var VirtualScroller = { render: function render() {
           containerHeight = l * itemHeight;
         }
 
-        this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex);
-        this._startIndex = startIndex;
-        this._endIndex = endIndex;
-        this._length = l;
-        this.visibleItems = items.slice(startIndex, endIndex);
-        this.itemContainerStyle = {
-          height: containerHeight + 'px'
-        };
-        this.itemsStyle = {
-          marginTop: offsetTop + 'px'
-        };
+        if (this._startIndex !== startIndex || this._endIndex !== endIndex || this._offsetTop !== offsetTop || this._height !== containerHeight || this._length !== l) {
+          this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex);
 
-        this.emitUpdate && this.$emit('update', startIndex, endIndex);
+          // Add next items
+          this.visibleItems = items.slice(this._startIndex, endIndex);
+          this.itemContainerStyle = {
+            height: containerHeight + 'px'
+          };
+          this.itemsStyle = {
+            marginTop: offsetTop + 'px'
+
+            // Remove previous items
+          };this.$nextTick(function () {
+            _this.visibleItems = items.slice(startIndex, endIndex);
+          });
+
+          this.emitUpdate && this.$emit('update', startIndex, endIndex);
+
+          this._startIndex = startIndex;
+          this._endIndex = endIndex;
+          this._length = l;
+          this._offsetTop = offsetTop;
+          this._height = containerHeight;
+        }
       }
     },
     scrollToItem: function scrollToItem(index) {
@@ -461,14 +476,15 @@ var VirtualScroller = { render: function render() {
       this.updateVisibleItems();
     },
     handleResize: function handleResize() {
+      this.$emit('resize');
       this._ready && this.updateVisibleItems();
     },
     handleVisibilityChange: function handleVisibilityChange(isVisible, entry) {
-      var _this = this;
+      var _this2 = this;
 
       if (this._ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {
         this.$nextTick(function () {
-          _this.updateVisibleItems();
+          _this2.updateVisibleItems();
         });
       }
     }
@@ -479,24 +495,28 @@ var VirtualScroller = { render: function render() {
     this._startIndex = 0;
     this._oldScrollTop = null;
     this._oldScrollBottom = null;
+    this._offsetTop = 0;
+    this._height = 0;
     var prerender = parseInt(this.prerender);
     if (prerender > 0) {
       this.visibleItems = this.items.slice(0, prerender);
       this._length = this.visibleItems.length;
       this._endIndex = this._length - 1;
+      this._skip = true;
     } else {
       this._endIndex = 0;
       this._length = 0;
+      this._skip = false;
     }
   },
   mounted: function mounted() {
-    var _this2 = this;
+    var _this3 = this;
 
     this.applyPageMode();
     this.$nextTick(function () {
-      _this2.updateVisibleItems(true);
-      _this2._ready = true;
-      _this2.$nextTick(_this2.updateVisibleItems);
+      _this3.updateVisibleItems(true);
+      _this3._ready = true;
+      _this3.$nextTick(_this3.updateVisibleItems);
     });
   },
   beforeDestroy: function beforeDestroy() {
@@ -510,7 +530,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "0.10.1",
+  version: "0.10.2",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
