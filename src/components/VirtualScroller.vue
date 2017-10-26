@@ -1,19 +1,58 @@
 <template>
-  <component :is="mainTag" class="virtual-scroller" :class="cssClass" @scroll="handleScroll" v-observe-visibility="handleVisibilityChange">
-    <slot name="before-container"></slot>
-    <component :is="containerTag" class="item-container" :class="containerClass" :style="itemContainerStyle">
-      <slot name="before-content"></slot>
-      <component :is="contentTag" class="items" :class="contentClass" :style="itemsStyle">
+  <component
+    :is="mainTag"
+    class="virtual-scroller"
+    :class="cssClass"
+    @scroll="handleScroll"
+    v-observe-visibility="handleVisibilityChange"
+  >
+    <slot
+      name="before-container"
+    />
+    <component
+      ref="itemContainer"
+      :is="containerTag"
+      class="item-container"
+      :class="containerClass"
+      :style="itemContainerStyle"
+    >
+      <slot
+        name="before-content"
+      />
+      <component
+        ref="items"
+        :is="contentTag"
+        class="items"
+        :class="contentClass"
+        :style="itemsStyle"
+      >
         <template v-if="renderers">
-          <component class="item" v-for="(item, index) in visibleItems" :key="keysEnabled && item[keyField] || ''" :is="renderers[item[typeField]]" :item="item" :item-index="_startIndex + index"></component>
+          <component
+            class="item"
+            v-for="(item, index) in visibleItems"
+            :key="keysEnabled && item[keyField] || ''"
+            :is="renderers[item[typeField]]"
+            :item="item"
+            :item-index="_startIndex + index"
+          />
         </template>
         <template v-else>
-          <slot class="item" v-for="(item, index) in visibleItems" :item="item" :item-index="_startIndex + index" :item-key="keysEnabled && item[keyField] || ''"></slot>
+          <slot
+            class="item"
+            v-for="(item, index) in visibleItems"
+            :item="item"
+            :item-index="_startIndex + index"
+            :item-key="keysEnabled && item[keyField] || ''"
+          />
         </template>
       </component>
-      <slot name="after-content"></slot>
+      <slot
+        name="after-content"
+      />
     </component>
-    <slot name="after-container"></slot>
+    <slot
+      name="after-container"
+    />
     <resize-observer @notify="handleResize" />
   </component>
 </template>
