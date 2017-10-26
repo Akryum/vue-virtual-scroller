@@ -359,6 +359,7 @@ export default {
     },
 
     handleResize () {
+      this.$emit('resize')
       this._ready && this.updateVisibleItems()
     },
 
