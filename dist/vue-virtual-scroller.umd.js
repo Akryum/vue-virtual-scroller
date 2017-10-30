@@ -428,7 +428,7 @@ var VirtualScroller = { render: function render() {
           containerHeight = l * itemHeight;
         }
 
-        if (this._startIndex !== startIndex || this._endIndex !== endIndex || this._offsetTop !== offsetTop || this._height !== containerHeight || this._length !== l) {
+        if (force || this._startIndex !== startIndex || this._endIndex !== endIndex || this._offsetTop !== offsetTop || this._height !== containerHeight || this._length !== l) {
           this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex);
 
           this.itemContainerStyle = {
@@ -546,7 +546,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "0.10.4",
+  version: "0.10.5",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
