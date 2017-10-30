@@ -292,6 +292,7 @@ export default {
         }
 
         if (
+          force ||
           this._startIndex !== startIndex ||
           this._endIndex !== endIndex ||
           this._offsetTop !== offsetTop ||
