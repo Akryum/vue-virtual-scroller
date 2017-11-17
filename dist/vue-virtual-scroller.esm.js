@@ -186,7 +186,7 @@ var VirtualScroller = { render: function render() {
     }) : [_vm._l(_vm.visibleItems, function (item, index) {
       return _vm._t("default", null, { item: item, itemIndex: _vm._startIndex + index, itemKey: _vm.keysEnabled && item[_vm.keyField] || '' });
     })]], 2), _vm._v(" "), _vm._t("after-content")])], 2), _vm._v(" "), _vm._t("after-container", [_c('resize-observer', { on: { "notify": _vm.handleResize } })])])], 2);
-  }, staticRenderFns: [], _scopeId: 'data-v-727d6836',
+  }, staticRenderFns: [], _scopeId: 'data-v-2b1f2e05',
   name: 'virtual-scroller',
 
   components: {
@@ -312,6 +312,42 @@ var VirtualScroller = { render: function render() {
     itemHeight: 'setDirty'
   },
 
+  created: function created() {
+    this.$_ready = false;
+    this.$_startIndex = 0;
+    this.$_oldScrollTop = null;
+    this.$_oldScrollBottom = null;
+    this.$_offsetTop = 0;
+    this.$_height = 0;
+    this.$_scrollDirty = false;
+    this.$_updateDirty = false;
+
+    var prerender = parseInt(this.prerender);
+    if (prerender > 0) {
+      this.visibleItems = this.items.slice(0, prerender);
+      this.$_length = this.visibleItems.length;
+      this.$_endIndex = this.$_length - 1;
+      this.$_skip = true;
+    } else {
+      this.$_endIndex = 0;
+      this.$_length = 0;
+      this.$_skip = false;
+    }
+  },
+  mounted: function mounted() {
+    var _this = this;
+
+    this.applyPageMode();
+    this.$nextTick(function () {
+      _this.updateVisibleItems(true);
+      _this.$_ready = true;
+    });
+  },
+  beforeDestroy: function beforeDestroy() {
+    this.removeWindowScroll();
+  },
+
+
   methods: {
     getScroll: function getScroll() {
       var el = this.$el;
@@ -346,111 +382,118 @@ var VirtualScroller = { render: function render() {
       }
     },
     updateVisibleItems: function updateVisibleItems() {
-      var _this = this;
+      var _this2 = this;
 
       var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
-      var l = this.items.length;
-      var scroll = this.getScroll();
-      var items = this.items;
-      var itemHeight = this.itemHeight;
-      var containerHeight = void 0,
-          offsetTop = void 0;
-      if (scroll) {
-        var startIndex = -1;
-        var endIndex = -1;
+      if (!this.$_updateDirty) {
+        this.$_updateDirty = true;
+        this.$nextTick(function () {
+          _this2.$_updateDirty = false;
 
-        var buffer = parseInt(this.buffer);
-        var poolSize = parseInt(this.poolSize);
-        var scrollTop = ~~(scroll.top / poolSize) * poolSize - buffer;
-        var scrollBottom = Math.ceil(scroll.bottom / poolSize) * poolSize + buffer;
+          var l = _this2.items.length;
+          var scroll = _this2.getScroll();
+          var items = _this2.items;
+          var itemHeight = _this2.itemHeight;
+          var containerHeight = void 0,
+              offsetTop = void 0;
+          if (scroll) {
+            var startIndex = -1;
+            var endIndex = -1;
 
-        if (!force && (scrollTop === this._oldScrollTop && scrollBottom === this._oldScrollBottom || this._skip)) {
-          this._skip = false;
-          return;
-        } else {
-          this._oldScrollTop = scrollTop;
-          this._oldScrollBottom = scrollBottom;
-        }
+            var buffer = parseInt(_this2.buffer);
+            var poolSize = parseInt(_this2.poolSize);
+            var scrollTop = ~~(scroll.top / poolSize) * poolSize - buffer;
+            var scrollBottom = Math.ceil(scroll.bottom / poolSize) * poolSize + buffer;
 
-        // Variable height mode
-        if (itemHeight === null) {
-          var heights = this.heights;
-          var h = void 0;
-          var a = 0;
-          var b = l - 1;
-          var i = ~~(l / 2);
-          var oldI = void 0;
-
-          // Searching for startIndex
-          do {
-            oldI = i;
-            h = heights[i];
-            if (h < scrollTop) {
-              a = i;
-            } else if (i < l && heights[i + 1] > scrollTop) {
-              b = i;
+            if (!force && (scrollTop === _this2.$_oldScrollTop && scrollBottom === _this2.$_oldScrollBottom || _this2.$_skip)) {
+              _this2.$_skip = false;
+              return;
+            } else {
+              _this2.$_oldScrollTop = scrollTop;
+              _this2.$_oldScrollBottom = scrollBottom;
             }
-            i = ~~((a + b) / 2);
-          } while (i !== oldI);
-          i < 0 && (i = 0);
-          startIndex = i;
 
-          // For containers style
-          offsetTop = i > 0 ? heights[i - 1] : 0;
-          containerHeight = heights[l - 1];
+            // Variable height mode
+            if (itemHeight === null) {
+              var heights = _this2.heights;
+              var h = void 0;
+              var a = 0;
+              var b = l - 1;
+              var i = ~~(l / 2);
+              var oldI = void 0;
 
-          // Searching for endIndex
-          for (endIndex = i; endIndex < l && heights[endIndex] < scrollBottom; endIndex++) {}
-          if (endIndex === -1) {
-            endIndex = items.length - 1;
-          } else {
-            endIndex++;
-            // Bounds
-            endIndex > l && (endIndex = l);
+              // Searching for startIndex
+              do {
+                oldI = i;
+                h = heights[i];
+                if (h < scrollTop) {
+                  a = i;
+                } else if (i < l && heights[i + 1] > scrollTop) {
+                  b = i;
+                }
+                i = ~~((a + b) / 2);
+              } while (i !== oldI);
+              i < 0 && (i = 0);
+              startIndex = i;
+
+              // For containers style
+              offsetTop = i > 0 ? heights[i - 1] : 0;
+              containerHeight = heights[l - 1];
+
+              // Searching for endIndex
+              for (endIndex = i; endIndex < l && heights[endIndex] < scrollBottom; endIndex++) {}
+              if (endIndex === -1) {
+                endIndex = items.length - 1;
+              } else {
+                endIndex++;
+                // Bounds
+                endIndex > l && (endIndex = l);
+              }
+            } else {
+              // Fixed height mode
+              startIndex = ~~(scrollTop / itemHeight);
+              endIndex = Math.ceil(scrollBottom / itemHeight);
+
+              // Bounds
+              startIndex < 0 && (startIndex = 0);
+              endIndex > l && (endIndex = l);
+
+              offsetTop = startIndex * itemHeight;
+              containerHeight = l * itemHeight;
+            }
+
+            if (force || _this2.$_startIndex !== startIndex || _this2.$_endIndex !== endIndex || _this2.$_offsetTop !== offsetTop || _this2.$_height !== containerHeight || _this2.$_length !== l) {
+              _this2.keysEnabled = !(startIndex > _this2.$_endIndex || endIndex < _this2.$_startIndex);
+
+              _this2.itemContainerStyle = {
+                height: containerHeight + 'px'
+              };
+              _this2.itemsStyle = {
+                marginTop: offsetTop + 'px'
+              };
+
+              if (_this2.delayPreviousItems) {
+                // Add next items
+                _this2.visibleItems = items.slice(_this2.$_startIndex, endIndex);
+                // Remove previous items
+                _this2.$nextTick(function () {
+                  _this2.visibleItems = items.slice(startIndex, endIndex);
+                });
+              } else {
+                _this2.visibleItems = items.slice(startIndex, endIndex);
+              }
+
+              _this2.emitUpdate && _this2.$emit('update', startIndex, endIndex);
+
+              _this2.$_startIndex = startIndex;
+              _this2.$_endIndex = endIndex;
+              _this2.$_length = l;
+              _this2.$_offsetTop = offsetTop;
+              _this2.$_height = containerHeight;
+            }
           }
-        } else {
-          // Fixed height mode
-          startIndex = ~~(scrollTop / itemHeight);
-          endIndex = Math.ceil(scrollBottom / itemHeight);
-
-          // Bounds
-          startIndex < 0 && (startIndex = 0);
-          endIndex > l && (endIndex = l);
-
-          offsetTop = startIndex * itemHeight;
-          containerHeight = l * itemHeight;
-        }
-
-        if (force || this._startIndex !== startIndex || this._endIndex !== endIndex || this._offsetTop !== offsetTop || this._height !== containerHeight || this._length !== l) {
-          this.keysEnabled = !(startIndex > this._endIndex || endIndex < this._startIndex);
-
-          this.itemContainerStyle = {
-            height: containerHeight + 'px'
-          };
-          this.itemsStyle = {
-            marginTop: offsetTop + 'px'
-          };
-
-          if (this.delayPreviousItems) {
-            // Add next items
-            this.visibleItems = items.slice(this._startIndex, endIndex);
-            // Remove previous items
-            this.$nextTick(function () {
-              _this.visibleItems = items.slice(startIndex, endIndex);
-            });
-          } else {
-            this.visibleItems = items.slice(startIndex, endIndex);
-          }
-
-          this.emitUpdate && this.$emit('update', startIndex, endIndex);
-
-          this._startIndex = startIndex;
-          this._endIndex = endIndex;
-          this._length = l;
-          this._offsetTop = offsetTop;
-          this._height = containerHeight;
-        }
+        });
       }
     },
     scrollToItem: function scrollToItem(index) {
@@ -463,8 +506,8 @@ var VirtualScroller = { render: function render() {
       this.$el.scrollTop = scrollTop;
     },
     setDirty: function setDirty() {
-      this._oldScrollTop = null;
-      this._oldScrollBottom = null;
+      this.$_oldScrollTop = null;
+      this.$_oldScrollBottom = null;
     },
     applyPageMode: function applyPageMode() {
       if (this.pageMode) {
@@ -482,55 +525,30 @@ var VirtualScroller = { render: function render() {
       window.removeEventListener('resize', this.handleResize);
     },
     handleScroll: function handleScroll() {
-      this.updateVisibleItems();
+      var _this3 = this;
+
+      if (!this.$_scrollDirty) {
+        this.$_scrollDirty = true;
+        requestAnimationFrame(function () {
+          _this3.$_scrollDirty = false;
+          _this3.updateVisibleItems();
+        });
+      }
     },
     handleResize: function handleResize() {
       this.$emit('resize');
-      this._ready && this.updateVisibleItems();
+      this.$_ready && this.updateVisibleItems();
     },
     handleVisibilityChange: function handleVisibilityChange(isVisible, entry) {
-      var _this2 = this;
+      var _this4 = this;
 
-      if (this._ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {
+      if (this.$_ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {
         this.$emit('visible');
         this.$nextTick(function () {
-          _this2.updateVisibleItems();
+          _this4.updateVisibleItems();
         });
       }
     }
-  },
-
-  created: function created() {
-    this._ready = false;
-    this._startIndex = 0;
-    this._oldScrollTop = null;
-    this._oldScrollBottom = null;
-    this._offsetTop = 0;
-    this._height = 0;
-    var prerender = parseInt(this.prerender);
-    if (prerender > 0) {
-      this.visibleItems = this.items.slice(0, prerender);
-      this._length = this.visibleItems.length;
-      this._endIndex = this._length - 1;
-      this._skip = true;
-    } else {
-      this._endIndex = 0;
-      this._length = 0;
-      this._skip = false;
-    }
-  },
-  mounted: function mounted() {
-    var _this3 = this;
-
-    this.applyPageMode();
-    this.$nextTick(function () {
-      _this3.updateVisibleItems(true);
-      _this3._ready = true;
-      _this3.$nextTick(_this3.updateVisibleItems);
-    });
-  },
-  beforeDestroy: function beforeDestroy() {
-    this.removeWindowScroll();
   }
 };
 
@@ -540,7 +558,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "0.10.5",
+  version: "0.10.6",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
