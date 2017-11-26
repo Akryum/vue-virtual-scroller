@@ -196,6 +196,7 @@ export default {
     this.$_height = 0
     this.$_scrollDirty = false
     this.$_updateDirty = false
+    this.$_beforeContentHeight = 0
 
     const prerender = parseInt(this.prerender)
     if (prerender > 0) {
