@@ -16,9 +16,11 @@
       :class="containerClass"
       :style="itemContainerStyle"
     >
-      <slot
-        name="before-content"
-      />
+      <template>
+        <slot
+          name="before-content"
+        />
+      </template>
       <component
         ref="items"
         :is="contentTag"
@@ -209,6 +211,9 @@ export default {
   },
 
   mounted () {
+    if (this.$slots['before-content'][0]) {
+      this.$_beforeContentHeight = this.$slots['before-content'][0].elm.offsetHeight
+    }
     this.applyPageMode()
     this.$nextTick(() => {
       this.updateVisibleItems(true)
@@ -328,7 +333,7 @@ export default {
               endIndex > l && (endIndex = l)
 
               offsetTop = startIndex * itemHeight
-              containerHeight = l * itemHeight
+              containerHeight = l * itemHeight + this.$_beforeContentHeight
             }
 
             if (

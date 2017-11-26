@@ -75,6 +75,7 @@ var ResizeObserver = { render: function render() {
 		var object = document.createElement('object');
 		this._resizeObject = object;
 		object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
+		object.setAttribute('aria-hidden', 'true');
 		object.onload = this.addResizeHandlers;
 		object.type = 'text/html';
 		if (isIE) {
@@ -102,7 +103,7 @@ function install(Vue) {
 // Plugin
 var plugin$2 = {
 	// eslint-disable-next-line no-undef
-	version: "0.4.2",
+	version: "0.4.3",
 	install: install
 };
 
@@ -187,12 +188,12 @@ if (GlobalVue$2) {
 }
 
 var VirtualScroller = { render: function render() {
-    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c(_vm.mainTag, { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], tag: "component", staticClass: "virtual-scroller", class: _vm.cssClass, on: { "scroll": _vm.handleScroll } }, [_vm._t("before-container", [_c(_vm.containerTag, { ref: "itemContainer", tag: "component", staticClass: "item-container", class: _vm.containerClass, style: _vm.itemContainerStyle }, [_vm._t("before-content", [_c(_vm.contentTag, { ref: "items", tag: "component", staticClass: "items", class: _vm.contentClass, style: _vm.itemsStyle }, [_vm.renderers ? _vm._l(_vm.visibleItems, function (item, index) {
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c(_vm.mainTag, { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], tag: "component", staticClass: "virtual-scroller", class: _vm.cssClass, on: { "scroll": _vm.handleScroll } }, [_vm._t("before-container", [_c(_vm.containerTag, { ref: "itemContainer", tag: "component", staticClass: "item-container", class: _vm.containerClass, style: _vm.itemContainerStyle }, [[_vm._t("before-content")], _vm._v(" "), _c(_vm.contentTag, { ref: "items", tag: "component", staticClass: "items", class: _vm.contentClass, style: _vm.itemsStyle }, [_vm.renderers ? _vm._l(_vm.visibleItems, function (item, index) {
       return _c(_vm.renderers[item[_vm.typeField]], { key: _vm.keysEnabled && item[_vm.keyField] || '', tag: "component", staticClass: "item", attrs: { "item": item, "item-index": _vm._startIndex + index } });
     }) : [_vm._l(_vm.visibleItems, function (item, index) {
       return _vm._t("default", null, { item: item, itemIndex: _vm._startIndex + index, itemKey: _vm.keysEnabled && item[_vm.keyField] || '' });
-    })]], 2), _vm._v(" "), _vm._t("after-content")])], 2), _vm._v(" "), _vm._t("after-container", [_c('resize-observer', { on: { "notify": _vm.handleResize } })])])], 2);
-  }, staticRenderFns: [], _scopeId: 'data-v-2b1f2e05',
+    })]], 2), _vm._v(" "), _vm._t("after-content")], 2), _vm._v(" "), _vm._t("after-container", [_c('resize-observer', { on: { "notify": _vm.handleResize } })])])], 2);
+  }, staticRenderFns: [], _scopeId: 'data-v-727d6836',
   name: 'virtual-scroller',
 
   components: {
@@ -343,6 +344,9 @@ var VirtualScroller = { render: function render() {
   mounted: function mounted() {
     var _this = this;
 
+    if (this.$slots['before-content'][0]) {
+      this.$_beforeContentHeight = this.$slots['before-content'][0].elm.offsetHeight;
+    }
     this.applyPageMode();
     this.$nextTick(function () {
       _this.updateVisibleItems(true);
@@ -466,7 +470,7 @@ var VirtualScroller = { render: function render() {
               endIndex > l && (endIndex = l);
 
               offsetTop = startIndex * itemHeight;
-              containerHeight = l * itemHeight;
+              containerHeight = l * itemHeight + _this2.$_beforeContentHeight;
             }
 
             if (force || _this2.$_startIndex !== startIndex || _this2.$_endIndex !== endIndex || _this2.$_offsetTop !== offsetTop || _this2.$_height !== containerHeight || _this2.$_length !== l) {
