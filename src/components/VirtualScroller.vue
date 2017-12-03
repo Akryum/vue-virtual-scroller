@@ -308,6 +308,9 @@ export default {
               // For containers style
               offsetTop = i > 0 ? heights[i - 1] : 0
               containerHeight = heights[l - 1]
+              if (containerHeight === undefined) {
+                containerHeight = 0
+              }
 
               // Searching for endIndex
               for (endIndex = i; endIndex < l && heights[endIndex] < scrollBottom; endIndex++);
