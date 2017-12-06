@@ -212,7 +212,7 @@ export default {
   },
 
   mounted () {
-    if (this.$slots['before-content'][0]) {
+    if (this.$slots['before-content'] && this.$slots['before-content'][0]) {
       this.$_beforeContentHeight = this.$slots['before-content'][0].elm.offsetHeight
     }
     this.applyPageMode()
