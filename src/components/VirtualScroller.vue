@@ -378,6 +378,10 @@ export default {
       }
     },
 
+    scrollToPosition (position) {
+      this.$el.scrollTop = position
+    },
+
     scrollToItem (index) {
       let scrollTop
       if (this.itemHeight === null) {
