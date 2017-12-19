@@ -507,6 +507,9 @@ var VirtualScroller = { render: function render() {
         });
       }
     },
+    scrollToPosition: function scrollToPosition(position) {
+      this.$el.scrollTop = position;
+    },
     scrollToItem: function scrollToItem(index) {
       var scrollTop = void 0;
       if (this.itemHeight === null) {
