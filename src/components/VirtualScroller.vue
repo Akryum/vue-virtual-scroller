@@ -79,6 +79,10 @@ export default {
       type: Array,
       required: true,
     },
+    transition: {
+      type: String,
+      default: ''
+    },
     renderers: {
       default: null,
     },
@@ -136,10 +140,18 @@ export default {
       type: Boolean,
       default: false,
     },
+    emitScrolling: {
+      type: Boolean,
+      default: false,
+    },
     delayPreviousItems: {
       type: Boolean,
       default: false,
     },
+    keepScroll: {
+      type: Boolean,
+      default: false
+    }
   },
 
   data () {
@@ -356,16 +368,23 @@ export default {
 
               if (this.delayPreviousItems) {
                 // Add next items
+                const top = scroll.top
                 this.visibleItems = items.slice(this.$_startIndex, endIndex)
                 // Remove previous items
                 this.$nextTick(() => {
                   this.visibleItems = items.slice(startIndex, endIndex)
+                  if (this.keepScroll) {
+                    this.scrollToPosition(scroll.top + containerHeight - this.$_height)
+                  }
                 })
               } else {
                 this.visibleItems = items.slice(startIndex, endIndex)
+                if (this.keepScroll) {
+                  this.scrollToPosition(scroll.top + containerHeight - this.$_height)
+                }
               }
 
-              this.emitUpdate && this.$emit('update', startIndex, endIndex)
+              this.emitUpdate && this.$emit('update', { scroll, startIndex, endIndex})
 
               this.$_startIndex = startIndex
               this.$_endIndex = endIndex
@@ -417,6 +436,9 @@ export default {
 
     handleScroll () {
       if (!this.$_scrollDirty) {
+        if (this.emitScrolling) {
+          this.$emit('scrolling', this.getScroll())
+        }
         this.$_scrollDirty = true
         requestAnimationFrame(() => {
           this.$_scrollDirty = false
