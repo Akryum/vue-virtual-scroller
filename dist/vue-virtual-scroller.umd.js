@@ -209,6 +209,10 @@ var VirtualScroller = { render: function render() {
       type: Array,
       required: true
     },
+    transition: {
+      type: String,
+      default: ''
+    },
     renderers: {
       default: null
     },
@@ -266,7 +270,15 @@ var VirtualScroller = { render: function render() {
       type: Boolean,
       default: false
     },
+    emitScrolling: {
+      type: Boolean,
+      default: false
+    },
     delayPreviousItems: {
+      type: Boolean,
+      default: false
+    },
+    keepScroll: {
       type: Boolean,
       default: false
     }
@@ -490,12 +502,18 @@ var VirtualScroller = { render: function render() {
                 // Remove previous items
                 _this2.$nextTick(function () {
                   _this2.visibleItems = items.slice(startIndex, endIndex);
+                  if (_this2.keepScroll) {
+                    _this2.scrollToPosition(scroll.top + containerHeight - _this2.$_height);
+                  }
                 });
               } else {
                 _this2.visibleItems = items.slice(startIndex, endIndex);
+                if (_this2.keepScroll) {
+                  _this2.scrollToPosition(scroll.top + containerHeight - _this2.$_height);
+                }
               }
 
-              _this2.emitUpdate && _this2.$emit('update', startIndex, endIndex);
+              _this2.emitUpdate && _this2.$emit('update', { scroll: scroll, startIndex: startIndex, endIndex: endIndex });
 
               _this2.$_startIndex = startIndex;
               _this2.$_endIndex = endIndex;
@@ -542,6 +560,9 @@ var VirtualScroller = { render: function render() {
       var _this3 = this;
 
       if (!this.$_scrollDirty) {
+        if (this.emitScrolling) {
+          this.$emit('scrolling', this.getScroll());
+        }
         this.$_scrollDirty = true;
         requestAnimationFrame(function () {
           _this3.$_scrollDirty = false;
