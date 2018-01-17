@@ -32,7 +32,7 @@
           <component
             class="item"
             v-for="(item, index) in visibleItems"
-            :key="keysEnabled && item[keyField] || ''"
+            :key="keysEnabled && item[keyField] || Math.random()"
             :is="renderers[item[typeField]]"
             :item="item"
             :item-index="_startIndex + index"
@@ -44,7 +44,7 @@
             v-for="(item, index) in visibleItems"
             :item="item"
             :item-index="_startIndex + index"
-            :item-key="keysEnabled && item[keyField] || ''"
+            :item-key="keysEnabled && item[keyField] || Math.random()"
           />
         </template>
       </component>
