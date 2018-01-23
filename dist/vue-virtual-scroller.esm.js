@@ -69,6 +69,7 @@ var ResizeObserver = { render: function render() {
 		var object = document.createElement('object');
 		this._resizeObject = object;
 		object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
+		object.setAttribute('aria-hidden', 'true');
 		object.onload = this.addResizeHandlers;
 		object.type = 'text/html';
 		if (isIE) {
@@ -94,21 +95,21 @@ function install(Vue) {
 /* You shouldn't have to modify the code below */
 
 // Plugin
-var plugin$2 = {
+var plugin = {
 	// eslint-disable-next-line no-undef
-	version: "0.4.2",
+	version: "0.4.3",
 	install: install
 };
 
 // Auto-install
-var GlobalVue$1 = null;
+var GlobalVue = null;
 if (typeof window !== 'undefined') {
-	GlobalVue$1 = window.Vue;
+	GlobalVue = window.Vue;
 } else if (typeof global !== 'undefined') {
-	GlobalVue$1 = global.Vue;
+	GlobalVue = global.Vue;
 }
-if (GlobalVue$1) {
-	GlobalVue$1.use(plugin$2);
+if (GlobalVue) {
+	GlobalVue.use(plugin);
 }
 
 function throwValueError(value) {
@@ -163,30 +164,32 @@ function install$1(Vue) {
 /* You shouldn't have to modify the code below */
 
 // Plugin
-var plugin$4 = {
+var plugin$2 = {
 	// eslint-disable-next-line no-undef
 	version: "0.3.1",
 	install: install$1
 };
 
 // Auto-install
-var GlobalVue$2 = null;
+var GlobalVue$1 = null;
 if (typeof window !== 'undefined') {
-	GlobalVue$2 = window.Vue;
+	GlobalVue$1 = window.Vue;
 } else if (typeof global !== 'undefined') {
-	GlobalVue$2 = global.Vue;
+	GlobalVue$1 = global.Vue;
 }
-if (GlobalVue$2) {
-	GlobalVue$2.use(plugin$4);
+if (GlobalVue$1) {
+	GlobalVue$1.use(plugin$2);
 }
 
 var VirtualScroller = { render: function render() {
-    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c(_vm.mainTag, { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], tag: "component", staticClass: "virtual-scroller", class: _vm.cssClass, on: { "scroll": _vm.handleScroll } }, [_vm._t("before-container", [_c(_vm.containerTag, { ref: "itemContainer", tag: "component", staticClass: "item-container", class: _vm.containerClass, style: _vm.itemContainerStyle }, [_vm._t("before-content", [_c(_vm.contentTag, { ref: "items", tag: "component", staticClass: "items", class: _vm.contentClass, style: _vm.itemsStyle }, [_vm.renderers ? _vm._l(_vm.visibleItems, function (item, index) {
-      return _c(_vm.renderers[item[_vm.typeField]], { key: _vm.keysEnabled && item[_vm.keyField] || '', tag: "component", staticClass: "item", attrs: { "item": item, "item-index": _vm._startIndex + index } });
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c(_vm.mainTag, { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], tag: "component", staticClass: "virtual-scroller", class: _vm.cssClass, on: { "&scroll": function scroll($event) {
+          _vm.handleScroll($event);
+        } } }, [_vm._t("before-container"), _vm._v(" "), _c(_vm.containerTag, { ref: "itemContainer", tag: "component", staticClass: "item-container", class: _vm.containerClass, style: _vm.itemContainerStyle }, [_vm._t("before-content"), _vm._v(" "), _c(_vm.contentTag, { ref: "items", tag: "component", staticClass: "items", class: _vm.contentClass, style: _vm.itemsStyle }, [_vm.renderers ? _vm._l(_vm.visibleItems, function (item, index) {
+      return _c(_vm.renderers[item[_vm.typeField]], { key: _vm.keysEnabled && item[_vm.keyField] || undefined, tag: "component", staticClass: "item", attrs: { "item": item, "item-index": _vm._startIndex + index } });
     }) : [_vm._l(_vm.visibleItems, function (item, index) {
-      return _vm._t("default", null, { item: item, itemIndex: _vm._startIndex + index, itemKey: _vm.keysEnabled && item[_vm.keyField] || '' });
-    })]], 2), _vm._v(" "), _vm._t("after-content")])], 2), _vm._v(" "), _vm._t("after-container", [_c('resize-observer', { on: { "notify": _vm.handleResize } })])])], 2);
-  }, staticRenderFns: [], _scopeId: 'data-v-2b1f2e05',
+      return _vm._t("default", null, { item: item, itemIndex: _vm._startIndex + index, itemKey: _vm.keysEnabled && item[_vm.keyField] || undefined });
+    })]], 2), _vm._v(" "), _vm._t("after-content")], 2), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('resize-observer', { on: { "notify": _vm.handleResize } })], 2);
+  }, staticRenderFns: [], _scopeId: 'data-v-727d6836',
   name: 'virtual-scroller',
 
   components: {
@@ -556,9 +559,9 @@ function registerComponents(Vue, prefix) {
   Vue.component(prefix + 'virtual-scroller', VirtualScroller);
 }
 
-var plugin = {
+var plugin$4 = {
   // eslint-disable-next-line no-undef
-  version: "0.10.6",
+  version: "0.10.8",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
@@ -572,15 +575,15 @@ var plugin = {
 };
 
 // Auto-install
-var GlobalVue = null;
+var GlobalVue$2 = null;
 if (typeof window !== 'undefined') {
-  GlobalVue = window.Vue;
+  GlobalVue$2 = window.Vue;
 } else if (typeof global !== 'undefined') {
-  GlobalVue = global.Vue;
+  GlobalVue$2 = global.Vue;
 }
-if (GlobalVue) {
-  GlobalVue.use(plugin);
+if (GlobalVue$2) {
+  GlobalVue$2.use(plugin$4);
 }
 
+export default plugin$4;
 export { VirtualScroller };
-export default plugin;
