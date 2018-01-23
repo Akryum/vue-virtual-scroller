@@ -3,7 +3,7 @@
     :is="mainTag"
     class="virtual-scroller"
     :class="cssClass"
-    @scroll="handleScroll"
+    @scroll.passive="handleScroll"
     v-observe-visibility="handleVisibilityChange"
   >
     <slot
