@@ -19,17 +19,19 @@
 <script>
 export default {
   props: ['item'],
+
+  created () {
+    console.log('created')
+  },
+
+  destroyed () {
+    console.log('destroyed')
+  },
+
   methods: {
     edit () {
       this.item.value.name += '#'
     },
   },
-  /* beforeCreate () {
-    let d = 0
-    for (let i = 0; i < 9999999; i++) {
-      d++
-    }
-    return d
-  }, */
 }
 </script>

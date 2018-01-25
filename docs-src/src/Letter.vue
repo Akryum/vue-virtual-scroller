@@ -26,14 +26,3 @@ export default {
   },
 }
 </script>
-
-<style scoped>
-.letter.big {
-  font-weight: normal;
-  height: 200px;
-}
-
-.letter.big .value {
-  font-size: 120px;
-}
-</style>

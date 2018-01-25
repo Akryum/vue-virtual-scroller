@@ -21,30 +21,84 @@
       </span>
       <span>
         <button @mousedown="showScroller = !showScroller">Toggle scroller</button>
-        <label><input type="checkbox" v-model="scopedSlots" /> Scoped slots</label>
+        <label><input type="checkbox" v-model="scopedSlots" :disabled="recycleList" /> Scoped slots</label>
+        <label><input type="checkbox" v-model="recycleList" /> Use recycle list</label>
       </span>
 
     </div>
     <div class="content" v-if="showScroller">
       <div class="wrapper">
-        <!-- Scoped slots -->
-        <virtual-scroller v-if="scopedSlots" class="scroller" :item-height="itemHeight" :items="items" main-tag="section" content-tag="table" :buffer="buffer" :pool-size="poolSize" emit-update @update="onUpdate">
-          <template slot-scope="props">
-            <!-- <letter v-if="props.item.type === 'letter'" :item="props.item"></letter>-->
-            <tr v-if="props.item.type === 'letter'" class="letter" :key="props.itemKey">
-              <td class="index">
-                {{props.item.index}}
-              </td>
-              <td>
-                {{props.item.value}} Scoped
-              </td>
-            </tr>
-            <item v-if="props.item.type === 'person'" :item="props.item" :key="props.itemKey"></item>
-          </template>
-        </virtual-scroller>
+        <template v-if="!recycleList">
+          <!-- Scoped slots -->
+          <virtual-scroller
+            v-if="scopedSlots"
+            class="scroller"
+            :item-height="itemHeight"
+            :items="items"
+            main-tag="section"
+            content-tag="table"
+            :buffer="buffer"
+            :pool-size="poolSize"
+            emit-update
+            @update="onUpdate"
+          >
+            <template slot-scope="props">
+              <!-- <letter v-if="props.item.type === 'letter'" :item="props.item"></letter>-->
+              <tr v-if="props.item.type === 'letter'" class="letter" :key="props.itemKey">
+                <td class="index">
+                  {{props.item.index}}
+                </td>
+                <td>
+                  {{props.item.value}} Scoped
+                </td>
+              </tr>
+              <item v-if="props.item.type === 'person'" :item="props.item" :key="props.itemKey"></item>
+            </template>
+          </virtual-scroller>
 
-        <!-- Renderers -->
-        <virtual-scroller v-else class="scroller" :item-height="itemHeight" :items="items" :renderers="renderers" type-field="type" key-field="index" main-tag="section" content-tag="table" :buffer="buffer" :pool-size="poolSize" emit-update @update="onUpdate"/>
+          <!-- Renderers -->
+          <virtual-scroller
+            v-else
+            class="scroller"
+            :item-height="itemHeight"
+            :items="items"
+            :renderers="renderers"
+            type-field="type"
+            key-field="index"
+            main-tag="section"
+            content-tag="table"
+            :buffer="buffer"
+            :pool-size="poolSize"
+            emit-update
+            @update="onUpdate"
+          />
+        </template>
+
+        <template>
+          <recycle-list
+            ref="scroller"
+            class="scroller"
+            :items="items"
+            :item-height="itemHeight"
+            :buffer="buffer"
+          >
+            <template slot-scope="props">
+              <tr
+                v-if="props.item.type === 'letter'"
+                class="letter big"
+                @click="props.item.height = (props.item.height === 200 ? 300 : 200)"
+              >
+                <td class="index">
+                  {{props.item.index}}
+                </td>
+                <td class="value">
+                  {{props.item.value}} Scoped
+                </td>
+              </tr>
+              <item v-if="props.item.type === 'person'" :item="props.item"></item>
+            </template>
+          </recycle-list>
+        </template>
       </div>
     </div>
   </div>
@@ -79,6 +133,7 @@ export default {
     poolSize: 2000,
     enableLetters: true,
     updateCount: 0,
+    recycleList: true,
   }),
 
   watch: {
@@ -110,6 +165,20 @@ export default {
     },
   },
 
+  updated () {
+    if (this._dirty) {
+      const time = Date.now()
+      this.updateTime = time - this._time
+      console.log('update', this.updateTime, 'ms')
+      this._dirty = false
+    }
+  },
+
+  mounted () {
+    this.$nextTick(this.generateItems)
+    window.scroller = this.$refs.scroller
+  },
+
   methods: {
     generateItems () {
       console.log('Generating ' + this.count + ' items...')
@@ -125,19 +194,6 @@ export default {
     onUpdate (startIndex, endIndex) {
       this.updateCount++
     },
-  },
-
-  updated () {
-    if (this._dirty) {
-      const time = Date.now()
-      this.updateTime = time - this._time
-      console.log('update', this.updateTime, 'ms')
-      this._dirty = false
-    }
-  },
-
-  mounted () {
-    this.$nextTick(this.generateItems)
   },
 }
 </script>
@@ -196,19 +252,38 @@ body {
   height: 100%;
 }
 
-.item-container {
+.item-container,
+.item-wrapper {
   box-sizing: border-box;
 }
 
-.item {
-  height: 50px;
+.item,
+.item-view {
   cursor: pointer;
   user-select: none;
   -moz-user-select: none;
   -webkit-user-select: none;
 }
 
-.item:hover {
+.item {
+  height: 50px;
+}
+
+tr, td {
+  box-sizing: border-box;
+}
+
+.item-view tr {
+  display: flex;
+  align-items: center;
+}
+
+.item-view td {
+  display: block;
+}
+
+.item:hover,
+.item-view:hover {
   background: #4fc08d;
   color: white;
 }
@@ -221,14 +296,26 @@ body {
 
 .letter td {
   padding: 12px;
+}
+
+.item .letter td {
   height: 200px;
-  box-sizing: border-box;
+}
+
+.letter.big {
+  font-weight: normal;
+  height: 200px;
+}
+
+.letter.big .value {
+  font-size: 120px;
 }
 
 .index {
   color: rgba(0, 0, 0, 0.2);
   width: 55px;
   text-align: right;
+  flex: auto 0 0;
 }
 
 table {
@@ -249,5 +336,6 @@ table {
   width: 50px;
   height: 50px;
   margin-right: 12px;
+  background: grey;
 }
 </style>
