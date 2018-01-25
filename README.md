@@ -347,6 +347,47 @@ export default {
 </script>
 ```
 
+# Exprimental component: RecycleList
+
+It's very similar to virtual-scroller, but:
+
+- Faster and less CPU intensive
+- Different HTML structure (don't try doing a `<table>` with it, use divs!)
+- No tag customization
+- No renderers features (use scoped slots!)
+- Recycles scoped slot content (including components) in the list (no destroyed components), depending on item types (customize with `typeField` prop)
+- The components used in the list should expect `item` prop change without being re-created (use computed props or watchers to properly react to props changes!)
+- You don't need to set `key` on list content (but you should on `<img>` elements)
+
+Both fixed and dynamic height modes are supported (set `itemHeight` prop for fixed height mode).
+
+```html
+<recycle-list
+  class="scroller"
+  :items="items"
+>
+  <!-- For each item -->
+  <template slot-scope="{ item }">
+    <!-- Reactive dynamic height -->
+    <div
+      v-if="item.type === 'letter'"
+      class="letter big"
+      @click="item.height = (item.height === 200 ? 300 : 200)"
+    >
+      {{ item.value }}
+    </div>
+
+    <!-- Component -->
+    <MyPersonComponent
+      v-else-if="item.type === 'person'"
+      :data="item.value"
+    />
+  </template>
+</recycle-list>
+```
+
+Please share feeback on the new RecycleList component in the issues!
+
 ---
 
 ## License
