@@ -58,43 +58,22 @@
 </template>
 
 <script>
-import { ResizeObserver } from 'vue-resize'
-import { ObserveVisibility } from 'vue-observe-visibility'
+import Scroller from '../mixins/scroller'
 
 export default {
   name: 'virtual-scroller',
 
-  components: {
-    ResizeObserver,
-  },
-
-  directives: {
-    ObserveVisibility,
-  },
+  mixins: [
+    Scroller,
+  ],
 
   props: {
-    items: {
-      type: Array,
-      required: true,
-    },
     renderers: {
       default: null,
-    },
-    itemHeight: {
-      type: [Number, String],
-      default: null,
-    },
-    typeField: {
-      type: String,
-      default: 'type',
     },
     keyField: {
       type: String,
       default: 'id',
-    },
-    heightField: {
-      type: String,
-      default: 'height',
     },
     mainTag: {
       type: String,
@@ -114,25 +93,9 @@ export default {
     contentClass: {
       default: null,
     },
-    pageMode: {
-      type: Boolean,
-      default: false,
-    },
-    buffer: {
-      type: [Number, String],
-      default: 200,
-    },
     poolSize: {
       type: [Number, String],
       default: 2000,
-    },
-    prerender: {
-      type: [Number, String],
-      default: 0,
-    },
-    emitUpdate: {
-      type: Boolean,
-      default: false,
     },
     delayPreviousItems: {
       type: Boolean,
@@ -147,28 +110,6 @@ export default {
       itemsStyle: null,
       keysEnabled: true,
     }
-  },
-
-  computed: {
-    cssClass () {
-      return {
-        'page-mode': this.pageMode,
-      }
-    },
-
-    heights () {
-      if (this.itemHeight === null) {
-        const heights = {}
-        const items = this.items
-        const field = this.heightField
-        let accumulator = 0
-        for (let i = 0; i < items.length; i++) {
-          accumulator += items[i][field]
-          heights[i] = accumulator
-        }
-        return heights
-      }
-    },
   },
 
   watch: {
@@ -216,44 +157,7 @@ export default {
     })
   },
 
-  beforeDestroy () {
-    this.removeWindowScroll()
-  },
-
   methods: {
-    getScroll () {
-      const el = this.$el
-      let scroll
-
-      if (this.pageMode) {
-        const rect = el.getBoundingClientRect()
-        let top = -rect.top
-        let height = window.innerHeight
-        if (top < 0) {
-          height += top
-          top = 0
-        }
-        if (top + height > rect.height) {
-          height = rect.height - top
-        }
-        scroll = {
-          top: top,
-          bottom: top + height,
-        }
-      } else {
-        scroll = {
-          top: el.scrollTop,
-          bottom: el.scrollTop + el.clientHeight,
-        }
-      }
-
-      if (scroll.bottom >= 0 && scroll.top <= scroll.bottom) {
-        return scroll
-      } else {
-        return null
-      }
-    },
-
     updateVisibleItems (force = false) {
       if (!this.$_updateDirty) {
         this.$_updateDirty = true
@@ -372,37 +276,9 @@ export default {
       }
     },
 
-    scrollToItem (index) {
-      let scrollTop
-      if (this.itemHeight === null) {
-        scrollTop = index > 0 ? this.heights[index - 1] : 0
-      } else {
-        scrollTop = index * this.itemHeight
-      }
-      this.$el.scrollTop = scrollTop
-    },
-
     setDirty () {
       this.$_oldScrollTop = null
       this.$_oldScrollBottom = null
-    },
-
-    applyPageMode () {
-      if (this.pageMode) {
-        this.addWindowScroll()
-      } else {
-        this.removeWindowScroll()
-      }
-    },
-
-    addWindowScroll () {
-      window.addEventListener('scroll', this.handleScroll, true)
-      window.addEventListener('resize', this.handleResize)
-    },
-
-    removeWindowScroll () {
-      window.removeEventListener('scroll', this.handleScroll, true)
-      window.removeEventListener('resize', this.handleResize)
     },
 
     handleScroll () {

@@ -1,11 +1,14 @@
 import VirtualScroller from './components/VirtualScroller.vue'
+import RecycleList from './components/RecycleList.vue'
 
 export {
   VirtualScroller,
+  RecycleList,
 }
 
 function registerComponents (Vue, prefix) {
   Vue.component(`${prefix}virtual-scroller`, VirtualScroller)
+  Vue.component(`${prefix}recycle-list`, RecycleList)
 }
 
 const plugin = {
