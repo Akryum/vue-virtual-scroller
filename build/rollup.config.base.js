@@ -3,6 +3,7 @@ import resolve from 'rollup-plugin-node-resolve'
 import vue from 'rollup-plugin-vue'
 import cjs from 'rollup-plugin-commonjs'
 import replace from 'rollup-plugin-replace'
+import eslint from 'rollup-plugin-eslint'
 import fs from 'fs'
 import CleanCSS from 'clean-css'
 
@@ -17,6 +18,7 @@ export default {
       browser: true,
     }),
     cjs(),
+    eslint(),
     vue({
       css (style) {
         fs.writeFileSync('dist/vue-virtual-scroller.css', new CleanCSS().minify(style).styles)
