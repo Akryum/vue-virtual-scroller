@@ -7,13 +7,13 @@
   >
     <div
       class="item-wrapper"
-      :style="'height:' + totalHeight + 'px'"
+      :style="{ height: totalHeight + 'px' }"
     >
       <div
         v-for="view of pool"
         :key="view.nr.id"
         class="item-view"
-        :style="'transform:translateY(' + view.top + 'px)'"
+        :style="{ transform: 'translateY(' + view.top + 'px)' }"
       >
         <slot
           :item="view.item"
@@ -238,8 +238,8 @@ export default {
 
       if (this.$_continuous !== continuous) {
         if (continuous) {
-          this.$_views.clear()
-          this.$_unusedViews.clear()
+          views.clear()
+          unusedViews.clear()
           for (let i = 0, l = pool.length; i < l; i++) {
             view = pool[i]
             this.unuseView(view)
@@ -249,12 +249,18 @@ export default {
       } else if (continuous) {
         for (let i = 0, l = pool.length; i < l; i++) {
           view = pool[i]
-          if (view.nr.used && (
-            view.nr.index < startIndex ||
-            view.nr.index > endIndex ||
-            (checkItem && !items.includes(view.item))
-          )) {
-            this.unuseView(view)
+          if (view.nr.used) {
+            // Update view item index
+            if (checkItem) view.nr.index = items.indexOf(view.item)
+
+            // Check if index is still in visible range
+            if (
+              view.nr.index === -1 ||
+              view.nr.index < startIndex ||
+              view.nr.index > endIndex
+            ) {
+              this.unuseView(view)
+            }
           }
         }
       }
