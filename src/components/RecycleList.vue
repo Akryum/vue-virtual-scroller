@@ -204,7 +204,7 @@ export default {
           h = heights[i].accumulator
           if (h < scroll.top) {
             a = i
-          } else if (i < count && heights[i + 1].accumulator > scroll.top) {
+          } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {
             b = i
           }
           i = ~~((a + b) / 2)
