@@ -598,7 +598,7 @@ var uid = 0;
 var RecycleList = { render: function render() {
     var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('div', { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], staticClass: "recycle-list", class: _vm.cssClass, on: { "&scroll": function scroll($event) {
           _vm.handleScroll($event);
-        } } }, [_c('div', { staticClass: "item-wrapper", style: { height: _vm.totalHeight + 'px' } }, _vm._l(_vm.pool, function (view) {
+        } } }, [_c('div', { ref: "wrapper", staticClass: "item-wrapper", style: { height: _vm.totalHeight + 'px' } }, _vm._l(_vm.pool, function (view) {
       return _c('div', { key: view.nr.id, staticClass: "item-view", style: { transform: 'translateY(' + view.top + 'px)' } }, [_vm._t("default", null, { item: view.item, active: view.nr.used })], 2);
     })), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('resize-observer', { on: { "notify": _vm.handleResize } })], 2);
   }, staticRenderFns: [], _scopeId: 'data-v-2277f571',
@@ -767,50 +767,54 @@ var RecycleList = { render: function render() {
           endIndex = void 0;
       var totalHeight = void 0;
 
-      // Variable height mode
-      if (itemHeight === null) {
-        var h = void 0;
-        var a = 0;
-        var b = count - 1;
-        var i = ~~(count / 2);
-        var oldI = void 0;
-
-        // Searching for startIndex
-        do {
-          oldI = i;
-          h = heights[i].accumulator;
-          if (h < scroll.top) {
-            a = i;
-          } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {
-            b = i;
-          }
-          i = ~~((a + b) / 2);
-        } while (i !== oldI);
-        i < 0 && (i = 0);
-        startIndex = i;
-
-        // For container style
-        totalHeight = heights[count - 1].accumulator;
-
-        // Searching for endIndex
-        for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++) {}
-        if (endIndex === -1) {
-          endIndex = items.length - 1;
-        } else {
-          endIndex++;
-          // Bounds
-          endIndex > count && (endIndex = count);
-        }
+      if (!count) {
+        startIndex = endIndex = totalHeight = 0;
       } else {
-        // Fixed height mode
-        startIndex = ~~(scroll.top / itemHeight);
-        endIndex = Math.ceil(scroll.bottom / itemHeight);
+        // Variable height mode
+        if (itemHeight === null) {
+          var h = void 0;
+          var a = 0;
+          var b = count - 1;
+          var i = ~~(count / 2);
+          var oldI = void 0;
 
-        // Bounds
-        startIndex < 0 && (startIndex = 0);
-        endIndex > count && (endIndex = count);
+          // Searching for startIndex
+          do {
+            oldI = i;
+            h = heights[i].accumulator;
+            if (h < scroll.top) {
+              a = i;
+            } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {
+              b = i;
+            }
+            i = ~~((a + b) / 2);
+          } while (i !== oldI);
+          i < 0 && (i = 0);
+          startIndex = i;
 
-        totalHeight = count * itemHeight;
+          // For container style
+          totalHeight = heights[count - 1].accumulator;
+
+          // Searching for endIndex
+          for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++) {}
+          if (endIndex === -1) {
+            endIndex = items.length - 1;
+          } else {
+            endIndex++;
+            // Bounds
+            endIndex > count && (endIndex = count);
+          }
+        } else {
+          // Fixed height mode
+          startIndex = ~~(scroll.top / itemHeight);
+          endIndex = Math.ceil(scroll.bottom / itemHeight);
+
+          // Bounds
+          startIndex < 0 && (startIndex = 0);
+          endIndex > count && (endIndex = count);
+
+          totalHeight = count * itemHeight;
+        }
       }
 
       this.totalHeight = totalHeight;
@@ -927,7 +931,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin$4 = {
   // eslint-disable-next-line no-undef
-  version: "0.11.3",
+  version: "0.11.4",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
