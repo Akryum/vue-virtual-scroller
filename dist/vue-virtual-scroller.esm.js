@@ -494,7 +494,7 @@ var VirtualScroller = { render: function render() {
                 h = heights[i].accumulator;
                 if (h < scrollTop) {
                   a = i;
-                } else if (i < l && heights[i + 1].accumulator > scrollTop) {
+                } else if (i < l - 1 && heights[i + 1].accumulator > scrollTop) {
                   b = i;
                 }
                 i = ~~((a + b) / 2);
@@ -781,7 +781,7 @@ var RecycleList = { render: function render() {
           h = heights[i].accumulator;
           if (h < scroll.top) {
             a = i;
-          } else if (i < count && heights[i + 1].accumulator > scroll.top) {
+          } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {
             b = i;
           }
           i = ~~((a + b) / 2);
@@ -927,7 +927,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin$4 = {
   // eslint-disable-next-line no-undef
-  version: "0.11.2",
+  version: "0.11.3",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
