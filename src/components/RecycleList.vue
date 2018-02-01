@@ -17,9 +17,14 @@
       >
         <slot
           :item="view.item"
+          :active="view.nr.used"
         />
       </div>
     </div>
+
+    <slot
+      name="after-container"
+    />
 
     <resize-observer @notify="handleResize" />
   </div>
@@ -27,7 +32,6 @@
 
 <script>
 import Scroller from '../mixins/scroller'
-import { clearTimeout, setTimeout } from 'timers';
 
 let uid = 0
 
@@ -66,10 +70,13 @@ export default {
         checkItem: false,
       })
     },
-    heights () {
-      this.updateVisibleItems({
-        checkItem: false,
-      })
+    heights: {
+      handler () {
+        this.updateVisibleItems({
+          checkItem: false,
+        })
+      },
+      deep: true,
     },
   },
 
@@ -124,7 +131,7 @@ export default {
       unusedPool.push(view)
       if (!fake) {
         view.nr.used = false
-        view.top = this.totalHeight
+        view.top = -9999
         this.$_views.delete(view.item)
       }
     },
@@ -194,10 +201,10 @@ export default {
         // Searching for startIndex
         do {
           oldI = i
-          h = heights[i]
+          h = heights[i].accumulator
           if (h < scroll.top) {
             a = i
-          } else if (i < count && heights[i + 1] > scroll.top) {
+          } else if (i < count && heights[i + 1].accumulator > scroll.top) {
             b = i
           }
           i = ~~((a + b) / 2)
@@ -206,10 +213,10 @@ export default {
         startIndex = i
 
         // For container style
-        totalHeight = heights[count - 1]
+        totalHeight = heights[count - 1].accumulator
 
         // Searching for endIndex
-        for (endIndex = i; endIndex < count && heights[endIndex] < scroll.bottom; endIndex++);
+        for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++);
         if (endIndex === -1) {
           endIndex = items.length - 1
         } else {
@@ -275,6 +282,11 @@ export default {
         item = items[i]
         view = views.get(item)
 
+        if (!itemHeight && !heights[i].height) {
+          if (view) this.unuseView(view)
+          continue
+        }
+
         // No view assigned to item
         if (!view) {
           type = item[typeField]
@@ -315,7 +327,7 @@ export default {
 
         // Update position
         if (itemHeight === null) {
-          view.top = heights[i - 1]
+          view.top = heights[i - 1].accumulator
         } else {
           view.top = i * itemHeight
         }

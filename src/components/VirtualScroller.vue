@@ -198,10 +198,10 @@ export default {
               // Searching for startIndex
               do {
                 oldI = i
-                h = heights[i]
+                h = heights[i].accumulator
                 if (h < scrollTop) {
                   a = i
-                } else if (i < l && heights[i + 1] > scrollTop) {
+                } else if (i < l && heights[i + 1].accumulator > scrollTop) {
                   b = i
                 }
                 i = ~~((a + b) / 2)
@@ -210,11 +210,11 @@ export default {
               startIndex = i
 
               // For containers style
-              offsetTop = i > 0 ? heights[i - 1] : 0
-              containerHeight = heights[l - 1]
+              offsetTop = i > 0 ? heights[i - 1].accumulator : 0
+              containerHeight = heights[l - 1].accumulator
 
               // Searching for endIndex
-              for (endIndex = i; endIndex < l && heights[endIndex] < scrollBottom; endIndex++);
+              for (endIndex = i; endIndex < l && heights[endIndex].accumulator < scrollBottom; endIndex++);
               if (endIndex === -1) {
                 endIndex = items.length - 1
               } else {

@@ -21,6 +21,10 @@ export default {
       type: [Number, String],
       default: null,
     },
+    minItemHeight: {
+      type: [Number, String],
+      default: null,
+    },
     heightField: {
       type: String,
       default: 'height',
@@ -57,14 +61,17 @@ export default {
     heights () {
       if (this.itemHeight === null) {
         const heights = {
-          '-1': 0,
+          '-1': { accumulator: 0 },
         }
         const items = this.items
         const field = this.heightField
+        const minItemHeight = this.minItemHeight
         let accumulator = 0
+        let current
         for (let i = 0, l = items.length; i < l; i++) {
-          accumulator += items[i][field]
-          heights[i] = accumulator
+          current = items[i][field] || minItemHeight
+          accumulator += current
+          heights[i] = { accumulator, height: current }
         }
         return heights
       }
@@ -132,7 +139,7 @@ export default {
     scrollToItem (index) {
       let scrollTop
       if (this.itemHeight === null) {
-        scrollTop = index > 0 ? this.heights[index - 1] : 0
+        scrollTop = index > 0 ? this.heights[index - 1].accumulator : 0
       } else {
         scrollTop = index * this.itemHeight
       }
