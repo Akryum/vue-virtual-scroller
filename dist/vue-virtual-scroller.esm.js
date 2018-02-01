@@ -1,5 +1,3 @@
-import { clearTimeout, setTimeout } from 'timers';
-
 function getInternetExplorerVersion() {
 	var ua = window.navigator.userAgent;
 
@@ -216,6 +214,10 @@ var Scroller = {
       type: [Number, String],
       default: null
     },
+    minItemHeight: {
+      type: [Number, String],
+      default: null
+    },
     heightField: {
       type: String,
       default: 'height'
@@ -251,14 +253,17 @@ var Scroller = {
     heights: function heights() {
       if (this.itemHeight === null) {
         var heights = {
-          '-1': 0
+          '-1': { accumulator: 0 }
         };
         var items = this.items;
         var field = this.heightField;
+        var minItemHeight = this.minItemHeight;
         var accumulator = 0;
+        var current = void 0;
         for (var i = 0, l = items.length; i < l; i++) {
-          accumulator += items[i][field];
-          heights[i] = accumulator;
+          current = items[i][field] || minItemHeight;
+          accumulator += current;
+          heights[i] = { accumulator: accumulator, height: current };
         }
         return heights;
       }
@@ -323,7 +328,7 @@ var Scroller = {
     scrollToItem: function scrollToItem(index) {
       var scrollTop = void 0;
       if (this.itemHeight === null) {
-        scrollTop = index > 0 ? this.heights[index - 1] : 0;
+        scrollTop = index > 0 ? this.heights[index - 1].accumulator : 0;
       } else {
         scrollTop = index * this.itemHeight;
       }
@@ -486,10 +491,10 @@ var VirtualScroller = { render: function render() {
               // Searching for startIndex
               do {
                 oldI = i;
-                h = heights[i];
+                h = heights[i].accumulator;
                 if (h < scrollTop) {
                   a = i;
-                } else if (i < l && heights[i + 1] > scrollTop) {
+                } else if (i < l && heights[i + 1].accumulator > scrollTop) {
                   b = i;
                 }
                 i = ~~((a + b) / 2);
@@ -498,11 +503,11 @@ var VirtualScroller = { render: function render() {
               startIndex = i;
 
               // For containers style
-              offsetTop = i > 0 ? heights[i - 1] : 0;
-              containerHeight = heights[l - 1];
+              offsetTop = i > 0 ? heights[i - 1].accumulator : 0;
+              containerHeight = heights[l - 1].accumulator;
 
               // Searching for endIndex
-              for (endIndex = i; endIndex < l && heights[endIndex] < scrollBottom; endIndex++) {}
+              for (endIndex = i; endIndex < l && heights[endIndex].accumulator < scrollBottom; endIndex++) {}
               if (endIndex === -1) {
                 endIndex = items.length - 1;
               } else {
@@ -594,8 +599,8 @@ var RecycleList = { render: function render() {
     var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('div', { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], staticClass: "recycle-list", class: _vm.cssClass, on: { "&scroll": function scroll($event) {
           _vm.handleScroll($event);
         } } }, [_c('div', { staticClass: "item-wrapper", style: { height: _vm.totalHeight + 'px' } }, _vm._l(_vm.pool, function (view) {
-      return _c('div', { key: view.nr.id, staticClass: "item-view", style: { transform: 'translateY(' + view.top + 'px)' } }, [_vm._t("default", null, { item: view.item })], 2);
-    })), _vm._v(" "), _c('resize-observer', { on: { "notify": _vm.handleResize } })], 1);
+      return _c('div', { key: view.nr.id, staticClass: "item-view", style: { transform: 'translateY(' + view.top + 'px)' } }, [_vm._t("default", null, { item: view.item, active: view.nr.used })], 2);
+    })), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('resize-observer', { on: { "notify": _vm.handleResize } })], 2);
   }, staticRenderFns: [], _scopeId: 'data-v-2277f571',
   name: 'RecycleList',
 
@@ -630,10 +635,15 @@ var RecycleList = { render: function render() {
         checkItem: false
       });
     },
-    heights: function heights() {
-      this.updateVisibleItems({
-        checkItem: false
-      });
+
+    heights: {
+      handler: function handler() {
+        this.updateVisibleItems({
+          checkItem: false
+        });
+      },
+
+      deep: true
     }
   },
 
@@ -691,7 +701,7 @@ var RecycleList = { render: function render() {
       unusedPool.push(view);
       if (!fake) {
         view.nr.used = false;
-        view.top = this.totalHeight;
+        view.top = -9999;
         this.$_views.delete(view.item);
       }
     },
@@ -768,10 +778,10 @@ var RecycleList = { render: function render() {
         // Searching for startIndex
         do {
           oldI = i;
-          h = heights[i];
+          h = heights[i].accumulator;
           if (h < scroll.top) {
             a = i;
-          } else if (i < count && heights[i + 1] > scroll.top) {
+          } else if (i < count && heights[i + 1].accumulator > scroll.top) {
             b = i;
           }
           i = ~~((a + b) / 2);
@@ -780,10 +790,10 @@ var RecycleList = { render: function render() {
         startIndex = i;
 
         // For container style
-        totalHeight = heights[count - 1];
+        totalHeight = heights[count - 1].accumulator;
 
         // Searching for endIndex
-        for (endIndex = i; endIndex < count && heights[endIndex] < scroll.bottom; endIndex++) {}
+        for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++) {}
         if (endIndex === -1) {
           endIndex = items.length - 1;
         } else {
@@ -847,6 +857,11 @@ var RecycleList = { render: function render() {
         item = items[_i3];
         view = views.get(item);
 
+        if (!itemHeight && !heights[_i3].height) {
+          if (view) this.unuseView(view);
+          continue;
+        }
+
         // No view assigned to item
         if (!view) {
           type = item[typeField];
@@ -887,7 +902,7 @@ var RecycleList = { render: function render() {
 
         // Update position
         if (itemHeight === null) {
-          view.top = heights[_i3 - 1];
+          view.top = heights[_i3 - 1].accumulator;
         } else {
           view.top = _i3 * itemHeight;
         }
@@ -912,7 +927,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin$4 = {
   // eslint-disable-next-line no-undef
-  version: "0.11.1",
+  version: "0.11.2",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
