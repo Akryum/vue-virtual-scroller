@@ -6,6 +6,7 @@
     v-observe-visibility="handleVisibilityChange"
   >
     <div
+      ref="wrapper"
       class="item-wrapper"
       :style="{ height: totalHeight + 'px' }"
     >
@@ -190,50 +191,54 @@ export default {
       let startIndex, endIndex
       let totalHeight
 
-      // Variable height mode
-      if (itemHeight === null) {
-        let h
-        let a = 0
-        let b = count - 1
-        let i = ~~(count / 2)
-        let oldI
-
-        // Searching for startIndex
-        do {
-          oldI = i
-          h = heights[i].accumulator
-          if (h < scroll.top) {
-            a = i
-          } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {
-            b = i
-          }
-          i = ~~((a + b) / 2)
-        } while (i !== oldI)
-        i < 0 && (i = 0)
-        startIndex = i
-
-        // For container style
-        totalHeight = heights[count - 1].accumulator
-
-        // Searching for endIndex
-        for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++);
-        if (endIndex === -1) {
-          endIndex = items.length - 1
-        } else {
-          endIndex++
-          // Bounds
-          endIndex > count && (endIndex = count)
-        }
+      if (!count) {
+        startIndex = endIndex = totalHeight = 0
       } else {
-        // Fixed height mode
-        startIndex = ~~(scroll.top / itemHeight)
-        endIndex = Math.ceil(scroll.bottom / itemHeight)
+        // Variable height mode
+        if (itemHeight === null) {
+          let h
+          let a = 0
+          let b = count - 1
+          let i = ~~(count / 2)
+          let oldI
 
-        // Bounds
-        startIndex < 0 && (startIndex = 0)
-        endIndex > count && (endIndex = count)
+          // Searching for startIndex
+          do {
+            oldI = i
+            h = heights[i].accumulator
+            if (h < scroll.top) {
+              a = i
+            } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {
+              b = i
+            }
+            i = ~~((a + b) / 2)
+          } while (i !== oldI)
+          i < 0 && (i = 0)
+          startIndex = i
 
-        totalHeight = count * itemHeight
+          // For container style
+          totalHeight = heights[count - 1].accumulator
+
+          // Searching for endIndex
+          for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++);
+          if (endIndex === -1) {
+            endIndex = items.length - 1
+          } else {
+            endIndex++
+            // Bounds
+            endIndex > count && (endIndex = count)
+          }
+        } else {
+          // Fixed height mode
+          startIndex = ~~(scroll.top / itemHeight)
+          endIndex = Math.ceil(scroll.bottom / itemHeight)
+
+          // Bounds
+          startIndex < 0 && (startIndex = 0)
+          endIndex > count && (endIndex = count)
+
+          totalHeight = count * itemHeight
+        }
       }
 
       this.totalHeight = totalHeight
