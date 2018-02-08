@@ -358,6 +358,7 @@ It's very similar to virtual-scroller, but:
 - Recycles scoped slot content (including components) in the list (no destroyed components), depending on item types (customize with `typeField` prop)
 - The components used in the list should expect `item` prop change without being re-created (use computed props or watchers to properly react to props changes!)
 - You don't need to set `key` on list content (but you should on `<img>` elements)
+- You get a `active` prop in the scoped slot, that is `false` when the view isn't currently rendered (but could be reused later).
 - To emulate conditions that would otherwise be available in a `v-for` loop, the scoped slot exposes an `index` prop that reflects each item's position in the `items` array
 
 Both fixed and dynamic height modes are supported (set `itemHeight` prop for fixed height mode).
@@ -368,7 +369,7 @@ Both fixed and dynamic height modes are supported (set `itemHeight` prop for fix
   :items="items"
 >
   <!-- For each item -->
-  <template slot-scope="{ item, index }">
+  <template slot-scope="{ item, index, active }">
     <!-- Reactive dynamic height -->
     <div
       v-if="item.type === 'letter'"
@@ -383,6 +384,7 @@ Both fixed and dynamic height modes are supported (set `itemHeight` prop for fix
       v-else-if="item.type === 'person'"
       :data="item.value"
       :index="index"
+      :active="active"
     />
   </template>
 </recycle-list>
