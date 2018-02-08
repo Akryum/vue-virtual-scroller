@@ -89,13 +89,13 @@
                 @click="props.item.height = (props.item.height === 200 ? 300 : 200)"
               >
                 <td class="index">
-                  {{props.item.index}}
+                  {{props.index}}
                 </td>
                 <td class="value">
                   {{props.item.value}} Scoped
                 </td>
               </tr>
-              <item v-if="props.item.type === 'person'" :item="props.item"></item>
+              <item v-if="props.item.type === 'person'" :item="props.item" :index="props.index"></item>
             </template>
           </recycle-list>
         </template>

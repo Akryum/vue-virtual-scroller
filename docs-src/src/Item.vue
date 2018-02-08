@@ -1,7 +1,7 @@
 <template>
   <tr class="person" @click="edit">
     <td class="index">
-      {{item.index}}
+      {{index}}
     </td>
     <td>
       <div class="info">
@@ -18,7 +18,7 @@
 
 <script>
 export default {
-  props: ['item'],
+  props: ['item', 'index'],
 
   created () {
     console.log('created')
