@@ -18,6 +18,7 @@
       >
         <slot
           :item="view.item"
+          :index="view.nr.index"
           :active="view.nr.used"
         />
       </div>
