@@ -49,6 +49,14 @@ export default {
       type: Boolean,
       default: false,
     },
+    keepScroll: {
+      type: Boolean,
+      default: false,
+    },
+    emitScrolling: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   computed: {
@@ -144,6 +152,10 @@ export default {
         scrollTop = index * this.itemHeight
       }
       this.$el.scrollTop = scrollTop
+    },
+
+    scrollToPosition (position) {
+      this.$el.scrollTop = position
     },
   },
 }

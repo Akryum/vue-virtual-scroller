@@ -262,6 +262,9 @@ export default {
               } else {
                 this.visibleItems = items.slice(startIndex, endIndex)
               }
+              if (this.keepScroll) {
+                this.scrollToPosition(scroll.top + containerHeight - this.$_height)
+              }
 
               this.emitUpdate && this.$emit('update', startIndex, endIndex)
 
@@ -283,6 +286,9 @@ export default {
 
     handleScroll () {
       if (!this.$_scrollDirty) {
+        if (this.emitScrolling) {
+          this.$emit('scrolling', this.getScroll())
+        }
         this.$_scrollDirty = true
         requestAnimationFrame(() => {
           this.$_scrollDirty = false
