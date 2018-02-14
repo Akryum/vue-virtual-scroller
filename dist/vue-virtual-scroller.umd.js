@@ -247,6 +247,14 @@ var Scroller = {
     emitUpdate: {
       type: Boolean,
       default: false
+    },
+    keepScroll: {
+      type: Boolean,
+      default: false
+    },
+    emitScrolling: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -339,6 +347,9 @@ var Scroller = {
         scrollTop = index * this.itemHeight;
       }
       this.$el.scrollTop = scrollTop;
+    },
+    scrollToPosition: function scrollToPosition(position) {
+      this.$el.scrollTop = position;
     }
   }
 };
@@ -554,6 +565,9 @@ var VirtualScroller = { render: function render() {
               } else {
                 _this2.visibleItems = items.slice(startIndex, endIndex);
               }
+              if (_this2.keepScroll) {
+                _this2.scrollToPosition(scroll.top + containerHeight - _this2.$_height);
+              }
 
               _this2.emitUpdate && _this2.$emit('update', startIndex, endIndex);
 
@@ -575,6 +589,9 @@ var VirtualScroller = { render: function render() {
       var _this3 = this;
 
       if (!this.$_scrollDirty) {
+        if (this.emitScrolling) {
+          this.$emit('scrolling', this.getScroll());
+        }
         this.$_scrollDirty = true;
         requestAnimationFrame(function () {
           _this3.$_scrollDirty = false;
