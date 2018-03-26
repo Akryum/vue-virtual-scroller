@@ -143,7 +143,11 @@ export default {
       } else {
         scrollTop = index * this.itemHeight
       }
-      this.$el.scrollTop = scrollTop
+      this.scrollToPosition(scrollTop)
+    },
+
+    scrollToPosition (position) {
+      this.$el.scrollTop = position
     },
   },
 }
