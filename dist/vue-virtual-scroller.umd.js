@@ -338,7 +338,10 @@ var Scroller = {
       } else {
         scrollTop = index * this.itemHeight;
       }
-      this.$el.scrollTop = scrollTop;
+      this.scrollToPosition(scrollTop);
+    },
+    scrollToPosition: function scrollToPosition(position) {
+      this.$el.scrollTop = position;
     }
   }
 };
@@ -347,11 +350,11 @@ var VirtualScroller = { render: function render() {
     var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c(_vm.mainTag, { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], tag: "component", staticClass: "virtual-scroller", class: _vm.cssClass, on: { "&scroll": function scroll($event) {
           _vm.handleScroll($event);
         } } }, [_vm._t("before-container"), _vm._v(" "), _c(_vm.containerTag, { ref: "itemContainer", tag: "component", staticClass: "item-container", class: _vm.containerClass, style: _vm.itemContainerStyle }, [_vm._t("before-content"), _vm._v(" "), _c(_vm.contentTag, { ref: "items", tag: "component", staticClass: "items", class: _vm.contentClass, style: _vm.itemsStyle }, [_vm.renderers ? _vm._l(_vm.visibleItems, function (item, index) {
-      return _c(_vm.renderers[item[_vm.typeField]], { key: _vm.keysEnabled && item[_vm.keyField] || undefined, tag: "component", staticClass: "item", attrs: { "item": item, "item-index": _vm._startIndex + index } });
+      return _c(_vm.renderers[item[_vm.typeField]], { key: _vm.keysEnabled && item[_vm.keyField] || undefined, tag: "component", staticClass: "item", attrs: { "item": item, "item-index": _vm.$_startIndex + index } });
     }) : [_vm._l(_vm.visibleItems, function (item, index) {
-      return _vm._t("default", null, { item: item, itemIndex: _vm._startIndex + index, itemKey: _vm.keysEnabled && item[_vm.keyField] || undefined });
+      return _vm._t("default", null, { item: item, itemIndex: _vm.$_startIndex + index, itemKey: _vm.keysEnabled && item[_vm.keyField] || undefined });
     })]], 2), _vm._v(" "), _vm._t("after-content")], 2), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('resize-observer', { on: { "notify": _vm.handleResize } })], 2);
-  }, staticRenderFns: [], _scopeId: 'data-v-727d6836',
+  }, staticRenderFns: [], _scopeId: 'data-v-2b1f2e05',
   name: 'virtual-scroller',
 
   mixins: [Scroller],
@@ -607,7 +610,7 @@ var RecycleList = { render: function render() {
         } } }, [_c('div', { ref: "wrapper", staticClass: "item-wrapper", style: { height: _vm.totalHeight + 'px' } }, _vm._l(_vm.pool, function (view) {
       return _c('div', { key: view.nr.id, staticClass: "item-view", style: { transform: 'translateY(' + view.top + 'px)' } }, [_vm._t("default", null, { item: view.item, index: view.nr.index, active: view.nr.used })], 2);
     })), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('resize-observer', { on: { "notify": _vm.handleResize } })], 2);
-  }, staticRenderFns: [], _scopeId: 'data-v-68940351',
+  }, staticRenderFns: [], _scopeId: 'data-v-2277f571',
   name: 'RecycleList',
 
   mixins: [Scroller],
@@ -615,6 +618,10 @@ var RecycleList = { render: function render() {
   props: {
     itemHeight: {
       type: Number,
+      default: null
+    },
+    keyField: {
+      type: String,
       default: null
     }
   },
@@ -677,7 +684,7 @@ var RecycleList = { render: function render() {
 
 
   methods: {
-    addView: function addView(index, item) {
+    addView: function addView(pool, index, item, key, type) {
       var view = {
         item: item,
         top: 0
@@ -685,20 +692,22 @@ var RecycleList = { render: function render() {
       var nonReactive = {
         id: uid++,
         index: index,
-        used: true
+        used: true,
+        key: key,
+        type: type
       };
       Object.defineProperty(view, 'nr', {
         configurable: false,
         value: nonReactive
       });
-      this.pool.push(view);
+      pool.push(view);
       return view;
     },
     unuseView: function unuseView(view) {
       var fake = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
       var unusedViews = this.$_unusedViews;
-      var type = view.item[this.typeField];
+      var type = view.nr.type;
       var unusedPool = unusedViews.get(type);
       if (!unusedPool) {
         unusedPool = [];
@@ -708,7 +717,7 @@ var RecycleList = { render: function render() {
       if (!fake) {
         view.nr.used = false;
         view.top = -9999;
-        this.$_views.delete(view.item);
+        this.$_views.delete(view.nr.key);
       }
     },
     handleResize: function handleResize() {
@@ -763,6 +772,7 @@ var RecycleList = { render: function render() {
 
       var itemHeight = this.itemHeight;
       var typeField = this.typeField;
+      var keyField = this.keyField;
       var items = this.items;
       var count = items.length;
       var heights = this.heights;
@@ -827,7 +837,7 @@ var RecycleList = { render: function render() {
 
       var view = void 0;
 
-      var continuous = startIndex < this.$_endIndex && endIndex > this.$_startIndex;
+      var continuous = startIndex <= this.$_endIndex && endIndex >= this.$_startIndex;
       var unusedIndex = void 0;
 
       if (this.$_continuous !== continuous) {
@@ -845,7 +855,9 @@ var RecycleList = { render: function render() {
           view = pool[_i2];
           if (view.nr.used) {
             // Update view item index
-            if (checkItem) view.nr.index = items.indexOf(view.item);
+            if (checkItem) view.nr.index = items.findIndex(function (item) {
+              return keyField ? item[keyField] == view.item[keyField] : item === view.item;
+            });
 
             // Check if index is still in visible range
             if (view.nr.index === -1 || view.nr.index < startIndex || view.nr.index > endIndex) {
@@ -865,7 +877,8 @@ var RecycleList = { render: function render() {
       var v = void 0;
       for (var _i3 = startIndex; _i3 < endIndex; _i3++) {
         item = items[_i3];
-        view = views.get(item);
+        var key = keyField ? item[keyField] : item;
+        view = views.get(key);
 
         if (!itemHeight && !heights[_i3].height) {
           if (view) this.unuseView(view);
@@ -884,8 +897,10 @@ var RecycleList = { render: function render() {
               view.item = item;
               view.nr.used = true;
               view.nr.index = _i3;
+              view.nr.key = key;
+              view.nr.type = type;
             } else {
-              view = this.addView(_i3, item, type);
+              view = this.addView(pool, _i3, item, key, type);
             }
           } else {
             unusedPool = unusedViews.get(type);
@@ -898,14 +913,16 @@ var RecycleList = { render: function render() {
               view.item = item;
               view.nr.used = true;
               view.nr.index = _i3;
+              view.nr.key = key;
+              view.nr.type = type;
               unusedIndex.set(type, v + 1);
             } else {
-              view = this.addView(_i3, item, type);
+              view = this.addView(pool, _i3, item, key, type);
               this.unuseView(view, true);
             }
             v++;
           }
-          views.set(item, view);
+          views.set(key, view);
         } else {
           view.nr.used = true;
         }
@@ -937,7 +954,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin$4 = {
   // eslint-disable-next-line no-undef
-  version: "0.11.5",
+  version: "0.11.7",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
