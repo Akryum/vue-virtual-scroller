@@ -49,6 +49,10 @@ export default {
       type: Number,
       default: null,
     },
+    keyField: {
+      type: String,
+      default: null,
+    },
   },
 
   data () {
@@ -104,7 +108,7 @@ export default {
   },
 
   methods: {
-    addView (index, item) {
+    addView (pool, index, item, key, type) {
       const view = {
         item,
         top: 0,
@@ -113,18 +117,20 @@ export default {
         id: uid++,
         index,
         used: true,
+        key,
+        type,
       }
       Object.defineProperty(view, 'nr', {
         configurable: false,
         value: nonReactive,
       })
-      this.pool.push(view)
+      pool.push(view)
       return view
     },
 
     unuseView (view, fake = false) {
       const unusedViews = this.$_unusedViews
-      const type = view.item[this.typeField]
+      const type = view.nr.type
       let unusedPool = unusedViews.get(type)
       if (!unusedPool) {
         unusedPool = []
@@ -134,7 +140,7 @@ export default {
       if (!fake) {
         view.nr.used = false
         view.top = -9999
-        this.$_views.delete(view.item)
+        this.$_views.delete(view.nr.key)
       }
     },
 
@@ -183,6 +189,7 @@ export default {
 
       const itemHeight = this.itemHeight
       const typeField = this.typeField
+      const keyField = this.keyField
       const items = this.items
       const count = items.length
       const heights = this.heights
@@ -246,7 +253,7 @@ export default {
 
       let view
 
-      const continuous = startIndex < this.$_endIndex && endIndex > this.$_startIndex
+      const continuous = startIndex <= this.$_endIndex && endIndex >= this.$_startIndex
       let unusedIndex
 
       if (this.$_continuous !== continuous) {
@@ -264,7 +271,9 @@ export default {
           view = pool[i]
           if (view.nr.used) {
             // Update view item index
-            if (checkItem) view.nr.index = items.indexOf(view.item)
+            if (checkItem) view.nr.index = items.findIndex(
+              item => keyField ? item[keyField] == view.item[keyField] : item === view.item
+            )
 
             // Check if index is still in visible range
             if (
@@ -286,7 +295,8 @@ export default {
       let v
       for (let i = startIndex; i < endIndex; i++) {
         item = items[i]
-        view = views.get(item)
+        const key = keyField ? item[keyField] : item
+        view = views.get(key)
 
         if (!itemHeight && !heights[i].height) {
           if (view) this.unuseView(view)
@@ -305,8 +315,10 @@ export default {
               view.item = item
               view.nr.used = true
               view.nr.index = i
+              view.nr.key = key
+              view.nr.type = type
             } else {
-              view = this.addView(i, item, type)
+              view = this.addView(pool, i, item, key, type)
             }
           } else {
             unusedPool = unusedViews.get(type)
@@ -319,14 +331,16 @@ export default {
               view.item = item
               view.nr.used = true
               view.nr.index = i
+              view.nr.key = key
+              view.nr.type = type
               unusedIndex.set(type, v + 1)
             } else {
-              view = this.addView(i, item, type)
+              view = this.addView(pool, i, item, key, type)
               this.unuseView(view, true)
             }
             v++
           }
-          views.set(item, view)
+          views.set(key, view)
         } else  {
           view.nr.used = true
         }
