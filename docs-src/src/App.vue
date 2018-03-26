@@ -1,31 +1,34 @@
 <template>
-  <div id="app">
-    <div class="counter">
+  <div
+    id="app"
+    :class="{
+      'page-mode': pageMode
+    }"
+  >
+    <div class="toolbar">
       <span>
         <input v-model="countInput" type="number" min="0" max="500000" /> items
+        <button @click="addItem()">+1</button>
       </span>
       <label>
         <input v-model="enableLetters" type="checkbox" /> variable height
       </label>
+      <label>
+        <input v-model="pageMode" type="checkbox" /> page mode
+      </label>
       <span>
         <input v-model.number="buffer" type="number" min="1" max="500000" /> buffer
       </span>
-      <span>
+      <span v-if="!recycleList">
         <input v-model.number="poolSize" type="number" min="1" max="500000" /> poolSize
-      </span>
-      <span v-if="generateTime !== null">
-        Items generation: {{ generateTime }} ms
-      </span>
-      <span>
-        Updates: {{ updateCount }}
       </span>
       <span>
         <button @mousedown="showScroller = !showScroller">Toggle scroller</button>
-        <label><input type="checkbox" v-model="scopedSlots" :disabled="recycleList" /> Scoped slots</label>
+        <label v-if="!recycleList"><input type="checkbox" v-model="scopedSlots" :disabled="recycleList" /> Scoped slots</label>
         <label><input type="checkbox" v-model="recycleList" /> Use recycle list</label>
       </span>
-
     </div>
+
     <div class="content" v-if="showScroller">
       <div class="wrapper">
         <template v-if="!recycleList">
@@ -34,7 +37,7 @@
             v-if="scopedSlots"
             class="scroller"
             :item-height="itemHeight"
-            :items="items"
+            :items="list"
             main-tag="section"
             content-tag="table"
             :buffer="buffer"
@@ -61,26 +64,27 @@
             v-else
             class="scroller"
             :item-height="itemHeight"
-            :items="items"
+            :items="list"
             :renderers="renderers"
             type-field="type"
-            key-field="index"
+            key-field="id"
             main-tag="section"
             content-tag="table"
             :buffer="buffer"
             :pool-size="poolSize"
-            emit-update
-            @update="onUpdate"
+            :page-mode="pageMode"
           />
         </template>
 
-        <template>
+        <template v-else>
           <recycle-list
             ref="scroller"
             class="scroller"
-            :items="items"
+            :items="list"
             :item-height="itemHeight"
             :buffer="buffer"
+            :page-mode="pageMode"
+            key-field="id"
           >
             <template slot-scope="props">
               <tr
@@ -105,7 +109,7 @@
 </template>
 
 <script>
-import { getData } from './data.js'
+import { getData, addItem } from './data.js'
 
 import Letter from './Letter.vue'
 import Item from './Item.vue'
@@ -125,14 +129,12 @@ export default {
     items: [],
     renderers,
     count: 10000,
-    generateTime: null,
-    updateTime: null,
     showScroller: true,
     scopedSlots: false,
     buffer: 200,
     poolSize: 2000,
     enableLetters: true,
-    updateCount: 0,
+    pageMode: false,
     recycleList: true,
   }),
 
@@ -163,15 +165,14 @@ export default {
     itemHeight () {
       return this.enableLetters ? null : 50
     },
-  },
 
-  updated () {
-    if (this._dirty) {
-      const time = Date.now()
-      this.updateTime = time - this._time
-      console.log('update', this.updateTime, 'ms')
-      this._dirty = false
-    }
+    list () {
+      return this.items.map(
+        item => Object.assign({}, {
+          random: Math.random(),
+        }, item)
+      )
+    },
   },
 
   mounted () {
@@ -184,11 +185,13 @@ export default {
       console.log('Generating ' + this.count + ' items...')
       let time = Date.now()
       const items = getData(this.count, this.enableLetters)
-      this._time = Date.now()
-      this.generateTime = this._time - time
-      console.log('Generated ' + items.length + ' in ' + this.generateTime + 'ms')
+      console.log('Generated ' + items.length + ' in ' + (Date.now() - time) + 'ms')
       this._dirty = true
       this.items = items
+    },
+
+    addItem () {
+      addItem(this.items)
     },
 
     onUpdate (startIndex, endIndex) {
@@ -202,8 +205,12 @@ export default {
 html,
 body,
 #app {
-  height: 100%;
   box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
@@ -221,14 +228,26 @@ body {
   padding: 12px;
 }
 
-.counter {
+#app:not(.page-mode) {
+  height: 100%;
+}
+
+.toolbar {
   flex: auto 0 0;
   text-align: center;
   margin-bottom: 12px;
   line-height: 32px;
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  background: white;
 }
 
-.counter > *:not(:last-child) {
+#app.page-mode .toolbar {
+  border-bottom: solid 1px #e0edfa;
+}
+
+.toolbar > *:not(:last-child) {
   margin-right: 24px;
 }
 
@@ -238,7 +257,7 @@ body {
   position: relative;
 }
 
-.wrapper {
+#app:not(.page-mode) .wrapper {
   overflow: hidden;
   position: absolute;
   top: 0;

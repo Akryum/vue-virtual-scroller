@@ -1,5 +1,14 @@
 import faker from 'faker'
 
+let uid = 0
+
+function generateItem () {
+  return {
+    name: faker.name.findName(),
+    avatar: faker.internet.avatar(),
+  }
+}
+
 export function getData (count, letters) {
   const raw = {}
 
@@ -10,21 +19,19 @@ export function getData (count, letters) {
   }
 
   for (var i = 0; i < count; i++) {
-    const item = {
-      name: faker.name.findName(),
-      avatar: faker.internet.avatar(),
-    }
+    const item = generateItem()
     const letter = item.name.charAt(0).toLowerCase()
     raw[letter].push(item)
   }
 
-  const data = []
+  const list = []
   let index = 1
 
   for (const l of alphabet) {
     raw[l] = raw[l].sort((a, b) => a.name < b.name ? -1 : 1)
     if (letters) {
-      data.push({
+      list.push({
+        id: uid++,
         index: index++,
         type: 'letter',
         value: l,
@@ -32,7 +39,8 @@ export function getData (count, letters) {
       })
     }
     for (var item of raw[l]) {
-      data.push({
+      list.push({
+        id: uid++,
         index: index++,
         type: 'person',
         value: item,
@@ -41,5 +49,15 @@ export function getData (count, letters) {
     }
   }
 
-  return data
+  return list
+}
+
+export function addItem (list) {
+  list.push({
+    id: uid++,
+    index: list.length + 1,
+    type: 'person',
+    value: generateItem(),
+    height: 50,
+  })
 }
