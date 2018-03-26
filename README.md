@@ -87,7 +87,7 @@ The optional `renderers` prop is an object containing a component definition for
 There are additional props you can use:
 
 - `typeField` to customize which field is used on the items to get their type and use the corresponding definition in the `renderers` map. The default is `'type'`.
-- `keyField` to customize which field is used on the items to set their `key` special attribute (see [the documation](https://vuejs.org/v2/api/#key)). The default is `'id'`.
+- `keyField` to customize which field is used on the items to set their `key` special attribute (see [the documentation](https://vuejs.org/v2/api/#key)). The default is `'id'`.
 
 **For better performance, you should use the `keyField` prop that will set the `key` attribute. Warning! You shouldn't expect items to have the key set at all times, since the scroller may disable them depending on the situation.**
 
