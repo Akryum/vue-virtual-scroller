@@ -246,7 +246,7 @@ export default {
               this.keysEnabled = !(startIndex > this.$_endIndex || endIndex < this.$_startIndex)
 
               this.itemContainerStyle = {
-                height: containerHeight + 'px',
+                minHeight: containerHeight + 'px',
               }
               this.itemsStyle = {
                 marginTop: offsetTop + 'px',
