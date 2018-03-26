@@ -33,7 +33,7 @@
             :key="keysEnabled && item[keyField] || undefined"
             :is="renderers[item[typeField]]"
             :item="item"
-            :item-index="_startIndex + index"
+            :item-index="$_startIndex + index"
           />
         </template>
         <template v-else>
@@ -41,7 +41,7 @@
             class="item"
             v-for="(item, index) in visibleItems"
             :item="item"
-            :item-index="_startIndex + index"
+            :item-index="$_startIndex + index"
             :item-key="keysEnabled && item[keyField] || undefined"
           />
         </template>
