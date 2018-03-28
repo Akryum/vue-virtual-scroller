@@ -2,7 +2,8 @@
   <div
     id="app"
     :class="{
-      'page-mode': pageMode
+      'page-mode': pageMode,
+      'full-page': pageModeFullPage,
     }"
   >
     <div class="toolbar">
@@ -15,6 +16,9 @@
       </label>
       <label>
         <input v-model="pageMode" type="checkbox" /> page mode
+      </label>
+      <label v-if="pageMode">
+        <input v-model="pageModeFullPage" type="checkbox" /> full page
       </label>
       <span>
         <input v-model.number="buffer" type="number" min="1" max="500000" /> buffer
@@ -135,6 +139,7 @@ export default {
     poolSize: 2000,
     enableLetters: true,
     pageMode: false,
+    pageModeFullPage: true,
     recycleList: true,
   }),
 
@@ -232,6 +237,10 @@ body {
   height: 100%;
 }
 
+#app.page-mode:not(.full-page) {
+  height: 100%;
+}
+
 .toolbar {
   flex: auto 0 0;
   text-align: center;
@@ -255,6 +264,10 @@ body {
   flex: 100% 1 1;
   border: solid 1px #42b983;
   position: relative;
+}
+
+#app.page-mode:not(.full-page) .content {
+  overflow: auto;
 }
 
 #app:not(.page-mode) .wrapper {
