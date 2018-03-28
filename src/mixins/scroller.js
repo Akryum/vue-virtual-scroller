@@ -1,5 +1,6 @@
 import { ResizeObserver } from 'vue-resize'
 import { ObserveVisibility } from 'vue-observe-visibility'
+import ScrollParent from 'scrollparent'
 import { supportsPassive } from '../utils'
 
 // @vue/component
@@ -79,7 +80,7 @@ export default {
   },
 
   beforeDestroy () {
-    this.removeWindowScroll()
+    this.removeListeners()
   },
 
   methods: {
@@ -118,20 +119,20 @@ export default {
 
     applyPageMode () {
       if (this.pageMode) {
-        this.addWindowScroll()
+        this.addListeners()
       } else {
-        this.removeWindowScroll()
+        this.removeListeners()
       }
     },
 
-    addWindowScroll () {
+    addListeners () {
       window.addEventListener('scroll', this.handleScroll, supportsPassive ? {
         passive: true,
       } : false)
       window.addEventListener('resize', this.handleResize)
     },
 
-    removeWindowScroll () {
+    removeListeners () {
       window.removeEventListener('scroll', this.handleScroll)
       window.removeEventListener('resize', this.handleResize)
     },
