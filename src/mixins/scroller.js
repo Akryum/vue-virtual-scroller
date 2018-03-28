@@ -84,6 +84,15 @@ export default {
   },
 
   methods: {
+
+    getListenerTarget () {
+      let target = ScrollParent(this.$el)
+      if (target === window.document.documentElement) {
+        target = window
+      }
+      return target
+    },
+
     getScroll () {
       const el = this.$el
       let scroll
@@ -126,15 +135,22 @@ export default {
     },
 
     addListeners () {
-      window.addEventListener('scroll', this.handleScroll, supportsPassive ? {
+      this.listenerTarget = this.getListenerTarget()
+      this.listenerTarget.addEventListener('scroll', this.handleScroll, supportsPassive ? {
         passive: true,
       } : false)
-      window.addEventListener('resize', this.handleResize)
+      this.listenerTarget.addEventListener('resize', this.handleResize)
     },
 
     removeListeners () {
-      window.removeEventListener('scroll', this.handleScroll)
-      window.removeEventListener('resize', this.handleResize)
+      if (!this.listenerTarget) {
+        return
+      }
+
+      this.listenerTarget.removeEventListener('scroll', this.handleScroll)
+      this.listenerTarget.removeEventListener('resize', this.handleResize)
+
+      this.listenerTarget = null
     },
 
     scrollToItem (index) {

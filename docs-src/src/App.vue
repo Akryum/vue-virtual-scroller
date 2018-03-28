@@ -39,6 +39,7 @@
           <!-- Scoped slots -->
           <virtual-scroller
             v-if="scopedSlots"
+            :key="pageModeFullPage"
             class="scroller"
             :item-height="itemHeight"
             :items="list"
@@ -66,6 +67,7 @@
           <!-- Renderers -->
           <virtual-scroller
             v-else
+            :key="pageModeFullPage"
             class="scroller"
             :item-height="itemHeight"
             :items="list"
@@ -82,6 +84,7 @@
 
         <template v-else>
           <recycle-list
+            :key="pageModeFullPage"
             ref="scroller"
             class="scroller"
             :items="list"
