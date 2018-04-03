@@ -347,7 +347,7 @@ export default {
 </script>
 ```
 
-# Exprimental component: RecycleList
+# Experimental component: RecycleList
 
 It's very similar to virtual-scroller, but:
 
