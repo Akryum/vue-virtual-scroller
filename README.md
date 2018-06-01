@@ -12,8 +12,6 @@ Smooth scroll with any amount of data ([demo](https://akryum.github.io/vue-virtu
 </p>
 
 <br>
-<br>
-<br>
 
 ## Table of contents
 
