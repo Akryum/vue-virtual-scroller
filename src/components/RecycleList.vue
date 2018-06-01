@@ -34,6 +34,7 @@
 
 <script>
 import Scroller from '../mixins/scroller'
+import config from '../config'
 
 let uid = 0
 
@@ -247,6 +248,10 @@ export default {
 
           totalHeight = count * itemHeight
         }
+      }
+
+      if (endIndex - startIndex > config.itemsLimit) {
+        this.itemsLimitError()
       }
 
       this.totalHeight = totalHeight

@@ -59,6 +59,7 @@
 
 <script>
 import Scroller from '../mixins/scroller'
+import config from '../config'
 
 export default {
   name: 'virtual-scroller',
@@ -233,6 +234,10 @@ export default {
 
               offsetTop = startIndex * itemHeight
               containerHeight = l * itemHeight
+            }
+
+            if (endIndex - startIndex > config.itemsLimit) {
+              this.itemsLimitError()
             }
 
             if (

@@ -1,3 +1,5 @@
+import config from './config'
+
 import VirtualScroller from './components/VirtualScroller.vue'
 import RecycleList from './components/RecycleList.vue'
 
@@ -19,6 +21,12 @@ const plugin = {
       installComponents: true,
       componentsPrefix: '',
     }, options)
+
+    for (const key in finalOptions) {
+      if (typeof finalOptions[key] !== 'undefined') {
+        config[key] = finalOptions[key]
+      }
+    }
 
     if (finalOptions.installComponents) {
       registerComponents(Vue, finalOptions.componentsPrefix)
