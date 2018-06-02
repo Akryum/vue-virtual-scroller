@@ -74,6 +74,7 @@ var ResizeObserver = { render: function render() {
 		this._resizeObject = object;
 		object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
 		object.setAttribute('aria-hidden', 'true');
+		object.setAttribute('tabindex', -1);
 		object.onload = this.addResizeHandlers;
 		object.type = 'text/html';
 		if (isIE) {
@@ -101,7 +102,7 @@ function install(Vue) {
 // Plugin
 var plugin = {
 	// eslint-disable-next-line no-undef
-	version: "0.4.3",
+	version: "0.4.4",
 	install: install
 };
 
@@ -116,44 +117,204 @@ if (GlobalVue) {
 	GlobalVue.use(plugin);
 }
 
-function throwValueError(value) {
-	if (value !== null && typeof value !== 'function') {
-		throw new Error('observe-visibility directive expects a function as the value');
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var toConsumableArray = function (arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
+};
+
+function processOptions(value) {
+	var options = void 0;
+	if (typeof value === 'function') {
+		// Simple options (callback-only)
+		options = {
+			callback: value
+		};
+	} else {
+		// Options object
+		options = value;
 	}
+	return options;
 }
+
+function throttle(callback, delay) {
+	var timeout = void 0;
+	var lastState = void 0;
+	var currentArgs = void 0;
+	var throttled = function throttled(state) {
+		for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+			args[_key - 1] = arguments[_key];
+		}
+
+		currentArgs = args;
+		if (timeout && state === lastState) return;
+		lastState = state;
+		clearTimeout(timeout);
+		timeout = setTimeout(function () {
+			callback.apply(undefined, [state].concat(toConsumableArray(currentArgs)));
+			timeout = 0;
+		}, delay);
+	};
+	throttled._clear = function () {
+		clearTimeout(timeout);
+	};
+	return throttled;
+}
+
+var VisibilityState = function () {
+	function VisibilityState(el, options, vnode) {
+		classCallCheck(this, VisibilityState);
+
+		this.el = el;
+		this.observer = null;
+		this.createObserver(options, vnode);
+	}
+
+	createClass(VisibilityState, [{
+		key: 'createObserver',
+		value: function createObserver(options, vnode) {
+			var _this = this;
+
+			if (this.observer) {
+				this.destroyObserver();
+			}
+
+			this.options = processOptions(options);
+
+			this.callback = this.options.callback;
+			// Throttle
+			if (this.callback && this.options.throttle) {
+				this.callback = throttle(this.callback, this.options.throttle);
+			}
+
+			this.observer = new IntersectionObserver(function (entries) {
+				var entry = entries[0];
+				if (_this.callback) {
+					// Use isIntersecting if possible because browsers can report isIntersecting as true, but intersectionRatio as 0, when something very slowly enters the viewport.
+					_this.callback(entry.isIntersecting && entry.intersectionRatio >= _this.threshold, entry);
+				}
+			}, this.options.intersection);
+
+			// Wait for the element to be in document
+			vnode.context.$nextTick(function () {
+				_this.observer.observe(_this.el);
+			});
+		}
+	}, {
+		key: 'destroyObserver',
+		value: function destroyObserver() {
+			if (this.observer) {
+				this.observer.disconnect();
+			}
+
+			// Cancel throttled call
+			if (this.callback && this.callback._clear) {
+				this.callback._clear();
+			}
+		}
+	}, {
+		key: 'threshold',
+		get: function get$$1() {
+			return this.options.intersection && this.options.intersection.threshold || 0;
+		}
+	}]);
+	return VisibilityState;
+}();
 
 var ObserveVisibility = {
 	bind: function bind(el, _ref, vnode) {
 		var value = _ref.value;
 
 		if (typeof IntersectionObserver === 'undefined') {
-			console.warn('[vue-observe-visibility] IntersectionObserver API is not available in your browser. Please install this polyfill: https://github.com/WICG/IntersectionObserver/tree/gh-pages/polyfill');
+			console.warn('[vue-observe-visibility] IntersectionObserver API is not available in your browser. Please install this polyfill: https://github.com/w3c/IntersectionObserver/tree/master/polyfill');
 		} else {
-			throwValueError(value);
-			el._vue_visibilityCallback = value;
-			var observer = el._vue_intersectionObserver = new IntersectionObserver(function (entries) {
-				var entry = entries[0];
-				if (el._vue_visibilityCallback) {
-					el._vue_visibilityCallback.call(null, entry.intersectionRatio > 0, entry);
-				}
-			});
-			// Wait for the element to be in document
-			vnode.context.$nextTick(function () {
-				observer.observe(el);
-			});
+			var state = new VisibilityState(el, value, vnode);
+			el._vue_visibilityState = state;
 		}
 	},
-	update: function update(el, _ref2) {
+	update: function update(el, _ref2, vnode) {
 		var value = _ref2.value;
 
-		throwValueError(value);
-		el._vue_visibilityCallback = value;
+		var state = el._vue_visibilityState;
+		if (state) {
+			state.createObserver(value, vnode);
+		} else {
+			this.bind(el, { value: value }, vnode);
+		}
 	},
 	unbind: function unbind(el) {
-		if (el._vue_intersectionObserver) {
-			el._vue_intersectionObserver.disconnect();
-			delete el._vue_intersectionObserver;
-			delete el._vue_visibilityCallback;
+		var state = el._vue_visibilityState;
+		if (state) {
+			state.destroyObserver();
+			delete el._vue_visibilityState;
 		}
 	}
 };
@@ -168,9 +329,9 @@ function install$1(Vue) {
 /* You shouldn't have to modify the code below */
 
 // Plugin
-var plugin$2 = {
+var plugin$1 = {
 	// eslint-disable-next-line no-undef
-	version: "0.3.1",
+	version: "0.4.1",
 	install: install$1
 };
 
@@ -182,8 +343,64 @@ if (typeof window !== 'undefined') {
 	GlobalVue$1 = global.Vue;
 }
 if (GlobalVue$1) {
-	GlobalVue$1.use(plugin$2);
+	GlobalVue$1.use(plugin$1);
 }
+
+var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+function createCommonjsModule(fn, module) {
+	return module = { exports: {} }, fn(module, module.exports), module.exports;
+}
+
+var scrollparent = createCommonjsModule(function (module) {
+(function (root, factory) {
+  if (typeof undefined === "function" && undefined.amd) {
+    undefined([], factory);
+  } else if (module.exports) {
+    module.exports = factory();
+  } else {
+    root.Scrollparent = factory();
+  }
+}(commonjsGlobal, function () {
+  var regex = /(auto|scroll)/;
+
+  var parents = function (node, ps) {
+    if (node.parentNode === null) { return ps; }
+
+    return parents(node.parentNode, ps.concat([node]));
+  };
+
+  var style = function (node, prop) {
+    return getComputedStyle(node, null).getPropertyValue(prop);
+  };
+
+  var overflow = function (node) {
+    return style(node, "overflow") + style(node, "overflow-y") + style(node, "overflow-x");
+  };
+
+  var scroll = function (node) {
+   return regex.test(overflow(node));
+  };
+
+  var scrollParent = function (node) {
+    if (!(node instanceof HTMLElement || node instanceof SVGElement)) {
+      return ;
+    }
+
+    var ps = parents(node.parentNode, []);
+
+    for (var i = 0; i < ps.length; i += 1) {
+      if (scroll(ps[i])) {
+        return ps[i];
+      }
+    }
+
+    return document.scrollingElement || document.documentElement;
+  };
+
+  return scrollParent;
+}));
+});
 
 var supportsPassive = false;
 
@@ -275,14 +492,21 @@ var Scroller = {
   },
 
   beforeDestroy: function beforeDestroy() {
-    this.removeWindowScroll();
+    this.removeListeners();
   },
 
 
   methods: {
+    getListenerTarget: function getListenerTarget() {
+      var target = scrollparent(this.$el);
+      if (target === window.document.documentElement) {
+        target = window;
+      }
+      return target;
+    },
     getScroll: function getScroll() {
       var el = this.$el;
-      var scroll = void 0;
+      var scrollState = void 0;
 
       if (this.pageMode) {
         var rect = el.getBoundingClientRect();
@@ -295,39 +519,42 @@ var Scroller = {
         if (top + height > rect.height) {
           height = rect.height - top;
         }
-        scroll = {
+        scrollState = {
           top: top,
           bottom: top + height
         };
       } else {
-        scroll = {
+        scrollState = {
           top: el.scrollTop,
           bottom: el.scrollTop + el.clientHeight
         };
       }
 
-      if (scroll.bottom >= 0 && scroll.top <= scroll.bottom) {
-        return scroll;
-      } else {
-        return null;
-      }
+      return scrollState;
     },
     applyPageMode: function applyPageMode() {
       if (this.pageMode) {
-        this.addWindowScroll();
+        this.addListeners();
       } else {
-        this.removeWindowScroll();
+        this.removeListeners();
       }
     },
-    addWindowScroll: function addWindowScroll() {
-      window.addEventListener('scroll', this.handleScroll, supportsPassive ? {
+    addListeners: function addListeners() {
+      this.listenerTarget = this.getListenerTarget();
+      this.listenerTarget.addEventListener('scroll', this.handleScroll, supportsPassive ? {
         passive: true
       } : false);
-      window.addEventListener('resize', this.handleResize);
+      this.listenerTarget.addEventListener('resize', this.handleResize);
     },
-    removeWindowScroll: function removeWindowScroll() {
-      window.removeEventListener('scroll', this.handleScroll);
-      window.removeEventListener('resize', this.handleResize);
+    removeListeners: function removeListeners() {
+      if (!this.listenerTarget) {
+        return;
+      }
+
+      this.listenerTarget.removeEventListener('scroll', this.handleScroll);
+      this.listenerTarget.removeEventListener('resize', this.handleResize);
+
+      this.listenerTarget = null;
     },
     scrollToItem: function scrollToItem(index) {
       var scrollTop = void 0;
@@ -353,21 +580,16 @@ var Scroller = {
   }
 };
 
-var VirtualScroller = { render: function render() {
-    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c(_vm.mainTag, { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], tag: "component", staticClass: "virtual-scroller", class: _vm.cssClass, on: { "&scroll": function scroll($event) {
-          _vm.handleScroll($event);
-        } } }, [_vm._t("before-container"), _vm._v(" "), _c(_vm.containerTag, { ref: "itemContainer", tag: "component", staticClass: "item-container", class: _vm.containerClass, style: _vm.itemContainerStyle }, [_vm._t("before-content"), _vm._v(" "), _c(_vm.contentTag, { ref: "items", tag: "component", staticClass: "items", class: _vm.contentClass, style: _vm.itemsStyle }, [_vm.renderers ? _vm._l(_vm.visibleItems, function (item, index) {
-      return _c(_vm.renderers[item[_vm.typeField]], { key: _vm.keysEnabled && item[_vm.keyField] || undefined, tag: "component", staticClass: "item", attrs: { "item": item, "item-index": _vm.$_startIndex + index } });
-    }) : [_vm._l(_vm.visibleItems, function (item, index) {
-      return _vm._t("default", null, { item: item, itemIndex: _vm.$_startIndex + index, itemKey: _vm.keysEnabled && item[_vm.keyField] || undefined });
-    })]], 2), _vm._v(" "), _vm._t("after-content")], 2), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('resize-observer', { on: { "notify": _vm.handleResize } })], 2);
-  }, staticRenderFns: [], _scopeId: 'data-v-727d6836',
-  name: 'virtual-scroller',
+//
+
+var script = {
+  name: 'VirtualScroller',
 
   mixins: [Scroller],
 
   props: {
     renderers: {
+      type: Object,
       default: null
     },
     keyField: {
@@ -383,6 +605,7 @@ var VirtualScroller = { render: function render() {
       default: 'div'
     },
     containerClass: {
+      type: [String, Array, Object],
       default: null
     },
     contentTag: {
@@ -390,6 +613,7 @@ var VirtualScroller = { render: function render() {
       default: 'div'
     },
     contentClass: {
+      type: [String, Array, Object],
       default: null
     },
     poolSize: {
@@ -613,15 +837,178 @@ var VirtualScroller = { render: function render() {
   }
 };
 
+var __vue_script__ = script;
+
+/* template */
+var __vue_render__ = function __vue_render__() {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(_vm.mainTag, {
+    directives: [{
+      name: "observe-visibility",
+      rawName: "v-observe-visibility",
+      value: _vm.handleVisibilityChange,
+      expression: "handleVisibilityChange"
+    }],
+    tag: "component",
+    staticClass: "virtual-scroller",
+    class: _vm.cssClass,
+    on: {
+      "&scroll": function scroll($event) {
+        return _vm.handleScroll($event);
+      }
+    }
+  }, [_vm._t("before-container"), _vm._v(" "), _c(_vm.containerTag, {
+    ref: "itemContainer",
+    tag: "component",
+    staticClass: "item-container",
+    class: _vm.containerClass,
+    style: _vm.itemContainerStyle
+  }, [_vm._t("before-content"), _vm._v(" "), _c(_vm.contentTag, {
+    ref: "items",
+    tag: "component",
+    staticClass: "items",
+    class: _vm.contentClass,
+    style: _vm.itemsStyle
+  }, [_vm.renderers ? _vm._l(_vm.visibleItems, function (item, index) {
+    return _c(_vm.renderers[item[_vm.typeField]], {
+      key: _vm.keysEnabled && item[_vm.keyField] || undefined,
+      tag: "component",
+      staticClass: "item",
+      attrs: {
+        item: item,
+        "item-index": _vm.$_startIndex + index
+      }
+    });
+  }) : [_vm._l(_vm.visibleItems, function (item, index) {
+    return _vm._t("default", null, {
+      item: item,
+      itemIndex: _vm.$_startIndex + index,
+      itemKey: _vm.keysEnabled && item[_vm.keyField] || undefined
+    });
+  })]], 2), _vm._v(" "), _vm._t("after-content")], 2), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c("resize-observer", { on: { notify: _vm.handleResize } })], 2);
+};
+var __vue_staticRenderFns__ = [];
+__vue_render__._withStripped = true;
+
+var __vue_template__ = typeof __vue_render__ !== 'undefined' ? { render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ } : {};
+/* style */
+var __vue_inject_styles__ = function (inject) {
+  if (!inject) return;
+  inject("data-v-caa2d078_0", { source: "\n.virtual-scroller[data-v-caa2d078]:not(.page-mode) {\n  overflow-y: auto;\n}\n.item-container[data-v-caa2d078] {\n  box-sizing: border-box;\n  width: 100%;\n  overflow: hidden;\n}\n.items[data-v-caa2d078] {\n  width: 100%;\n}\n", map: undefined, media: undefined });
+};
+/* scoped */
+var __vue_scope_id__ = "data-v-caa2d078";
+/* module identifier */
+var __vue_module_identifier__ = undefined;
+/* functional template */
+var __vue_is_functional_template__ = false;
+/* component normalizer */
+function __vue_normalize__(template, style, script$$1, scope, functional, moduleIdentifier, createInjector, createInjectorSSR) {
+  var component = (typeof script$$1 === 'function' ? script$$1.options : script$$1) || {};
+
+  {
+    component.__file = "/home/akryum/Projets/vue-virtual-scroller/src/components/VirtualScroller.vue";
+  }
+
+  if (!component.render) {
+    component.render = template.render;
+    component.staticRenderFns = template.staticRenderFns;
+    component._compiled = true;
+
+    if (functional) component.functional = true;
+  }
+
+  component._scopeId = scope;
+
+  {
+    var hook = void 0;
+    if (style) {
+      hook = function hook(context) {
+        style.call(this, createInjector(context));
+      };
+    }
+
+    if (hook !== undefined) {
+      if (component.functional) {
+        // register for functional component in vue file
+        var originalRender = component.render;
+        component.render = function renderWithStyleInjection(h, context) {
+          hook.call(context);
+          return originalRender(h, context);
+        };
+      } else {
+        // inject component registration as beforeCreate hook
+        var existing = component.beforeCreate;
+        component.beforeCreate = existing ? [].concat(existing, hook) : [hook];
+      }
+    }
+  }
+
+  return component;
+}
+/* style inject */
+function __vue_create_injector__() {
+  var head = document.head || document.getElementsByTagName('head')[0];
+  var styles = __vue_create_injector__.styles || (__vue_create_injector__.styles = {});
+  var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\\b/.test(navigator.userAgent.toLowerCase());
+
+  return function addStyle(id, css) {
+    if (document.querySelector('style[data-vue-ssr-id~="' + id + '"]')) return; // SSR styles are present.
+
+    var group = isOldIE ? css.media || 'default' : id;
+    var style = styles[group] || (styles[group] = { ids: [], parts: [], element: undefined });
+
+    if (!style.ids.includes(id)) {
+      var code = css.source;
+      var index = style.ids.length;
+
+      style.ids.push(id);
+
+      if (isOldIE) {
+        style.element = style.element || document.querySelector('style[data-group=' + group + ']');
+      }
+
+      if (!style.element) {
+        var el = style.element = document.createElement('style');
+        el.type = 'text/css';
+
+        if (css.media) el.setAttribute('media', css.media);
+        if (isOldIE) {
+          el.setAttribute('data-group', group);
+          el.setAttribute('data-next-index', '0');
+        }
+
+        head.appendChild(el);
+      }
+
+      if (isOldIE) {
+        index = parseInt(style.element.getAttribute('data-next-index'));
+        style.element.setAttribute('data-next-index', index + 1);
+      }
+
+      if (style.element.styleSheet) {
+        style.parts.push(code);
+        style.element.styleSheet.cssText = style.parts.filter(Boolean).join('\n');
+      } else {
+        var textNode = document.createTextNode(code);
+        var nodes = style.element.childNodes;
+        if (nodes[index]) style.element.removeChild(nodes[index]);
+        if (nodes.length) style.element.insertBefore(textNode, nodes[index]);else style.element.appendChild(textNode);
+      }
+    }
+  };
+}
+/* style inject SSR */
+
+var VirtualScroller = __vue_normalize__(__vue_template__, __vue_inject_styles__, typeof __vue_script__ === 'undefined' ? {} : __vue_script__, __vue_scope_id__, __vue_is_functional_template__, __vue_module_identifier__, typeof __vue_create_injector__ !== 'undefined' ? __vue_create_injector__ : function () {}, typeof __vue_create_injector_ssr__ !== 'undefined' ? __vue_create_injector_ssr__ : function () {});
+
+//
+
 var uid = 0;
 
-var RecycleList = { render: function render() {
-    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('div', { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], staticClass: "recycle-list", class: _vm.cssClass, on: { "&scroll": function scroll($event) {
-          _vm.handleScroll($event);
-        } } }, [_c('div', { ref: "wrapper", staticClass: "item-wrapper", style: { height: _vm.totalHeight + 'px' } }, _vm._l(_vm.pool, function (view) {
-      return _c('div', { key: view.nr.id, staticClass: "item-view", style: { transform: 'translateY(' + view.top + 'px)' } }, [_vm._t("default", null, { item: view.item, index: view.nr.index, active: view.nr.used })], 2);
-    })), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('resize-observer', { on: { "notify": _vm.handleResize } })], 2);
-  }, staticRenderFns: [], _scopeId: 'data-v-68940351',
+var script$1 = {
   name: 'RecycleList',
 
   mixins: [Scroller],
@@ -646,25 +1033,17 @@ var RecycleList = { render: function render() {
 
 
   watch: {
-    items: {
-      handler: function handler() {
-        this.updateVisibleItems({
-          checkItem: true
-        });
-      }
+    items: function items() {
+      this.updateVisibleItems(true);
     },
     pageMode: function pageMode() {
       this.applyPageMode();
-      this.updateVisibleItems({
-        checkItem: false
-      });
+      this.updateVisibleItems(false);
     },
 
     heights: {
       handler: function handler() {
-        this.updateVisibleItems({
-          checkItem: false
-        });
+        this.updateVisibleItems(false);
       },
 
       deep: true
@@ -686,9 +1065,7 @@ var RecycleList = { render: function render() {
 
     this.applyPageMode();
     this.$nextTick(function () {
-      _this.updateVisibleItems({
-        checkItem: true
-      });
+      _this.updateVisibleItems(true);
       _this.$_ready = true;
     });
   },
@@ -733,9 +1110,7 @@ var RecycleList = { render: function render() {
     },
     handleResize: function handleResize() {
       this.$emit('resize');
-      this.$_ready && this.updateVisibleItems({
-        checkItem: false
-      });
+      if (this.$_ready) this.updateVisibleItems(false);
     },
     handleScroll: function handleScroll(event) {
       var _this2 = this;
@@ -745,9 +1120,7 @@ var RecycleList = { render: function render() {
         requestAnimationFrame(function () {
           _this2.$_scrollDirty = false;
 
-          var _updateVisibleItems = _this2.updateVisibleItems({
-            checkItem: false
-          }),
+          var _updateVisibleItems = _this2.updateVisibleItems(false),
               continuous = _updateVisibleItems.continuous;
 
           // It seems sometimes chrome doesn't fire scroll event :/
@@ -767,15 +1140,11 @@ var RecycleList = { render: function render() {
       if (this.$_ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {
         this.$emit('visible');
         requestAnimationFrame(function () {
-          _this3.updateVisibleItems({
-            checkItem: false
-          });
+          _this3.updateVisibleItems(false);
         });
       }
     },
-    updateVisibleItems: function updateVisibleItems(_ref) {
-      var checkItem = _ref.checkItem;
-
+    updateVisibleItems: function updateVisibleItems(checkItem) {
       var scroll = this.getScroll();
       var buffer = parseInt(this.buffer);
       scroll.top -= buffer;
@@ -870,9 +1239,11 @@ var RecycleList = { render: function render() {
           view = pool[_i2];
           if (view.nr.used) {
             // Update view item index
-            if (checkItem) view.nr.index = items.findIndex(function (item) {
-              return keyField ? item[keyField] == view.item[keyField] : item === view.item;
-            });
+            if (checkItem) {
+              view.nr.index = items.findIndex(function (item) {
+                return keyField ? item[keyField] === view.item[keyField] : item === view.item;
+              });
+            }
 
             // Check if index is still in visible range
             if (view.nr.index === -1 || view.nr.index < startIndex || view.nr.index > endIndex) {
@@ -962,14 +1333,166 @@ var RecycleList = { render: function render() {
   }
 };
 
+var __vue_script__$1 = script$1;
+
+/* template */
+var __vue_render__$1 = function __vue_render__() {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", {
+    directives: [{
+      name: "observe-visibility",
+      rawName: "v-observe-visibility",
+      value: _vm.handleVisibilityChange,
+      expression: "handleVisibilityChange"
+    }],
+    staticClass: "recycle-list",
+    class: _vm.cssClass,
+    on: {
+      "&scroll": function scroll($event) {
+        return _vm.handleScroll($event);
+      }
+    }
+  }, [_c("div", {
+    ref: "wrapper",
+    staticClass: "item-wrapper",
+    style: { height: _vm.totalHeight + "px" }
+  }, _vm._l(_vm.pool, function (view) {
+    return _c("div", {
+      key: view.nr.id,
+      staticClass: "item-view",
+      style: { transform: "translateY(" + view.top + "px)" }
+    }, [_vm._t("default", null, {
+      item: view.item,
+      index: view.nr.index,
+      active: view.nr.used
+    })], 2);
+  })), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c("resize-observer", { on: { notify: _vm.handleResize } })], 2);
+};
+var __vue_staticRenderFns__$1 = [];
+__vue_render__$1._withStripped = true;
+
+var __vue_template__$1 = typeof __vue_render__$1 !== 'undefined' ? { render: __vue_render__$1, staticRenderFns: __vue_staticRenderFns__$1 } : {};
+/* style */
+var __vue_inject_styles__$1 = function (inject) {
+  if (!inject) return;
+  inject("data-v-0ff19954_0", { source: "\n.recycle-list[data-v-0ff19954]:not(.page-mode) {\n  overflow-y: auto;\n}\n.item-wrapper[data-v-0ff19954] {\n  box-sizing: border-box;\n  width: 100%;\n  overflow: hidden;\n  position: relative;\n}\n.item-view[data-v-0ff19954] {\n  width: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  will-change: transform;\n}\n", map: undefined, media: undefined });
+};
+/* scoped */
+var __vue_scope_id__$1 = "data-v-0ff19954";
+/* module identifier */
+var __vue_module_identifier__$1 = undefined;
+/* functional template */
+var __vue_is_functional_template__$1 = false;
+/* component normalizer */
+function __vue_normalize__$1(template, style, script, scope, functional, moduleIdentifier, createInjector, createInjectorSSR) {
+  var component = (typeof script === 'function' ? script.options : script) || {};
+
+  {
+    component.__file = "/home/akryum/Projets/vue-virtual-scroller/src/components/RecycleList.vue";
+  }
+
+  if (!component.render) {
+    component.render = template.render;
+    component.staticRenderFns = template.staticRenderFns;
+    component._compiled = true;
+
+    if (functional) component.functional = true;
+  }
+
+  component._scopeId = scope;
+
+  {
+    var hook = void 0;
+    if (style) {
+      hook = function hook(context) {
+        style.call(this, createInjector(context));
+      };
+    }
+
+    if (hook !== undefined) {
+      if (component.functional) {
+        // register for functional component in vue file
+        var originalRender = component.render;
+        component.render = function renderWithStyleInjection(h, context) {
+          hook.call(context);
+          return originalRender(h, context);
+        };
+      } else {
+        // inject component registration as beforeCreate hook
+        var existing = component.beforeCreate;
+        component.beforeCreate = existing ? [].concat(existing, hook) : [hook];
+      }
+    }
+  }
+
+  return component;
+}
+/* style inject */
+function __vue_create_injector__$1() {
+  var head = document.head || document.getElementsByTagName('head')[0];
+  var styles = __vue_create_injector__$1.styles || (__vue_create_injector__$1.styles = {});
+  var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\\b/.test(navigator.userAgent.toLowerCase());
+
+  return function addStyle(id, css) {
+    if (document.querySelector('style[data-vue-ssr-id~="' + id + '"]')) return; // SSR styles are present.
+
+    var group = isOldIE ? css.media || 'default' : id;
+    var style = styles[group] || (styles[group] = { ids: [], parts: [], element: undefined });
+
+    if (!style.ids.includes(id)) {
+      var code = css.source;
+      var index = style.ids.length;
+
+      style.ids.push(id);
+
+      if (isOldIE) {
+        style.element = style.element || document.querySelector('style[data-group=' + group + ']');
+      }
+
+      if (!style.element) {
+        var el = style.element = document.createElement('style');
+        el.type = 'text/css';
+
+        if (css.media) el.setAttribute('media', css.media);
+        if (isOldIE) {
+          el.setAttribute('data-group', group);
+          el.setAttribute('data-next-index', '0');
+        }
+
+        head.appendChild(el);
+      }
+
+      if (isOldIE) {
+        index = parseInt(style.element.getAttribute('data-next-index'));
+        style.element.setAttribute('data-next-index', index + 1);
+      }
+
+      if (style.element.styleSheet) {
+        style.parts.push(code);
+        style.element.styleSheet.cssText = style.parts.filter(Boolean).join('\n');
+      } else {
+        var textNode = document.createTextNode(code);
+        var nodes = style.element.childNodes;
+        if (nodes[index]) style.element.removeChild(nodes[index]);
+        if (nodes.length) style.element.insertBefore(textNode, nodes[index]);else style.element.appendChild(textNode);
+      }
+    }
+  };
+}
+/* style inject SSR */
+
+var RecycleList = __vue_normalize__$1(__vue_template__$1, __vue_inject_styles__$1, typeof __vue_script__$1 === 'undefined' ? {} : __vue_script__$1, __vue_scope_id__$1, __vue_is_functional_template__$1, __vue_module_identifier__$1, typeof __vue_create_injector__$1 !== 'undefined' ? __vue_create_injector__$1 : function () {}, typeof __vue_create_injector_ssr__ !== 'undefined' ? __vue_create_injector_ssr__ : function () {});
+
 function registerComponents(Vue, prefix) {
   Vue.component(prefix + 'virtual-scroller', VirtualScroller);
   Vue.component(prefix + 'recycle-list', RecycleList);
 }
 
-var plugin$4 = {
+var plugin$2 = {
   // eslint-disable-next-line no-undef
-  version: "0.11.8",
+  version: "0.12.0",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
@@ -996,8 +1519,8 @@ if (typeof window !== 'undefined') {
   GlobalVue$2 = global.Vue;
 }
 if (GlobalVue$2) {
-  GlobalVue$2.use(plugin$4);
+  GlobalVue$2.use(plugin$2);
 }
 
-export default plugin$4;
+export default plugin$2;
 export { VirtualScroller, RecycleList };
