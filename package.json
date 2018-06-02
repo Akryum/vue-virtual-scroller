@@ -64,5 +64,10 @@
     "scrollparent": "^2.0.1",
     "vue-observe-visibility": "^0.4.1",
     "vue-resize": "^0.4.4"
-  }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
 }
