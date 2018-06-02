@@ -64,24 +64,16 @@ export default {
   },
 
   watch: {
-    items: {
-      handler () {
-        this.updateVisibleItems({
-          checkItem: true,
-        })
+    items () {
+      this.updateVisibleItems(true)
       },
-    },
     pageMode () {
       this.applyPageMode()
-      this.updateVisibleItems({
-        checkItem: false,
-      })
+      this.updateVisibleItems(false)
     },
     heights: {
       handler () {
-        this.updateVisibleItems({
-          checkItem: false,
-        })
+        this.updateVisibleItems(false)
       },
       deep: true,
     },
@@ -101,9 +93,7 @@ export default {
   mounted () {
     this.applyPageMode()
     this.$nextTick(() => {
-      this.updateVisibleItems({
-        checkItem: true,
-      })
+      this.updateVisibleItems(true)
       this.$_ready = true
     })
   },
@@ -147,9 +137,7 @@ export default {
 
     handleResize () {
       this.$emit('resize')
-      this.$_ready && this.updateVisibleItems({
-        checkItem: false,
-      })
+      if (this.$_ready) this.updateVisibleItems(false)
     },
 
     handleScroll (event) {
@@ -157,9 +145,7 @@ export default {
         this.$_scrollDirty = true
         requestAnimationFrame(() => {
           this.$_scrollDirty = false
-          const { continuous } = this.updateVisibleItems({
-            checkItem: false,
-          })
+          const { continuous } = this.updateVisibleItems(false)
 
           // It seems sometimes chrome doesn't fire scroll event :/
           // When non continous scrolling is ending, we force a refresh
@@ -175,14 +161,12 @@ export default {
       if (this.$_ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {
         this.$emit('visible')
         requestAnimationFrame(() => {
-          this.updateVisibleItems({
-            checkItem: false,
+          this.updateVisibleItems(false)
           })
-        })
       }
     },
 
-    updateVisibleItems ({ checkItem }) {
+    updateVisibleItems (checkItem) {
       const scroll = this.getScroll()
       const buffer = parseInt(this.buffer)
       scroll.top -= buffer
