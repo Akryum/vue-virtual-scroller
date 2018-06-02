@@ -1,5 +1,6 @@
 import { ResizeObserver } from 'vue-resize'
 import { ObserveVisibility } from 'vue-observe-visibility'
+import ScrollParent from 'scrollparent'
 import { supportsPassive } from '../utils'
 
 // @vue/component
@@ -79,10 +80,19 @@ export default {
   },
 
   beforeDestroy () {
-    this.removeWindowScroll()
+    this.removeListeners()
   },
 
   methods: {
+
+    getListenerTarget () {
+      let target = ScrollParent(this.$el)
+      if (target === window.document.documentElement) {
+        target = window
+      }
+      return target
+    },
+
     getScroll () {
       const el = this.$el
       let scroll
@@ -118,22 +128,29 @@ export default {
 
     applyPageMode () {
       if (this.pageMode) {
-        this.addWindowScroll()
+        this.addListeners()
       } else {
-        this.removeWindowScroll()
+        this.removeListeners()
       }
     },
 
-    addWindowScroll () {
-      window.addEventListener('scroll', this.handleScroll, supportsPassive ? {
+    addListeners () {
+      this.listenerTarget = this.getListenerTarget()
+      this.listenerTarget.addEventListener('scroll', this.handleScroll, supportsPassive ? {
         passive: true,
       } : false)
-      window.addEventListener('resize', this.handleResize)
+      this.listenerTarget.addEventListener('resize', this.handleResize)
     },
 
-    removeWindowScroll () {
-      window.removeEventListener('scroll', this.handleScroll)
-      window.removeEventListener('resize', this.handleResize)
+    removeListeners () {
+      if (!this.listenerTarget) {
+        return
+      }
+
+      this.listenerTarget.removeEventListener('scroll', this.handleScroll)
+      this.listenerTarget.removeEventListener('resize', this.handleResize)
+
+      this.listenerTarget = null
     },
 
     scrollToItem (index) {

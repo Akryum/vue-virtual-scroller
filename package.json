@@ -62,6 +62,7 @@
     "vue-template-compiler": "^2.2.5"
   },
   "dependencies": {
+    "scrollparent": "^2.0.1",
     "vue-observe-visibility": "^0.3.1",
     "vue-resize": "^0.4.2"
   }
