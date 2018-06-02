@@ -84,7 +84,6 @@ export default {
   },
 
   methods: {
-
     getListenerTarget () {
       let target = ScrollParent(this.$el)
       if (target === window.document.documentElement) {
@@ -95,7 +94,7 @@ export default {
 
     getScroll () {
       const el = this.$el
-      let scroll
+      let scrollState
 
       if (this.pageMode) {
         const rect = el.getBoundingClientRect()
@@ -108,22 +107,18 @@ export default {
         if (top + height > rect.height) {
           height = rect.height - top
         }
-        scroll = {
-          top: top,
+        scrollState = {
+          top,
           bottom: top + height,
         }
       } else {
-        scroll = {
+        scrollState = {
           top: el.scrollTop,
           bottom: el.scrollTop + el.clientHeight,
         }
       }
 
-      if (scroll.bottom >= 0 && scroll.top <= scroll.bottom) {
-        return scroll
-      } else {
-        return null
-      }
+      return scrollState
     },
 
     applyPageMode () {
