@@ -66,7 +66,7 @@ export default {
   watch: {
     items () {
       this.updateVisibleItems(true)
-      },
+    },
     pageMode () {
       this.applyPageMode()
       this.updateVisibleItems(false)
@@ -162,7 +162,7 @@ export default {
         this.$emit('visible')
         requestAnimationFrame(() => {
           this.updateVisibleItems(false)
-          })
+        })
       }
     },
 
