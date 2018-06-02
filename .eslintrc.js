@@ -12,7 +12,7 @@ module.exports = {
   ],
   // required to lint *.vue files
   plugins: [
-    'html',
+    'vue',
   ],
   env: {
     browser: true,
