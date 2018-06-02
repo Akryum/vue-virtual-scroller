@@ -1,20 +1,20 @@
 <template>
   <div
-    class="recycle-list"
-    :class="cssClass"
-    @scroll.passive="handleScroll"
     v-observe-visibility="handleVisibilityChange"
+    :class="cssClass"
+    class="recycle-list"
+    @scroll.passive="handleScroll"
   >
     <div
       ref="wrapper"
-      class="item-wrapper"
       :style="{ height: totalHeight + 'px' }"
+      class="item-wrapper"
     >
       <div
         v-for="view of pool"
         :key="view.nr.id"
-        class="item-view"
         :style="{ transform: 'translateY(' + view.top + 'px)' }"
+        class="item-view"
       >
         <slot
           :item="view.item"
