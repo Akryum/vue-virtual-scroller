@@ -276,9 +276,11 @@ export default {
           view = pool[i]
           if (view.nr.used) {
             // Update view item index
-            if (checkItem) view.nr.index = items.findIndex(
-              item => keyField ? item[keyField] == view.item[keyField] : item === view.item
-            )
+            if (checkItem) {
+              view.nr.index = items.findIndex(
+                item => keyField ? item[keyField] === view.item[keyField] : item === view.item
+              )
+            }
 
             // Check if index is still in visible range
             if (
@@ -346,7 +348,7 @@ export default {
             v++
           }
           views.set(key, view)
-        } else  {
+        } else {
           view.nr.used = true
         }
 
