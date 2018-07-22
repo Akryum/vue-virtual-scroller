@@ -16,9 +16,11 @@
       :style="itemContainerStyle"
       class="item-container"
     >
-      <slot
-        name="before-content"
-      />
+      <div ref="beforeContentContainer">
+        <slot
+          name="before-content"
+        />
+      </div>
       <component
         ref="items"
         :is="contentTag"
@@ -253,6 +255,9 @@ export default {
             ) {
               this.keysEnabled = !(startIndex > this.$_endIndex || endIndex < this.$_startIndex)
 
+              if (this.$refs.beforeContentContainer.childElementCount) {
+                containerHeight = containerHeight + this.$refs.beforeContentContainer.clientHeight
+              }
               this.itemContainerStyle = {
                 height: containerHeight + 'px',
               }
