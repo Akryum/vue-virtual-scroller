@@ -86,6 +86,7 @@ export default {
   methods: {
     getListenerTarget () {
       let target = ScrollParent(this.$el)
+      // Fix global scroll target for Chrome and Safari
       if (target === window.document.documentElement || target === window.document.body) {
         target = window
       }
