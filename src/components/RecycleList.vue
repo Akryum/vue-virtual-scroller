@@ -5,6 +5,10 @@
     class="recycle-list"
     @scroll.passive="handleScroll"
   >
+    <slot
+      name="before-container"
+    />
+
     <div
       ref="wrapper"
       :style="{ height: totalHeight + 'px' }"
