@@ -162,11 +162,15 @@ export default {
     },
 
     handleVisibilityChange (isVisible, entry) {
-      if (this.$_ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {
-        this.$emit('visible')
-        requestAnimationFrame(() => {
-          this.updateVisibleItems(false)
-        })
+      if (this.$_ready) {
+        if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {
+          this.$emit('visible')
+          requestAnimationFrame(() => {
+            this.updateVisibleItems(false)
+          })
+        } else {
+          this.$emit('hidden')
+        }
       }
     },
 
