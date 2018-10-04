@@ -63,7 +63,7 @@
   },
   "dependencies": {
     "scrollparent": "^2.0.1",
-    "vue-observe-visibility": "^0.4.1",
+    "vue-observe-visibility": "^0.4.3",
     "vue-resize": "^0.4.4"
   },
   "browserslist": [
