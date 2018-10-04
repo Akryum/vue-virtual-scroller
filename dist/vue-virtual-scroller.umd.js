@@ -123,6 +123,16 @@
   	GlobalVue.use(plugin);
   }
 
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+  };
+
+
+
+
+
   var classCallCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
@@ -235,12 +245,26 @@
   	return throttled;
   }
 
+  function deepEqual(val1, val2) {
+  	if (val1 === val2) return true;
+  	if ((typeof val1 === 'undefined' ? 'undefined' : _typeof(val1)) === 'object') {
+  		for (var key in val1) {
+  			if (!deepEqual(val1[key], val2[key])) {
+  				return false;
+  			}
+  		}
+  		return true;
+  	}
+  	return false;
+  }
+
   var VisibilityState = function () {
   	function VisibilityState(el, options, vnode) {
   		classCallCheck(this, VisibilityState);
 
   		this.el = el;
   		this.observer = null;
+  		this.frozen = false;
   		this.createObserver(options, vnode);
   	}
 
@@ -253,6 +277,8 @@
   				this.destroyObserver();
   			}
 
+  			if (this.frozen) return;
+
   			this.options = processOptions(options);
 
   			this.callback = this.options.callback;
@@ -261,11 +287,20 @@
   				this.callback = throttle(this.callback, this.options.throttle);
   			}
 
+  			this.oldResult = undefined;
+
   			this.observer = new IntersectionObserver(function (entries) {
   				var entry = entries[0];
   				if (_this.callback) {
   					// Use isIntersecting if possible because browsers can report isIntersecting as true, but intersectionRatio as 0, when something very slowly enters the viewport.
-  					_this.callback(entry.isIntersecting && entry.intersectionRatio >= _this.threshold, entry);
+  					var result = entry.isIntersecting && entry.intersectionRatio >= _this.threshold;
+  					if (result === _this.oldResult) return;
+  					_this.oldResult = result;
+  					_this.callback(result, entry);
+  					if (result && _this.options.once) {
+  						_this.frozen = true;
+  						_this.destroyObserver();
+  					}
   				}
   			}, this.options.intersection);
 
@@ -279,11 +314,13 @@
   		value: function destroyObserver() {
   			if (this.observer) {
   				this.observer.disconnect();
+  				this.observer = null;
   			}
 
   			// Cancel throttled call
   			if (this.callback && this.callback._clear) {
   				this.callback._clear();
+  				this.callback = null;
   			}
   		}
   	}, {
@@ -295,34 +332,42 @@
   	return VisibilityState;
   }();
 
-  var ObserveVisibility = {
-  	bind: function bind(el, _ref, vnode) {
-  		var value = _ref.value;
+  function bind(el, _ref, vnode) {
+  	var value = _ref.value;
 
-  		if (typeof IntersectionObserver === 'undefined') {
-  			console.warn('[vue-observe-visibility] IntersectionObserver API is not available in your browser. Please install this polyfill: https://github.com/w3c/IntersectionObserver/tree/master/polyfill');
-  		} else {
-  			var state = new VisibilityState(el, value, vnode);
-  			el._vue_visibilityState = state;
-  		}
-  	},
-  	update: function update(el, _ref2, vnode) {
-  		var value = _ref2.value;
-
-  		var state = el._vue_visibilityState;
-  		if (state) {
-  			state.createObserver(value, vnode);
-  		} else {
-  			this.bind(el, { value: value }, vnode);
-  		}
-  	},
-  	unbind: function unbind(el) {
-  		var state = el._vue_visibilityState;
-  		if (state) {
-  			state.destroyObserver();
-  			delete el._vue_visibilityState;
-  		}
+  	if (typeof IntersectionObserver === 'undefined') {
+  		console.warn('[vue-observe-visibility] IntersectionObserver API is not available in your browser. Please install this polyfill: https://github.com/w3c/IntersectionObserver/tree/master/polyfill');
+  	} else {
+  		var state = new VisibilityState(el, value, vnode);
+  		el._vue_visibilityState = state;
   	}
+  }
+
+  function update(el, _ref2, vnode) {
+  	var value = _ref2.value,
+  	    oldValue = _ref2.oldValue;
+
+  	if (deepEqual(value, oldValue)) return;
+  	var state = el._vue_visibilityState;
+  	if (state) {
+  		state.createObserver(value, vnode);
+  	} else {
+  		bind(el, { value: value }, vnode);
+  	}
+  }
+
+  function unbind(el) {
+  	var state = el._vue_visibilityState;
+  	if (state) {
+  		state.destroyObserver();
+  		delete el._vue_visibilityState;
+  	}
+  }
+
+  var ObserveVisibility = {
+  	bind: bind,
+  	update: update,
+  	unbind: unbind
   };
 
   // Install the components
@@ -337,7 +382,7 @@
   // Plugin
   var plugin$1 = {
   	// eslint-disable-next-line no-undef
-  	version: "0.4.1",
+  	version: "0.4.3",
   	install: install$1
   };
 
@@ -1143,11 +1188,15 @@
       handleVisibilityChange: function handleVisibilityChange(isVisible, entry) {
         var _this3 = this;
 
-        if (this.$_ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {
-          this.$emit('visible');
-          requestAnimationFrame(function () {
-            _this3.updateVisibleItems(false);
-          });
+        if (this.$_ready) {
+          if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {
+            this.$emit('visible');
+            requestAnimationFrame(function () {
+              _this3.updateVisibleItems(false);
+            });
+          } else {
+            this.$emit('hidden');
+          }
         }
       },
       updateVisibleItems: function updateVisibleItems(checkItem) {
@@ -1383,10 +1432,10 @@
   /* style */
   var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
     if (!inject) return;
-    inject("data-v-877e228e_0", { source: "\n.recycle-list[data-v-877e228e]:not(.page-mode) {\n  overflow-y: auto;\n}\n.item-wrapper[data-v-877e228e] {\n  box-sizing: border-box;\n  width: 100%;\n  overflow: hidden;\n  position: relative;\n}\n.item-view[data-v-877e228e] {\n  width: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  will-change: transform;\n}\n", map: { "version": 3, "sources": ["/home/akryum/Projects/vue-virtual-scroller/src/components/RecycleList.vue"], "names": [], "mappings": ";AA4WA;EACA,iBAAA;CACA;AAEA;EACA,uBAAA;EACA,YAAA;EACA,iBAAA;EACA,mBAAA;CACA;AAEA;EACA,YAAA;EACA,mBAAA;EACA,OAAA;EACA,QAAA;EACA,uBAAA;CACA", "file": "RecycleList.vue", "sourcesContent": ["<template>\n  <div\n    v-observe-visibility=\"handleVisibilityChange\"\n    :class=\"cssClass\"\n    class=\"recycle-list\"\n    @scroll.passive=\"handleScroll\"\n  >\n    <slot\n      name=\"before-container\"\n    />\n\n    <div\n      ref=\"wrapper\"\n      :style=\"{ height: totalHeight + 'px' }\"\n      class=\"item-wrapper\"\n    >\n      <div\n        v-for=\"view of pool\"\n        :key=\"view.nr.id\"\n        :style=\"{ transform: 'translateY(' + view.top + 'px)' }\"\n        class=\"item-view\"\n      >\n        <slot\n          :item=\"view.item\"\n          :index=\"view.nr.index\"\n          :active=\"view.nr.used\"\n        />\n      </div>\n    </div>\n\n    <slot\n      name=\"after-container\"\n    />\n\n    <resize-observer @notify=\"handleResize\" />\n  </div>\n</template>\n\n<script>\nimport Scroller from '../mixins/scroller'\nimport config from '../config'\n\nlet uid = 0\n\nexport default {\n  name: 'RecycleList',\n\n  mixins: [\n    Scroller,\n  ],\n\n  props: {\n    itemHeight: {\n      type: Number,\n      default: null,\n    },\n    keyField: {\n      type: String,\n      default: null,\n    },\n  },\n\n  data () {\n    return {\n      pool: [],\n      totalHeight: 0,\n    }\n  },\n\n  watch: {\n    items () {\n      this.updateVisibleItems(true)\n    },\n    pageMode () {\n      this.applyPageMode()\n      this.updateVisibleItems(false)\n    },\n    heights: {\n      handler () {\n        this.updateVisibleItems(false)\n      },\n      deep: true,\n    },\n  },\n\n  created () {\n    this.$_ready = false\n    this.$_startIndex = 0\n    this.$_endIndex = 0\n    this.$_views = new Map()\n    this.$_unusedViews = new Map()\n    this.$_scrollDirty = false\n\n    // TODO prerender\n  },\n\n  mounted () {\n    this.applyPageMode()\n    this.$nextTick(() => {\n      this.updateVisibleItems(true)\n      this.$_ready = true\n    })\n  },\n\n  methods: {\n    addView (pool, index, item, key, type) {\n      const view = {\n        item,\n        top: 0,\n      }\n      const nonReactive = {\n        id: uid++,\n        index,\n        used: true,\n        key,\n        type,\n      }\n      Object.defineProperty(view, 'nr', {\n        configurable: false,\n        value: nonReactive,\n      })\n      pool.push(view)\n      return view\n    },\n\n    unuseView (view, fake = false) {\n      const unusedViews = this.$_unusedViews\n      const type = view.nr.type\n      let unusedPool = unusedViews.get(type)\n      if (!unusedPool) {\n        unusedPool = []\n        unusedViews.set(type, unusedPool)\n      }\n      unusedPool.push(view)\n      if (!fake) {\n        view.nr.used = false\n        view.top = -9999\n        this.$_views.delete(view.nr.key)\n      }\n    },\n\n    handleResize () {\n      this.$emit('resize')\n      if (this.$_ready) this.updateVisibleItems(false)\n    },\n\n    handleScroll (event) {\n      if (!this.$_scrollDirty) {\n        this.$_scrollDirty = true\n        requestAnimationFrame(() => {\n          this.$_scrollDirty = false\n          const { continuous } = this.updateVisibleItems(false)\n\n          // It seems sometimes chrome doesn't fire scroll event :/\n          // When non continous scrolling is ending, we force a refresh\n          if (!continuous) {\n            clearTimeout(this.$_refreshTimout)\n            this.$_refreshTimout = setTimeout(this.handleScroll, 100)\n          }\n        })\n      }\n    },\n\n    handleVisibilityChange (isVisible, entry) {\n      if (this.$_ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {\n        this.$emit('visible')\n        requestAnimationFrame(() => {\n          this.updateVisibleItems(false)\n        })\n      }\n    },\n\n    updateVisibleItems (checkItem) {\n      const scroll = this.getScroll()\n      const buffer = parseInt(this.buffer)\n      scroll.top -= buffer\n      scroll.bottom += buffer\n\n      const itemHeight = this.itemHeight\n      const typeField = this.typeField\n      const keyField = this.keyField\n      const items = this.items\n      const count = items.length\n      const heights = this.heights\n      const views = this.$_views\n      let unusedViews = this.$_unusedViews\n      const pool = this.pool\n      let startIndex, endIndex\n      let totalHeight\n\n      if (!count) {\n        startIndex = endIndex = totalHeight = 0\n      } else {\n        // Variable height mode\n        if (itemHeight === null) {\n          let h\n          let a = 0\n          let b = count - 1\n          let i = ~~(count / 2)\n          let oldI\n\n          // Searching for startIndex\n          do {\n            oldI = i\n            h = heights[i].accumulator\n            if (h < scroll.top) {\n              a = i\n            } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {\n              b = i\n            }\n            i = ~~((a + b) / 2)\n          } while (i !== oldI)\n          i < 0 && (i = 0)\n          startIndex = i\n\n          // For container style\n          totalHeight = heights[count - 1].accumulator\n\n          // Searching for endIndex\n          for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++);\n          if (endIndex === -1) {\n            endIndex = items.length - 1\n          } else {\n            endIndex++\n            // Bounds\n            endIndex > count && (endIndex = count)\n          }\n        } else {\n          // Fixed height mode\n          startIndex = ~~(scroll.top / itemHeight)\n          endIndex = Math.ceil(scroll.bottom / itemHeight)\n\n          // Bounds\n          startIndex < 0 && (startIndex = 0)\n          endIndex > count && (endIndex = count)\n\n          totalHeight = count * itemHeight\n        }\n      }\n\n      if (endIndex - startIndex > config.itemsLimit) {\n        this.itemsLimitError()\n      }\n\n      this.totalHeight = totalHeight\n\n      let view\n\n      const continuous = startIndex <= this.$_endIndex && endIndex >= this.$_startIndex\n      let unusedIndex\n\n      if (this.$_continuous !== continuous) {\n        if (continuous) {\n          views.clear()\n          unusedViews.clear()\n          for (let i = 0, l = pool.length; i < l; i++) {\n            view = pool[i]\n            this.unuseView(view)\n          }\n        }\n        this.$_continuous = continuous\n      } else if (continuous) {\n        for (let i = 0, l = pool.length; i < l; i++) {\n          view = pool[i]\n          if (view.nr.used) {\n            // Update view item index\n            if (checkItem) {\n              view.nr.index = items.findIndex(\n                item => keyField ? item[keyField] === view.item[keyField] : item === view.item\n              )\n            }\n\n            // Check if index is still in visible range\n            if (\n              view.nr.index === -1 ||\n              view.nr.index < startIndex ||\n              view.nr.index > endIndex\n            ) {\n              this.unuseView(view)\n            }\n          }\n        }\n      }\n\n      if (!continuous) {\n        unusedIndex = new Map()\n      }\n\n      let item, type, unusedPool\n      let v\n      for (let i = startIndex; i < endIndex; i++) {\n        item = items[i]\n        const key = keyField ? item[keyField] : item\n        view = views.get(key)\n\n        if (!itemHeight && !heights[i].height) {\n          if (view) this.unuseView(view)\n          continue\n        }\n\n        // No view assigned to item\n        if (!view) {\n          type = item[typeField]\n\n          if (continuous) {\n            unusedPool = unusedViews.get(type)\n            // Reuse existing view\n            if (unusedPool && unusedPool.length) {\n              view = unusedPool.pop()\n              view.item = item\n              view.nr.used = true\n              view.nr.index = i\n              view.nr.key = key\n              view.nr.type = type\n            } else {\n              view = this.addView(pool, i, item, key, type)\n            }\n          } else {\n            unusedPool = unusedViews.get(type)\n            v = unusedIndex.get(type) || 0\n            // Use existing view\n            // We don't care if they are already used\n            // because we are not in continous scrolling\n            if (unusedPool && v < unusedPool.length) {\n              view = unusedPool[v]\n              view.item = item\n              view.nr.used = true\n              view.nr.index = i\n              view.nr.key = key\n              view.nr.type = type\n              unusedIndex.set(type, v + 1)\n            } else {\n              view = this.addView(pool, i, item, key, type)\n              this.unuseView(view, true)\n            }\n            v++\n          }\n          views.set(key, view)\n        } else {\n          view.nr.used = true\n        }\n\n        // Update position\n        if (itemHeight === null) {\n          view.top = heights[i - 1].accumulator\n        } else {\n          view.top = i * itemHeight\n        }\n      }\n\n      this.$_startIndex = startIndex\n      this.$_endIndex = endIndex\n\n      this.emitUpdate && this.$emit('update', startIndex, endIndex)\n\n      return {\n        continuous,\n      }\n    },\n  },\n}\n</script>\n\n<style scoped>\n.recycle-list:not(.page-mode) {\n  overflow-y: auto;\n}\n\n.item-wrapper {\n  box-sizing: border-box;\n  width: 100%;\n  overflow: hidden;\n  position: relative;\n}\n\n.item-view {\n  width: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  will-change: transform;\n}\n</style>\n"] }, media: undefined });
+    inject("data-v-e814ad22_0", { source: "\n.recycle-list[data-v-e814ad22]:not(.page-mode) {\n  overflow-y: auto;\n}\n.item-wrapper[data-v-e814ad22] {\n  box-sizing: border-box;\n  width: 100%;\n  overflow: hidden;\n  position: relative;\n}\n.item-view[data-v-e814ad22] {\n  width: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  will-change: transform;\n}\n", map: { "version": 3, "sources": ["/home/akryum/Projects/vue-virtual-scroller/src/components/RecycleList.vue"], "names": [], "mappings": ";AAgXA;EACA,iBAAA;CACA;AAEA;EACA,uBAAA;EACA,YAAA;EACA,iBAAA;EACA,mBAAA;CACA;AAEA;EACA,YAAA;EACA,mBAAA;EACA,OAAA;EACA,QAAA;EACA,uBAAA;CACA", "file": "RecycleList.vue", "sourcesContent": ["<template>\n  <div\n    v-observe-visibility=\"handleVisibilityChange\"\n    :class=\"cssClass\"\n    class=\"recycle-list\"\n    @scroll.passive=\"handleScroll\"\n  >\n    <slot\n      name=\"before-container\"\n    />\n\n    <div\n      ref=\"wrapper\"\n      :style=\"{ height: totalHeight + 'px' }\"\n      class=\"item-wrapper\"\n    >\n      <div\n        v-for=\"view of pool\"\n        :key=\"view.nr.id\"\n        :style=\"{ transform: 'translateY(' + view.top + 'px)' }\"\n        class=\"item-view\"\n      >\n        <slot\n          :item=\"view.item\"\n          :index=\"view.nr.index\"\n          :active=\"view.nr.used\"\n        />\n      </div>\n    </div>\n\n    <slot\n      name=\"after-container\"\n    />\n\n    <resize-observer @notify=\"handleResize\" />\n  </div>\n</template>\n\n<script>\nimport Scroller from '../mixins/scroller'\nimport config from '../config'\n\nlet uid = 0\n\nexport default {\n  name: 'RecycleList',\n\n  mixins: [\n    Scroller,\n  ],\n\n  props: {\n    itemHeight: {\n      type: Number,\n      default: null,\n    },\n    keyField: {\n      type: String,\n      default: null,\n    },\n  },\n\n  data () {\n    return {\n      pool: [],\n      totalHeight: 0,\n    }\n  },\n\n  watch: {\n    items () {\n      this.updateVisibleItems(true)\n    },\n    pageMode () {\n      this.applyPageMode()\n      this.updateVisibleItems(false)\n    },\n    heights: {\n      handler () {\n        this.updateVisibleItems(false)\n      },\n      deep: true,\n    },\n  },\n\n  created () {\n    this.$_ready = false\n    this.$_startIndex = 0\n    this.$_endIndex = 0\n    this.$_views = new Map()\n    this.$_unusedViews = new Map()\n    this.$_scrollDirty = false\n\n    // TODO prerender\n  },\n\n  mounted () {\n    this.applyPageMode()\n    this.$nextTick(() => {\n      this.updateVisibleItems(true)\n      this.$_ready = true\n    })\n  },\n\n  methods: {\n    addView (pool, index, item, key, type) {\n      const view = {\n        item,\n        top: 0,\n      }\n      const nonReactive = {\n        id: uid++,\n        index,\n        used: true,\n        key,\n        type,\n      }\n      Object.defineProperty(view, 'nr', {\n        configurable: false,\n        value: nonReactive,\n      })\n      pool.push(view)\n      return view\n    },\n\n    unuseView (view, fake = false) {\n      const unusedViews = this.$_unusedViews\n      const type = view.nr.type\n      let unusedPool = unusedViews.get(type)\n      if (!unusedPool) {\n        unusedPool = []\n        unusedViews.set(type, unusedPool)\n      }\n      unusedPool.push(view)\n      if (!fake) {\n        view.nr.used = false\n        view.top = -9999\n        this.$_views.delete(view.nr.key)\n      }\n    },\n\n    handleResize () {\n      this.$emit('resize')\n      if (this.$_ready) this.updateVisibleItems(false)\n    },\n\n    handleScroll (event) {\n      if (!this.$_scrollDirty) {\n        this.$_scrollDirty = true\n        requestAnimationFrame(() => {\n          this.$_scrollDirty = false\n          const { continuous } = this.updateVisibleItems(false)\n\n          // It seems sometimes chrome doesn't fire scroll event :/\n          // When non continous scrolling is ending, we force a refresh\n          if (!continuous) {\n            clearTimeout(this.$_refreshTimout)\n            this.$_refreshTimout = setTimeout(this.handleScroll, 100)\n          }\n        })\n      }\n    },\n\n    handleVisibilityChange (isVisible, entry) {\n      if (this.$_ready) {\n        if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {\n          this.$emit('visible')\n          requestAnimationFrame(() => {\n            this.updateVisibleItems(false)\n          })\n        } else {\n          this.$emit('hidden')\n        }\n      }\n    },\n\n    updateVisibleItems (checkItem) {\n      const scroll = this.getScroll()\n      const buffer = parseInt(this.buffer)\n      scroll.top -= buffer\n      scroll.bottom += buffer\n\n      const itemHeight = this.itemHeight\n      const typeField = this.typeField\n      const keyField = this.keyField\n      const items = this.items\n      const count = items.length\n      const heights = this.heights\n      const views = this.$_views\n      let unusedViews = this.$_unusedViews\n      const pool = this.pool\n      let startIndex, endIndex\n      let totalHeight\n\n      if (!count) {\n        startIndex = endIndex = totalHeight = 0\n      } else {\n        // Variable height mode\n        if (itemHeight === null) {\n          let h\n          let a = 0\n          let b = count - 1\n          let i = ~~(count / 2)\n          let oldI\n\n          // Searching for startIndex\n          do {\n            oldI = i\n            h = heights[i].accumulator\n            if (h < scroll.top) {\n              a = i\n            } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {\n              b = i\n            }\n            i = ~~((a + b) / 2)\n          } while (i !== oldI)\n          i < 0 && (i = 0)\n          startIndex = i\n\n          // For container style\n          totalHeight = heights[count - 1].accumulator\n\n          // Searching for endIndex\n          for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++);\n          if (endIndex === -1) {\n            endIndex = items.length - 1\n          } else {\n            endIndex++\n            // Bounds\n            endIndex > count && (endIndex = count)\n          }\n        } else {\n          // Fixed height mode\n          startIndex = ~~(scroll.top / itemHeight)\n          endIndex = Math.ceil(scroll.bottom / itemHeight)\n\n          // Bounds\n          startIndex < 0 && (startIndex = 0)\n          endIndex > count && (endIndex = count)\n\n          totalHeight = count * itemHeight\n        }\n      }\n\n      if (endIndex - startIndex > config.itemsLimit) {\n        this.itemsLimitError()\n      }\n\n      this.totalHeight = totalHeight\n\n      let view\n\n      const continuous = startIndex <= this.$_endIndex && endIndex >= this.$_startIndex\n      let unusedIndex\n\n      if (this.$_continuous !== continuous) {\n        if (continuous) {\n          views.clear()\n          unusedViews.clear()\n          for (let i = 0, l = pool.length; i < l; i++) {\n            view = pool[i]\n            this.unuseView(view)\n          }\n        }\n        this.$_continuous = continuous\n      } else if (continuous) {\n        for (let i = 0, l = pool.length; i < l; i++) {\n          view = pool[i]\n          if (view.nr.used) {\n            // Update view item index\n            if (checkItem) {\n              view.nr.index = items.findIndex(\n                item => keyField ? item[keyField] === view.item[keyField] : item === view.item\n              )\n            }\n\n            // Check if index is still in visible range\n            if (\n              view.nr.index === -1 ||\n              view.nr.index < startIndex ||\n              view.nr.index > endIndex\n            ) {\n              this.unuseView(view)\n            }\n          }\n        }\n      }\n\n      if (!continuous) {\n        unusedIndex = new Map()\n      }\n\n      let item, type, unusedPool\n      let v\n      for (let i = startIndex; i < endIndex; i++) {\n        item = items[i]\n        const key = keyField ? item[keyField] : item\n        view = views.get(key)\n\n        if (!itemHeight && !heights[i].height) {\n          if (view) this.unuseView(view)\n          continue\n        }\n\n        // No view assigned to item\n        if (!view) {\n          type = item[typeField]\n\n          if (continuous) {\n            unusedPool = unusedViews.get(type)\n            // Reuse existing view\n            if (unusedPool && unusedPool.length) {\n              view = unusedPool.pop()\n              view.item = item\n              view.nr.used = true\n              view.nr.index = i\n              view.nr.key = key\n              view.nr.type = type\n            } else {\n              view = this.addView(pool, i, item, key, type)\n            }\n          } else {\n            unusedPool = unusedViews.get(type)\n            v = unusedIndex.get(type) || 0\n            // Use existing view\n            // We don't care if they are already used\n            // because we are not in continous scrolling\n            if (unusedPool && v < unusedPool.length) {\n              view = unusedPool[v]\n              view.item = item\n              view.nr.used = true\n              view.nr.index = i\n              view.nr.key = key\n              view.nr.type = type\n              unusedIndex.set(type, v + 1)\n            } else {\n              view = this.addView(pool, i, item, key, type)\n              this.unuseView(view, true)\n            }\n            v++\n          }\n          views.set(key, view)\n        } else {\n          view.nr.used = true\n        }\n\n        // Update position\n        if (itemHeight === null) {\n          view.top = heights[i - 1].accumulator\n        } else {\n          view.top = i * itemHeight\n        }\n      }\n\n      this.$_startIndex = startIndex\n      this.$_endIndex = endIndex\n\n      this.emitUpdate && this.$emit('update', startIndex, endIndex)\n\n      return {\n        continuous,\n      }\n    },\n  },\n}\n</script>\n\n<style scoped>\n.recycle-list:not(.page-mode) {\n  overflow-y: auto;\n}\n\n.item-wrapper {\n  box-sizing: border-box;\n  width: 100%;\n  overflow: hidden;\n  position: relative;\n}\n\n.item-view {\n  width: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  will-change: transform;\n}\n</style>\n"] }, media: undefined });
   };
   /* scoped */
-  var __vue_scope_id__$1 = "data-v-877e228e";
+  var __vue_scope_id__$1 = "data-v-e814ad22";
   /* module identifier */
   var __vue_module_identifier__$1 = undefined;
   /* functional template */
@@ -1497,7 +1546,7 @@
 
   var plugin$2 = {
     // eslint-disable-next-line no-undef
-    version: "0.12.1",
+    version: "0.12.2",
     install: function install(Vue, options) {
       var finalOptions = Object.assign({}, {
         installComponents: true,
