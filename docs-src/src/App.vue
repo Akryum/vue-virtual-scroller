@@ -27,13 +27,18 @@
         <input v-model.number="poolSize" type="number" min="1" max="500000" /> poolSize
       </span>
       <span>
-        <button @mousedown="showScroller = !showScroller">Toggle scroller</button>
+        <button @mousedown="renderScroller = !renderScroller">Toggle render</button>
+        <button @mousedown="showScroller = !showScroller">Toggle visibility</button>
         <label v-if="!recycleList"><input type="checkbox" v-model="scopedSlots" :disabled="recycleList" /> Scoped slots</label>
         <label><input type="checkbox" v-model="recycleList" /> Use recycle list</label>
       </span>
     </div>
 
-    <div class="content" v-if="showScroller">
+    <div
+      v-if="renderScroller"
+      v-show="showScroller"
+      class="content"
+    >
       <div class="wrapper">
         <template v-if="!recycleList">
           <!-- Scoped slots -->
@@ -92,6 +97,8 @@
             :buffer="buffer"
             :page-mode="pageMode"
             key-field="id"
+            @visible="onVisible"
+            @hidden="onHidden"
           >
             <template slot-scope="props">
               <tr
@@ -136,6 +143,7 @@ export default {
     items: [],
     renderers,
     count: 10000,
+    renderScroller: true,
     showScroller: true,
     scopedSlots: false,
     buffer: 200,
@@ -204,6 +212,14 @@ export default {
 
     onUpdate (startIndex, endIndex) {
       this.updateCount++
+    },
+
+    onVisible () {
+      console.log('visible')
+    },
+
+    onHidden () {
+      console.log('hidden')
     },
   },
 }
