@@ -3,15 +3,13 @@
 [![npm](https://img.shields.io/npm/v/vue-virtual-scroller.svg) ![npm](https://img.shields.io/npm/dm/vue-virtual-scroller.svg)](https://www.npmjs.com/package/vue-virtual-scroller)
 [![vue2](https://img.shields.io/badge/vue-2.x-brightgreen.svg)](https://vuejs.org/)
 
-Blazing fast scrolling of any amount of data ([demo](https://akryum.github.io/vue-virtual-scroller/)).
+Blazing fast scrolling of any amount of data | [Live demo](https://akryum.github.io/vue-virtual-scroller/) | [Video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k)
 
 <p>
   <a href="https://www.patreon.com/akryum" target="_blank">
     <img src="https://c5.patreon.com/external/logo/become_a_patron_button.png" alt="Become a Patreon">
   </a>
 </p>
-
-Video demo: https://www.youtube.com/watch?v=Uzq1KQV8f4k
 
 ## Table of contents
 
