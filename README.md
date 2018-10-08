@@ -11,6 +11,8 @@ Blazing fast scrolling of any amount of data ([demo](https://akryum.github.io/vu
   </a>
 </p>
 
+Video demo: https://www.youtube.com/watch?v=Uzq1KQV8f4k
+
 ## Table of contents
 
 - [Installation](#installation)
