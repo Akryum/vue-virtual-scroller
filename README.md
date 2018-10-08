@@ -15,7 +15,10 @@ Blazing fast scrolling of any amount of data ([demo](https://akryum.github.io/vu
 
 - [Installation](#installation)
 - [Usage](#usage)
-- [Example](#example)
+  - [RecycleScroller](#recyclescroller)
+  - [DynamicScroller](#dynamicscroller)
+  - [DynamicScrollerItem](#dynamicscrolleritem)
+  - [IdState](#idstate)
 
 # Installation
 
@@ -81,6 +84,8 @@ There are several components provided by `vue-virtual-scroller`:
 [DynamicScroller](#dynamicscroller) is a component is using RecycleScroller under-the-hood and adds a dynamic height management feature on top of it. The main use case for this is **not knowing the height of the items** in advance: the Dynamic Scroller will automatically "discover" it when it renders new item as the user scrolls.
 
 [DynamicScrollerItem](#dynamicscrolleritem) must wrap each item in a DynamicScroller to handle size computations.
+
+[IdState](#idstate) is a mixin that ease the local state management in reused components inside a RecycleScroller.
 
 ## RecycleScroller
 
