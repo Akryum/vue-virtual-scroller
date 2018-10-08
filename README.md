@@ -146,12 +146,12 @@ Here is what the internals of RecycleScroller look like:
 <RecycleScroller>
   <!-- Wrapper element with a pre-calculated total height -->
   <wrapper
-    :style="{ height }"
+    :style="{ height: computedTotalHeight + 'px' }"
   >
     <!-- Each view is translated to the computed position -->
     <view
       v-for="view of pool"
-      :style="{ top: 'translateY(' + view.computedTop + 'px)' }"
+      :style="{ transform: 'translateY(' + view.computedTop + 'px)' }"
     >
       <!-- Your elements will be rendered here -->
       <slot
