@@ -1,16 +1,24 @@
 import config from './config'
 
-import VirtualScroller from './components/VirtualScroller.vue'
-import RecycleList from './components/RecycleList.vue'
+import RecycleScroller from './components/RecycleScroller.vue'
+import DynamicScroller from './components/DynamicScroller.vue'
+import DynamicScrollerItem from './components/DynamicScrollerItem.vue'
+
+export { default as IdState } from './mixins/IdState'
 
 export {
-  VirtualScroller,
-  RecycleList,
+  RecycleScroller,
+  DynamicScroller,
+  DynamicScrollerItem,
 }
 
 function registerComponents (Vue, prefix) {
-  Vue.component(`${prefix}virtual-scroller`, VirtualScroller)
-  Vue.component(`${prefix}recycle-list`, RecycleList)
+  Vue.component(`${prefix}recycle-scroller`, RecycleScroller)
+  Vue.component(`${prefix}RecycleScroller`, RecycleScroller)
+  Vue.component(`${prefix}dynamic-scroller`, DynamicScroller)
+  Vue.component(`${prefix}DynamicScroller`, DynamicScroller)
+  Vue.component(`${prefix}dynamic-scroller-item`, DynamicScrollerItem)
+  Vue.component(`${prefix}DynamicScrollerItem`, DynamicScrollerItem)
 }
 
 const plugin = {

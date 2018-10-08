@@ -5,13 +5,14 @@
   "author": "Guillaume Chau <guillaume.b.chau@gmail.com>",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_ENV=development webpack-dev-server --open --inline --hot --progress",
-    "devp": "cross-env NODE_ENV=production webpack-dev-server --open --inline --hot --progress",
+    "dev": "cross-env NODE_ENV=development webpack-dev-server --inline --hot --progress",
+    "devp": "cross-env NODE_ENV=production webpack-dev-server --inline --hot --progress",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
   },
   "dependencies": {
     "faker": "^4.1.0",
-    "vue": "^2.5.17"
+    "vue": "^2.5.17",
+    "vue-router": "^3.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",

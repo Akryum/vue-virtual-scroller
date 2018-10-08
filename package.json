@@ -1,7 +1,7 @@
 {
   "name": "vue-virtual-scroller",
   "description": "Smooth scrolling for any amount of data",
-  "version": "0.12.2",
+  "version": "1.0.0-beta.1",
   "author": {
     "name": "Guillaume Chau",
     "email": "guillaume.b.chau@gmail.com"
@@ -49,7 +49,7 @@
     "eslint-plugin-node": "^5.1.1",
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^3.0.1",
-    "eslint-plugin-vue": "^4.2.0",
+    "eslint-plugin-vue": "^5.0.0-beta.3",
     "rollup": "^0.59.0",
     "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-commonjs": "^9.1.0",
@@ -59,6 +59,7 @@
     "rollup-plugin-uglify": "^4.0.0",
     "rollup-plugin-vue": "^4.2.0",
     "uglify-es": "^3.0.28",
+    "vue": "^2.5.17",
     "vue-template-compiler": "^2.2.5"
   },
   "dependencies": {

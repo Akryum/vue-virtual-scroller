@@ -1,8 +1,11 @@
 <template>
   <div
     v-observe-visibility="handleVisibilityChange"
-    :class="cssClass"
-    class="recycle-list"
+    class="vue-recycle-scroller"
+    :class="{
+      ready,
+      'page-mode': pageMode,
+    }"
     @scroll.passive="handleScroll"
   >
     <slot
@@ -12,13 +15,13 @@
     <div
       ref="wrapper"
       :style="{ height: totalHeight + 'px' }"
-      class="item-wrapper"
+      class="vue-recycle-scroller__item-wrapper"
     >
       <div
         v-for="view of pool"
         :key="view.nr.id"
-        :style="{ transform: 'translateY(' + view.top + 'px)' }"
-        class="item-view"
+        :style="ready ? { transform: 'translateY(' + view.top + 'px)' } : null"
+        class="vue-recycle-scroller__item-view"
       >
         <slot
           :item="view.item"
@@ -37,33 +40,23 @@
 </template>
 
 <script>
-import Scroller from '../mixins/scroller'
+import Scroller from '../mixins/Scroller'
 import config from '../config'
 
 let uid = 0
 
 export default {
-  name: 'RecycleList',
+  name: 'RecycleScroller',
 
   mixins: [
     Scroller,
   ],
 
-  props: {
-    itemHeight: {
-      type: Number,
-      default: null,
-    },
-    keyField: {
-      type: String,
-      default: null,
-    },
-  },
-
   data () {
     return {
       pool: [],
       totalHeight: 0,
+      ready: false,
     }
   },
 
@@ -71,10 +64,12 @@ export default {
     items () {
       this.updateVisibleItems(true)
     },
+
     pageMode () {
       this.applyPageMode()
       this.updateVisibleItems(false)
     },
+
     heights: {
       handler () {
         this.updateVisibleItems(false)
@@ -84,21 +79,22 @@ export default {
   },
 
   created () {
-    this.$_ready = false
     this.$_startIndex = 0
     this.$_endIndex = 0
     this.$_views = new Map()
     this.$_unusedViews = new Map()
     this.$_scrollDirty = false
 
-    // TODO prerender
+    if (this.$isServer) {
+      this.updateVisibleItems(false)
+    }
   },
 
   mounted () {
     this.applyPageMode()
     this.$nextTick(() => {
       this.updateVisibleItems(true)
-      this.$_ready = true
+      this.ready = true
     })
   },
 
@@ -141,7 +137,7 @@ export default {
 
     handleResize () {
       this.$emit('resize')
-      if (this.$_ready) this.updateVisibleItems(false)
+      if (this.ready) this.updateVisibleItems(false)
     },
 
     handleScroll (event) {
@@ -162,7 +158,7 @@ export default {
     },
 
     handleVisibilityChange (isVisible, entry) {
-      if (this.$_ready) {
+      if (this.ready) {
         if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {
           this.$emit('visible')
           requestAnimationFrame(() => {
@@ -175,11 +171,6 @@ export default {
     },
 
     updateVisibleItems (checkItem) {
-      const scroll = this.getScroll()
-      const buffer = parseInt(this.buffer)
-      scroll.top -= buffer
-      scroll.bottom += buffer
-
       const itemHeight = this.itemHeight
       const typeField = this.typeField
       const keyField = this.keyField
@@ -194,7 +185,16 @@ export default {
 
       if (!count) {
         startIndex = endIndex = totalHeight = 0
+      } else if (this.$isServer) {
+        startIndex = 0
+        endIndex = this.prerender
+        totalHeight = null
       } else {
+        const scroll = this.getScroll()
+        const buffer = this.buffer
+        scroll.top -= buffer
+        scroll.bottom += buffer
+
         // Variable height mode
         if (itemHeight === null) {
           let h
@@ -278,7 +278,7 @@ export default {
             if (
               view.nr.index === -1 ||
               view.nr.index < startIndex ||
-              view.nr.index > endIndex
+              view.nr.index >= endIndex
             ) {
               this.unuseView(view)
             }
@@ -355,7 +355,7 @@ export default {
       this.$_startIndex = startIndex
       this.$_endIndex = endIndex
 
-      this.emitUpdate && this.$emit('update', startIndex, endIndex)
+      if (this.emitUpdate) this.$emit('update', startIndex, endIndex)
 
       return {
         continuous,
@@ -365,19 +365,19 @@ export default {
 }
 </script>
 
-<style scoped>
-.recycle-list:not(.page-mode) {
+<style>
+.vue-recycle-scroller:not(.page-mode) {
   overflow-y: auto;
 }
 
-.item-wrapper {
+.vue-recycle-scroller__item-wrapper {
   box-sizing: border-box;
   width: 100%;
   overflow: hidden;
   position: relative;
 }
 
-.item-view {
+.vue-recycle-scroller.ready .vue-recycle-scroller__item-view {
   width: 100%;
   position: absolute;
   top: 0;

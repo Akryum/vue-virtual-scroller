@@ -1,9 +1,9 @@
 <template>
-  <tr class="person" @click="edit">
-    <td class="index">
+  <div class="tr person" @click="edit">
+    <div class="td index">
       {{index}}
-    </td>
-    <td>
+    </div>
+    <div class="td">
       <div class="info">
         <img
           class="avatar"
@@ -12,8 +12,8 @@
         />
         <span>{{item.value.name}}</span>
       </div>
-    </td>
-  </tr>
+    </div>
+  </div>
 </template>
 
 <script>

@@ -61,3 +61,10 @@ export function addItem (list) {
     height: 50,
   })
 }
+
+export function generateMessage () {
+  return {
+    avatar: faker.internet.avatar(),
+    message: faker.lorem.text(),
+  }
+}

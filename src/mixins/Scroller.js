@@ -18,34 +18,47 @@ export default {
       type: Array,
       required: true,
     },
+
     itemHeight: {
-      type: [Number, String],
+      type: Number,
       default: null,
     },
+
     minItemHeight: {
       type: [Number, String],
       default: null,
     },
+
     heightField: {
       type: String,
       default: 'height',
     },
+
     typeField: {
       type: String,
       default: 'type',
     },
+
+    keyField: {
+      type: String,
+      default: 'id',
+    },
+
     buffer: {
-      type: [Number, String],
+      type: Number,
       default: 200,
     },
+
     pageMode: {
       type: Boolean,
       default: false,
     },
+
     prerender: {
-      type: [Number, String],
+      type: Number,
       default: 0,
     },
+
     emitUpdate: {
       type: Boolean,
       default: false,
@@ -53,12 +66,6 @@ export default {
   },
 
   computed: {
-    cssClass () {
-      return {
-        'page-mode': this.pageMode,
-      }
-    },
-
     heights () {
       if (this.itemHeight === null) {
         const heights = {
@@ -95,18 +102,19 @@ export default {
 
     getScroll () {
       const el = this.$el
+      // const wrapper = this.$refs.wrapper
       let scrollState
 
       if (this.pageMode) {
-        const rect = el.getBoundingClientRect()
-        let top = -rect.top
+        const size = el.getBoundingClientRect()
+        let top = -size.top
         let height = window.innerHeight
         if (top < 0) {
           height += top
           top = 0
         }
-        if (top + height > rect.height) {
-          height = rect.height - top
+        if (top + height > size.height) {
+          height = size.height - top
         }
         scrollState = {
           top,
