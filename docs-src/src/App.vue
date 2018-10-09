@@ -37,9 +37,14 @@ body {
   align-items: stretch;
 }
 
+.menu {
+  flex: auto 0 0;
+}
+
 .menu,
 .page {
   padding: 12px;
+  box-sizing: border-box;
 }
 
 .package {
@@ -69,7 +74,6 @@ body {
 .menu a.router-link-active {
   background: #42b983;
 }
-
 
 .vue-recycle-scroller__item-container,
 .vue-recycle-scroller__item-wrapper {

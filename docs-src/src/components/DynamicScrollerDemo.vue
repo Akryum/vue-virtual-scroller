@@ -72,6 +72,10 @@ export default {
   height: 100%;
 }
 
+.dynamic-scroller-demo {
+  overflow: hidden;
+}
+
 .notice {
   padding: 24px;
   font-size: 20px;

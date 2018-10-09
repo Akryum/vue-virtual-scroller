@@ -95,15 +95,6 @@ export default {
     pageModeFullPage: true,
   }),
 
-  watch: {
-    count () {
-      this.generateItems()
-    },
-    enableLetters () {
-      this.generateItems()
-    },
-  },
-
   computed: {
     countInput: {
       get () {
@@ -129,6 +120,15 @@ export default {
           random: Math.random(),
         }, item)
       )
+    },
+  },
+
+  watch: {
+    count () {
+      this.generateItems()
+    },
+    enableLetters () {
+      this.generateItems()
     },
   },
 
