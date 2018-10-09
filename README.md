@@ -135,13 +135,14 @@ export default {
 - ⚠️ You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). Unless you are using [variable height mode](#variable-height-mode), all items should have the same height to prevent display glitches.
 - It is not recommended to use functional components inside RecycleScroller since the components are reused (so it will actually be slower).
 - The components used in the list should expect `item` prop change without being re-created (use computed props or watchers to properly react to props changes!).
-- You don't need to set `key` on list content (but you should on  all nested `<img>`elements to prevent load glitches).
+- You don't need to set `key` on list content (but you should on all nested `<img>` elements to prevent load glitches).
 - The browsers have a height limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
+- Since DOM elements are reused for items, it's recommended to define hover styles using the provided `hover` class instead of the `:hover` state selector (e.g. `.vue-recycle-scroller__item-view.hover` or `.hover .some-element-inside-the-item-view`).
 
 ### How does it work?
 
 - The RecycleScroller creates pools of views to render visible items to the user.
-- A view is holding a rendered item, and is reused inside its pool. 
+- A view is holding a rendered item, and is reused inside its pool.
 - For each type of item, a new pool is created so that the same components (and DOM trees) are reused for the same type.
 - Views can be deactivated if they go off-screen, and can be reused anytime for a newly visible item.
 
@@ -195,7 +196,7 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 
 - `item`: item being rendered in a view.
 - `index`: reflects each item's position in the `items` array
-- `active`: is the view active. An active view is considered visible and being positionned by `RecycleScroller`. An inactive view is not considered visible and hidden from the user. Any rendering-related computations should be skipped if the view is inactive.
+- `active`: is the view active. An active view is considered visible and being positioned by `RecycleScroller`. An inactive view is not considered visible and hidden from the user. Any rendering-related computations should be skipped if the view is inactive.
 
 ### Other Slots
 

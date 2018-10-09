@@ -76,16 +76,11 @@ body {
   box-sizing: border-box;
 }
 
-.vue-recycle-scroller__item,
 .vue-recycle-scroller__item-view {
   cursor: pointer;
   user-select: none;
   -moz-user-select: none;
   -webkit-user-select: none;
-}
-
-.vue-recycle-scroller__item {
-  height: 50px;
 }
 
 .tr, .td {
@@ -101,8 +96,7 @@ body {
   display: block;
 }
 
-.vue-recycle-scroller__item:hover,
-.vue-recycle-scroller__item-view:hover {
+.vue-recycle-scroller__item-view.hover {
   background: #4fc08d;
   color: white;
 }

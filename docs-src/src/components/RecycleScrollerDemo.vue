@@ -232,10 +232,6 @@ export default {
   padding: 12px;
 }
 
-.vue-recycle-scroller__item .letter .td {
-  height: 200px;
-}
-
 .letter.big {
   font-weight: normal;
   height: 200px;

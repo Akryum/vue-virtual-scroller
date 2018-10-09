@@ -22,6 +22,9 @@
         :key="view.nr.id"
         :style="ready ? { transform: 'translateY(' + view.top + 'px)' } : null"
         class="vue-recycle-scroller__item-view"
+        :class="{ hover: hoverKey === view.nr.key }"
+        @mouseenter="hoverKey = view.nr.key"
+        @mouseleave="hoverKey = null"
       >
         <slot
           :item="view.item"
@@ -57,6 +60,7 @@ export default {
       pool: [],
       totalHeight: 0,
       ready: false,
+      hoverKey: null,
     }
   },
 
