@@ -113,7 +113,7 @@ Use the scoped slot to render each item in the list:
     :item-height="32"
   >
     <div slot-scope="{ item }" class="user">
-      {{ user.name }}
+      {{ item.name }}
     </div>
   </RecycleScroller>
 </template>
