@@ -75,6 +75,10 @@ body {
   background: #42b983;
 }
 
+.vue-recycle-scroller {
+  -webkit-overflow-scrolling: touch;
+}
+
 .vue-recycle-scroller__item-container,
 .vue-recycle-scroller__item-wrapper {
   box-sizing: border-box;
