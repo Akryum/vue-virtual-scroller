@@ -346,6 +346,7 @@ export default {
           views.set(key, view)
         } else {
           view.nr.used = true
+          view.item = item
         }
 
         // Update position
