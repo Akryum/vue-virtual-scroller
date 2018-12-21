@@ -55,7 +55,6 @@ module.exports = {
   ],
   devServer: {
     historyApiFallback: true,
-    noInfo: true,
     contentBase: path.join(__dirname, '..', 'docs'),
   },
   performance: {
