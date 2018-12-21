@@ -83,6 +83,7 @@ export default {
         }
         return heights
       }
+      return []
     },
   },
 
