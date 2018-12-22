@@ -38,7 +38,7 @@
       name="after-container"
     />
 
-    <resize-observer @notify="handleResize" />
+    <ResizeObserver @notify="handleResize" />
   </div>
 </template>
 
@@ -371,6 +371,10 @@ export default {
 </script>
 
 <style>
+.vue-recycle-scroller {
+  position: relative;
+}
+
 .vue-recycle-scroller:not(.page-mode) {
   overflow-y: auto;
 }
