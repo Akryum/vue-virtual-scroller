@@ -21,6 +21,8 @@ export default {
     eslint(),
     vue({
       css (style) {
+        const file = require.resolve('vue-resize/dist/vue-resize.css')
+        style += fs.readFileSync(file, { encoding: 'utf8' })
         fs.writeFileSync('dist/vue-virtual-scroller.css', new CleanCSS().minify(style).styles)
       },
     }),
