@@ -100,21 +100,21 @@ function install(Vue$$1) {
 }
 
 // Plugin
-var plugin = {
+var plugin$2 = {
 	// eslint-disable-next-line no-undef
 	version: "0.4.5",
 	install: install
 };
 
 // Auto-install
-var GlobalVue = null;
+var GlobalVue$1 = null;
 if (typeof window !== 'undefined') {
-	GlobalVue = window.Vue;
+	GlobalVue$1 = window.Vue;
 } else if (typeof global !== 'undefined') {
-	GlobalVue = global.Vue;
+	GlobalVue$1 = global.Vue;
 }
-if (GlobalVue) {
-	GlobalVue.use(plugin);
+if (GlobalVue$1) {
+	GlobalVue$1.use(plugin$2);
 }
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
@@ -122,6 +122,123 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 } : function (obj) {
   return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
 };
+
+
+
+
+
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
+  }
+
+  function AsyncGenerator(gen) {
+    var front, back;
+
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
+
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
+        }
+      });
+    }
+
+    function resume(key, arg) {
+      try {
+        var result = gen[key](arg);
+        var value = result.value;
+
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
+        }
+      } catch (err) {
+        settle("throw", err);
+      }
+    }
+
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
+
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
+  }
+
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
+  };
+
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
+
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
 
 
 
@@ -374,24 +491,28 @@ function install$1(Vue$$1) {
 /* You shouldn't have to modify the code below */
 
 // Plugin
-var plugin$1 = {
+var plugin$4 = {
 	// eslint-disable-next-line no-undef
 	version: "0.4.3",
 	install: install$1
 };
 
 // Auto-install
-var GlobalVue$1 = null;
+var GlobalVue$2 = null;
 if (typeof window !== 'undefined') {
-	GlobalVue$1 = window.Vue;
+	GlobalVue$2 = window.Vue;
 } else if (typeof global !== 'undefined') {
-	GlobalVue$1 = global.Vue;
+	GlobalVue$2 = global.Vue;
 }
-if (GlobalVue$1) {
-	GlobalVue$1.use(plugin$1);
+if (GlobalVue$2) {
+	GlobalVue$2.use(plugin$4);
 }
 
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+
+
+
 
 function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
@@ -401,7 +522,7 @@ var scrollparent = createCommonjsModule(function (module) {
 (function (root, factory) {
   if (typeof undefined === "function" && undefined.amd) {
     undefined([], factory);
-  } else if (module.exports) {
+  } else if ('object' === "object" && module.exports) {
     module.exports = factory();
   } else {
     root.Scrollparent = factory();
@@ -636,11 +757,19 @@ var Scroller = {
   }
 };
 
-//
-
 var uid = 0;
 
-var script = {
+var RecycleScroller = { render: function render() {
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('div', { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], staticClass: "vue-recycle-scroller", class: { ready: _vm.ready, 'page-mode': _vm.pageMode }, on: { "&scroll": function scroll($event) {
+          return _vm.handleScroll($event);
+        } } }, [_vm._t("before-container"), _vm._v(" "), _c('div', { ref: "wrapper", staticClass: "vue-recycle-scroller__item-wrapper", style: { height: _vm.totalHeight + 'px' } }, _vm._l(_vm.pool, function (view) {
+      return _c('div', { key: view.nr.id, staticClass: "vue-recycle-scroller__item-view", class: { hover: _vm.hoverKey === view.nr.key }, style: _vm.ready ? { transform: 'translateY(' + view.top + 'px)' } : null, on: { "mouseenter": function mouseenter($event) {
+            _vm.hoverKey = view.nr.key;
+          }, "mouseleave": function mouseleave($event) {
+            _vm.hoverKey = null;
+          } } }, [_vm._t("default", null, { item: view.item, index: view.nr.index, active: view.nr.used })], 2);
+    }), 0), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('ResizeObserver', { on: { "notify": _vm.handleResize } })], 2);
+  }, staticRenderFns: [],
   name: 'RecycleScroller',
 
   mixins: [Scroller],
@@ -967,172 +1096,19 @@ var script = {
   }
 };
 
-/* script */
-var __vue_script__ = script;
-
-/* template */
-var __vue_render__ = function __vue_render__() {
-  var _vm = this;
-  var _h = _vm.$createElement;
-  var _c = _vm._self._c || _h;
-  return _c("div", {
-    directives: [{
-      name: "observe-visibility",
-      rawName: "v-observe-visibility",
-      value: _vm.handleVisibilityChange,
-      expression: "handleVisibilityChange"
-    }],
-    staticClass: "vue-recycle-scroller",
-    class: {
-      ready: _vm.ready,
-      "page-mode": _vm.pageMode
-    },
-    on: {
-      "&scroll": function scroll($event) {
-        return _vm.handleScroll($event);
-      }
-    }
-  }, [_vm._t("before-container"), _vm._v(" "), _c("div", {
-    ref: "wrapper",
-    staticClass: "vue-recycle-scroller__item-wrapper",
-    style: { height: _vm.totalHeight + "px" }
-  }, _vm._l(_vm.pool, function (view) {
-    return _c("div", {
-      key: view.nr.id,
-      staticClass: "vue-recycle-scroller__item-view",
-      class: { hover: _vm.hoverKey === view.nr.key },
-      style: _vm.ready ? { transform: "translateY(" + view.top + "px)" } : null,
-      on: {
-        mouseenter: function mouseenter($event) {
-          _vm.hoverKey = view.nr.key;
-        },
-        mouseleave: function mouseleave($event) {
-          _vm.hoverKey = null;
-        }
-      }
-    }, [_vm._t("default", null, {
-      item: view.item,
-      index: view.nr.index,
-      active: view.nr.used
-    })], 2);
-  }), 0), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c("resize-observer", { on: { notify: _vm.handleResize } })], 2);
-};
-var __vue_staticRenderFns__ = [];
-__vue_render__._withStripped = true;
-
-/* style */
-var __vue_inject_styles__ = function __vue_inject_styles__(inject) {
-  if (!inject) return;
-  inject("data-v-5705564c_0", { source: "\n.vue-recycle-scroller:not(.page-mode) {\n  overflow-y: auto;\n}\n.vue-recycle-scroller__item-wrapper {\n  box-sizing: border-box;\n  width: 100%;\n  overflow: hidden;\n  position: relative;\n}\n.vue-recycle-scroller.ready .vue-recycle-scroller__item-view {\n  width: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  will-change: transform;\n}\n", map: { "version": 3, "sources": ["/home/akryum/Projects/vue-virtual-scroller/src/components/RecycleScroller.vue"], "names": [], "mappings": ";AAqXA;EACA,iBAAA;CACA;AAEA;EACA,uBAAA;EACA,YAAA;EACA,iBAAA;EACA,mBAAA;CACA;AAEA;EACA,YAAA;EACA,mBAAA;EACA,OAAA;EACA,QAAA;EACA,uBAAA;CACA", "file": "RecycleScroller.vue", "sourcesContent": ["<template>\n  <div\n    v-observe-visibility=\"handleVisibilityChange\"\n    class=\"vue-recycle-scroller\"\n    :class=\"{\n      ready,\n      'page-mode': pageMode,\n    }\"\n    @scroll.passive=\"handleScroll\"\n  >\n    <slot\n      name=\"before-container\"\n    />\n\n    <div\n      ref=\"wrapper\"\n      :style=\"{ height: totalHeight + 'px' }\"\n      class=\"vue-recycle-scroller__item-wrapper\"\n    >\n      <div\n        v-for=\"view of pool\"\n        :key=\"view.nr.id\"\n        :style=\"ready ? { transform: 'translateY(' + view.top + 'px)' } : null\"\n        class=\"vue-recycle-scroller__item-view\"\n        :class=\"{ hover: hoverKey === view.nr.key }\"\n        @mouseenter=\"hoverKey = view.nr.key\"\n        @mouseleave=\"hoverKey = null\"\n      >\n        <slot\n          :item=\"view.item\"\n          :index=\"view.nr.index\"\n          :active=\"view.nr.used\"\n        />\n      </div>\n    </div>\n\n    <slot\n      name=\"after-container\"\n    />\n\n    <resize-observer @notify=\"handleResize\" />\n  </div>\n</template>\n\n<script>\nimport Scroller from '../mixins/Scroller'\nimport config from '../config'\n\nlet uid = 0\n\nexport default {\n  name: 'RecycleScroller',\n\n  mixins: [\n    Scroller,\n  ],\n\n  data () {\n    return {\n      pool: [],\n      totalHeight: 0,\n      ready: false,\n      hoverKey: null,\n    }\n  },\n\n  watch: {\n    items () {\n      this.updateVisibleItems(true)\n    },\n\n    pageMode () {\n      this.applyPageMode()\n      this.updateVisibleItems(false)\n    },\n\n    heights: {\n      handler () {\n        this.updateVisibleItems(false)\n      },\n      deep: true,\n    },\n  },\n\n  created () {\n    this.$_startIndex = 0\n    this.$_endIndex = 0\n    this.$_views = new Map()\n    this.$_unusedViews = new Map()\n    this.$_scrollDirty = false\n\n    if (this.$isServer) {\n      this.updateVisibleItems(false)\n    }\n  },\n\n  mounted () {\n    this.applyPageMode()\n    this.$nextTick(() => {\n      this.updateVisibleItems(true)\n      this.ready = true\n    })\n  },\n\n  methods: {\n    addView (pool, index, item, key, type) {\n      const view = {\n        item,\n        top: 0,\n      }\n      const nonReactive = {\n        id: uid++,\n        index,\n        used: true,\n        key,\n        type,\n      }\n      Object.defineProperty(view, 'nr', {\n        configurable: false,\n        value: nonReactive,\n      })\n      pool.push(view)\n      return view\n    },\n\n    unuseView (view, fake = false) {\n      const unusedViews = this.$_unusedViews\n      const type = view.nr.type\n      let unusedPool = unusedViews.get(type)\n      if (!unusedPool) {\n        unusedPool = []\n        unusedViews.set(type, unusedPool)\n      }\n      unusedPool.push(view)\n      if (!fake) {\n        view.nr.used = false\n        view.top = -9999\n        this.$_views.delete(view.nr.key)\n      }\n    },\n\n    handleResize () {\n      this.$emit('resize')\n      if (this.ready) this.updateVisibleItems(false)\n    },\n\n    handleScroll (event) {\n      if (!this.$_scrollDirty) {\n        this.$_scrollDirty = true\n        requestAnimationFrame(() => {\n          this.$_scrollDirty = false\n          const { continuous } = this.updateVisibleItems(false)\n\n          // It seems sometimes chrome doesn't fire scroll event :/\n          // When non continous scrolling is ending, we force a refresh\n          if (!continuous) {\n            clearTimeout(this.$_refreshTimout)\n            this.$_refreshTimout = setTimeout(this.handleScroll, 100)\n          }\n        })\n      }\n    },\n\n    handleVisibilityChange (isVisible, entry) {\n      if (this.ready) {\n        if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {\n          this.$emit('visible')\n          requestAnimationFrame(() => {\n            this.updateVisibleItems(false)\n          })\n        } else {\n          this.$emit('hidden')\n        }\n      }\n    },\n\n    updateVisibleItems (checkItem) {\n      const itemHeight = this.itemHeight\n      const typeField = this.typeField\n      const keyField = this.keyField\n      const items = this.items\n      const count = items.length\n      const heights = this.heights\n      const views = this.$_views\n      let unusedViews = this.$_unusedViews\n      const pool = this.pool\n      let startIndex, endIndex\n      let totalHeight\n\n      if (!count) {\n        startIndex = endIndex = totalHeight = 0\n      } else if (this.$isServer) {\n        startIndex = 0\n        endIndex = this.prerender\n        totalHeight = null\n      } else {\n        const scroll = this.getScroll()\n        const buffer = this.buffer\n        scroll.top -= buffer\n        scroll.bottom += buffer\n\n        // Variable height mode\n        if (itemHeight === null) {\n          let h\n          let a = 0\n          let b = count - 1\n          let i = ~~(count / 2)\n          let oldI\n\n          // Searching for startIndex\n          do {\n            oldI = i\n            h = heights[i].accumulator\n            if (h < scroll.top) {\n              a = i\n            } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {\n              b = i\n            }\n            i = ~~((a + b) / 2)\n          } while (i !== oldI)\n          i < 0 && (i = 0)\n          startIndex = i\n\n          // For container style\n          totalHeight = heights[count - 1].accumulator\n\n          // Searching for endIndex\n          for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++);\n          if (endIndex === -1) {\n            endIndex = items.length - 1\n          } else {\n            endIndex++\n            // Bounds\n            endIndex > count && (endIndex = count)\n          }\n        } else {\n          // Fixed height mode\n          startIndex = ~~(scroll.top / itemHeight)\n          endIndex = Math.ceil(scroll.bottom / itemHeight)\n\n          // Bounds\n          startIndex < 0 && (startIndex = 0)\n          endIndex > count && (endIndex = count)\n\n          totalHeight = count * itemHeight\n        }\n      }\n\n      if (endIndex - startIndex > config.itemsLimit) {\n        this.itemsLimitError()\n      }\n\n      this.totalHeight = totalHeight\n\n      let view\n\n      const continuous = startIndex <= this.$_endIndex && endIndex >= this.$_startIndex\n      let unusedIndex\n\n      if (this.$_continuous !== continuous) {\n        if (continuous) {\n          views.clear()\n          unusedViews.clear()\n          for (let i = 0, l = pool.length; i < l; i++) {\n            view = pool[i]\n            this.unuseView(view)\n          }\n        }\n        this.$_continuous = continuous\n      } else if (continuous) {\n        for (let i = 0, l = pool.length; i < l; i++) {\n          view = pool[i]\n          if (view.nr.used) {\n            // Update view item index\n            if (checkItem) {\n              view.nr.index = items.findIndex(\n                item => keyField ? item[keyField] === view.item[keyField] : item === view.item\n              )\n            }\n\n            // Check if index is still in visible range\n            if (\n              view.nr.index === -1 ||\n              view.nr.index < startIndex ||\n              view.nr.index >= endIndex\n            ) {\n              this.unuseView(view)\n            }\n          }\n        }\n      }\n\n      if (!continuous) {\n        unusedIndex = new Map()\n      }\n\n      let item, type, unusedPool\n      let v\n      for (let i = startIndex; i < endIndex; i++) {\n        item = items[i]\n        const key = keyField ? item[keyField] : item\n        view = views.get(key)\n\n        if (!itemHeight && !heights[i].height) {\n          if (view) this.unuseView(view)\n          continue\n        }\n\n        // No view assigned to item\n        if (!view) {\n          type = item[typeField]\n\n          if (continuous) {\n            unusedPool = unusedViews.get(type)\n            // Reuse existing view\n            if (unusedPool && unusedPool.length) {\n              view = unusedPool.pop()\n              view.item = item\n              view.nr.used = true\n              view.nr.index = i\n              view.nr.key = key\n              view.nr.type = type\n            } else {\n              view = this.addView(pool, i, item, key, type)\n            }\n          } else {\n            unusedPool = unusedViews.get(type)\n            v = unusedIndex.get(type) || 0\n            // Use existing view\n            // We don't care if they are already used\n            // because we are not in continous scrolling\n            if (unusedPool && v < unusedPool.length) {\n              view = unusedPool[v]\n              view.item = item\n              view.nr.used = true\n              view.nr.index = i\n              view.nr.key = key\n              view.nr.type = type\n              unusedIndex.set(type, v + 1)\n            } else {\n              view = this.addView(pool, i, item, key, type)\n              this.unuseView(view, true)\n            }\n            v++\n          }\n          views.set(key, view)\n        } else {\n          view.nr.used = true\n          view.item = item\n        }\n\n        // Update position\n        if (itemHeight === null) {\n          view.top = heights[i - 1].accumulator\n        } else {\n          view.top = i * itemHeight\n        }\n      }\n\n      this.$_startIndex = startIndex\n      this.$_endIndex = endIndex\n\n      if (this.emitUpdate) this.$emit('update', startIndex, endIndex)\n\n      return {\n        continuous,\n      }\n    },\n  },\n}\n</script>\n\n<style>\n.vue-recycle-scroller:not(.page-mode) {\n  overflow-y: auto;\n}\n\n.vue-recycle-scroller__item-wrapper {\n  box-sizing: border-box;\n  width: 100%;\n  overflow: hidden;\n  position: relative;\n}\n\n.vue-recycle-scroller.ready .vue-recycle-scroller__item-view {\n  width: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  will-change: transform;\n}\n</style>\n"] }, media: undefined });
-};
-/* scoped */
-var __vue_scope_id__ = undefined;
-/* module identifier */
-var __vue_module_identifier__ = undefined;
-/* functional template */
-var __vue_is_functional_template__ = false;
-/* component normalizer */
-function __vue_normalize__(template, style, script$$1, scope, functional, moduleIdentifier, createInjector, createInjectorSSR) {
-  var component = (typeof script$$1 === 'function' ? script$$1.options : script$$1) || {};
-
-  // For security concerns, we use only base name in production mode.
-  component.__file = "/home/akryum/Projects/vue-virtual-scroller/src/components/RecycleScroller.vue";
-
-  if (!component.render) {
-    component.render = template.render;
-    component.staticRenderFns = template.staticRenderFns;
-    component._compiled = true;
-
-    if (functional) component.functional = true;
-  }
-
-  component._scopeId = scope;
-
-  {
-    var hook = void 0;
-    if (style) {
-      hook = function hook(context) {
-        style.call(this, createInjector(context));
-      };
-    }
-
-    if (hook !== undefined) {
-      if (component.functional) {
-        // register for functional component in vue file
-        var originalRender = component.render;
-        component.render = function renderWithStyleInjection(h, context) {
-          hook.call(context);
-          return originalRender(h, context);
-        };
-      } else {
-        // inject component registration as beforeCreate hook
-        var existing = component.beforeCreate;
-        component.beforeCreate = existing ? [].concat(existing, hook) : [hook];
-      }
-    }
-  }
-
-  return component;
-}
-/* style inject */
-function __vue_create_injector__() {
-  var head = document.head || document.getElementsByTagName('head')[0];
-  var styles = __vue_create_injector__.styles || (__vue_create_injector__.styles = {});
-  var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\\b/.test(navigator.userAgent.toLowerCase());
-
-  return function addStyle(id, css) {
-    if (document.querySelector('style[data-vue-ssr-id~="' + id + '"]')) return; // SSR styles are present.
-
-    var group = isOldIE ? css.media || 'default' : id;
-    var style = styles[group] || (styles[group] = { ids: [], parts: [], element: undefined });
-
-    if (!style.ids.includes(id)) {
-      var code = css.source;
-      var index = style.ids.length;
-
-      style.ids.push(id);
-
-      if (isOldIE) {
-        style.element = style.element || document.querySelector('style[data-group=' + group + ']');
-      }
-
-      if (!style.element) {
-        var el = style.element = document.createElement('style');
-        el.type = 'text/css';
-
-        if (css.media) el.setAttribute('media', css.media);
-        if (isOldIE) {
-          el.setAttribute('data-group', group);
-          el.setAttribute('data-next-index', '0');
-        }
-
-        head.appendChild(el);
-      }
-
-      if (isOldIE) {
-        index = parseInt(style.element.getAttribute('data-next-index'));
-        style.element.setAttribute('data-next-index', index + 1);
-      }
-
-      if (style.element.styleSheet) {
-        style.parts.push(code);
-        style.element.styleSheet.cssText = style.parts.filter(Boolean).join('\n');
-      } else {
-        var textNode = document.createTextNode(code);
-        var nodes = style.element.childNodes;
-        if (nodes[index]) style.element.removeChild(nodes[index]);
-        if (nodes.length) style.element.insertBefore(textNode, nodes[index]);else style.element.appendChild(textNode);
-      }
-    }
-  };
-}
-/* style inject SSR */
-
-var RecycleScroller = __vue_normalize__({ render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ }, __vue_inject_styles__, __vue_script__, __vue_scope_id__, __vue_is_functional_template__, __vue_module_identifier__, __vue_create_injector__, undefined);
-
-//
-
-var script$1 = {
+var DynamicScroller = { render: function render() {
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('RecycleScroller', _vm._g(_vm._b({ ref: "scroller", attrs: { "items": _vm.itemsWithHeight, "min-item-height": _vm.minItemHeight }, on: { "resize": _vm.onScrollerResize, "visible": _vm.onScrollerVisible }, scopedSlots: _vm._u([{ key: "default", fn: function fn(_ref) {
+          var itemWithHeight = _ref.item,
+              index = _ref.index,
+              active = _ref.active;
+          return [_vm._t("default", null, null, {
+            item: itemWithHeight.item,
+            index: index,
+            active: active,
+            itemWithHeight: itemWithHeight
+          })];
+        } }]) }, 'RecycleScroller', _vm.$attrs, false), _vm.listeners), [_c('template', { slot: "before-container" }, [_vm._t("before-container")], 2), _vm._v(" "), _c('template', { slot: "after-container" }, [_vm._t("after-container")], 2)], 2);
+  }, staticRenderFns: [],
   name: 'DynamicScroller',
 
   components: {
@@ -1251,74 +1227,7 @@ var script$1 = {
   }
 };
 
-/* script */
-var __vue_script__$1 = script$1;
-
-/* template */
-var __vue_render__$1 = function __vue_render__() {
-  var _vm = this;
-  var _h = _vm.$createElement;
-  var _c = _vm._self._c || _h;
-  return _c("RecycleScroller", _vm._g(_vm._b({
-    ref: "scroller",
-    attrs: {
-      items: _vm.itemsWithHeight,
-      "min-item-height": _vm.minItemHeight
-    },
-    on: { resize: _vm.onScrollerResize, visible: _vm.onScrollerVisible },
-    scopedSlots: _vm._u([{
-      key: "default",
-      fn: function fn(ref) {
-        var itemWithHeight = ref.item;
-        var index = ref.index;
-        var active = ref.active;
-        return [_vm._t("default", null, null, {
-          item: itemWithHeight.item,
-          index: index,
-          active: active,
-          itemWithHeight: itemWithHeight
-        })];
-      }
-    }])
-  }, "RecycleScroller", _vm.$attrs, false), _vm.listeners), [_c("template", { slot: "before-container" }, [_vm._t("before-container")], 2), _vm._v(" "), _c("template", { slot: "after-container" }, [_vm._t("after-container")], 2)], 2);
-};
-var __vue_staticRenderFns__$1 = [];
-__vue_render__$1._withStripped = true;
-
-/* style */
-var __vue_inject_styles__$1 = undefined;
-/* scoped */
-var __vue_scope_id__$1 = undefined;
-/* module identifier */
-var __vue_module_identifier__$1 = undefined;
-/* functional template */
-var __vue_is_functional_template__$1 = false;
-/* component normalizer */
-function __vue_normalize__$1(template, style, script, scope, functional, moduleIdentifier, createInjector, createInjectorSSR) {
-  var component = (typeof script === 'function' ? script.options : script) || {};
-
-  // For security concerns, we use only base name in production mode.
-  component.__file = "/home/akryum/Projects/vue-virtual-scroller/src/components/DynamicScroller.vue";
-
-  if (!component.render) {
-    component.render = template.render;
-    component.staticRenderFns = template.staticRenderFns;
-    component._compiled = true;
-
-    if (functional) component.functional = true;
-  }
-
-  component._scopeId = scope;
-
-  return component;
-}
-/* style inject */
-
-/* style inject SSR */
-
-var DynamicScroller = __vue_normalize__$1({ render: __vue_render__$1, staticRenderFns: __vue_staticRenderFns__$1 }, __vue_inject_styles__$1, __vue_script__$1, __vue_scope_id__$1, __vue_is_functional_template__$1, __vue_module_identifier__$1, undefined, undefined);
-
-var script$2 = {
+var DynamicScrollerItem = {
   name: 'DynamicScrollerItem',
 
   inject: ['vscrollData', 'vscrollBus'],
@@ -1477,45 +1386,7 @@ var script$2 = {
   }
 };
 
-/* script */
-var __vue_script__$2 = script$2;
-
-/* template */
-
-/* style */
-var __vue_inject_styles__$2 = undefined;
-/* scoped */
-var __vue_scope_id__$2 = undefined;
-/* module identifier */
-var __vue_module_identifier__$2 = undefined;
-/* functional template */
-var __vue_is_functional_template__$2 = undefined;
-/* component normalizer */
-function __vue_normalize__$2(template, style, script, scope, functional, moduleIdentifier, createInjector, createInjectorSSR) {
-  var component = (typeof script === 'function' ? script.options : script) || {};
-
-  // For security concerns, we use only base name in production mode.
-  component.__file = "/home/akryum/Projects/vue-virtual-scroller/src/components/DynamicScrollerItem.vue";
-
-  if (!component.render) {
-    component.render = template.render;
-    component.staticRenderFns = template.staticRenderFns;
-    component._compiled = true;
-
-    if (functional) component.functional = true;
-  }
-
-  component._scopeId = scope;
-
-  return component;
-}
-/* style inject */
-
-/* style inject SSR */
-
-var DynamicScrollerItem = __vue_normalize__$2({}, __vue_inject_styles__$2, __vue_script__$2, __vue_scope_id__$2, __vue_is_functional_template__$2, __vue_module_identifier__$2, undefined, undefined);
-
-function IdState () {
+var IdState = function () {
   var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
       _ref$idProp = _ref.idProp,
       idProp = _ref$idProp === undefined ? function (vm) {
@@ -1604,7 +1475,7 @@ function IdState () {
       }
     }
   };
-}
+};
 
 function registerComponents(Vue$$1, prefix) {
   Vue$$1.component(prefix + 'recycle-scroller', RecycleScroller);
@@ -1615,9 +1486,9 @@ function registerComponents(Vue$$1, prefix) {
   Vue$$1.component(prefix + 'DynamicScrollerItem', DynamicScrollerItem);
 }
 
-var plugin$2 = {
+var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.0.0-beta.3",
+  version: "1.0.0-beta.4",
   install: function install(Vue$$1, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
@@ -1637,15 +1508,15 @@ var plugin$2 = {
 };
 
 // Auto-install
-var GlobalVue$2 = null;
+var GlobalVue = null;
 if (typeof window !== 'undefined') {
-  GlobalVue$2 = window.Vue;
+  GlobalVue = window.Vue;
 } else if (typeof global !== 'undefined') {
-  GlobalVue$2 = global.Vue;
+  GlobalVue = global.Vue;
 }
-if (GlobalVue$2) {
-  GlobalVue$2.use(plugin$2);
+if (GlobalVue) {
+  GlobalVue.use(plugin);
 }
 
-export default plugin$2;
 export { RecycleScroller, DynamicScroller, DynamicScrollerItem, IdState };
+export default plugin;
