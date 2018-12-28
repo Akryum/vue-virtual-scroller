@@ -46,6 +46,13 @@
         <button @mousedown="renderScroller = !renderScroller">Toggle render</button>
         <button @mousedown="showScroller = !showScroller">Toggle visibility</button>
       </span>
+      <label>
+        <input
+          v-model="showMessageBeforeItems"
+          type="checkbox"
+        > show message before items
+      </label>
+      <span>({{ updateParts.viewStartIdx }} - [{{ updateParts.visibleStartIdx }} - {{ updateParts.visibleEndIdx }}] - {{ updateParts.viewEndIdx }})</span>
     </div>
 
     <div
@@ -64,6 +71,8 @@
           :page-mode="pageMode"
           key-field="id"
           size-field="height"
+          :emit-update="true"
+          @update="onUpdate"
           @visible="onVisible"
           @hidden="onHidden"
         >
@@ -113,6 +122,8 @@ export default {
     enableLetters: true,
     pageMode: false,
     pageModeFullPage: true,
+    updateParts: { viewStartIdx: 0, viewEndIdx: 0, visibleStartIdx: 0, visibleEndIdx: 0 },
+    showMessageBeforeItems: true,
   }),
 
   computed: {
@@ -138,7 +149,7 @@ export default {
       return this.items.map(
         item => Object.assign({}, {
           random: Math.random(),
-        }, item)
+        }, item),
       )
     },
   },
@@ -160,7 +171,7 @@ export default {
   methods: {
     generateItems () {
       console.log('Generating ' + this.count + ' items...')
-      let time = Date.now()
+      const time = Date.now()
       const items = getData(this.count, this.enableLetters)
       console.log('Generated ' + items.length + ' in ' + (Date.now() - time) + 'ms')
       this._dirty = true
@@ -171,8 +182,11 @@ export default {
       addItem(this.items)
     },
 
-    onUpdate (startIndex, endIndex) {
-      this.updateCount++
+    onUpdate (viewStartIndex, viewEndIndex, visibleStartIndex, visibleEndIndex) {
+      this.updateParts.viewStartIdx = viewStartIndex
+      this.updateParts.viewEndIdx = viewEndIndex
+      this.updateParts.visibleStartIdx = visibleStartIndex
+      this.updateParts.visibleEndIdx = visibleEndIndex
     },
 
     onVisible () {
@@ -225,6 +239,12 @@ export default {
 .scroller {
   width: 100%;
   height: 100%;
+}
+
+.notice {
+  padding: 24px;
+  font-size: 20px;
+  color: #999;
 }
 
 .letter {

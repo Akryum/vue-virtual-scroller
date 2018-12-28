@@ -11,8 +11,8 @@
   >
     <div
       v-if="$slots.before"
-      class="vue-recycle-scroller__slot"
       ref="before"
+      class="vue-recycle-scroller__slot"
     >
       <slot
         name="before"
@@ -43,8 +43,8 @@
 
     <div
       v-if="$slots.after"
-      class="vue-recycle-scroller__slot"
       ref="after"
+      class="vue-recycle-scroller__slot"
     >
       <slot
         name="after"
@@ -208,12 +208,12 @@ export default {
     })
   },
 
-  activated() {
-    const lastPosition = this.$_lastUpdateScrollPosition;
+  activated () {
+    const lastPosition = this.$_lastUpdateScrollPosition
     if (typeof lastPosition === 'number') {
       this.$nextTick(() => {
-        this.scrollToPosition(lastPosition);
-      });
+        this.scrollToPosition(lastPosition)
+      })
     }
   },
 
@@ -306,12 +306,13 @@ export default {
       const pool = this.pool
       let startIndex, endIndex
       let totalSize
+      let visibleStartIndex, visibleEndIndex
 
       if (!count) {
-        startIndex = endIndex = totalSize = 0
+        startIndex = endIndex = visibleStartIndex = visibleEndIndex = totalSize = 0
       } else if (this.$_prerender) {
-        startIndex = 0
-        endIndex = this.prerender
+        startIndex = visibleStartIndex = 0
+        endIndex = visibleEndIndex = this.prerender
         totalSize = null
       } else {
         const scroll = this.getScroll()
@@ -333,15 +334,16 @@ export default {
         scroll.end += buffer
 
         // account for leading slot
-        if (this.$refs.before){
-          const lead = this.$refs.before.scrollHeight;
-          scroll.start -= lead;
+        let beforeSize = 0
+        if (this.$refs.before) {
+          beforeSize = this.$refs.before.scrollHeight
+          scroll.start -= beforeSize
         }
 
         // account for trailing slot
-        if (this.$refs.after){
-          const trail = this.$refs.after.scrollHeight;
-          scroll.end += trail;
+        if (this.$refs.after) {
+          const afterSize = this.$refs.after.scrollHeight
+          scroll.end += afterSize
         }
 
         // Variable size mode
@@ -378,14 +380,24 @@ export default {
             // Bounds
             endIndex > count && (endIndex = count)
           }
+
+          // search visible startIndex
+          for (visibleStartIndex = startIndex; visibleStartIndex < count && (beforeSize + sizes[visibleStartIndex].accumulator) < scroll.start; visibleStartIndex++);
+
+          // search visible endIndex
+          for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeSize + sizes[visibleEndIndex].accumulator) < scroll.end; visibleEndIndex++);
         } else {
           // Fixed size mode
           startIndex = ~~(scroll.start / itemSize)
           endIndex = Math.ceil(scroll.end / itemSize)
+          visibleStartIndex = Math.max(0, Math.floor((scroll.start - beforeSize) / itemSize))
+          visibleEndIndex = Math.floor((scroll.end - beforeSize) / itemSize)
 
           // Bounds
           startIndex < 0 && (startIndex = 0)
           endIndex > count && (endIndex = count)
+          visibleStartIndex < 0 && (visibleStartIndex = 0)
+          visibleEndIndex > count && (visibleEndIndex = count)
 
           totalSize = count * itemSize
         }
@@ -506,7 +518,7 @@ export default {
       this.$_startIndex = startIndex
       this.$_endIndex = endIndex
 
-      if (this.emitUpdate) this.$emit('update', startIndex, endIndex)
+      if (this.emitUpdate) this.$emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex)
 
       // After the user has finished scrolling
       // Sort views so text selection is correct
