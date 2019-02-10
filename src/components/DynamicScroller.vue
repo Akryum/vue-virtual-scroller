@@ -82,10 +82,18 @@ export default {
       for (let i = 0; i < items.length; i++) {
         const item = items[i]
         const id = item[keyField]
+        let height = heights[id]
+        if (typeof height === 'undefined' && !this.$_undefinedMap[id]) {
+          // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+          this.$_undefinedHeights++
+          // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+          this.$_undefinedMap[id] = true
+          height = 0
+        }
         result.push({
           item,
           id,
-          height: heights[id] || 0,
+          height,
         })
       }
       return result
@@ -110,6 +118,8 @@ export default {
 
   created () {
     this.$_updates = []
+    this.$_undefinedHeights = 0
+    this.$_undefinedMap = {}
   },
 
   mounted () {
@@ -152,6 +162,30 @@ export default {
     scrollToItem (index) {
       const scroller = this.$refs.scroller
       if (scroller) scroller.scrollToItem(index)
+    },
+
+    getItemSize (item) {
+      const id = item[this.keyField]
+      return this.vscrollData.heights[id] || 0
+    },
+
+    scrollToBottom () {
+      if (this.$_scrollingToBottom) return
+      this.$_scrollingToBottom = true
+      const el = this.$el
+      // Item is inserted to the DOM
+      this.$nextTick(() => {
+        // Item sizes are computed
+        const cb = () => {
+          el.scrollTop = el.scrollHeight
+          if (this.$_undefinedHeights === 0) {
+            this.$_scrollingToBottom = false
+          } else {
+            requestAnimationFrame(cb)
+          }
+        }
+        requestAnimationFrame(cb)
+      })
     },
   },
 }

@@ -141,6 +141,10 @@ export default {
         if (this.id === id) {
           const size = this.getSize()
           if (size.height && this.height !== size.height) {
+            if (this.vscrollBus.$_undefinedMap[id]) {
+              this.vscrollBus.$_undefinedHeights--
+              this.vscrollBus.$_undefinedMap[id] = undefined
+            }
             this.$set(this.vscrollData.heights, this.id, size.height)
             if (this.emitResize) this.$emit('resize', this.id)
           }
