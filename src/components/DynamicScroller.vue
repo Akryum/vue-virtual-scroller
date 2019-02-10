@@ -103,7 +103,9 @@ export default {
   },
 
   watch: {
-    items: 'forceUpdate',
+    items () {
+      this.forceUpdate(false)
+    },
   },
 
   created () {
@@ -138,8 +140,8 @@ export default {
       this.$emit('visible')
     },
 
-    forceUpdate () {
-      this.vscrollData.heights = {}
+    forceUpdate (clear = true) {
+      if (clear) this.vscrollData.heights = {}
       this.$emit('vscroll:update', { force: true })
     },
 
