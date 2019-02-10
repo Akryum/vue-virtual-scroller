@@ -1162,10 +1162,18 @@ var DynamicScroller = { render: function render() {
       for (var i = 0; i < items.length; i++) {
         var item = items[i];
         var id = item[keyField];
+        var height = heights[id];
+        if (typeof height === 'undefined' && !this.$_undefinedMap[id]) {
+          // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+          this.$_undefinedHeights++;
+          // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+          this.$_undefinedMap[id] = true;
+          height = 0;
+        }
         result.push({
           item: item,
           id: id,
-          height: heights[id] || 0
+          height: height
         });
       }
       return result;
@@ -1182,11 +1190,15 @@ var DynamicScroller = { render: function render() {
   },
 
   watch: {
-    items: 'forceUpdate'
+    items: function items() {
+      this.forceUpdate(false);
+    }
   },
 
   created: function created() {
     this.$_updates = [];
+    this.$_undefinedHeights = 0;
+    this.$_undefinedMap = {};
   },
   mounted: function mounted() {
     var scroller = this.$refs.scroller;
@@ -1214,7 +1226,9 @@ var DynamicScroller = { render: function render() {
       this.$emit('visible');
     },
     forceUpdate: function forceUpdate() {
-      this.vscrollData.heights = {};
+      var clear = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+
+      if (clear) this.vscrollData.heights = {};
       this.$emit('vscroll:update', { force: true });
     },
     getSize: function getSize(scroller) {
@@ -1223,6 +1237,30 @@ var DynamicScroller = { render: function render() {
     scrollToItem: function scrollToItem(index) {
       var scroller = this.$refs.scroller;
       if (scroller) scroller.scrollToItem(index);
+    },
+    getItemSize: function getItemSize(item) {
+      var id = item[this.keyField];
+      return this.vscrollData.heights[id] || 0;
+    },
+    scrollToBottom: function scrollToBottom() {
+      var _this = this;
+
+      if (this.$_scrollingToBottom) return;
+      this.$_scrollingToBottom = true;
+      var el = this.$el;
+      // Item is inserted to the DOM
+      this.$nextTick(function () {
+        // Item sizes are computed
+        var cb = function cb() {
+          el.scrollTop = el.scrollHeight;
+          if (_this.$_undefinedHeights === 0) {
+            _this.$_scrollingToBottom = false;
+          } else {
+            requestAnimationFrame(cb);
+          }
+        };
+        requestAnimationFrame(cb);
+      });
     }
   }
 };
@@ -1372,6 +1410,10 @@ var DynamicScrollerItem = {
         if (_this3.id === id) {
           var size = _this3.getSize();
           if (size.height && _this3.height !== size.height) {
+            if (_this3.vscrollBus.$_undefinedMap[id]) {
+              _this3.vscrollBus.$_undefinedHeights--;
+              _this3.vscrollBus.$_undefinedMap[id] = undefined;
+            }
             _this3.$set(_this3.vscrollData.heights, _this3.id, size.height);
             if (_this3.emitResize) _this3.$emit('resize', _this3.id);
           }
@@ -1488,7 +1530,7 @@ function registerComponents(Vue$$1, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.0.0-beta.4",
+  version: "1.0.0-beta.5",
   install: function install(Vue$$1, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
