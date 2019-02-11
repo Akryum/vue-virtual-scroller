@@ -300,7 +300,7 @@ The `prerender` props can be set as the number of items to render on the server 
 >
 ```
 
-## Dynamic Scroller
+## DynamicScroller
 
 This works like RecycleScroller but can render items with unknown heights!
 
