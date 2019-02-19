@@ -588,8 +588,21 @@ if (typeof window !== 'undefined') {
   } catch (e) {}
 }
 
-// @vue/component
-var Scroller = {
+var uid = 0;
+
+var RecycleScroller = { render: function render() {
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('div', { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], staticClass: "vue-recycle-scroller", class: { ready: _vm.ready, 'page-mode': _vm.pageMode }, on: { "&scroll": function scroll($event) {
+          return _vm.handleScroll($event);
+        } } }, [_vm._t("before-container"), _vm._v(" "), _c('div', { ref: "wrapper", staticClass: "vue-recycle-scroller__item-wrapper", style: { height: _vm.totalHeight + 'px' } }, _vm._l(_vm.pool, function (view) {
+      return _c('div', { key: view.nr.id, staticClass: "vue-recycle-scroller__item-view", class: { hover: _vm.hoverKey === view.nr.key }, style: _vm.ready ? { transform: 'translateY(' + view.top + 'px)' } : null, on: { "mouseenter": function mouseenter($event) {
+            _vm.hoverKey = view.nr.key;
+          }, "mouseleave": function mouseleave($event) {
+            _vm.hoverKey = null;
+          } } }, [_vm._t("default", null, { "item": view.item, "index": view.nr.index, "active": view.nr.used })], 2);
+    }), 0), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('ResizeObserver', { on: { "notify": _vm.handleResize } })], 2);
+  }, staticRenderFns: [],
+  name: 'RecycleScroller',
+
   components: {
     ResizeObserver: ResizeObserver
   },
@@ -599,6 +612,7 @@ var Scroller = {
   },
 
   props: {
+
     items: {
       type: Array,
       required: true
@@ -650,6 +664,16 @@ var Scroller = {
     }
   },
 
+  data: function data() {
+    return {
+      pool: [],
+      totalHeight: 0,
+      ready: false,
+      hoverKey: null
+    };
+  },
+
+
   computed: {
     heights: function heights() {
       if (this.itemHeight === null) {
@@ -671,124 +695,6 @@ var Scroller = {
       return [];
     }
   },
-
-  beforeDestroy: function beforeDestroy() {
-    this.removeListeners();
-  },
-
-
-  methods: {
-    getListenerTarget: function getListenerTarget() {
-      var target = scrollparent(this.$el);
-      // Fix global scroll target for Chrome and Safari
-      if (target === window.document.documentElement || target === window.document.body) {
-        target = window;
-      }
-      return target;
-    },
-    getScroll: function getScroll() {
-      var el = this.$el;
-      // const wrapper = this.$refs.wrapper
-      var scrollState = void 0;
-
-      if (this.pageMode) {
-        var size = el.getBoundingClientRect();
-        var top = -size.top;
-        var height = window.innerHeight;
-        if (top < 0) {
-          height += top;
-          top = 0;
-        }
-        if (top + height > size.height) {
-          height = size.height - top;
-        }
-        scrollState = {
-          top: top,
-          bottom: top + height
-        };
-      } else {
-        scrollState = {
-          top: el.scrollTop,
-          bottom: el.scrollTop + el.clientHeight
-        };
-      }
-
-      return scrollState;
-    },
-    applyPageMode: function applyPageMode() {
-      if (this.pageMode) {
-        this.addListeners();
-      } else {
-        this.removeListeners();
-      }
-    },
-    addListeners: function addListeners() {
-      this.listenerTarget = this.getListenerTarget();
-      this.listenerTarget.addEventListener('scroll', this.handleScroll, supportsPassive ? {
-        passive: true
-      } : false);
-      this.listenerTarget.addEventListener('resize', this.handleResize);
-    },
-    removeListeners: function removeListeners() {
-      if (!this.listenerTarget) {
-        return;
-      }
-
-      this.listenerTarget.removeEventListener('scroll', this.handleScroll);
-      this.listenerTarget.removeEventListener('resize', this.handleResize);
-
-      this.listenerTarget = null;
-    },
-    scrollToItem: function scrollToItem(index) {
-      var scrollTop = void 0;
-      if (this.itemHeight === null) {
-        scrollTop = index > 0 ? this.heights[index - 1].accumulator : 0;
-      } else {
-        scrollTop = index * this.itemHeight;
-      }
-      this.scrollToPosition(scrollTop);
-    },
-    scrollToPosition: function scrollToPosition(position) {
-      this.$el.scrollTop = position;
-    },
-    itemsLimitError: function itemsLimitError() {
-      var _this = this;
-
-      setTimeout(function () {
-        console.log('It seems the scroller element isn\'t scrolling, so it tries to render all the items at once.', 'Scroller:', _this.$el);
-        console.log('Make sure the scroller has a fixed height and \'overflow-y\' set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.');
-      });
-      throw new Error('Rendered items limit reached');
-    }
-  }
-};
-
-var uid = 0;
-
-var RecycleScroller = { render: function render() {
-    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('div', { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], staticClass: "vue-recycle-scroller", class: { ready: _vm.ready, 'page-mode': _vm.pageMode }, on: { "&scroll": function scroll($event) {
-          return _vm.handleScroll($event);
-        } } }, [_vm._t("before-container"), _vm._v(" "), _c('div', { ref: "wrapper", staticClass: "vue-recycle-scroller__item-wrapper", style: { height: _vm.totalHeight + 'px' } }, _vm._l(_vm.pool, function (view) {
-      return _c('div', { key: view.nr.id, staticClass: "vue-recycle-scroller__item-view", class: { hover: _vm.hoverKey === view.nr.key }, style: _vm.ready ? { transform: 'translateY(' + view.top + 'px)' } : null, on: { "mouseenter": function mouseenter($event) {
-            _vm.hoverKey = view.nr.key;
-          }, "mouseleave": function mouseleave($event) {
-            _vm.hoverKey = null;
-          } } }, [_vm._t("default", null, { item: view.item, index: view.nr.index, active: view.nr.used })], 2);
-    }), 0), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('ResizeObserver', { on: { "notify": _vm.handleResize } })], 2);
-  }, staticRenderFns: [],
-  name: 'RecycleScroller',
-
-  mixins: [Scroller],
-
-  data: function data() {
-    return {
-      pool: [],
-      totalHeight: 0,
-      ready: false,
-      hoverKey: null
-    };
-  },
-
 
   watch: {
     items: function items() {
@@ -828,6 +734,9 @@ var RecycleScroller = { render: function render() {
       _this.updateVisibleItems(true);
       _this.ready = true;
     });
+  },
+  beforeDestroy: function beforeDestroy() {
+    this.removeListeners();
   },
 
 
@@ -1098,6 +1007,88 @@ var RecycleScroller = { render: function render() {
       return {
         continuous: continuous
       };
+    },
+    getListenerTarget: function getListenerTarget() {
+      var target = scrollparent(this.$el);
+      // Fix global scroll target for Chrome and Safari
+      if (target === window.document.documentElement || target === window.document.body) {
+        target = window;
+      }
+      return target;
+    },
+    getScroll: function getScroll() {
+      var el = this.$el;
+      // const wrapper = this.$refs.wrapper
+      var scrollState = void 0;
+
+      if (this.pageMode) {
+        var size = el.getBoundingClientRect();
+        var top = -size.top;
+        var height = window.innerHeight;
+        if (top < 0) {
+          height += top;
+          top = 0;
+        }
+        if (top + height > size.height) {
+          height = size.height - top;
+        }
+        scrollState = {
+          top: top,
+          bottom: top + height
+        };
+      } else {
+        scrollState = {
+          top: el.scrollTop,
+          bottom: el.scrollTop + el.clientHeight
+        };
+      }
+
+      return scrollState;
+    },
+    applyPageMode: function applyPageMode() {
+      if (this.pageMode) {
+        this.addListeners();
+      } else {
+        this.removeListeners();
+      }
+    },
+    addListeners: function addListeners() {
+      this.listenerTarget = this.getListenerTarget();
+      this.listenerTarget.addEventListener('scroll', this.handleScroll, supportsPassive ? {
+        passive: true
+      } : false);
+      this.listenerTarget.addEventListener('resize', this.handleResize);
+    },
+    removeListeners: function removeListeners() {
+      if (!this.listenerTarget) {
+        return;
+      }
+
+      this.listenerTarget.removeEventListener('scroll', this.handleScroll);
+      this.listenerTarget.removeEventListener('resize', this.handleResize);
+
+      this.listenerTarget = null;
+    },
+    scrollToItem: function scrollToItem(index) {
+      var scrollTop = void 0;
+      if (this.itemHeight === null) {
+        scrollTop = index > 0 ? this.heights[index - 1].accumulator : 0;
+      } else {
+        scrollTop = index * this.itemHeight;
+      }
+      this.scrollToPosition(scrollTop);
+    },
+    scrollToPosition: function scrollToPosition(position) {
+      this.$el.scrollTop = position;
+    },
+    itemsLimitError: function itemsLimitError() {
+      var _this4 = this;
+
+      setTimeout(function () {
+        console.log('It seems the scroller element isn\'t scrolling, so it tries to render all the items at once.', 'Scroller:', _this4.$el);
+        console.log('Make sure the scroller has a fixed height and \'overflow-y\' set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.');
+      });
+      throw new Error('Rendered items limit reached');
     }
   }
 };
@@ -1113,7 +1104,7 @@ var DynamicScroller = { render: function render() {
             active: active,
             itemWithHeight: itemWithHeight
           })];
-        } }]) }, 'RecycleScroller', _vm.$attrs, false), _vm.listeners), [_c('template', { slot: "before-container" }, [_vm._t("before-container")], 2), _vm._v(" "), _c('template', { slot: "after-container" }, [_vm._t("after-container")], 2)], 2);
+        } }], true) }, 'RecycleScroller', _vm.$attrs, false), _vm.listeners), [_vm._v(" "), _c('template', { slot: "before-container" }, [_vm._t("before-container")], 2), _vm._v(" "), _c('template', { slot: "after-container" }, [_vm._t("after-container")], 2)], 2);
   }, staticRenderFns: [],
   name: 'DynamicScroller',
 
@@ -1326,7 +1317,7 @@ var DynamicScrollerItem = {
       }
     },
     active: function active(value) {
-      if (value && this.$_pendingVScrollUpdate) {
+      if (value && this.$_pendingVScrollUpdate === this.id) {
         this.updateSize();
       }
     }
@@ -1337,7 +1328,7 @@ var DynamicScrollerItem = {
 
     if (this.$isServer) return;
 
-    this.$_forceNextVScrollUpdate = false;
+    this.$_forceNextVScrollUpdate = null;
     this.updateWatchData();
 
     var _loop = function _loop(k) {
@@ -1367,16 +1358,16 @@ var DynamicScrollerItem = {
   methods: {
     updateSize: function updateSize() {
       if (this.active && this.vscrollData.active) {
-        if (!this.$_pendingSizeUpdate) {
-          this.$_pendingSizeUpdate = true;
-          this.$_forceNextVScrollUpdate = false;
-          this.$_pendingVScrollUpdate = false;
+        if (this.$_pendingSizeUpdate !== this.id) {
+          this.$_pendingSizeUpdate = this.id;
+          this.$_forceNextVScrollUpdate = null;
+          this.$_pendingVScrollUpdate = null;
           if (this.active && this.vscrollData.active) {
             this.computeSize(this.id);
           }
         }
       } else {
-        this.$_forceNextVScrollUpdate = true;
+        this.$_forceNextVScrollUpdate = this.id;
       }
     },
     getSize: function getSize() {
@@ -1400,9 +1391,9 @@ var DynamicScrollerItem = {
       var force = _ref.force;
 
       if (!this.active && force) {
-        this.$_pendingVScrollUpdate = true;
+        this.$_pendingVScrollUpdate = this.id;
       }
-      if (this.$_forceNextVScrollUpdate || force || !this.height) {
+      if (this.$_forceNextVScrollUpdate === this.id || force || !this.height) {
         this.updateSize();
       }
     },
@@ -1424,7 +1415,7 @@ var DynamicScrollerItem = {
             if (_this3.emitResize) _this3.$emit('resize', _this3.id);
           }
         }
-        _this3.$_pendingSizeUpdate = false;
+        _this3.$_pendingSizeUpdate = null;
       });
     }
   },
@@ -1536,7 +1527,7 @@ function registerComponents(Vue$$1, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.0.0-beta.5",
+  version: "1.0.0-beta.6",
   install: function install(Vue$$1, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
