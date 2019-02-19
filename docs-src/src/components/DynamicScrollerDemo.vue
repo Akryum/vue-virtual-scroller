@@ -1,11 +1,21 @@
 <template>
   <div class="dynamic-scroller-demo">
+    <div class="toolbar">
+      <input
+        v-model="search"
+        placeholder="Filter..."
+      >
+    </div>
+
     <DynamicScroller
-      :items="items"
+      :items="filteredItems"
       :min-item-height="54"
       class="scroller"
     >
-      <div slot="before-container" class="notice">
+      <div
+        slot="before-container"
+        class="notice"
+      >
         The message heights are unknown.
       </div>
 
@@ -24,15 +34,18 @@
         >
           <div class="avatar">
             <img
-              :src="item.avatar"
               :key="item.avatar"
+              :src="item.avatar"
               alt="avatar"
               class="image"
             >
           </div>
           <div class="text">
-            {{ index }}
             {{ item.message }}
+          </div>
+          <div class="index">
+            <span>{{ item.id }} (id)</span>
+            <span>{{ index }} (index)</span>
           </div>
         </DynamicScrollerItem>
       </template>
@@ -55,7 +68,17 @@ export default {
   data () {
     return {
       items,
+      search: '',
     }
+  },
+
+  computed: {
+    filteredItems () {
+      const { search, items } = this
+      if (!search) return items
+      const lowerCaseSearch = search.toLowerCase()
+      return items.filter(i => i.message.toLowerCase().includes(lowerCaseSearch))
+    },
   },
 
   methods: {
@@ -87,7 +110,6 @@ export default {
   min-height: 32px;
   padding: 12px;
   box-sizing: border-box;
-  max-width: 400px;
 }
 
 .avatar {
@@ -104,7 +126,18 @@ export default {
   border-radius: 50%;
 }
 
+.index,
 .text {
   flex: 1;
+}
+
+.text {
+  max-width: 400px;
+}
+
+.index span {
+  display: inline-block;
+  width: 160px;
+  text-align: right;
 }
 </style>
