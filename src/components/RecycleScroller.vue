@@ -14,7 +14,7 @@
 
     <div
       ref="wrapper"
-      :style="{ height: totalHeight + 'px' }"
+      :style="{ minHeight: totalHeight + 'px' }"
       class="vue-recycle-scroller__item-wrapper"
     >
       <div
