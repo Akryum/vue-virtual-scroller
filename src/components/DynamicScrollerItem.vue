@@ -59,7 +59,7 @@ export default {
     },
 
     active (value) {
-      if (value && this.$_pendingVScrollUpdate) {
+      if (value && this.$_pendingVScrollUpdate === this.id) {
         this.updateSize()
       }
     },
@@ -68,7 +68,7 @@ export default {
   created () {
     if (this.$isServer) return
 
-    this.$_forceNextVScrollUpdate = false
+    this.$_forceNextVScrollUpdate = null
     this.updateWatchData()
 
     for (const k in this.sizeDependencies) {
@@ -93,16 +93,16 @@ export default {
   methods: {
     updateSize () {
       if (this.active && this.vscrollData.active) {
-        if (!this.$_pendingSizeUpdate) {
-          this.$_pendingSizeUpdate = true
-          this.$_forceNextVScrollUpdate = false
-          this.$_pendingVScrollUpdate = false
+        if (this.$_pendingSizeUpdate !== this.id) {
+          this.$_pendingSizeUpdate = this.id
+          this.$_forceNextVScrollUpdate = null
+          this.$_pendingVScrollUpdate = null
           if (this.active && this.vscrollData.active) {
             this.computeSize(this.id)
           }
         }
       } else {
-        this.$_forceNextVScrollUpdate = true
+        this.$_forceNextVScrollUpdate = this.id
       }
     },
 
@@ -125,9 +125,9 @@ export default {
 
     onVscrollUpdate ({ force }) {
       if (!this.active && force) {
-        this.$_pendingVScrollUpdate = true
+        this.$_pendingVScrollUpdate = this.id
       }
-      if (this.$_forceNextVScrollUpdate || force || !this.height) {
+      if (this.$_forceNextVScrollUpdate === this.id || force || !this.height) {
         this.updateSize()
       }
     },
@@ -149,7 +149,7 @@ export default {
             if (this.emitResize) this.$emit('resize', this.id)
           }
         }
-        this.$_pendingSizeUpdate = false
+        this.$_pendingSizeUpdate = null
       })
     },
   },
