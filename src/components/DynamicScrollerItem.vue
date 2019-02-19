@@ -140,12 +140,13 @@ export default {
       this.$nextTick(() => {
         if (this.id === id) {
           const size = this.getSize()
-          if (size.height && this.height !== size.height) {
+          const height = Math.round(size.height)
+          if (height && this.height !== height) {
             if (this.vscrollBus.$_undefinedMap[id]) {
               this.vscrollBus.$_undefinedHeights--
               this.vscrollBus.$_undefinedMap[id] = undefined
             }
-            this.$set(this.vscrollData.heights, this.id, size.height)
+            this.$set(this.vscrollData.heights, this.id, height)
             if (this.emitResize) this.$emit('resize', this.id)
           }
         }
