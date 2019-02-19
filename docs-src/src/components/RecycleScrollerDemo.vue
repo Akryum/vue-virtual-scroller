@@ -27,6 +27,10 @@
         <button @mousedown="renderScroller = !renderScroller">Toggle render</button>
         <button @mousedown="showScroller = !showScroller">Toggle visibility</button>
       </span>
+      <label>
+        <input v-model="showMessageBeforeItems" type="checkbox" /> show message before items
+      </label>
+      <span>({{updateParts.viewStartIdx}} - [{{updateParts.visibleStartIdx}} - {{updateParts.visibleEndIdx}}] - {{updateParts.viewEndIdx}})</span>
     </div>
 
     <div
@@ -44,9 +48,15 @@
           :buffer="buffer"
           :page-mode="pageMode"
           key-field="id"
+          :emit-update="true"
+          @update="onUpdate"
           @visible="onVisible"
           @hidden="onHidden"
         >
+          <div slot="before-container" class="notice" v-if="showMessageBeforeItems">
+            <span v-if="enableLetters">The message heights are variable.</span>
+            <span v-else>The message heights are fixed.</span>
+          </div>
           <template slot-scope="props">
             <div
               v-if="props.item.type === 'letter'"
@@ -93,6 +103,8 @@ export default {
     enableLetters: true,
     pageMode: false,
     pageModeFullPage: true,
+    updateParts: { viewStartIdx: 0, viewEndIdx: 0, visibleStartIdx: 0, visibleEndIdx: 0 },
+    showMessageBeforeItems: true,
   }),
 
   computed: {
@@ -151,8 +163,11 @@ export default {
       addItem(this.items)
     },
 
-    onUpdate (startIndex, endIndex) {
-      this.updateCount++
+    onUpdate (viewStartIndex, viewEndIndex, visibleStartIndex, visibleEndIndex) {
+      this.updateParts.viewStartIdx = viewStartIndex;
+      this.updateParts.viewEndIdx = viewEndIndex;
+      this.updateParts.visibleStartIdx = visibleStartIndex;
+      this.updateParts.visibleEndIdx = visibleEndIndex;
     },
 
     onVisible () {
@@ -220,6 +235,12 @@ export default {
 .scroller {
   width: 100%;
   height: 100%;
+}
+
+.notice {
+  padding: 24px;
+  font-size: 20px;
+  color: #999;
 }
 
 .letter {

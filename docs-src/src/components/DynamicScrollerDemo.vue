@@ -1,11 +1,20 @@
 <template>
   <div class="dynamic-scroller-demo">
+    <div class="toolbar">
+      <label>
+        <input v-model="showMessageBeforeItems" type="checkbox" /> show message before items
+      </label>
+      <span>({{updateParts.viewStartIdx}} - [{{updateParts.visibleStartIdx}} - {{updateParts.visibleEndIdx}}] - {{updateParts.viewEndIdx}})</span>
+    </div>
+
     <DynamicScroller
       :items="items"
       :min-item-height="54"
+      :emit-update="true"
+      @update="onUpdate"
       class="scroller"
     >
-      <div slot="before-container" class="notice">
+      <div slot="before-container" class="notice" v-if="showMessageBeforeItems">
         The message heights are unknown.
       </div>
 
@@ -55,12 +64,21 @@ export default {
   data () {
     return {
       items,
+      updateParts: { viewStartIdx: 0, viewEndIdx: 0, visibleStartIdx: 0, visibleEndIdx: 0 },
+      showMessageBeforeItems: true,
     }
   },
 
   methods: {
     changeMessage (message) {
       Object.assign(message, generateMessage())
+    },
+
+    onUpdate (viewStartIndex, viewEndIndex, visibleStartIndex, visibleEndIndex) {
+      this.updateParts.viewStartIdx = viewStartIndex;
+      this.updateParts.viewEndIdx = viewEndIndex;
+      this.updateParts.visibleStartIdx = visibleStartIndex;
+      this.updateParts.visibleEndIdx = visibleEndIndex;
     },
   },
 }
@@ -74,6 +92,19 @@ export default {
 
 .dynamic-scroller-demo {
   overflow: hidden;
+}
+
+.scroller {
+  border: solid 1px #42b983;
+}
+
+.toolbar {
+  flex: auto 0 0;
+  text-align: center;
+}
+
+.toolbar > *:not(:last-child) {
+  margin-right: 24px;
 }
 
 .notice {

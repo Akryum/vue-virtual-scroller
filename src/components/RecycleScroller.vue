@@ -8,9 +8,14 @@
     }"
     @scroll.passive="handleScroll"
   >
-    <slot
-      name="before-container"
-    />
+    <div
+      v-if="$slots['before-container']"
+      ref="beforeContent"
+    >
+      <slot
+        name="before-container"
+      />
+    </div>
 
     <div
       ref="wrapper"
@@ -185,19 +190,24 @@ export default {
       let unusedViews = this.$_unusedViews
       const pool = this.pool
       let startIndex, endIndex
+      let visibleStartIndex, visibleEndIndex
       let totalHeight
 
       if (!count) {
-        startIndex = endIndex = totalHeight = 0
+        startIndex = endIndex = visibleStartIndex = visibleEndIndex = totalHeight = 0
       } else if (this.$isServer) {
-        startIndex = 0
-        endIndex = this.prerender
+        startIndex = visibleStartIndex = 0
+        endIndex = visibleEndIndex = this.prerender
         totalHeight = null
       } else {
         const scroll = this.getScroll()
-        const buffer = this.buffer
-        scroll.top -= buffer
-        scroll.bottom += buffer
+        const visibleScrollTop = scroll.top
+        const visibleScrollBottom = scroll.bottom
+        scroll.top -= this.buffer
+        scroll.bottom += this.buffer
+
+        // get height of possible beforeContent
+        const beforeContentHeight = this.$refs['beforeContent'] ? this.$refs['beforeContent'].getBoundingClientRect().height : 0
 
         // Variable height mode
         if (itemHeight === null) {
@@ -233,14 +243,24 @@ export default {
             // Bounds
             endIndex > count && (endIndex = count)
           }
+
+          // search visible startIndex
+          for (visibleStartIndex = startIndex; visibleStartIndex < count && (beforeContentHeight + heights[visibleStartIndex].accumulator) < visibleScrollTop; visibleStartIndex++);
+
+          // search visible endIndex
+          for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeContentHeight + heights[visibleEndIndex].accumulator) < visibleScrollBottom; visibleEndIndex++);
         } else {
           // Fixed height mode
           startIndex = ~~(scroll.top / itemHeight)
           endIndex = Math.ceil(scroll.bottom / itemHeight)
+          visibleStartIndex = Math.max(0, Math.floor((visibleScrollTop - beforeContentHeight) / itemHeight))
+          visibleEndIndex = Math.floor((visibleScrollBottom - beforeContentHeight) / itemHeight)
 
           // Bounds
           startIndex < 0 && (startIndex = 0)
           endIndex > count && (endIndex = count)
+          visibleStartIndex < 0 && (visibleStartIndex = 0)
+          visibleEndIndex > count && (visibleEndIndex = count)
 
           totalHeight = count * itemHeight
         }
@@ -360,7 +380,7 @@ export default {
       this.$_startIndex = startIndex
       this.$_endIndex = endIndex
 
-      if (this.emitUpdate) this.$emit('update', startIndex, endIndex)
+      if (this.emitUpdate) this.$emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex)
 
       return {
         continuous,
