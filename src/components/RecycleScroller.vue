@@ -47,6 +47,7 @@ import { ResizeObserver } from 'vue-resize'
 import { ObserveVisibility } from 'vue-observe-visibility'
 import ScrollParent from 'scrollparent'
 import config from '../config'
+import { props, simpleArray } from './common'
 import { supportsPassive } from '../utils'
 
 let uid = 0
@@ -63,10 +64,7 @@ export default {
   },
 
   props: {
-    items: {
-      type: Array,
-      required: true,
-    },
+    ...props,
 
     itemHeight: {
       type: Number,
@@ -86,11 +84,6 @@ export default {
     typeField: {
       type: String,
       default: 'type',
-    },
-
-    keyField: {
-      type: String,
-      default: 'id',
     },
 
     buffer: {
@@ -143,6 +136,8 @@ export default {
       }
       return []
     },
+
+    simpleArray,
   },
 
   watch: {
@@ -262,7 +257,7 @@ export default {
     updateVisibleItems (checkItem) {
       const itemHeight = this.itemHeight
       const typeField = this.typeField
-      const keyField = this.keyField
+      const keyField = this.simpleArray ? null : this.keyField
       const items = this.items
       const count = items.length
       const heights = this.heights

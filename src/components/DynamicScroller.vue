@@ -3,6 +3,7 @@
     ref="scroller"
     :items="itemsWithHeight"
     :min-item-height="minItemHeight"
+    :key-field="simpleArray ? null : keyField"
     v-bind="$attrs"
     @resize="onScrollerResize"
     @visible="onScrollerVisible"
@@ -29,6 +30,7 @@
 
 <script>
 import RecycleScroller from './RecycleScroller.vue'
+import { props, simpleArray } from './common'
 
 export default {
   name: 'DynamicScroller',
@@ -47,19 +49,11 @@ export default {
   },
 
   props: {
-    items: {
-      type: Array,
-      required: true,
-    },
+    ...props,
 
     minItemHeight: {
       type: [Number, String],
       required: true,
-    },
-
-    keyField: {
-      type: String,
-      default: 'id',
     },
   },
 
@@ -69,19 +63,21 @@ export default {
         active: true,
         heights: {},
         keyField: this.keyField,
+        simpleArray: false,
       },
     }
   },
 
   computed: {
+    simpleArray,
+
     itemsWithHeight () {
       const result = []
-      const items = this.items
-      const keyField = this.keyField
+      const { items, keyField, simpleArray } = this
       const heights = this.vscrollData.heights
       for (let i = 0; i < items.length; i++) {
         const item = items[i]
-        const id = item[keyField]
+        const id = simpleArray ? i : item[keyField]
         let height = heights[id]
         if (typeof height === 'undefined' && !this.$_undefinedMap[id]) {
           // eslint-disable-next-line vue/no-side-effects-in-computed-properties
@@ -113,6 +109,13 @@ export default {
   watch: {
     items () {
       this.forceUpdate(false)
+    },
+
+    simpleArray: {
+      handler (value) {
+        this.vscrollData.simpleArray = value
+      },
+      immediate: true,
     },
   },
 
@@ -151,7 +154,7 @@ export default {
     },
 
     forceUpdate (clear = true) {
-      if (clear) this.vscrollData.heights = {}
+      if (clear || this.simpleArray) this.vscrollData.heights = {}
       this.$emit('vscroll:update', { force: true })
     },
 
@@ -164,8 +167,8 @@ export default {
       if (scroller) scroller.scrollToItem(index)
     },
 
-    getItemSize (item) {
-      const id = item[this.keyField]
+    getItemSize (item, index = undefined) {
+      const id = this.simpleArray ? (index != null ? index : this.items.indexOf(item)) : item[this.keyField]
       return this.vscrollData.heights[id] || 0
     },
 

@@ -9,7 +9,6 @@ export default {
 
   props: {
     item: {
-      type: Object,
       required: true,
     },
 
@@ -21,6 +20,11 @@ export default {
     active: {
       type: Boolean,
       required: true,
+    },
+
+    index: {
+      type: Number,
+      default: undefined,
     },
 
     sizeDependencies: {
@@ -41,7 +45,7 @@ export default {
 
   computed: {
     id () {
-      return this.item[this.vscrollData.keyField]
+      return this.vscrollData.simpleArray ? this.index : this.item[this.vscrollData.keyField]
     },
 
     height () {
