@@ -9,6 +9,7 @@
       <router-link :to="{ name: 'recycle' }">Recycle scroller demo</router-link>
       <router-link :to="{ name: 'dynamic' }">Dynamic scroller demo</router-link>
       <router-link :to="{ name: 'test-chat' }">Chat demo</router-link>
+      <router-link :to="{ name: 'simple-list' }">Simple array</router-link>
     </nav>
     <router-view class="page"/>
   </div>
