@@ -151,6 +151,7 @@ export default {
 ### Important notes
 
 - ⚠️ You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). Unless you are using [variable height mode](#variable-height-mode), all items should have the same height to prevent display glitches.
+- If the items are objects, the scroller needs to be able to identify them. By default it will look for an `id` field on the items. This can be configured with the `keyField` prop.
 - It is not recommended to use functional components inside RecycleScroller since the components are reused (so it will actually be slower).
 - The components used in the list should expect `item` prop change without being re-created (use computed props or watchers to properly react to props changes!).
 - You don't need to set `key` on list content (but you should on all nested `<img>` elements to prevent load glitches).
