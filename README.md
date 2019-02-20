@@ -118,6 +118,7 @@ Use the scoped slot to render each item in the list:
   <RecycleScroller
     class="scroller"
     :items="list"
+    :key-field="item.id"
     :item-height="32"
   >
     <div slot-scope="{ item }" class="user">
