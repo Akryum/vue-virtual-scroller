@@ -574,6 +574,173 @@ var scrollparent = createCommonjsModule(function (module) {
 }));
 });
 
+var _typeof$1 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+};
+
+
+
+
+
+var asyncGenerator$1 = function () {
+  function AwaitValue(value) {
+    this.value = value;
+  }
+
+  function AsyncGenerator(gen) {
+    var front, back;
+
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
+
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
+        }
+      });
+    }
+
+    function resume(key, arg) {
+      try {
+        var result = gen[key](arg);
+        var value = result.value;
+
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
+        }
+      } catch (err) {
+        settle("throw", err);
+      }
+    }
+
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
+
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
+  }
+
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
+  };
+
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
+
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+var props = {
+  items: {
+    type: Array,
+    required: true
+  },
+
+  keyField: {
+    type: String,
+    default: 'id'
+  }
+};
+
+function simpleArray() {
+  return this.items.length && _typeof$1(this.items[0]) !== 'object';
+}
+
 var supportsPassive = false;
 
 if (typeof window !== 'undefined') {
@@ -593,7 +760,7 @@ var uid = 0;
 var RecycleScroller = { render: function render() {
     var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('div', { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], staticClass: "vue-recycle-scroller", class: { ready: _vm.ready, 'page-mode': _vm.pageMode }, on: { "&scroll": function scroll($event) {
           return _vm.handleScroll($event);
-        } } }, [_vm._t("before-container"), _vm._v(" "), _c('div', { ref: "wrapper", staticClass: "vue-recycle-scroller__item-wrapper", style: { height: _vm.totalHeight + 'px' } }, _vm._l(_vm.pool, function (view) {
+        } } }, [_vm._t("before-container"), _vm._v(" "), _c('div', { ref: "wrapper", staticClass: "vue-recycle-scroller__item-wrapper", style: { minHeight: _vm.totalHeight + 'px' } }, _vm._l(_vm.pool, function (view) {
       return _c('div', { key: view.nr.id, staticClass: "vue-recycle-scroller__item-view", class: { hover: _vm.hoverKey === view.nr.key }, style: _vm.ready ? { transform: 'translateY(' + view.top + 'px)' } : null, on: { "mouseenter": function mouseenter($event) {
             _vm.hoverKey = view.nr.key;
           }, "mouseleave": function mouseleave($event) {
@@ -611,12 +778,7 @@ var RecycleScroller = { render: function render() {
     ObserveVisibility: ObserveVisibility
   },
 
-  props: {
-
-    items: {
-      type: Array,
-      required: true
-    },
+  props: _extends({}, props, {
 
     itemHeight: {
       type: Number,
@@ -638,11 +800,6 @@ var RecycleScroller = { render: function render() {
       default: 'type'
     },
 
-    keyField: {
-      type: String,
-      default: 'id'
-    },
-
     buffer: {
       type: Number,
       default: 200
@@ -662,7 +819,7 @@ var RecycleScroller = { render: function render() {
       type: Boolean,
       default: false
     }
-  },
+  }),
 
   data: function data() {
     return {
@@ -693,7 +850,10 @@ var RecycleScroller = { render: function render() {
         return heights;
       }
       return [];
-    }
+    },
+
+
+    simpleArray: simpleArray
   },
 
   watch: {
@@ -820,7 +980,7 @@ var RecycleScroller = { render: function render() {
     updateVisibleItems: function updateVisibleItems(checkItem) {
       var itemHeight = this.itemHeight;
       var typeField = this.typeField;
-      var keyField = this.keyField;
+      var keyField = this.simpleArray ? null : this.keyField;
       var items = this.items;
       var count = items.length;
       var heights = this.heights;
@@ -1011,7 +1171,7 @@ var RecycleScroller = { render: function render() {
     getListenerTarget: function getListenerTarget() {
       var target = scrollparent(this.$el);
       // Fix global scroll target for Chrome and Safari
-      if (target === window.document.documentElement || target === window.document.body) {
+      if (window.document && (target === window.document.documentElement || target === window.document.body)) {
         target = window;
       }
       return target;
@@ -1094,7 +1254,7 @@ var RecycleScroller = { render: function render() {
 };
 
 var DynamicScroller = { render: function render() {
-    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('RecycleScroller', _vm._g(_vm._b({ ref: "scroller", attrs: { "items": _vm.itemsWithHeight, "min-item-height": _vm.minItemHeight }, on: { "resize": _vm.onScrollerResize, "visible": _vm.onScrollerVisible }, scopedSlots: _vm._u([{ key: "default", fn: function fn(_ref) {
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('RecycleScroller', _vm._g(_vm._b({ ref: "scroller", attrs: { "items": _vm.itemsWithHeight, "min-item-height": _vm.minItemHeight, "key-field": _vm.simpleArray ? null : _vm.keyField }, on: { "resize": _vm.onScrollerResize, "visible": _vm.onScrollerVisible }, scopedSlots: _vm._u([{ key: "default", fn: function fn(_ref) {
           var itemWithHeight = _ref.item,
               index = _ref.index,
               active = _ref.active;
@@ -1122,43 +1282,40 @@ var DynamicScroller = { render: function render() {
   },
 
 
-  props: {
-    items: {
-      type: Array,
-      required: true
-    },
+  props: _extends({}, props, {
 
     minItemHeight: {
       type: [Number, String],
       required: true
-    },
-
-    keyField: {
-      type: String,
-      default: 'id'
     }
-  },
+  }),
 
   data: function data() {
     return {
       vscrollData: {
         active: true,
         heights: {},
-        keyField: this.keyField
+        validHeights: {},
+        keyField: this.keyField,
+        simpleArray: false
       }
     };
   },
 
 
   computed: {
+    simpleArray: simpleArray,
+
     itemsWithHeight: function itemsWithHeight() {
       var result = [];
-      var items = this.items;
-      var keyField = this.keyField;
+      var items = this.items,
+          keyField = this.keyField,
+          simpleArray$$1 = this.simpleArray;
+
       var heights = this.vscrollData.heights;
       for (var i = 0; i < items.length; i++) {
         var item = items[i];
-        var id = item[keyField];
+        var id = simpleArray$$1 ? i : item[keyField];
         var height = heights[id];
         if (typeof height === 'undefined' && !this.$_undefinedMap[id]) {
           // eslint-disable-next-line vue/no-side-effects-in-computed-properties
@@ -1189,6 +1346,15 @@ var DynamicScroller = { render: function render() {
   watch: {
     items: function items() {
       this.forceUpdate(false);
+    },
+
+
+    simpleArray: {
+      handler: function handler(value) {
+        this.vscrollData.simpleArray = value;
+      },
+
+      immediate: true
     }
   },
 
@@ -1225,7 +1391,9 @@ var DynamicScroller = { render: function render() {
     forceUpdate: function forceUpdate() {
       var clear = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 
-      if (clear) this.vscrollData.heights = {};
+      if (clear || this.simpleArray) {
+        this.vscrollData.validHeights = {};
+      }
       this.$emit('vscroll:update', { force: true });
     },
     getSize: function getSize(scroller) {
@@ -1236,7 +1404,9 @@ var DynamicScroller = { render: function render() {
       if (scroller) scroller.scrollToItem(index);
     },
     getItemSize: function getItemSize(item) {
-      var id = item[this.keyField];
+      var index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : undefined;
+
+      var id = this.simpleArray ? index != null ? index : this.items.indexOf(item) : item[this.keyField];
       return this.vscrollData.heights[id] || 0;
     },
     scrollToBottom: function scrollToBottom() {
@@ -1269,7 +1439,6 @@ var DynamicScrollerItem = {
 
   props: {
     item: {
-      type: Object,
       required: true
     },
 
@@ -1281,6 +1450,11 @@ var DynamicScrollerItem = {
     active: {
       type: Boolean,
       required: true
+    },
+
+    index: {
+      type: Number,
+      default: undefined
     },
 
     sizeDependencies: {
@@ -1301,10 +1475,10 @@ var DynamicScrollerItem = {
 
   computed: {
     id: function id() {
-      return this.item[this.vscrollData.keyField];
+      return this.vscrollData.simpleArray ? this.index : this.item[this.vscrollData.keyField];
     },
     height: function height() {
-      return this.vscrollData.heights[this.id] || 0;
+      return this.vscrollData.validHeights[this.id] && this.vscrollData.heights[this.id] || 0;
     }
   },
 
@@ -1406,12 +1580,14 @@ var DynamicScrollerItem = {
       this.$nextTick(function () {
         if (_this3.id === id) {
           var size = _this3.getSize();
-          if (size.height && _this3.height !== size.height) {
+          var height = Math.round(size.height);
+          if (height && _this3.height !== height) {
             if (_this3.vscrollBus.$_undefinedMap[id]) {
               _this3.vscrollBus.$_undefinedHeights--;
               _this3.vscrollBus.$_undefinedMap[id] = undefined;
             }
-            _this3.$set(_this3.vscrollData.heights, _this3.id, size.height);
+            _this3.$set(_this3.vscrollData.heights, _this3.id, height);
+            _this3.$set(_this3.vscrollData.validHeights, _this3.id, true);
             if (_this3.emitResize) _this3.$emit('resize', _this3.id);
           }
         }
@@ -1527,7 +1703,7 @@ function registerComponents(Vue$$1, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.0.0-beta.6",
+  version: "1.0.0-beta.7",
   install: function install(Vue$$1, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
