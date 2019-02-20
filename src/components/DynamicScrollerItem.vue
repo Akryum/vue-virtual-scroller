@@ -49,7 +49,7 @@ export default {
     },
 
     height () {
-      return this.vscrollData.heights[this.id] || 0
+      return (this.vscrollData.validHeights[this.id] && this.vscrollData.heights[this.id]) || 0
     },
   },
 
@@ -151,6 +151,7 @@ export default {
               this.vscrollBus.$_undefinedMap[id] = undefined
             }
             this.$set(this.vscrollData.heights, this.id, height)
+            this.$set(this.vscrollData.validHeights, this.id, true)
             if (this.emitResize) this.$emit('resize', this.id)
           }
         }

@@ -62,6 +62,7 @@ export default {
       vscrollData: {
         active: true,
         heights: {},
+        validHeights: {},
         keyField: this.keyField,
         simpleArray: false,
       },
@@ -154,7 +155,9 @@ export default {
     },
 
     forceUpdate (clear = true) {
-      if (clear || this.simpleArray) this.vscrollData.heights = {}
+      if (clear || this.simpleArray) {
+        this.vscrollData.validHeights = {}
+      }
       this.$emit('vscroll:update', { force: true })
     },
 
