@@ -3,6 +3,7 @@
     ref="scroller"
     :items="itemsWithHeight"
     :min-item-height="minItemHeight"
+    key-field="id"
     v-bind="$attrs"
     @resize="onScrollerResize"
     @visible="onScrollerVisible"
