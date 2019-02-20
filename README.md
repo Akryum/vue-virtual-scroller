@@ -99,7 +99,7 @@ There are several components provided by `vue-virtual-scroller`:
 
 [RecycleScroller](#recyclescroller) is a component that only renders the visible item in your list. It also re-use components and dom elements to be the most efficient and performant possible.
 
-[DynamicScroller](#dynamicscroller) is a component is using RecycleScroller under-the-hood and adds a dynamic height management feature on top of it. The main use case for this is **not knowing the height of the items** in advance: the Dynamic Scroller will automatically "discover" it when it renders new item as the user scrolls.
+[DynamicScroller](#dynamicscroller) is a component is using RecycleScroller under-the-hood and adds a dynamic size management feature on top of it. The main use case for this is **not knowing the size of the items** in advance: the Dynamic Scroller will automatically "discover" it when it renders new item as the user scrolls.
 
 [DynamicScrollerItem](#dynamicscrolleritem) must wrap each item in a DynamicScroller to handle size computations.
 
@@ -118,9 +118,10 @@ Use the scoped slot to render each item in the list:
   <RecycleScroller
     class="scroller"
     :items="list"
-    :item-height="32"
+    :item-size="32"
+    key-field="id"
   >
-    <div slot-scope="{ item }" class="user">
+    <div v-slot="{ item }" class="user">
       {{ item.name }}
     </div>
   </RecycleScroller>
@@ -150,12 +151,12 @@ export default {
 
 ### Important notes
 
-- ⚠️ You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). Unless you are using [variable height mode](#variable-height-mode), all items should have the same height to prevent display glitches.
-- If the items are objects, the scroller needs to be able to identify them. By default it will look for an `id` field on the items. This can be configured with the `keyField` prop.
+- **⚠️ You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). Unless you are using [variable size mode](#variable-size-mode), all items should have the same height (or width in horizontal mode) to prevent display glitches.**
+- **⚠️ If the items are objects, the scroller needs to be able to identify them. By default it will look for an `id` field on the items. This can be configured with the `keyField` prop if you are using another field name.**
 - It is not recommended to use functional components inside RecycleScroller since the components are reused (so it will actually be slower).
 - The components used in the list should expect `item` prop change without being re-created (use computed props or watchers to properly react to props changes!).
 - You don't need to set `key` on list content (but you should on all nested `<img>` elements to prevent load glitches).
-- The browsers have a height limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
+- The browsers have a size limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
 - Since DOM elements are reused for items, it's recommended to define hover styles using the provided `hover` class instead of the `:hover` state selector (e.g. `.vue-recycle-scroller__item-view.hover` or `.hover .some-element-inside-the-item-view`).
 
 ### How does it work?
@@ -165,7 +166,7 @@ export default {
 - For each type of item, a new pool is created so that the same components (and DOM trees) are reused for the same type.
 - Views can be deactivated if they go off-screen, and can be reused anytime for a newly visible item.
 
-Here is what the internals of RecycleScroller look like:
+Here is what the internals of RecycleScroller look like in vertical mode:
 
 ```html
 <RecycleScroller>
@@ -194,9 +195,10 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 ### Props
 
 - `items`: list of items you want to display in the scroller.
-- `itemHeight` (default: `null`): display height of the items in pixels used to calculate the scroll height and position. If it set to `null` (the default value), it will use [variable height mode](#variable-height-mode).
-- `minItemHeight`: minimum height used if the height of a item is unknown.
-- `heightField` (default: `'height'`): field used to get the item's height in variable height mode.
+- `direction` (default: `'vertical'`): scrolling direction, either `'vertical'` or `'horizontal'`.
+- `itemSize` (default: `null`): display height (or width in horizontal mode) of the items in pixels used to calculate the scroll size and position. If it set to `null` (the default value), it will use [variable size mode](#variable-size-mode).
+- `minItemSize`: minimum size used if the height (or width in horizontal mode) of a item is unknown.
+- `sizeField` (default: `'size'`): field used to get the item's size in variable size mode.
 - `typeField` (default: `'type'`): field used to differenciate different kinds of components in the list. For each distinct type, a pool of recycled items will be created.
 - `keyField` (default: `'id'`): field used to identify items and optimize render views management.
 - `pageMode` (default: `false`): enable [Page mode](#page-mode).
@@ -221,12 +223,30 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 
 ```html
 <main>
-  <slot name="before-container"></slot>
+  <slot name="before"></slot>
   <wrapper>
     <!-- Reused view pools here -->
   </wrapper>
-  <slot name="after-container"></slot>
+  <slot name="after"></slot>
 </main>
+```
+
+Example:
+
+```html
+<RecycleScroller
+  class="scroller"
+  :items="list"
+  :item-size="32"
+>
+  <template #before>
+    Hey! I'm a message displayed before the items!
+  </template>
+
+  <div v-slot="{ item }" class="user">
+    {{ item.name }}
+  </div>
+</RecycleScroller>
 ```
 
 ### Page mode
@@ -247,15 +267,15 @@ The page mode expand the virtual-scroller and use the page viewport to compute w
 </footer>
 ```
 
-### Variable height mode
+### Variable size mode
 
 **⚠️ This mode can be performance heavy with a lot of items. Use with caution.**
 
-If the `itemHeight` prop is not set or set to `null`, the virtual scroller will switch to Variable height mode. You then need to expose a number field on the item objects with the height of the item element.
+If the `itemSize` prop is not set or set to `null`, the virtual scroller will switch to Variable size mode. You then need to expose a number field on the item objects with the size of the item element.
 
-**⚠️ You still need to set the height of the items with CSS correctly (with classes for example).**
+**⚠️ You still need to set the size of the items with CSS correctly (with classes for example).**
 
-Use the `heightField` prop (default is `'height'`) to set the field used by the scroller to get the height for each item.
+Use the `sizeField` prop (default is `'size'`) to set the field used by the scroller to get the size for each item.
 
 Example:
 
@@ -264,17 +284,17 @@ const items = [
   {
     id: 1,
     label: 'Title',
-    height: 64,
+    size: 64,
   },
   {
     id: 2,
     label: 'Foo',
-    height: 32,
+    size: 32,
   },
   {
     id: 3,
     label: 'Bar',
-    height: 32,
+    size: 32,
   },
 ]
 ```
@@ -296,14 +316,14 @@ The `prerender` props can be set as the number of items to render on the server 
 ```html
 <RecycleScroller
   :items="items"
-  :item-height="42"
+  :item-size="42"
   :prerender="10"
 >
 ```
 
 ## DynamicScroller
 
-This works like RecycleScroller but can render items with unknown heights!
+This works like RecycleScroller but can render items with unknown sizes!
 
 ### Basic usage
 
@@ -311,10 +331,10 @@ This works like RecycleScroller but can render items with unknown heights!
 <template>
   <DynamicScroller
     :items="items"
-    :min-item-height="54"
+    :min-item-size="54"
     class="scroller"
   >
-    <template slot-scope="{ item, index, active }">
+    <template v-slot="{ item, index, active }">
       <DynamicScrollerItem
         :item="item"
         :active="active"
@@ -354,15 +374,15 @@ export default {
 
 ### Important notes
 
-- `minItemHeight` is required for the initial render of items.
+- `minItemSize` is required for the initial render of items.
 - `DynamicScroller` won't detect size changes on its own, but you can put values that can affect the item size with `size-dependencies` on [DynamicScrollerItem](#dynamicscrolleritem).
-- You don't need to have a `height` field on the items.
+- You don't need to have a `size` field on the items.
 
 ### Props
 
 All the RecycleScroller props.
 
-- It's not recommended to change `heightField` prop since all the height management is done internally.
+- It's not recommended to change `sizeField` prop since all the size management is done internally.
 
 ### Events
 

@@ -4,7 +4,7 @@ export default {
 
   inject: [
     'vscrollData',
-    'vscrollBus',
+    'vscrollParent',
   ],
 
   props: {
@@ -48,8 +48,8 @@ export default {
       return this.vscrollData.simpleArray ? this.index : this.item[this.vscrollData.keyField]
     },
 
-    height () {
-      return (this.vscrollData.validHeights[this.id] && this.vscrollData.heights[this.id]) || 0
+    size () {
+      return (this.vscrollData.validSizes[this.id] && this.vscrollData.sizes[this.id]) || 0
     },
   },
 
@@ -57,7 +57,7 @@ export default {
     watchData: 'updateWatchData',
 
     id () {
-      if (!this.height) {
+      if (!this.size) {
         this.onDataUpdate()
       }
     },
@@ -79,8 +79,8 @@ export default {
       this.$watch(() => this.sizeDependencies[k], this.onDataUpdate)
     }
 
-    this.vscrollBus.$on('vscroll:update', this.onVscrollUpdate)
-    this.vscrollBus.$on('vscroll:update-size', this.onVscrollUpdateSize)
+    this.vscrollParent.$on('vscroll:update', this.onVscrollUpdate)
+    this.vscrollParent.$on('vscroll:update-size', this.onVscrollUpdateSize)
   },
 
   mounted () {
@@ -90,8 +90,8 @@ export default {
   },
 
   beforeDestroy () {
-    this.vscrollBus.$off('vscroll:update', this.onVscrollUpdate)
-    this.vscrollBus.$off('vscroll:update-size', this.onVscrollUpdateSize)
+    this.vscrollParent.$off('vscroll:update', this.onVscrollUpdate)
+    this.vscrollParent.$off('vscroll:update-size', this.onVscrollUpdateSize)
   },
 
   methods: {
@@ -110,7 +110,7 @@ export default {
       }
     },
 
-    getSize () {
+    getBounds () {
       return this.$el.getBoundingClientRect()
     },
 
@@ -131,7 +131,7 @@ export default {
       if (!this.active && force) {
         this.$_pendingVScrollUpdate = this.id
       }
-      if (this.$_forceNextVScrollUpdate === this.id || force || !this.height) {
+      if (this.$_forceNextVScrollUpdate === this.id || force || !this.size) {
         this.updateSize()
       }
     },
@@ -143,15 +143,15 @@ export default {
     computeSize (id) {
       this.$nextTick(() => {
         if (this.id === id) {
-          const size = this.getSize()
-          const height = Math.round(size.height)
-          if (height && this.height !== height) {
-            if (this.vscrollBus.$_undefinedMap[id]) {
-              this.vscrollBus.$_undefinedHeights--
-              this.vscrollBus.$_undefinedMap[id] = undefined
+          const bounds = this.getBounds()
+          const size = Math.round(this.vscrollParent.direction === 'vertical' ? bounds.height : bounds.width)
+          if (size && this.size !== size) {
+            if (this.vscrollParent.$_undefinedMap[id]) {
+              this.vscrollParent.$_undefinedSizes--
+              this.vscrollParent.$_undefinedMap[id] = undefined
             }
-            this.$set(this.vscrollData.heights, this.id, height)
-            this.$set(this.vscrollData.validHeights, this.id, true)
+            this.$set(this.vscrollData.sizes, this.id, size)
+            this.$set(this.vscrollData.validSizes, this.id, true)
             if (this.emitResize) this.$emit('resize', this.id)
           }
         }

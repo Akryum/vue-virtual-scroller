@@ -6,9 +6,10 @@
       </span>
 
       <router-link :to="{ name: 'home' }" exact>Home</router-link>
-      <router-link :to="{ name: 'recycle' }">Recycle scroller demo</router-link>
-      <router-link :to="{ name: 'dynamic' }">Dynamic scroller demo</router-link>
-      <router-link :to="{ name: 'test-chat' }">Chat demo</router-link>
+      <router-link :to="{ name: 'recycle' }">Recycle scroller</router-link>
+      <router-link :to="{ name: 'dynamic' }">Dynamic scroller</router-link>
+      <router-link :to="{ name: 'horizontal' }">Horizontal</router-link>
+      <router-link :to="{ name: 'test-chat' }">Scroll to bottom</router-link>
       <router-link :to="{ name: 'simple-list' }">Simple array</router-link>
     </nav>
     <router-view class="page"/>
@@ -109,5 +110,28 @@ body {
 .vue-recycle-scroller__item-view.hover {
   background: #4fc08d;
   color: white;
+}
+
+.toolbar {
+  flex: auto 0 0;
+  text-align: center;
+  margin-bottom: 12px;
+  line-height: 32px;
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  background: white;
+}
+
+.recycle-scroller-demo.page-mode .toolbar {
+  border-bottom: solid 1px #e0edfa;
+}
+
+.toolbar > *:not(:last-child) {
+  margin-right: 24px;
+}
+
+.avatar {
+  background: grey;
 }
 </style>

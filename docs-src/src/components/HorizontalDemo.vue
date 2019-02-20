@@ -10,11 +10,17 @@
     <DynamicScroller
       :items="filteredItems"
       :min-item-size="54"
+      direction="horizontal"
       class="scroller"
     >
       <template #before>
-        <div class="notice">
-          The message heights are unknown.
+        <div
+          v-if="!dismissInfo"
+          class="notice"
+        >
+          <div>The message widths are unknown.</div>
+          <div>Scroll to the left ➡️</div>
+          <div><button @click="dismissInfo = true">OK</button></div>
         </div>
       </template>
 
@@ -28,6 +34,9 @@
           :data-index="index"
           :data-active="active"
           :title="`Click to change message ${index}`"
+          :style="{
+            width: `${Math.max(130, Math.round(item.message.length / 20 * 20))}px`,
+          }"
           class="message"
           @click.native="changeMessage(item)"
         >
@@ -68,6 +77,7 @@ export default {
     return {
       items,
       search: '',
+      dismissInfo: false,
     }
   },
 
@@ -106,6 +116,7 @@ export default {
 
 .message {
   display: flex;
+  flex-direction: column;
   min-height: 32px;
   padding: 12px;
   box-sizing: border-box;
@@ -116,7 +127,7 @@ export default {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  margin-right: 12px;
+  margin-bottom: 12px;
 }
 
 .avatar .image {
@@ -131,7 +142,7 @@ export default {
 }
 
 .text {
-  max-width: 400px;
+  margin-bottom: 12px;
 }
 
 .index {
@@ -139,8 +150,6 @@ export default {
 }
 
 .index span {
-  display: inline-block;
-  width: 160px;
-  text-align: right;
+  display: block;
 }
 </style>

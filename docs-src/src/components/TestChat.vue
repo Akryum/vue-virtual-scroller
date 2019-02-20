@@ -15,7 +15,7 @@
     <DynamicScroller
       ref="scroller"
       :items="items"
-      :min-item-height="24"
+      :min-item-size="24"
       class="scroller"
       @resize="scrollToBottom()"
     >

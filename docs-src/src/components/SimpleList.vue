@@ -15,7 +15,7 @@
     <DynamicScroller
       v-if="dynamic"
       :items="filteredItems"
-      :min-item-height="54"
+      :min-item-size="54"
       class="scroller"
     >
       <div

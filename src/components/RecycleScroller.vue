@@ -5,22 +5,28 @@
     :class="{
       ready,
       'page-mode': pageMode,
+      [`direction-${direction}`]: true,
     }"
     @scroll.passive="handleScroll"
   >
-    <slot
-      name="before-container"
-    />
+    <div
+      v-if="$slots.before"
+      class="vue-recycle-scroller__slot"
+    >
+      <slot
+        name="before"
+      />
+    </div>
 
     <div
       ref="wrapper"
-      :style="{ minHeight: totalHeight + 'px' }"
+      :style="{ [direction === 'vertical' ? 'minHeight' : 'minWidth']: totalSize + 'px' }"
       class="vue-recycle-scroller__item-wrapper"
     >
       <div
         v-for="view of pool"
         :key="view.nr.id"
-        :style="ready ? { transform: 'translateY(' + view.top + 'px)' } : null"
+        :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
         class="vue-recycle-scroller__item-view"
         :class="{ hover: hoverKey === view.nr.key }"
         @mouseenter="hoverKey = view.nr.key"
@@ -34,9 +40,14 @@
       </div>
     </div>
 
-    <slot
-      name="after-container"
-    />
+    <div
+      v-if="$slots.after"
+      class="vue-recycle-scroller__slot"
+    >
+      <slot
+        name="after"
+      />
+    </div>
 
     <ResizeObserver @notify="handleResize" />
   </div>
@@ -66,19 +77,19 @@ export default {
   props: {
     ...props,
 
-    itemHeight: {
+    itemSize: {
       type: Number,
       default: null,
     },
 
-    minItemHeight: {
+    minItemSize: {
       type: [Number, String],
       default: null,
     },
 
-    heightField: {
+    sizeField: {
       type: String,
-      default: 'height',
+      default: 'size',
     },
 
     typeField: {
@@ -110,29 +121,29 @@ export default {
   data () {
     return {
       pool: [],
-      totalHeight: 0,
+      totalSize: 0,
       ready: false,
       hoverKey: null,
     }
   },
 
   computed: {
-    heights () {
-      if (this.itemHeight === null) {
-        const heights = {
+    sizes () {
+      if (this.itemSize === null) {
+        const sizes = {
           '-1': { accumulator: 0 },
         }
         const items = this.items
-        const field = this.heightField
-        const minItemHeight = this.minItemHeight
+        const field = this.sizeField
+        const minItemSize = this.minItemSize
         let accumulator = 0
         let current
         for (let i = 0, l = items.length; i < l; i++) {
-          current = items[i][field] || minItemHeight
+          current = items[i][field] || minItemSize
           accumulator += current
-          heights[i] = { accumulator, height: current }
+          sizes[i] = { accumulator, size: current }
         }
-        return heights
+        return sizes
       }
       return []
     },
@@ -150,7 +161,7 @@ export default {
       this.updateVisibleItems(false)
     },
 
-    heights: {
+    sizes: {
       handler () {
         this.updateVisibleItems(false)
       },
@@ -186,7 +197,7 @@ export default {
     addView (pool, index, item, key, type) {
       const view = {
         item,
-        top: 0,
+        position: 0,
       }
       const nonReactive = {
         id: uid++,
@@ -214,7 +225,7 @@ export default {
       unusedPool.push(view)
       if (!fake) {
         view.nr.used = false
-        view.top = -9999
+        view.position = -9999
         this.$_views.delete(view.nr.key)
       }
     },
@@ -255,32 +266,32 @@ export default {
     },
 
     updateVisibleItems (checkItem) {
-      const itemHeight = this.itemHeight
+      const itemSize = this.itemSize
       const typeField = this.typeField
       const keyField = this.simpleArray ? null : this.keyField
       const items = this.items
       const count = items.length
-      const heights = this.heights
+      const sizes = this.sizes
       const views = this.$_views
       let unusedViews = this.$_unusedViews
       const pool = this.pool
       let startIndex, endIndex
-      let totalHeight
+      let totalSize
 
       if (!count) {
-        startIndex = endIndex = totalHeight = 0
+        startIndex = endIndex = totalSize = 0
       } else if (this.$isServer) {
         startIndex = 0
         endIndex = this.prerender
-        totalHeight = null
+        totalSize = null
       } else {
         const scroll = this.getScroll()
         const buffer = this.buffer
-        scroll.top -= buffer
-        scroll.bottom += buffer
+        scroll.start -= buffer
+        scroll.end += buffer
 
-        // Variable height mode
-        if (itemHeight === null) {
+        // Variable size mode
+        if (itemSize === null) {
           let h
           let a = 0
           let b = count - 1
@@ -290,10 +301,10 @@ export default {
           // Searching for startIndex
           do {
             oldI = i
-            h = heights[i].accumulator
-            if (h < scroll.top) {
+            h = sizes[i].accumulator
+            if (h < scroll.start) {
               a = i
-            } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {
+            } else if (i < count - 1 && sizes[i + 1].accumulator > scroll.start) {
               b = i
             }
             i = ~~((a + b) / 2)
@@ -302,10 +313,10 @@ export default {
           startIndex = i
 
           // For container style
-          totalHeight = heights[count - 1].accumulator
+          totalSize = sizes[count - 1].accumulator
 
           // Searching for endIndex
-          for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++);
+          for (endIndex = i; endIndex < count && sizes[endIndex].accumulator < scroll.end; endIndex++);
           if (endIndex === -1) {
             endIndex = items.length - 1
           } else {
@@ -314,15 +325,15 @@ export default {
             endIndex > count && (endIndex = count)
           }
         } else {
-          // Fixed height mode
-          startIndex = ~~(scroll.top / itemHeight)
-          endIndex = Math.ceil(scroll.bottom / itemHeight)
+          // Fixed size mode
+          startIndex = ~~(scroll.start / itemSize)
+          endIndex = Math.ceil(scroll.end / itemSize)
 
           // Bounds
           startIndex < 0 && (startIndex = 0)
           endIndex > count && (endIndex = count)
 
-          totalHeight = count * itemHeight
+          totalSize = count * itemSize
         }
       }
 
@@ -330,7 +341,7 @@ export default {
         this.itemsLimitError()
       }
 
-      this.totalHeight = totalHeight
+      this.totalSize = totalSize
 
       let view
 
@@ -381,7 +392,7 @@ export default {
         const key = keyField ? item[keyField] : item
         view = views.get(key)
 
-        if (!itemHeight && !heights[i].height) {
+        if (!itemSize && !sizes[i].size) {
           if (view) this.unuseView(view)
           continue
         }
@@ -430,10 +441,10 @@ export default {
         }
 
         // Update position
-        if (itemHeight === null) {
-          view.top = heights[i - 1].accumulator
+        if (itemSize === null) {
+          view.position = sizes[i - 1].accumulator
         } else {
-          view.top = i * itemHeight
+          view.position = i * itemSize
         }
       }
 
@@ -457,29 +468,35 @@ export default {
     },
 
     getScroll () {
-      const el = this.$el
-      // const wrapper = this.$refs.wrapper
+      const { $el: el, direction } = this
+      const isVertical = direction === 'vertical'
       let scrollState
 
       if (this.pageMode) {
-        const size = el.getBoundingClientRect()
-        let top = -size.top
-        let height = window.innerHeight
-        if (top < 0) {
-          height += top
-          top = 0
+        const bounds = el.getBoundingClientRect()
+        const boundsSize = isVertical ? bounds.height : bounds.width
+        let start = -(isVertical ? bounds.top : bounds.left)
+        let size = isVertical ? window.innerHeight : window.innerWidth
+        if (start < 0) {
+          size += start
+          start = 0
         }
-        if (top + height > size.height) {
-          height = size.height - top
+        if (start + size > boundsSize) {
+          size = boundsSize - start
         }
         scrollState = {
-          top,
-          bottom: top + height,
+          start,
+          end: start + size,
+        }
+      } else if (isVertical) {
+        scrollState = {
+          start: el.scrollTop,
+          end: el.scrollTop + el.clientHeight,
         }
       } else {
         scrollState = {
-          top: el.scrollTop,
-          bottom: el.scrollTop + el.clientHeight,
+          start: el.scrollLeft,
+          end: el.scrollLeft + el.clientWidth,
         }
       }
 
@@ -514,23 +531,27 @@ export default {
     },
 
     scrollToItem (index) {
-      let scrollTop
-      if (this.itemHeight === null) {
-        scrollTop = index > 0 ? this.heights[index - 1].accumulator : 0
+      let scroll
+      if (this.itemSize === null) {
+        scroll = index > 0 ? this.sizes[index - 1].accumulator : 0
       } else {
-        scrollTop = index * this.itemHeight
+        scroll = index * this.itemSize
       }
-      this.scrollToPosition(scrollTop)
+      this.scrollToPosition(scroll)
     },
 
     scrollToPosition (position) {
-      this.$el.scrollTop = position
+      if (this.direction === 'vertical') {
+        this.$el.scrollTop = position
+      } else {
+        this.$el.scrollLeft = position
+      }
     },
 
     itemsLimitError () {
       setTimeout(() => {
         console.log(`It seems the scroller element isn't scrolling, so it tries to render all the items at once.`, 'Scroller:', this.$el)
-        console.log(`Make sure the scroller has a fixed height and 'overflow-y' set to 'auto' so it can scroll correctly and only render the items visible in the scroll viewport.`)
+        console.log(`Make sure the scroller has a fixed height (or width) and 'overflow-y' (or 'overflow-x') set to 'auto' so it can scroll correctly and only render the items visible in the scroll viewport.`)
       })
       throw new Error('Rendered items limit reached')
     },
@@ -543,22 +564,49 @@ export default {
   position: relative;
 }
 
-.vue-recycle-scroller:not(.page-mode) {
+.vue-recycle-scroller.direction-vertical:not(.page-mode) {
   overflow-y: auto;
 }
 
+.vue-recycle-scroller.direction-horizontal:not(.page-mode) {
+  overflow-x: auto;
+}
+
+.vue-recycle-scroller.direction-horizontal {
+  display: flex;
+}
+
+.vue-recycle-scroller__slot {
+  flex: auto 0 0;
+}
+
 .vue-recycle-scroller__item-wrapper {
+  flex: 1;
   box-sizing: border-box;
-  width: 100%;
   overflow: hidden;
   position: relative;
 }
 
 .vue-recycle-scroller.ready .vue-recycle-scroller__item-view {
-  width: 100%;
   position: absolute;
   top: 0;
   left: 0;
   will-change: transform;
+}
+
+.vue-recycle-scroller.direction-vertical .vue-recycle-scroller__item-wrapper {
+  width: 100%;
+}
+
+.vue-recycle-scroller.direction-horizontal .vue-recycle-scroller__item-wrapper {
+  height: 100%;
+}
+
+.vue-recycle-scroller.ready.direction-vertical .vue-recycle-scroller__item-view {
+  width: 100%;
+}
+
+.vue-recycle-scroller.ready.direction-horizontal .vue-recycle-scroller__item-view {
+  height: 100%;
 }
 </style>

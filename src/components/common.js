@@ -8,6 +8,12 @@ export const props = {
     type: String,
     default: 'id',
   },
+
+  direction: {
+    type: String,
+    default: 'vertical',
+    validator: (value) => ['vertical', 'horizontal'].includes(value),
+  },
 }
 
 export function simpleArray () {

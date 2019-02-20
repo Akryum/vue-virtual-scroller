@@ -8,20 +8,39 @@
   >
     <div class="toolbar">
       <span>
-        <input v-model="countInput" type="number" min="0" max="500000" /> items
+        <input
+          v-model="countInput"
+          type="number"
+          min="0"
+          max="500000"
+        > items
         <button @click="addItem()">+1</button>
       </span>
       <label>
-        <input v-model="enableLetters" type="checkbox" /> variable height
+        <input
+          v-model="enableLetters"
+          type="checkbox"
+        > variable height
       </label>
       <label>
-        <input v-model="pageMode" type="checkbox" /> page mode
+        <input
+          v-model="pageMode"
+          type="checkbox"
+        > page mode
       </label>
       <label v-if="pageMode">
-        <input v-model="pageModeFullPage" type="checkbox" /> full page
+        <input
+          v-model="pageModeFullPage"
+          type="checkbox"
+        > full page
       </label>
       <span>
-        <input v-model.number="buffer" type="number" min="1" max="500000" /> buffer
+        <input
+          v-model.number="buffer"
+          type="number"
+          min="1"
+          max="500000"
+        > buffer
       </span>
       <span>
         <button @mousedown="renderScroller = !renderScroller">Toggle render</button>
@@ -40,24 +59,25 @@
           ref="scroller"
           class="scroller"
           :items="list"
-          :item-height="itemHeight"
+          :item-size="itemHeight"
           :buffer="buffer"
           :page-mode="pageMode"
           key-field="id"
+          size-field="height"
           @visible="onVisible"
           @hidden="onHidden"
         >
-          <template slot-scope="props">
+          <template v-slot="props">
             <div
               v-if="props.item.type === 'letter'"
               class="tr letter big"
               @click="props.item.height = (props.item.height === 200 ? 300 : 200)"
             >
               <div class="td index">
-                {{props.index}}
+                {{ props.index }}
               </div>
               <div class="td value">
-                {{props.item.value}} Scoped
+                {{ props.item.value }} Scoped
               </div>
             </div>
             <Person
@@ -166,7 +186,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .recycle-scroller-demo:not(.page-mode) {
   height: 100%;
 }
@@ -179,23 +199,8 @@ export default {
   flex: auto 0 0;
 }
 
-.toolbar {
-  flex: auto 0 0;
-  text-align: center;
-  margin-bottom: 12px;
-  line-height: 32px;
-  position: sticky;
-  top: 0;
-  z-index: 9999;
-  background: white;
-}
-
 .recycle-scroller-demo.page-mode .toolbar {
   border-bottom: solid 1px #e0edfa;
-}
-
-.toolbar > *:not(:last-child) {
-  margin-right: 24px;
 }
 
 .content {
@@ -239,29 +244,5 @@ export default {
 
 .letter.big .value {
   font-size: 120px;
-}
-
-.index {
-  color: rgba(0, 0, 0, 0.2);
-  width: 55px;
-  text-align: right;
-  flex: auto 0 0;
-}
-
-.person .td:first-child {
-  padding: 12px;
-}
-
-.person .info {
-  display: flex;
-  align-items: center;
-  height: 48px;
-}
-
-.avatar {
-  width: 50px;
-  height: 50px;
-  margin-right: 12px;
-  background: grey;
 }
 </style>

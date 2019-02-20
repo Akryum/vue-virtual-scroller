@@ -1,29 +1,30 @@
 <template>
   <RecycleScroller
     ref="scroller"
-    :items="itemsWithHeight"
-    :min-item-height="minItemHeight"
+    :items="itemsWithSize"
+    :min-item-size="minItemSize"
+    :direction="direction"
     key-field="id"
     v-bind="$attrs"
     @resize="onScrollerResize"
     @visible="onScrollerVisible"
     v-on="listeners"
   >
-    <template slot-scope="{ item: itemWithHeight, index, active }">
+    <template slot-scope="{ item: itemWithSize, index, active }">
       <slot
         v-bind="{
-          item: itemWithHeight.item,
+          item: itemWithSize.item,
           index,
           active,
-          itemWithHeight
+          itemWithSize
         }"
       />
     </template>
-    <template slot="before-container">
-      <slot name="before-container" />
+    <template slot="before">
+      <slot name="before" />
     </template>
-    <template slot="after-container">
-      <slot name="after-container" />
+    <template slot="after">
+      <slot name="after" />
     </template>
   </RecycleScroller>
 </template>
@@ -44,14 +45,14 @@ export default {
   provide () {
     return {
       vscrollData: this.vscrollData,
-      vscrollBus: this,
+      vscrollParent: this,
     }
   },
 
   props: {
     ...props,
 
-    minItemHeight: {
+    minItemSize: {
       type: [Number, String],
       required: true,
     },
@@ -61,8 +62,8 @@ export default {
     return {
       vscrollData: {
         active: true,
-        heights: {},
-        validHeights: {},
+        sizes: {},
+        validSizes: {},
         keyField: this.keyField,
         simpleArray: false,
       },
@@ -72,25 +73,25 @@ export default {
   computed: {
     simpleArray,
 
-    itemsWithHeight () {
+    itemsWithSize () {
       const result = []
       const { items, keyField, simpleArray } = this
-      const heights = this.vscrollData.heights
+      const sizes = this.vscrollData.sizes
       for (let i = 0; i < items.length; i++) {
         const item = items[i]
         const id = simpleArray ? i : item[keyField]
-        let height = heights[id]
-        if (typeof height === 'undefined' && !this.$_undefinedMap[id]) {
+        let size = sizes[id]
+        if (typeof size === 'undefined' && !this.$_undefinedMap[id]) {
           // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-          this.$_undefinedHeights++
+          this.$_undefinedSizes++
           // eslint-disable-next-line vue/no-side-effects-in-computed-properties
           this.$_undefinedMap[id] = true
-          height = 0
+          size = 0
         }
         result.push({
           item,
           id,
-          height,
+          size,
         })
       }
       return result
@@ -118,18 +119,16 @@ export default {
       },
       immediate: true,
     },
+
+    direction (value) {
+      this.forceUpdate(true)
+    },
   },
 
   created () {
     this.$_updates = []
-    this.$_undefinedHeights = 0
+    this.$_undefinedSizes = 0
     this.$_undefinedMap = {}
-  },
-
-  mounted () {
-    const scroller = this.$refs.scroller
-    const rect = this.getSize(scroller)
-    this._scrollerWidth = rect.width
   },
 
   activated () {
@@ -156,13 +155,9 @@ export default {
 
     forceUpdate (clear = true) {
       if (clear || this.simpleArray) {
-        this.vscrollData.validHeights = {}
+        this.vscrollData.validSizes = {}
       }
       this.$emit('vscroll:update', { force: true })
-    },
-
-    getSize (scroller) {
-      return scroller.$el.getBoundingClientRect()
     },
 
     scrollToItem (index) {
@@ -172,7 +167,7 @@ export default {
 
     getItemSize (item, index = undefined) {
       const id = this.simpleArray ? (index != null ? index : this.items.indexOf(item)) : item[this.keyField]
-      return this.vscrollData.heights[id] || 0
+      return this.vscrollData.sizes[id] || 0
     },
 
     scrollToBottom () {
@@ -184,7 +179,7 @@ export default {
         // Item sizes are computed
         const cb = () => {
           el.scrollTop = el.scrollHeight
-          if (this.$_undefinedHeights === 0) {
+          if (this.$_undefinedSizes === 0) {
             this.$_scrollingToBottom = false
           } else {
             requestAnimationFrame(cb)
