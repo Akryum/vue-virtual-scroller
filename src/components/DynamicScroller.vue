@@ -3,7 +3,6 @@
     ref="scroller"
     :items="itemsWithHeight"
     :min-item-height="minItemHeight"
-    :key-field="simpleArray ? null : keyField"
     v-bind="$attrs"
     @resize="onScrollerResize"
     @visible="onScrollerVisible"
