@@ -709,7 +709,20 @@ var asyncGenerator$1 = function () {
 
 
 
+var defineProperty = function (obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
 
+  return obj;
+};
 
 var _extends = Object.assign || function (target) {
   for (var i = 1; i < arguments.length; i++) {
@@ -734,6 +747,14 @@ var props = {
   keyField: {
     type: String,
     default: 'id'
+  },
+
+  direction: {
+    type: String,
+    default: 'vertical',
+    validator: function validator(value) {
+      return ['vertical', 'horizontal'].includes(value);
+    }
   }
 };
 
@@ -758,15 +779,15 @@ if (typeof window !== 'undefined') {
 var uid = 0;
 
 var RecycleScroller = { render: function render() {
-    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('div', { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], staticClass: "vue-recycle-scroller", class: { ready: _vm.ready, 'page-mode': _vm.pageMode }, on: { "&scroll": function scroll($event) {
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('div', { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], staticClass: "vue-recycle-scroller", class: defineProperty({ ready: _vm.ready, 'page-mode': _vm.pageMode }, 'direction-' + _vm.direction, true), on: { "&scroll": function scroll($event) {
           return _vm.handleScroll($event);
-        } } }, [_vm._t("before-container"), _vm._v(" "), _c('div', { ref: "wrapper", staticClass: "vue-recycle-scroller__item-wrapper", style: { minHeight: _vm.totalHeight + 'px' } }, _vm._l(_vm.pool, function (view) {
-      return _c('div', { key: view.nr.id, staticClass: "vue-recycle-scroller__item-view", class: { hover: _vm.hoverKey === view.nr.key }, style: _vm.ready ? { transform: 'translateY(' + view.top + 'px)' } : null, on: { "mouseenter": function mouseenter($event) {
+        } } }, [_vm.$slots.before ? _c('div', { staticClass: "vue-recycle-scroller__slot" }, [_vm._t("before")], 2) : _vm._e(), _vm._v(" "), _c('div', { ref: "wrapper", staticClass: "vue-recycle-scroller__item-wrapper", style: defineProperty({}, _vm.direction === 'vertical' ? 'minHeight' : 'minWidth', _vm.totalSize + 'px') }, _vm._l(_vm.pool, function (view) {
+      return _c('div', { key: view.nr.id, staticClass: "vue-recycle-scroller__item-view", class: { hover: _vm.hoverKey === view.nr.key }, style: _vm.ready ? { transform: 'translate' + (_vm.direction === 'vertical' ? 'Y' : 'X') + '(' + view.position + 'px)' } : null, on: { "mouseenter": function mouseenter($event) {
             _vm.hoverKey = view.nr.key;
           }, "mouseleave": function mouseleave($event) {
             _vm.hoverKey = null;
           } } }, [_vm._t("default", null, { "item": view.item, "index": view.nr.index, "active": view.nr.used })], 2);
-    }), 0), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c('ResizeObserver', { on: { "notify": _vm.handleResize } })], 2);
+    }), 0), _vm._v(" "), _vm.$slots.after ? _c('div', { staticClass: "vue-recycle-scroller__slot" }, [_vm._t("after")], 2) : _vm._e(), _vm._v(" "), _c('ResizeObserver', { on: { "notify": _vm.handleResize } })], 1);
   }, staticRenderFns: [],
   name: 'RecycleScroller',
 
@@ -780,19 +801,19 @@ var RecycleScroller = { render: function render() {
 
   props: _extends({}, props, {
 
-    itemHeight: {
+    itemSize: {
       type: Number,
       default: null
     },
 
-    minItemHeight: {
+    minItemSize: {
       type: [Number, String],
       default: null
     },
 
-    heightField: {
+    sizeField: {
       type: String,
-      default: 'height'
+      default: 'size'
     },
 
     typeField: {
@@ -824,7 +845,7 @@ var RecycleScroller = { render: function render() {
   data: function data() {
     return {
       pool: [],
-      totalHeight: 0,
+      totalSize: 0,
       ready: false,
       hoverKey: null
     };
@@ -832,22 +853,22 @@ var RecycleScroller = { render: function render() {
 
 
   computed: {
-    heights: function heights() {
-      if (this.itemHeight === null) {
-        var heights = {
+    sizes: function sizes() {
+      if (this.itemSize === null) {
+        var sizes = {
           '-1': { accumulator: 0 }
         };
         var items = this.items;
-        var field = this.heightField;
-        var minItemHeight = this.minItemHeight;
+        var field = this.sizeField;
+        var minItemSize = this.minItemSize;
         var accumulator = 0;
         var current = void 0;
         for (var i = 0, l = items.length; i < l; i++) {
-          current = items[i][field] || minItemHeight;
+          current = items[i][field] || minItemSize;
           accumulator += current;
-          heights[i] = { accumulator: accumulator, height: current };
+          sizes[i] = { accumulator: accumulator, size: current };
         }
-        return heights;
+        return sizes;
       }
       return [];
     },
@@ -866,7 +887,7 @@ var RecycleScroller = { render: function render() {
     },
 
 
-    heights: {
+    sizes: {
       handler: function handler() {
         this.updateVisibleItems(false);
       },
@@ -904,7 +925,7 @@ var RecycleScroller = { render: function render() {
     addView: function addView(pool, index, item, key, type) {
       var view = {
         item: item,
-        top: 0
+        position: 0
       };
       var nonReactive = {
         id: uid++,
@@ -933,7 +954,7 @@ var RecycleScroller = { render: function render() {
       unusedPool.push(view);
       if (!fake) {
         view.nr.used = false;
-        view.top = -9999;
+        view.position = -9999;
         this.$_views.delete(view.nr.key);
       }
     },
@@ -978,33 +999,33 @@ var RecycleScroller = { render: function render() {
       }
     },
     updateVisibleItems: function updateVisibleItems(checkItem) {
-      var itemHeight = this.itemHeight;
+      var itemSize = this.itemSize;
       var typeField = this.typeField;
       var keyField = this.simpleArray ? null : this.keyField;
       var items = this.items;
       var count = items.length;
-      var heights = this.heights;
+      var sizes = this.sizes;
       var views = this.$_views;
       var unusedViews = this.$_unusedViews;
       var pool = this.pool;
       var startIndex = void 0,
           endIndex = void 0;
-      var totalHeight = void 0;
+      var totalSize = void 0;
 
       if (!count) {
-        startIndex = endIndex = totalHeight = 0;
+        startIndex = endIndex = totalSize = 0;
       } else if (this.$isServer) {
         startIndex = 0;
         endIndex = this.prerender;
-        totalHeight = null;
+        totalSize = null;
       } else {
         var scroll = this.getScroll();
         var buffer = this.buffer;
-        scroll.top -= buffer;
-        scroll.bottom += buffer;
+        scroll.start -= buffer;
+        scroll.end += buffer;
 
-        // Variable height mode
-        if (itemHeight === null) {
+        // Variable size mode
+        if (itemSize === null) {
           var h = void 0;
           var a = 0;
           var b = count - 1;
@@ -1014,10 +1035,10 @@ var RecycleScroller = { render: function render() {
           // Searching for startIndex
           do {
             oldI = i;
-            h = heights[i].accumulator;
-            if (h < scroll.top) {
+            h = sizes[i].accumulator;
+            if (h < scroll.start) {
               a = i;
-            } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {
+            } else if (i < count - 1 && sizes[i + 1].accumulator > scroll.start) {
               b = i;
             }
             i = ~~((a + b) / 2);
@@ -1026,10 +1047,10 @@ var RecycleScroller = { render: function render() {
           startIndex = i;
 
           // For container style
-          totalHeight = heights[count - 1].accumulator;
+          totalSize = sizes[count - 1].accumulator;
 
           // Searching for endIndex
-          for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++) {}
+          for (endIndex = i; endIndex < count && sizes[endIndex].accumulator < scroll.end; endIndex++) {}
           if (endIndex === -1) {
             endIndex = items.length - 1;
           } else {
@@ -1038,15 +1059,15 @@ var RecycleScroller = { render: function render() {
             endIndex > count && (endIndex = count);
           }
         } else {
-          // Fixed height mode
-          startIndex = ~~(scroll.top / itemHeight);
-          endIndex = Math.ceil(scroll.bottom / itemHeight);
+          // Fixed size mode
+          startIndex = ~~(scroll.start / itemSize);
+          endIndex = Math.ceil(scroll.end / itemSize);
 
           // Bounds
           startIndex < 0 && (startIndex = 0);
           endIndex > count && (endIndex = count);
 
-          totalHeight = count * itemHeight;
+          totalSize = count * itemSize;
         }
       }
 
@@ -1054,7 +1075,7 @@ var RecycleScroller = { render: function render() {
         this.itemsLimitError();
       }
 
-      this.totalHeight = totalHeight;
+      this.totalSize = totalSize;
 
       var view = void 0;
 
@@ -1103,7 +1124,7 @@ var RecycleScroller = { render: function render() {
         var key = keyField ? item[keyField] : item;
         view = views.get(key);
 
-        if (!itemHeight && !heights[_i3].height) {
+        if (!itemSize && !sizes[_i3].size) {
           if (view) this.unuseView(view);
           continue;
         }
@@ -1152,10 +1173,10 @@ var RecycleScroller = { render: function render() {
         }
 
         // Update position
-        if (itemHeight === null) {
-          view.top = heights[_i3 - 1].accumulator;
+        if (itemSize === null) {
+          view.position = sizes[_i3 - 1].accumulator;
         } else {
-          view.top = _i3 * itemHeight;
+          view.position = _i3 * itemSize;
         }
       }
 
@@ -1177,29 +1198,37 @@ var RecycleScroller = { render: function render() {
       return target;
     },
     getScroll: function getScroll() {
-      var el = this.$el;
-      // const wrapper = this.$refs.wrapper
+      var el = this.$el,
+          direction = this.direction;
+
+      var isVertical = direction === 'vertical';
       var scrollState = void 0;
 
       if (this.pageMode) {
-        var size = el.getBoundingClientRect();
-        var top = -size.top;
-        var height = window.innerHeight;
-        if (top < 0) {
-          height += top;
-          top = 0;
+        var bounds = el.getBoundingClientRect();
+        var boundsSize = isVertical ? bounds.height : bounds.width;
+        var start = -(isVertical ? bounds.top : bounds.left);
+        var size = isVertical ? window.innerHeight : window.innerWidth;
+        if (start < 0) {
+          size += start;
+          start = 0;
         }
-        if (top + height > size.height) {
-          height = size.height - top;
+        if (start + size > boundsSize) {
+          size = boundsSize - start;
         }
         scrollState = {
-          top: top,
-          bottom: top + height
+          start: start,
+          end: start + size
+        };
+      } else if (isVertical) {
+        scrollState = {
+          start: el.scrollTop,
+          end: el.scrollTop + el.clientHeight
         };
       } else {
         scrollState = {
-          top: el.scrollTop,
-          bottom: el.scrollTop + el.clientHeight
+          start: el.scrollLeft,
+          end: el.scrollLeft + el.clientWidth
         };
       }
 
@@ -1230,23 +1259,27 @@ var RecycleScroller = { render: function render() {
       this.listenerTarget = null;
     },
     scrollToItem: function scrollToItem(index) {
-      var scrollTop = void 0;
-      if (this.itemHeight === null) {
-        scrollTop = index > 0 ? this.heights[index - 1].accumulator : 0;
+      var scroll = void 0;
+      if (this.itemSize === null) {
+        scroll = index > 0 ? this.sizes[index - 1].accumulator : 0;
       } else {
-        scrollTop = index * this.itemHeight;
+        scroll = index * this.itemSize;
       }
-      this.scrollToPosition(scrollTop);
+      this.scrollToPosition(scroll);
     },
     scrollToPosition: function scrollToPosition(position) {
-      this.$el.scrollTop = position;
+      if (this.direction === 'vertical') {
+        this.$el.scrollTop = position;
+      } else {
+        this.$el.scrollLeft = position;
+      }
     },
     itemsLimitError: function itemsLimitError() {
       var _this4 = this;
 
       setTimeout(function () {
         console.log('It seems the scroller element isn\'t scrolling, so it tries to render all the items at once.', 'Scroller:', _this4.$el);
-        console.log('Make sure the scroller has a fixed height and \'overflow-y\' set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.');
+        console.log('Make sure the scroller has a fixed height (or width) and \'overflow-y\' (or \'overflow-x\') set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.');
       });
       throw new Error('Rendered items limit reached');
     }
@@ -1254,17 +1287,17 @@ var RecycleScroller = { render: function render() {
 };
 
 var DynamicScroller = { render: function render() {
-    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('RecycleScroller', _vm._g(_vm._b({ ref: "scroller", attrs: { "items": _vm.itemsWithHeight, "min-item-height": _vm.minItemHeight, "key-field": _vm.simpleArray ? null : _vm.keyField }, on: { "resize": _vm.onScrollerResize, "visible": _vm.onScrollerVisible }, scopedSlots: _vm._u([{ key: "default", fn: function fn(_ref) {
-          var itemWithHeight = _ref.item,
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('RecycleScroller', _vm._g(_vm._b({ ref: "scroller", attrs: { "items": _vm.itemsWithSize, "min-item-size": _vm.minItemSize, "direction": _vm.direction, "key-field": "id" }, on: { "resize": _vm.onScrollerResize, "visible": _vm.onScrollerVisible }, scopedSlots: _vm._u([{ key: "default", fn: function fn(_ref) {
+          var itemWithSize = _ref.item,
               index = _ref.index,
               active = _ref.active;
           return [_vm._t("default", null, null, {
-            item: itemWithHeight.item,
+            item: itemWithSize.item,
             index: index,
             active: active,
-            itemWithHeight: itemWithHeight
+            itemWithSize: itemWithSize
           })];
-        } }], true) }, 'RecycleScroller', _vm.$attrs, false), _vm.listeners), [_vm._v(" "), _c('template', { slot: "before-container" }, [_vm._t("before-container")], 2), _vm._v(" "), _c('template', { slot: "after-container" }, [_vm._t("after-container")], 2)], 2);
+        } }], true) }, 'RecycleScroller', _vm.$attrs, false), _vm.listeners), [_vm._v(" "), _c('template', { slot: "before" }, [_vm._t("before")], 2), _vm._v(" "), _c('template', { slot: "after" }, [_vm._t("after")], 2)], 2);
   }, staticRenderFns: [],
   name: 'DynamicScroller',
 
@@ -1277,14 +1310,14 @@ var DynamicScroller = { render: function render() {
   provide: function provide() {
     return {
       vscrollData: this.vscrollData,
-      vscrollBus: this
+      vscrollParent: this
     };
   },
 
 
   props: _extends({}, props, {
 
-    minItemHeight: {
+    minItemSize: {
       type: [Number, String],
       required: true
     }
@@ -1294,8 +1327,8 @@ var DynamicScroller = { render: function render() {
     return {
       vscrollData: {
         active: true,
-        heights: {},
-        validHeights: {},
+        sizes: {},
+        validSizes: {},
         keyField: this.keyField,
         simpleArray: false
       }
@@ -1306,28 +1339,28 @@ var DynamicScroller = { render: function render() {
   computed: {
     simpleArray: simpleArray,
 
-    itemsWithHeight: function itemsWithHeight() {
+    itemsWithSize: function itemsWithSize() {
       var result = [];
       var items = this.items,
           keyField = this.keyField,
           simpleArray$$1 = this.simpleArray;
 
-      var heights = this.vscrollData.heights;
+      var sizes = this.vscrollData.sizes;
       for (var i = 0; i < items.length; i++) {
         var item = items[i];
         var id = simpleArray$$1 ? i : item[keyField];
-        var height = heights[id];
-        if (typeof height === 'undefined' && !this.$_undefinedMap[id]) {
+        var size = sizes[id];
+        if (typeof size === 'undefined' && !this.$_undefinedMap[id]) {
           // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-          this.$_undefinedHeights++;
+          this.$_undefinedSizes++;
           // eslint-disable-next-line vue/no-side-effects-in-computed-properties
           this.$_undefinedMap[id] = true;
-          height = 0;
+          size = 0;
         }
         result.push({
           item: item,
           id: id,
-          height: height
+          size: size
         });
       }
       return result;
@@ -1355,18 +1388,17 @@ var DynamicScroller = { render: function render() {
       },
 
       immediate: true
+    },
+
+    direction: function direction(value) {
+      this.forceUpdate(true);
     }
   },
 
   created: function created() {
     this.$_updates = [];
-    this.$_undefinedHeights = 0;
+    this.$_undefinedSizes = 0;
     this.$_undefinedMap = {};
-  },
-  mounted: function mounted() {
-    var scroller = this.$refs.scroller;
-    var rect = this.getSize(scroller);
-    this._scrollerWidth = rect.width;
   },
   activated: function activated() {
     this.vscrollData.active = true;
@@ -1392,12 +1424,9 @@ var DynamicScroller = { render: function render() {
       var clear = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 
       if (clear || this.simpleArray) {
-        this.vscrollData.validHeights = {};
+        this.vscrollData.validSizes = {};
       }
       this.$emit('vscroll:update', { force: true });
-    },
-    getSize: function getSize(scroller) {
-      return scroller.$el.getBoundingClientRect();
     },
     scrollToItem: function scrollToItem(index) {
       var scroller = this.$refs.scroller;
@@ -1407,7 +1436,7 @@ var DynamicScroller = { render: function render() {
       var index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : undefined;
 
       var id = this.simpleArray ? index != null ? index : this.items.indexOf(item) : item[this.keyField];
-      return this.vscrollData.heights[id] || 0;
+      return this.vscrollData.sizes[id] || 0;
     },
     scrollToBottom: function scrollToBottom() {
       var _this = this;
@@ -1420,7 +1449,7 @@ var DynamicScroller = { render: function render() {
         // Item sizes are computed
         var cb = function cb() {
           el.scrollTop = el.scrollHeight;
-          if (_this.$_undefinedHeights === 0) {
+          if (_this.$_undefinedSizes === 0) {
             _this.$_scrollingToBottom = false;
           } else {
             requestAnimationFrame(cb);
@@ -1435,7 +1464,7 @@ var DynamicScroller = { render: function render() {
 var DynamicScrollerItem = {
   name: 'DynamicScrollerItem',
 
-  inject: ['vscrollData', 'vscrollBus'],
+  inject: ['vscrollData', 'vscrollParent'],
 
   props: {
     item: {
@@ -1477,8 +1506,8 @@ var DynamicScrollerItem = {
     id: function id() {
       return this.vscrollData.simpleArray ? this.index : this.item[this.vscrollData.keyField];
     },
-    height: function height() {
-      return this.vscrollData.validHeights[this.id] && this.vscrollData.heights[this.id] || 0;
+    size: function size() {
+      return this.vscrollData.validSizes[this.id] && this.vscrollData.sizes[this.id] || 0;
     }
   },
 
@@ -1486,7 +1515,7 @@ var DynamicScrollerItem = {
     watchData: 'updateWatchData',
 
     id: function id() {
-      if (!this.height) {
+      if (!this.size) {
         this.onDataUpdate();
       }
     },
@@ -1515,8 +1544,8 @@ var DynamicScrollerItem = {
       _loop(k);
     }
 
-    this.vscrollBus.$on('vscroll:update', this.onVscrollUpdate);
-    this.vscrollBus.$on('vscroll:update-size', this.onVscrollUpdateSize);
+    this.vscrollParent.$on('vscroll:update', this.onVscrollUpdate);
+    this.vscrollParent.$on('vscroll:update-size', this.onVscrollUpdateSize);
   },
   mounted: function mounted() {
     if (this.vscrollData.active) {
@@ -1524,8 +1553,8 @@ var DynamicScrollerItem = {
     }
   },
   beforeDestroy: function beforeDestroy() {
-    this.vscrollBus.$off('vscroll:update', this.onVscrollUpdate);
-    this.vscrollBus.$off('vscroll:update-size', this.onVscrollUpdateSize);
+    this.vscrollParent.$off('vscroll:update', this.onVscrollUpdate);
+    this.vscrollParent.$off('vscroll:update-size', this.onVscrollUpdateSize);
   },
 
 
@@ -1544,7 +1573,7 @@ var DynamicScrollerItem = {
         this.$_forceNextVScrollUpdate = this.id;
       }
     },
-    getSize: function getSize() {
+    getBounds: function getBounds() {
       return this.$el.getBoundingClientRect();
     },
     updateWatchData: function updateWatchData() {
@@ -1567,7 +1596,7 @@ var DynamicScrollerItem = {
       if (!this.active && force) {
         this.$_pendingVScrollUpdate = this.id;
       }
-      if (this.$_forceNextVScrollUpdate === this.id || force || !this.height) {
+      if (this.$_forceNextVScrollUpdate === this.id || force || !this.size) {
         this.updateSize();
       }
     },
@@ -1579,15 +1608,15 @@ var DynamicScrollerItem = {
 
       this.$nextTick(function () {
         if (_this3.id === id) {
-          var size = _this3.getSize();
-          var height = Math.round(size.height);
-          if (height && _this3.height !== height) {
-            if (_this3.vscrollBus.$_undefinedMap[id]) {
-              _this3.vscrollBus.$_undefinedHeights--;
-              _this3.vscrollBus.$_undefinedMap[id] = undefined;
+          var bounds = _this3.getBounds();
+          var size = Math.round(_this3.vscrollParent.direction === 'vertical' ? bounds.height : bounds.width);
+          if (size && _this3.size !== size) {
+            if (_this3.vscrollParent.$_undefinedMap[id]) {
+              _this3.vscrollParent.$_undefinedSizes--;
+              _this3.vscrollParent.$_undefinedMap[id] = undefined;
             }
-            _this3.$set(_this3.vscrollData.heights, _this3.id, height);
-            _this3.$set(_this3.vscrollData.validHeights, _this3.id, true);
+            _this3.$set(_this3.vscrollData.sizes, _this3.id, size);
+            _this3.$set(_this3.vscrollData.validSizes, _this3.id, true);
             if (_this3.emitResize) _this3.$emit('resize', _this3.id);
           }
         }
@@ -1703,7 +1732,7 @@ function registerComponents(Vue$$1, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.0.0-beta.7",
+  version: "1.0.0-rc.1",
   install: function install(Vue$$1, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
