@@ -5067,10 +5067,10 @@ vue-resize@^0.4.5:
   resolved "https://registry.yarnpkg.com/vue-resize/-/vue-resize-0.4.5.tgz#4777a23042e3c05620d9cbda01c0b3cc5e32dcea"
   integrity sha512-bhP7MlgJQ8TIkZJXAfDf78uJO+mEI3CaLABLjv0WNzr4CcGRGPIAItyWYnP6LsPA4Oq0WE+suidNs6dgpO4RHg==
 
-vue-template-compiler@>=2.0, vue-template-compiler@^2.5.21:
-  version "2.6.6"
-  resolved "https://registry.yarnpkg.com/vue-template-compiler/-/vue-template-compiler-2.6.6.tgz#a807acbf3d51971d3721d75ecb1b927b517c1a02"
-  integrity sha512-OakxDGyrmMQViCjkakQFbDZlG0NibiOzpLauOfyCUVRQc9yPmTqpiz9nF0VeA+dFkXegetw0E5x65BFhhLXO0A==
+vue-template-compiler@2.5.22, vue-template-compiler@>=2.0:
+  version "2.5.22"
+  resolved "https://registry.yarnpkg.com/vue-template-compiler/-/vue-template-compiler-2.5.22.tgz#c3d3c02c65f1908205c4fbd3b0ef579e51239955"
+  integrity sha512-1VTw/NPTUeHNiwhkq6NkFzO7gYLjFCueBN0FX8NEiQIemd5EUMQ5hxrF7O0zCPo5tae+U9S/scETPea+hIz8Eg==
   dependencies:
     de-indent "^1.0.2"
     he "^1.1.0"
@@ -5087,10 +5087,10 @@ vue-template-validator@^1.1.5:
   dependencies:
     chalk "^1.1.1"
 
-vue@^2.5.17:
-  version "2.6.6"
-  resolved "https://registry.yarnpkg.com/vue/-/vue-2.6.6.tgz#dde41e483c11c46a7bf523909f4f2f816ab60d25"
-  integrity sha512-Y2DdOZD8sxApS+iUlwv1v8U1qN41kq6Kw45lM6nVZKhygeWA49q7VCCXkjXqeDBXgurrKWkYQ9cJeEJwAq0b9Q==
+vue@2.5.22, vue@^2.5.17:
+  version "2.5.22"
+  resolved "https://registry.yarnpkg.com/vue/-/vue-2.5.22.tgz#3bf88041af08b8539c37b268b70ca79245e9cc30"
+  integrity sha512-pxY3ZHlXNJMFQbkjEgGVMaMMkSV1ONpz+4qB55kZuJzyJOhn6MSy/YZdzhdnumegNzVTL/Dn3Pp4UrVBYt1j/g==
 
 which-module@^1.0.0:
   version "1.0.0"
