@@ -786,7 +786,7 @@ var RecycleScroller = { render: function render() {
             _vm.hoverKey = view.nr.key;
           }, "mouseleave": function mouseleave($event) {
             _vm.hoverKey = null;
-          } } }, [_vm._t("default", null, { "item": view.item, "index": view.nr.index, "active": view.nr.used })], 2);
+          } } }, [_vm._t("default", null, { item: view.item, index: view.nr.index, active: view.nr.used })], 2);
     }), 0), _vm._v(" "), _vm.$slots.after ? _c('div', { staticClass: "vue-recycle-scroller__slot" }, [_vm._t("after")], 2) : _vm._e(), _vm._v(" "), _c('ResizeObserver', { on: { "notify": _vm.handleResize } })], 1);
   }, staticRenderFns: [],
   name: 'RecycleScroller',
@@ -1297,7 +1297,7 @@ var DynamicScroller = { render: function render() {
             active: active,
             itemWithSize: itemWithSize
           })];
-        } }], true) }, 'RecycleScroller', _vm.$attrs, false), _vm.listeners), [_vm._v(" "), _c('template', { slot: "before" }, [_vm._t("before")], 2), _vm._v(" "), _c('template', { slot: "after" }, [_vm._t("after")], 2)], 2);
+        } }]) }, 'RecycleScroller', _vm.$attrs, false), _vm.listeners), [_c('template', { slot: "before" }, [_vm._t("before")], 2), _vm._v(" "), _c('template', { slot: "after" }, [_vm._t("after")], 2)], 2);
   }, staticRenderFns: [],
   name: 'DynamicScroller',
 
@@ -1732,7 +1732,7 @@ function registerComponents(Vue$$1, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.0.0-rc.1",
+  version: "1.0.0-rc.2",
   install: function install(Vue$$1, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
