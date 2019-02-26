@@ -4232,10 +4232,10 @@ rollup-plugin-css-only@^0.2.0:
   dependencies:
     rollup-pluginutils "^1.5.2"
 
-rollup-plugin-css-porter@^0.1.2:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/rollup-plugin-css-porter/-/rollup-plugin-css-porter-0.1.2.tgz#e904fd29d11e0f9f6ab4890a2a1cb3c6d86bb7ab"
-  integrity sha1-6QT9KdEeD59qtIkKKhyzxthrt6s=
+rollup-plugin-css-porter@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/rollup-plugin-css-porter/-/rollup-plugin-css-porter-0.2.0.tgz#7db19c8874c84abca0d282f49df814601962f748"
+  integrity sha512-jXrOqUosU3+fUZEi/U+YG7X6MetLI65fzo/Sd0go2CKp8T03X5zsJkneE10NbZGLS3tvB34BskntQu1xXvD67A==
   dependencies:
     clean-css "^3.4.21"
     fs-promise "^1.0.0"
