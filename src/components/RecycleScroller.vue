@@ -390,6 +390,9 @@ export default {
       for (let i = startIndex; i < endIndex; i++) {
         item = items[i]
         const key = keyField ? item[keyField] : item
+        if (key == null) {
+          throw new Error(`Key is ${key} on item (keyField is '${keyField}')`)
+        }
         view = views.get(key)
 
         if (!itemSize && !sizes[i].size) {
