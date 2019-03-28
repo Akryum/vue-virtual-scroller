@@ -57,6 +57,7 @@
 import { ResizeObserver } from 'vue-resize'
 import { ObserveVisibility } from 'vue-observe-visibility'
 import ScrollParent from 'scrollparent'
+import fastdom from 'fastdom'
 import config from '../config'
 import { props, simpleArray } from './common'
 import { supportsPassive } from '../utils'
@@ -265,7 +266,7 @@ export default {
       }
     },
 
-    updateVisibleItems (checkItem) {
+    async updateVisibleItems (checkItem) {
       const itemSize = this.itemSize
       const typeField = this.typeField
       const keyField = this.simpleArray ? null : this.keyField
@@ -285,7 +286,7 @@ export default {
         endIndex = this.prerender
         totalSize = null
       } else {
-        const scroll = this.getScroll()
+        const scroll = await this.getScroll()
         const buffer = this.buffer
         scroll.start -= buffer
         scroll.end += buffer
@@ -468,39 +469,61 @@ export default {
     },
 
     getScroll () {
-      const { $el: el, direction } = this
-      const isVertical = direction === 'vertical'
-      let scrollState
+      return new Promise((resolve, reject) => {
+        const { $el: el, direction } = this
+        const isVertical = direction === 'vertical'
+        let scrollState
 
-      if (this.pageMode) {
-        const bounds = el.getBoundingClientRect()
-        const boundsSize = isVertical ? bounds.height : bounds.width
-        let start = -(isVertical ? bounds.top : bounds.left)
-        let size = isVertical ? window.innerHeight : window.innerWidth
-        if (start < 0) {
-          size += start
-          start = 0
-        }
-        if (start + size > boundsSize) {
-          size = boundsSize - start
-        }
-        scrollState = {
-          start,
-          end: start + size,
-        }
-      } else if (isVertical) {
-        scrollState = {
-          start: el.scrollTop,
-          end: el.scrollTop + el.clientHeight,
-        }
-      } else {
-        scrollState = {
-          start: el.scrollLeft,
-          end: el.scrollLeft + el.clientWidth,
-        }
-      }
+        if (this.pageMode) {
+          fastdom.measure(() => {
+            const bounds = el.getBoundingClientRect()
+            const boundsSize = isVertical ? bounds.height : bounds.width
+            let start = -(isVertical ? bounds.top : bounds.left)
+            let size = isVertical ? window.innerHeight : window.innerWidth
 
-      return scrollState
+            fastdom.mutate(() => {
+              if (start < 0) {
+                size += start
+                start = 0
+              }
+              if (start + size > boundsSize) {
+                size = boundsSize - start
+              }
+              scrollState = {
+                start,
+                end: start + size,
+              }
+              resolve(scrollState);
+            })
+          })
+        } else if (isVertical) {
+          fastdom.measure(() => {
+            const start = el.scrollTop
+            const end = el.scrollTop + el.clientHeight
+
+            fastdom.mutate(() => {
+              scrollState = {
+                start,
+                end,
+              }
+              resolve(scrollState);
+            })
+          })
+        } else {
+          fastdom.measure(() => {
+            const start = el.scrollLeft
+            const end = el.scrollLeft + el.clientWidth
+
+            fastdom.mutate(() => {
+              scrollState = {
+                start,
+                end,
+              }
+              resolve(scrollState);
+            })
+          })
+        }
+      })
     },
 
     applyPageMode () {

@@ -1,4 +1,5 @@
 <script>
+import fastdom from 'fastdom'
 export default {
   name: 'DynamicScrollerItem',
 
@@ -111,7 +112,11 @@ export default {
     },
 
     getBounds () {
-      return this.$el.getBoundingClientRect()
+      return new Promise((resolve, reject) => {
+        fastdom.measure(() => {
+          resolve(this.$el.getBoundingClientRect())
+        })
+      })
     },
 
     updateWatchData () {
@@ -141,9 +146,9 @@ export default {
     },
 
     computeSize (id) {
-      this.$nextTick(() => {
+      this.$nextTick(async () => {
         if (this.id === id) {
-          const bounds = this.getBounds()
+          const bounds = await this.getBounds()
           const size = Math.round(this.vscrollParent.direction === 'vertical' ? bounds.height : bounds.width)
           if (size && this.size !== size) {
             if (this.vscrollParent.$_undefinedMap[id]) {
