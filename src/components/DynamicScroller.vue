@@ -5,6 +5,8 @@
     :min-item-size="minItemSize"
     :direction="direction"
     :key-field="keyField"
+    :list-tag="listTag"
+    :item-tag="itemTag"
     v-bind="$attrs"
     @resize="onScrollerResize"
     @visible="onScrollerVisible"
