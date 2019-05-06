@@ -113,9 +113,9 @@ Vue.component('RecycleScroller', VueVirtualScroller.RecycleScroller)
 
 There are several components provided by `vue-virtual-scroller`:
 
-[RecycleScroller](#recyclescroller) is a component that only renders the visible item in your list. It also re-use components and dom elements to be the most efficient and performant possible.
+[RecycleScroller](#recyclescroller) is a component that only renders the visible items in your list. It also re-uses components and dom elements to be as efficient and performant as possible.
 
-[DynamicScroller](#dynamicscroller) is a component is using RecycleScroller under-the-hood and adds a dynamic size management feature on top of it. The main use case for this is **not knowing the size of the items** in advance: the Dynamic Scroller will automatically "discover" it when it renders new item as the user scrolls.
+[DynamicScroller](#dynamicscroller) is a component that wraps the RecycleScroller component and extends its features to include dynamic size management. The main use case for this is when you **do not know the size of the items** in advance. The Dynamic Scroller automatically "discovers" item dimensions as it renders new items during scrolling.
 
 [DynamicScrollerItem](#dynamicscrolleritem) must wrap each item in a DynamicScroller to handle size computations.
 
@@ -123,7 +123,7 @@ There are several components provided by `vue-virtual-scroller`:
 
 ## RecycleScroller
 
-It's a virtual scroller which only renders the visible items and reuse all the components and DOM trees as the user scrolls.
+RecycleScroller is a virtual scroller that only renders the visible items. As the user scrolls, RecycleScroller reuses all components and DOM nodes to maintain optimal performance.
 
 ### Basic usage
 
@@ -170,7 +170,7 @@ export default {
 - **⚠️ You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). Unless you are using [variable size mode](#variable-size-mode), all items should have the same height (or width in horizontal mode) to prevent display glitches.**
 - **⚠️ If the items are objects, the scroller needs to be able to identify them. By default it will look for an `id` field on the items. This can be configured with the `keyField` prop if you are using another field name.**
 - It is not recommended to use functional components inside RecycleScroller since the components are reused (so it will actually be slower).
-- The components used in the list should expect `item` prop change without being re-created (use computed props or watchers to properly react to props changes!).
+- The list item components must be reactive to the `item` prop being updated without being re-created (use computed props or watchers to properly react to props changes!).
 - You don't need to set `key` on list content (but you should on all nested `<img>` elements to prevent load glitches).
 - The browsers have a size limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
 - Since DOM elements are reused for items, it's recommended to define hover styles using the provided `hover` class instead of the `:hover` state selector (e.g. `.vue-recycle-scroller__item-view.hover` or `.hover .some-element-inside-the-item-view`).
@@ -178,7 +178,7 @@ export default {
 ### How does it work?
 
 - The RecycleScroller creates pools of views to render visible items to the user.
-- A view is holding a rendered item, and is reused inside its pool.
+- A view holds a rendered item, and is reused inside its pool.
 - For each type of item, a new pool is created so that the same components (and DOM trees) are reused for the same type.
 - Views can be deactivated if they go off-screen, and can be reused anytime for a newly visible item.
 
@@ -212,13 +212,13 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 
 - `items`: list of items you want to display in the scroller.
 - `direction` (default: `'vertical'`): scrolling direction, either `'vertical'` or `'horizontal'`.
-- `itemSize` (default: `null`): display height (or width in horizontal mode) of the items in pixels used to calculate the scroll size and position. If it set to `null` (the default value), it will use [variable size mode](#variable-size-mode).
+- `itemSize` (default: `null`): display height (or width in horizontal mode) of the items in pixels used to calculate the scroll size and position. If it is set to `null` (the default value), it will use [variable size mode](#variable-size-mode).
 - `minItemSize`: minimum size used if the height (or width in horizontal mode) of a item is unknown.
 - `sizeField` (default: `'size'`): field used to get the item's size in variable size mode.
-- `typeField` (default: `'type'`): field used to differenciate different kinds of components in the list. For each distinct type, a pool of recycled items will be created.
-- `keyField` (default: `'id'`): field used to identify items and optimize render views management.
+- `typeField` (default: `'type'`): field used to differentiate different kinds of components in the list. For each distinct type, a pool of recycled items will be created.
+- `keyField` (default: `'id'`): field used to identify items and optimize managing rendered views.
 - `pageMode` (default: `false`): enable [Page mode](#page-mode).
-- `prerender` (default: `0`): render a fixed number of items for Server-Side Rendering.
+- `prerender` (default: `0`): render a fixed number of items for Server-Side Rendering (SSR).
 - `buffer` (default: `200`): amount of pixel to add to edges of the scrolling visible area to start rendering items further away.
 - `emitUpdate` (default: `false`): emit a `'update'` event each time the virtual scroller content is updated (can impact performance).
 
@@ -233,7 +233,7 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 
 - `item`: item being rendered in a view.
 - `index`: reflects each item's position in the `items` array
-- `active`: is the view active. An active view is considered visible and being positioned by `RecycleScroller`. An inactive view is not considered visible and hidden from the user. Any rendering-related computations should be skipped if the view is inactive.
+- `active`: whether or not the view is active. An active view is considered visible and being positioned by `RecycleScroller`. An inactive view is not considered visible and is hidden from the user. Any rendering-related computations should be skipped if the view is inactive.
 
 ### Other Slots
 
@@ -267,7 +267,7 @@ Example:
 
 ### Page mode
 
-The page mode expand the virtual-scroller and use the page viewport to compute which items are visible. That way, you can use it in a big page with HTML elements before or after (like a header and a footer). Just set the `page-mode` props to `true`:
+The page mode expands the virtual-scroller and uses the page viewport to compute which items are visible. That way, you can use it in a big page with HTML elements before or after (like a header and a footer). Set the `page-mode` prop to `true`:
 
 ```html
 <header>
@@ -287,7 +287,7 @@ The page mode expand the virtual-scroller and use the page viewport to compute w
 
 **⚠️ This mode can be performance heavy with a lot of items. Use with caution.**
 
-If the `itemSize` prop is not set or set to `null`, the virtual scroller will switch to Variable size mode. You then need to expose a number field on the item objects with the size of the item element.
+If the `itemSize` prop is not set or is set to `null`, the virtual scroller will switch to variable size mode. You then need to expose a number field on the item objects with the size of the item element.
 
 **⚠️ You still need to set the size of the items with CSS correctly (with classes for example).**
 
@@ -339,7 +339,7 @@ The `prerender` props can be set as the number of items to render on the server 
 
 ## DynamicScroller
 
-This works like RecycleScroller but can render items with unknown sizes!
+This works just like the RecycleScroller, but it can render items with unknown sizes!
 
 ### Basic usage
 
@@ -396,21 +396,21 @@ export default {
 
 ### Props
 
-All the RecycleScroller props.
+Extends all the RecycleScroller props.
 
 - It's not recommended to change `sizeField` prop since all the size management is done internally.
 
 ### Events
 
-All the RecycleScroller events.
+Extends all the RecycleScroller events.
 
 ### Default scoped slot props
 
-All the RecycleScroller scoped slot props.
+Extends all the RecycleScroller scoped slot props.
 
 ### Other slots
 
-All the RecycleScroller other slots.
+Extends all the RecycleScroller other slots.
 
 ## DynamicScrollerItem
 
@@ -419,8 +419,8 @@ The component that should wrap all the items in a DynamicScroller.
 ### Props
 
 - `item` (required): the item rendered in the scroller.
-- `active` (required): is the holding view active in RecleScroller. Will prevent unecessary size recomputation.
-- `sizeDependencies`: values that can affest the size of the item. This prop will be watched and if one value changes, the size will be recomputed. Recommended instead of `watchData`.
+- `active` (required): is the holding view active in RecycleScroller. Will prevent unnecessary size recomputation.
+- `sizeDependencies`: values that can affect the size of the item. This prop will be watched and if one value changes, the size will be recomputed. Recommended instead of `watchData`.
 - `watchData` (default: `false`): deeply watch `item` for changes to re-calculate the size (not recommended, can impact performance).
 - `tag` (default: `'div'`): element used to render the component.
 - `emitResize` (default: `false`): emit the `resize` event each time the size is recomputed (can impact performance).
@@ -431,7 +431,7 @@ The component that should wrap all the items in a DynamicScroller.
 
 ## IdState
 
-This is conveniance mixin that can replace `data` in components being rendered in a RecycleScroller.
+This is convenience mixin that can replace `data` in components being rendered in a RecycleScroller.
 
 ### Why is this useful?
 
