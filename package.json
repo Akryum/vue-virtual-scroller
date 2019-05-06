@@ -13,7 +13,7 @@
   ],
   "license": "MIT",
   "main": "dist/vue-virtual-scroller.umd.js",
-  "module": "dist/vue-virtual-scroller.esm.js",
+  "module": "dist/vue-virtual-scroller.es.js",
   "unpkg": "dist/vue-virtual-scroller.min.js",
   "scripts": {
     "build": "npm run build:browser && npm run build:es && npm run build:umd",
