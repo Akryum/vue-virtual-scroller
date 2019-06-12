@@ -3,6 +3,8 @@
     ref="scroller"
     :items="itemsWithSize"
     :min-item-size="minItemSize"
+    :buffer="buffer"
+    :prerender="prerender"
     :direction="direction"
     key-field="id"
     v-bind="$attrs"
@@ -55,6 +57,16 @@ export default {
     minItemSize: {
       type: [Number, String],
       required: true,
+    },
+
+    buffer: {
+      type: Number,
+      default: 200,
+    },
+
+    prerender: {
+      type: Number,
+      default: 0,
     },
   },
 
