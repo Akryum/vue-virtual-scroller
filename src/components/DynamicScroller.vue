@@ -178,11 +178,19 @@ export default {
       this.$nextTick(() => {
         // Item sizes are computed
         const cb = () => {
+          const prevTop = el.scrollTop
           el.scrollTop = el.scrollHeight
-          if (this.$_undefinedSizes === 0) {
+
+          // If scroll top is not changed, that means the scroll position is
+          // already bottom and stable. We stop the process of scrolling to bottom here.
+          if (prevTop === el.scrollTop) {
             this.$_scrollingToBottom = false
           } else {
-            requestAnimationFrame(cb)
+            // Wait for RecycleScroller's visible items calculation
+            requestAnimationFrame(() => {
+              // Wait for DOM update
+              requestAnimationFrame(cb)
+            })
           }
         }
         requestAnimationFrame(cb)
