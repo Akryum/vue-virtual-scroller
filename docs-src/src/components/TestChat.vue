@@ -53,7 +53,7 @@ export default {
       for (let i = 0; i < count; i++) {
         this.items.push({
           text: faker.lorem.lines(),
-          id: this.items.length + 1
+          id: this.items.length + 1,
         })
       }
       this.scrollToBottom()
