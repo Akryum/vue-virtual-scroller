@@ -164,7 +164,7 @@ export default {
     },
   },
 
-  created () {
+  beforeCreate () {
     this.$_updates = []
     this.$_undefinedSizes = 0
     this.$_undefinedMap = {}
