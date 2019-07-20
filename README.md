@@ -82,7 +82,7 @@ import { RecycleScroller } from 'vue-virtual-scroller'
 Vue.component('RecycleScroller', RecycleScroller)
 ```
 
-**⚠️ A css file is included when importing the package:**
+**⚠️ The line below should be included when importing the package:**
 
 ```js
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
