@@ -222,6 +222,7 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 - `prerender` (default: `0`): render a fixed number of items for Server-Side Rendering (SSR).
 - `buffer` (default: `200`): amount of pixel to add to edges of the scrolling visible area to start rendering items further away.
 - `emitUpdate` (default: `false`): emit a `'update'` event each time the virtual scroller content is updated (can impact performance).
+- `emitReachEnd` (default: `false`): emit a `'reach_end'` event when scroller meet the last item.
 
 ### Events
 
@@ -229,6 +230,7 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 - `visible`: emitted when the scroller considers itself to be visible in the page.
 - `hidden`: emitted when the scroller is hidden in the page.
 - `update (startIndex, endIndex)`: emitted each time the views are updated, only if `emitUpdate` prop is `true`
+- `reach_end`: emitted when the scroller rech the end of the items.
 
 ### Default scoped slot props
 

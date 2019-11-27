@@ -116,6 +116,11 @@ export default {
       type: Boolean,
       default: false,
     },
+
+    emitReachEnd: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   data () {
@@ -450,6 +455,11 @@ export default {
           view.position = i * itemSize
         }
       }
+
+      if (this.emitReachEnd) 
+        if (count === endIndex) 
+          if (this.$_endIndex !== endIndex) 
+            this.$emit('reach_end')
 
       this.$_startIndex = startIndex
       this.$_endIndex = endIndex
