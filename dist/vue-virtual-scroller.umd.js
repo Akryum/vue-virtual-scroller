@@ -1632,7 +1632,7 @@ function registerComponents(Vue$$1, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "2.0.0",
+  version: "2.1.0",
   install: function install(Vue$$1, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
