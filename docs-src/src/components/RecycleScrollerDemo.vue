@@ -62,8 +62,10 @@
           :item-size="itemHeight"
           :buffer="buffer"
           :page-mode="pageMode"
+          :emitReachEnd="true"
           key-field="id"
           size-field="height"
+          @reach_end="onReachEnd"
           @visible="onVisible"
           @hidden="onHidden"
         >
@@ -177,6 +179,10 @@ export default {
 
     onVisible () {
       console.log('visible')
+    },
+
+    onReachEnd () {
+      console.log('onReachEnd');
     },
 
     onHidden () {

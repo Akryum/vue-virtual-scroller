@@ -271,6 +271,11 @@ var RecycleScroller = { render: function render() {
     emitUpdate: {
       type: Boolean,
       default: false
+    },
+
+    emitReachEnd: {
+      type: Boolean,
+      default: false
     }
   }),
 
@@ -614,6 +619,8 @@ var RecycleScroller = { render: function render() {
           view.position = _i3 * itemSize;
         }
       }
+
+      if (this.emitReachEnd) if (count === endIndex) if (this.$_endIndex !== endIndex) this.$emit('reach_end');
 
       this.$_startIndex = startIndex;
       this.$_endIndex = endIndex;
@@ -9280,7 +9287,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.0.0-rc.2",
+  version: "2.0.0",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
