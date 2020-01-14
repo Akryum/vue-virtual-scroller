@@ -123,395 +123,275 @@ if (GlobalVue$1) {
 	GlobalVue$1.use(plugin$2);
 }
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-  return typeof obj;
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-};
-
-
-
-
-
-var asyncGenerator = function () {
-  function AwaitValue(value) {
-    this.value = value;
-  }
-
-  function AsyncGenerator(gen) {
-    var front, back;
-
-    function send(key, arg) {
-      return new Promise(function (resolve, reject) {
-        var request = {
-          key: key,
-          arg: arg,
-          resolve: resolve,
-          reject: reject,
-          next: null
-        };
-
-        if (back) {
-          back = back.next = request;
-        } else {
-          front = back = request;
-          resume(key, arg);
-        }
-      });
-    }
-
-    function resume(key, arg) {
-      try {
-        var result = gen[key](arg);
-        var value = result.value;
-
-        if (value instanceof AwaitValue) {
-          Promise.resolve(value.value).then(function (arg) {
-            resume("next", arg);
-          }, function (arg) {
-            resume("throw", arg);
-          });
-        } else {
-          settle(result.done ? "return" : "normal", result.value);
-        }
-      } catch (err) {
-        settle("throw", err);
-      }
-    }
-
-    function settle(type, value) {
-      switch (type) {
-        case "return":
-          front.resolve({
-            value: value,
-            done: true
-          });
-          break;
-
-        case "throw":
-          front.reject(value);
-          break;
-
-        default:
-          front.resolve({
-            value: value,
-            done: false
-          });
-          break;
-      }
-
-      front = front.next;
-
-      if (front) {
-        resume(front.key, front.arg);
-      } else {
-        back = null;
-      }
-    }
-
-    this._invoke = send;
-
-    if (typeof gen.return !== "function") {
-      this.return = undefined;
-    }
-  }
-
-  if (typeof Symbol === "function" && Symbol.asyncIterator) {
-    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
-      return this;
+function _typeof(obj) {
+  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    _typeof = function (obj) {
+      return typeof obj;
+    };
+  } else {
+    _typeof = function (obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
     };
   }
 
-  AsyncGenerator.prototype.next = function (arg) {
-    return this._invoke("next", arg);
-  };
+  return _typeof(obj);
+}
 
-  AsyncGenerator.prototype.throw = function (arg) {
-    return this._invoke("throw", arg);
-  };
-
-  AsyncGenerator.prototype.return = function (arg) {
-    return this._invoke("return", arg);
-  };
-
-  return {
-    wrap: function (fn) {
-      return function () {
-        return new AsyncGenerator(fn.apply(this, arguments));
-      };
-    },
-    await: function (value) {
-      return new AwaitValue(value);
-    }
-  };
-}();
-
-
-
-
-
-var classCallCheck = function (instance, Constructor) {
+function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
     throw new TypeError("Cannot call a class as a function");
   }
-};
+}
 
-var createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
   }
+}
 
-  return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
-  };
-}();
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
+}
 
+function _toConsumableArray(arr) {
+  return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-var toConsumableArray = function (arr) {
+function _arrayWithoutHoles(arr) {
   if (Array.isArray(arr)) {
-    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+    for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
 
     return arr2;
-  } else {
-    return Array.from(arr);
   }
-};
+}
+
+function _iterableToArray(iter) {
+  if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+}
+
+function _nonIterableSpread() {
+  throw new TypeError("Invalid attempt to spread non-iterable instance");
+}
 
 function processOptions(value) {
-	var options = void 0;
-	if (typeof value === 'function') {
-		// Simple options (callback-only)
-		options = {
-			callback: value
-		};
-	} else {
-		// Options object
-		options = value;
-	}
-	return options;
-}
+  var options;
 
+  if (typeof value === 'function') {
+    // Simple options (callback-only)
+    options = {
+      callback: value
+    };
+  } else {
+    // Options object
+    options = value;
+  }
+
+  return options;
+}
 function throttle(callback, delay) {
-	var timeout = void 0;
-	var lastState = void 0;
-	var currentArgs = void 0;
-	var throttled = function throttled(state) {
-		for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-			args[_key - 1] = arguments[_key];
-		}
+  var timeout;
+  var lastState;
+  var currentArgs;
 
-		currentArgs = args;
-		if (timeout && state === lastState) return;
-		lastState = state;
-		clearTimeout(timeout);
-		timeout = setTimeout(function () {
-			callback.apply(undefined, [state].concat(toConsumableArray(currentArgs)));
-			timeout = 0;
-		}, delay);
-	};
-	throttled._clear = function () {
-		clearTimeout(timeout);
-	};
-	return throttled;
+  var throttled = function throttled(state) {
+    for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
+
+    currentArgs = args;
+    if (timeout && state === lastState) return;
+    lastState = state;
+    clearTimeout(timeout);
+    timeout = setTimeout(function () {
+      callback.apply(void 0, [state].concat(_toConsumableArray(currentArgs)));
+      timeout = 0;
+    }, delay);
+  };
+
+  throttled._clear = function () {
+    clearTimeout(timeout);
+  };
+
+  return throttled;
 }
-
 function deepEqual(val1, val2) {
-	if (val1 === val2) return true;
-	if ((typeof val1 === 'undefined' ? 'undefined' : _typeof(val1)) === 'object') {
-		for (var key in val1) {
-			if (!deepEqual(val1[key], val2[key])) {
-				return false;
-			}
-		}
-		return true;
-	}
-	return false;
+  if (val1 === val2) return true;
+
+  if (_typeof(val1) === 'object') {
+    for (var key in val1) {
+      if (!deepEqual(val1[key], val2[key])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  return false;
 }
 
-var VisibilityState = function () {
-	function VisibilityState(el, options, vnode) {
-		classCallCheck(this, VisibilityState);
+var VisibilityState =
+/*#__PURE__*/
+function () {
+  function VisibilityState(el, options, vnode) {
+    _classCallCheck(this, VisibilityState);
 
-		this.el = el;
-		this.observer = null;
-		this.frozen = false;
-		this.createObserver(options, vnode);
-	}
+    this.el = el;
+    this.observer = null;
+    this.frozen = false;
+    this.createObserver(options, vnode);
+  }
 
-	createClass(VisibilityState, [{
-		key: 'createObserver',
-		value: function createObserver(options, vnode) {
-			var _this = this;
+  _createClass(VisibilityState, [{
+    key: "createObserver",
+    value: function createObserver(options, vnode) {
+      var _this = this;
 
-			if (this.observer) {
-				this.destroyObserver();
-			}
+      if (this.observer) {
+        this.destroyObserver();
+      }
 
-			if (this.frozen) return;
+      if (this.frozen) return;
+      this.options = processOptions(options);
 
-			this.options = processOptions(options);
+      this.callback = function (result, entry) {
+        _this.options.callback(result, entry);
 
-			this.callback = this.options.callback;
-			// Throttle
-			if (this.callback && this.options.throttle) {
-				this.callback = throttle(this.callback, this.options.throttle);
-			}
+        if (result && _this.options.once) {
+          _this.frozen = true;
 
-			this.oldResult = undefined;
+          _this.destroyObserver();
+        }
+      }; // Throttle
 
-			this.observer = new IntersectionObserver(function (entries) {
-				var entry = entries[0];
-				if (_this.callback) {
-					// Use isIntersecting if possible because browsers can report isIntersecting as true, but intersectionRatio as 0, when something very slowly enters the viewport.
-					var result = entry.isIntersecting && entry.intersectionRatio >= _this.threshold;
-					if (result === _this.oldResult) return;
-					_this.oldResult = result;
-					_this.callback(result, entry);
-					if (result && _this.options.once) {
-						_this.frozen = true;
-						_this.destroyObserver();
-					}
-				}
-			}, this.options.intersection);
 
-			// Wait for the element to be in document
-			vnode.context.$nextTick(function () {
-				_this.observer.observe(_this.el);
-			});
-		}
-	}, {
-		key: 'destroyObserver',
-		value: function destroyObserver() {
-			if (this.observer) {
-				this.observer.disconnect();
-				this.observer = null;
-			}
+      if (this.callback && this.options.throttle) {
+        this.callback = throttle(this.callback, this.options.throttle);
+      }
 
-			// Cancel throttled call
-			if (this.callback && this.callback._clear) {
-				this.callback._clear();
-				this.callback = null;
-			}
-		}
-	}, {
-		key: 'threshold',
-		get: function get$$1() {
-			return this.options.intersection && this.options.intersection.threshold || 0;
-		}
-	}]);
-	return VisibilityState;
+      this.oldResult = undefined;
+      this.observer = new IntersectionObserver(function (entries) {
+        var entry = entries[0];
+
+        if (_this.callback) {
+          // Use isIntersecting if possible because browsers can report isIntersecting as true, but intersectionRatio as 0, when something very slowly enters the viewport.
+          var result = entry.isIntersecting && entry.intersectionRatio >= _this.threshold;
+          if (result === _this.oldResult) return;
+          _this.oldResult = result;
+
+          _this.callback(result, entry);
+        }
+      }, this.options.intersection); // Wait for the element to be in document
+
+      vnode.context.$nextTick(function () {
+        if (_this.observer) {
+          _this.observer.observe(_this.el);
+        }
+      });
+    }
+  }, {
+    key: "destroyObserver",
+    value: function destroyObserver() {
+      if (this.observer) {
+        this.observer.disconnect();
+        this.observer = null;
+      } // Cancel throttled call
+
+
+      if (this.callback && this.callback._clear) {
+        this.callback._clear();
+
+        this.callback = null;
+      }
+    }
+  }, {
+    key: "threshold",
+    get: function get() {
+      return this.options.intersection && this.options.intersection.threshold || 0;
+    }
+  }]);
+
+  return VisibilityState;
 }();
 
 function bind(el, _ref, vnode) {
-	var value = _ref.value;
+  var value = _ref.value;
+  if (!value) return;
 
-	if (typeof IntersectionObserver === 'undefined') {
-		console.warn('[vue-observe-visibility] IntersectionObserver API is not available in your browser. Please install this polyfill: https://github.com/w3c/IntersectionObserver/tree/master/polyfill');
-	} else {
-		var state = new VisibilityState(el, value, vnode);
-		el._vue_visibilityState = state;
-	}
+  if (typeof IntersectionObserver === 'undefined') {
+    console.warn('[vue-observe-visibility] IntersectionObserver API is not available in your browser. Please install this polyfill: https://github.com/w3c/IntersectionObserver/tree/master/polyfill');
+  } else {
+    var state = new VisibilityState(el, value, vnode);
+    el._vue_visibilityState = state;
+  }
 }
 
 function update(el, _ref2, vnode) {
-	var value = _ref2.value,
-	    oldValue = _ref2.oldValue;
+  var value = _ref2.value,
+      oldValue = _ref2.oldValue;
+  if (deepEqual(value, oldValue)) return;
+  var state = el._vue_visibilityState;
 
-	if (deepEqual(value, oldValue)) return;
-	var state = el._vue_visibilityState;
-	if (state) {
-		state.createObserver(value, vnode);
-	} else {
-		bind(el, { value: value }, vnode);
-	}
+  if (!value) {
+    unbind(el);
+    return;
+  }
+
+  if (state) {
+    state.createObserver(value, vnode);
+  } else {
+    bind(el, {
+      value: value
+    }, vnode);
+  }
 }
 
 function unbind(el) {
-	var state = el._vue_visibilityState;
-	if (state) {
-		state.destroyObserver();
-		delete el._vue_visibilityState;
-	}
+  var state = el._vue_visibilityState;
+
+  if (state) {
+    state.destroyObserver();
+    delete el._vue_visibilityState;
+  }
 }
 
 var ObserveVisibility = {
-	bind: bind,
-	update: update,
-	unbind: unbind
+  bind: bind,
+  update: update,
+  unbind: unbind
 };
 
-// Install the components
 function install$1(Vue$$1) {
-	Vue$$1.directive('observe-visibility', ObserveVisibility);
-	/* -- Add more components here -- */
+  Vue$$1.directive('observe-visibility', ObserveVisibility);
+  /* -- Add more components here -- */
 }
-
 /* -- Plugin definition & Auto-install -- */
-/* You shouldn't have to modify the code below */
 
+/* You shouldn't have to modify the code below */
 // Plugin
+
 var plugin$4 = {
-	// eslint-disable-next-line no-undef
-	version: "0.4.3",
-	install: install$1
+  // eslint-disable-next-line no-undef
+  version: "0.4.4",
+  install: install$1
 };
 
-// Auto-install
 var GlobalVue$2 = null;
+
 if (typeof window !== 'undefined') {
-	GlobalVue$2 = window.Vue;
+  GlobalVue$2 = window.Vue;
 } else if (typeof global !== 'undefined') {
-	GlobalVue$2 = global.Vue;
+  GlobalVue$2 = global.Vue;
 }
+
 if (GlobalVue$2) {
-	GlobalVue$2.use(plugin$4);
+  GlobalVue$2.use(plugin$4);
 }
 
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -584,7 +464,7 @@ var _typeof$1 = typeof Symbol === "function" && typeof Symbol.iterator === "symb
 
 
 
-var asyncGenerator$1 = function () {
+var asyncGenerator = function () {
   function AwaitValue(value) {
     this.value = value;
   }
@@ -755,6 +635,11 @@ var props = {
     validator: function validator(value) {
       return ['vertical', 'horizontal'].includes(value);
     }
+  },
+
+  debounce: {
+    type: [Number, String],
+    default: 0
   }
 };
 
@@ -918,6 +803,7 @@ var RecycleScroller = { render: function render() {
   },
   beforeDestroy: function beforeDestroy() {
     this.removeListeners();
+    clearTimeout(this.scrollTimeout);
   },
 
 
@@ -965,23 +851,33 @@ var RecycleScroller = { render: function render() {
     handleScroll: function handleScroll(event) {
       var _this2 = this;
 
-      if (!this.$_scrollDirty) {
-        this.$_scrollDirty = true;
-        requestAnimationFrame(function () {
-          _this2.$_scrollDirty = false;
+      var job = function job() {
+        if (!_this2.$_scrollDirty) {
+          _this2.$_scrollDirty = true;
+          requestAnimationFrame(function () {
+            _this2.$_scrollDirty = false;
 
-          var _updateVisibleItems = _this2.updateVisibleItems(false),
-              continuous = _updateVisibleItems.continuous;
+            var _updateVisibleItems = _this2.updateVisibleItems(false),
+                continuous = _updateVisibleItems.continuous;
 
-          // It seems sometimes chrome doesn't fire scroll event :/
-          // When non continous scrolling is ending, we force a refresh
+            // It seems sometimes chrome doesn't fire scroll event :/
+            // When non continous scrolling is ending, we force a refresh
 
 
-          if (!continuous) {
-            clearTimeout(_this2.$_refreshTimout);
-            _this2.$_refreshTimout = setTimeout(_this2.handleScroll, 100);
-          }
-        });
+            if (!continuous) {
+              clearTimeout(_this2.$_refreshTimeout);
+              _this2.$_refreshTimeout = setTimeout(_this2.handleScroll, 100);
+            }
+          });
+        }
+      };
+
+      clearTimeout(this.scrollTimeout);
+
+      if (this.debounce) {
+        this.scrollTimeout = setTimeout(job, parseInt(this.debounce));
+      } else {
+        job();
       }
     },
     handleVisibilityChange: function handleVisibilityChange(isVisible, entry) {
@@ -1122,6 +1018,9 @@ var RecycleScroller = { render: function render() {
       for (var _i3 = startIndex; _i3 < endIndex; _i3++) {
         item = items[_i3];
         var key = keyField ? item[keyField] : item;
+        if (key == null) {
+          throw new Error('Key is ' + key + ' on item (keyField is \'' + keyField + '\')');
+        }
         view = views.get(key);
 
         if (!itemSize && !sizes[_i3].size) {
@@ -1287,7 +1186,7 @@ var RecycleScroller = { render: function render() {
 };
 
 var DynamicScroller = { render: function render() {
-    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('RecycleScroller', _vm._g(_vm._b({ ref: "scroller", attrs: { "items": _vm.itemsWithSize, "min-item-size": _vm.minItemSize, "direction": _vm.direction, "key-field": "id" }, on: { "resize": _vm.onScrollerResize, "visible": _vm.onScrollerVisible }, scopedSlots: _vm._u([{ key: "default", fn: function fn(_ref) {
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('RecycleScroller', _vm._g(_vm._b({ ref: "scroller", attrs: { "items": _vm.itemsWithSize, "min-item-size": _vm.minItemSize, "direction": _vm.direction, "debounce": _vm.debounce, "key-field": "id" }, on: { "resize": _vm.onScrollerResize, "visible": _vm.onScrollerVisible }, scopedSlots: _vm._u([{ key: "default", fn: function fn(_ref) {
           var itemWithSize = _ref.item,
               index = _ref.index,
               active = _ref.active;

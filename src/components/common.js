@@ -14,7 +14,7 @@ export const props = {
     default: 'vertical',
     validator: (value) => ['vertical', 'horizontal'].includes(value),
   },
-  
+
   debounce: {
     type: [Number, String],
     default: 0,
