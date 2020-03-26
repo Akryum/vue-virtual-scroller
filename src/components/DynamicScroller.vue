@@ -33,6 +33,8 @@
 import RecycleScroller from './RecycleScroller.vue'
 import { props, simpleArray } from './common'
 
+const MAX_SCROLL = 9999999999
+
 export default {
   name: 'DynamicScroller',
 
@@ -191,12 +193,12 @@ export default {
       const el = this.$el
       // Item is inserted to the DOM
       this.$nextTick(() => {
-        el.scrollTop = Number.MAX_SAFE_INTEGER
+        el.scrollTop = MAX_SCROLL
         // Item sizes are computed
         const cb = () => {
-          el.scrollTop = Number.MAX_SAFE_INTEGER
+          el.scrollTop = MAX_SCROLL
           requestAnimationFrame(() => {
-            el.scrollTop = Number.MAX_SAFE_INTEGER
+            el.scrollTop = MAX_SCROLL
             if (this.$_undefinedSizes === 0) {
               this.$_scrollingToBottom = false
             } else {
