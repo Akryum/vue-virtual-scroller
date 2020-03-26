@@ -1773,6 +1773,13 @@ fast-levenshtein@~2.0.6:
   resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
   integrity sha1-PYpcZog6FqMMqGQ+hR8Zuqd5eRc=
 
+fastdom@^1.0.9:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/fastdom/-/fastdom-1.0.9.tgz#b395fab11a3701173c02a054fe769d8f596a0a26"
+  integrity sha512-SSp4fbVzu8JkkG01NUX+0iOwe9M5PN3MGIQ84txLf4TkkJG4q30khkzumKgi4hUqO1+jX6wLHfnCPoZ6eSZ6Tg==
+  dependencies:
+    strictdom "^1.0.1"
+
 fastparse@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/fastparse/-/fastparse-1.1.2.tgz#91728c5a5942eced8531283c79441ee4122c35a9"
@@ -3428,6 +3435,11 @@ sshpk@^1.7.0:
     jsbn "~0.1.0"
     safer-buffer "^2.0.2"
     tweetnacl "~0.14.0"
+
+strictdom@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/strictdom/-/strictdom-1.0.1.tgz#189de91649f73d44d59b8432efa68ef9d2659460"
+  integrity sha1-GJ3pFkn3PUTVm4Qy76aO+dJllGA=
 
 string-hash@^1.1.0:
   version "1.1.3"
