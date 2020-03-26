@@ -7,7 +7,7 @@ const config = Object.assign({}, base, {
     format: 'es',
   },
   external: [
-    'vue',
+    ...base.external,
     'scrollparent',
     'vue-observe-visibility',
     'vue-resize',
