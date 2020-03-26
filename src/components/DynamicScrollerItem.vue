@@ -5,6 +5,7 @@ export default {
   inject: [
     'vscrollData',
     'vscrollParent',
+    'vscrollResizeObserver',
   ],
 
   props: {
@@ -63,7 +64,27 @@ export default {
     },
 
     active (value) {
-      if (value && this.$_pendingVScrollUpdate === this.id) {
+      if (!this.size) {
+        if (value) {
+          if (!this.vscrollParent.$_undefinedMap[this.id]) {
+            this.vscrollParent.$_undefinedSizes++
+            this.vscrollParent.$_undefinedMap[this.id] = true
+          }
+        } else {
+          if (this.vscrollParent.$_undefinedMap[this.id]) {
+            this.vscrollParent.$_undefinedSizes--
+            this.vscrollParent.$_undefinedMap[this.id] = false
+          }
+        }
+      }
+
+      if (this.vscrollResizeObserver) {
+        if (value) {
+          this.observeSize()
+        } else {
+          this.unobserveSize()
+        }
+      } else if (value && this.$_pendingVScrollUpdate === this.id) {
         this.updateSize()
       }
     },
@@ -75,23 +96,27 @@ export default {
     this.$_forceNextVScrollUpdate = null
     this.updateWatchData()
 
-    for (const k in this.sizeDependencies) {
-      this.$watch(() => this.sizeDependencies[k], this.onDataUpdate)
-    }
+    if (!this.vscrollResizeObserver) {
+      for (const k in this.sizeDependencies) {
+        this.$watch(() => this.sizeDependencies[k], this.onDataUpdate)
+      }
 
-    this.vscrollParent.$on('vscroll:update', this.onVscrollUpdate)
-    this.vscrollParent.$on('vscroll:update-size', this.onVscrollUpdateSize)
+      this.vscrollParent.$on('vscroll:update', this.onVscrollUpdate)
+      this.vscrollParent.$on('vscroll:update-size', this.onVscrollUpdateSize)
+    }
   },
 
   mounted () {
     if (this.vscrollData.active) {
       this.updateSize()
+      this.observeSize()
     }
   },
 
   beforeDestroy () {
     this.vscrollParent.$off('vscroll:update', this.onVscrollUpdate)
     this.vscrollParent.$off('vscroll:update-size', this.onVscrollUpdateSize)
+    this.unobserveSize()
   },
 
   methods: {
@@ -108,10 +133,6 @@ export default {
       } else {
         this.$_forceNextVScrollUpdate = this.id
       }
-    },
-
-    getBounds () {
-      return this.$el.getBoundingClientRect()
     },
 
     updateWatchData () {
@@ -143,20 +164,40 @@ export default {
     computeSize (id) {
       this.$nextTick(() => {
         if (this.id === id) {
-          const bounds = this.getBounds()
-          const size = Math.round(this.vscrollParent.direction === 'vertical' ? bounds.height : bounds.width)
-          if (size && this.size !== size) {
-            if (this.vscrollParent.$_undefinedMap[id]) {
-              this.vscrollParent.$_undefinedSizes--
-              this.vscrollParent.$_undefinedMap[id] = undefined
-            }
-            this.$set(this.vscrollData.sizes, this.id, size)
-            this.$set(this.vscrollData.validSizes, this.id, true)
-            if (this.emitResize) this.$emit('resize', this.id)
-          }
+          const width = this.$el.offsetWidth
+          const height = this.$el.offsetHeight
+          this.applySize(width, height)
         }
         this.$_pendingSizeUpdate = null
       })
+    },
+
+    applySize (width, height) {
+      const size = Math.round(this.vscrollParent.direction === 'vertical' ? height : width)
+      if (size && this.size !== size) {
+        if (this.vscrollParent.$_undefinedMap[this.id]) {
+          this.vscrollParent.$_undefinedSizes--
+          this.vscrollParent.$_undefinedMap[this.id] = undefined
+        }
+        this.$set(this.vscrollData.sizes, this.id, size)
+        this.$set(this.vscrollData.validSizes, this.id, true)
+        if (this.emitResize) this.$emit('resize', this.id)
+      }
+    },
+
+    observeSize () {
+      this.vscrollResizeObserver.observe(this.$el.parentNode)
+      this.$el.parentNode.addEventListener('resize', this.onResize)
+    },
+
+    unobserveSize () {
+      this.vscrollResizeObserver.unobserve(this.$el.parentNode)
+      this.$el.parentNode.removeEventListener('resize', this.onResize)
+    },
+
+    onResize (event) {
+      const { width, height } = event.detail.contentRect
+      this.applySize(width, height)
     },
   },
 
