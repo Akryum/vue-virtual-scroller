@@ -78,16 +78,14 @@ export default {
         }
       }
 
-      if (value && this.$_pendingVScrollUpdate === this.id) {
-        this.updateSize()
-      }
-
       if (this.vscrollResizeObserver) {
         if (value) {
           this.observeSize()
         } else {
           this.unobserveSize()
         }
+      } else if (value && this.$_pendingVScrollUpdate === this.id) {
+        this.updateSize()
       }
     },
   },
@@ -164,7 +162,6 @@ export default {
     },
 
     computeSize (id) {
-      if (this.vscrollResizeObserver) return
       this.$nextTick(() => {
         if (this.id === id) {
           const width = this.$el.offsetWidth
