@@ -104,10 +104,12 @@ export default {
     },
 
     addMessage () {
-      this.items.push({
-        id: id++,
-        ...messages[id % 10000],
-      })
+      for (let i = 0; i < 10; i++) {
+        this.items.push({
+          id: id++,
+          ...messages[id % 10000],
+        })
+      }
       this.scrollToBottom()
 
       if (this.streaming) {
