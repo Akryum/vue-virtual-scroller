@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "faker": "^4.1.0",
-    "vue": "^2.5.17",
+    "vue": "^2.6.11",
     "vue-router": "^3.0.1"
   },
   "devDependencies": {

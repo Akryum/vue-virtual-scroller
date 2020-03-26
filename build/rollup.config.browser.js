@@ -1,6 +1,5 @@
 import base from './rollup.config.base'
-import uglify from 'rollup-plugin-uglify'
-import { minify } from 'uglify-es'
+import { terser } from 'rollup-plugin-terser'
 
 const config = Object.assign({}, base, {
   output: {
@@ -11,6 +10,6 @@ const config = Object.assign({}, base, {
   },
 })
 
-config.plugins.push(uglify({}, minify))
+config.plugins.push(terser({}))
 
 export default config

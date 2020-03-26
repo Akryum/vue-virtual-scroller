@@ -3,7 +3,7 @@ import resolve from 'rollup-plugin-node-resolve'
 import vue from 'rollup-plugin-vue'
 import cjs from 'rollup-plugin-commonjs'
 import replace from 'rollup-plugin-replace'
-import eslint from 'rollup-plugin-eslint'
+import { eslint } from 'rollup-plugin-eslint'
 import fs from 'fs'
 import CleanCSS from 'clean-css'
 
@@ -28,9 +28,6 @@ export default {
     }),
     babel({
       exclude: 'node_modules/**',
-      'plugins': [
-        'external-helpers',
-      ],
     }),
     replace({
       VERSION: JSON.stringify(config.version),
