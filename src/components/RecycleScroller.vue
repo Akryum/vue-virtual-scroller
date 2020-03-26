@@ -273,7 +273,7 @@ export default {
       const count = items.length
       const sizes = this.sizes
       const views = this.$_views
-      let unusedViews = this.$_unusedViews
+      const unusedViews = this.$_unusedViews
       const pool = this.pool
       let startIndex, endIndex
       let totalSize
@@ -365,7 +365,7 @@ export default {
             // Update view item index
             if (checkItem) {
               view.nr.index = items.findIndex(
-                item => keyField ? item[keyField] === view.item[keyField] : item === view.item
+                item => keyField ? item[keyField] === view.item[keyField] : item === view.item,
               )
             }
 
@@ -553,8 +553,8 @@ export default {
 
     itemsLimitError () {
       setTimeout(() => {
-        console.log(`It seems the scroller element isn't scrolling, so it tries to render all the items at once.`, 'Scroller:', this.$el)
-        console.log(`Make sure the scroller has a fixed height (or width) and 'overflow-y' (or 'overflow-x') set to 'auto' so it can scroll correctly and only render the items visible in the scroll viewport.`)
+        console.log('It seems the scroller element isn\'t scrolling, so it tries to render all the items at once.', 'Scroller:', this.$el)
+        console.log('Make sure the scroller has a fixed height (or width) and \'overflow-y\' (or \'overflow-x\') set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.')
       })
       throw new Error('Rendered items limit reached')
     },
