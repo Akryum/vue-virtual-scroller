@@ -75,6 +75,78 @@
     return target;
   }
 
+  function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(n);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+  }
+
+  function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+
+    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+    return arr2;
+  }
+
+  function _createForOfIteratorHelper(o) {
+    if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
+      if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) {
+        var i = 0;
+
+        var F = function () {};
+
+        return {
+          s: F,
+          n: function () {
+            if (i >= o.length) return {
+              done: true
+            };
+            return {
+              done: false,
+              value: o[i++]
+            };
+          },
+          e: function (e) {
+            throw e;
+          },
+          f: F
+        };
+      }
+
+      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+    }
+
+    var it,
+        normalCompletion = true,
+        didErr = false,
+        err;
+    return {
+      s: function () {
+        it = o[Symbol.iterator]();
+      },
+      n: function () {
+        var step = it.next();
+        normalCompletion = step.done;
+        return step;
+      },
+      e: function (e) {
+        didErr = true;
+        err = e;
+      },
+      f: function () {
+        try {
+          if (!normalCompletion && it.return != null) it.return();
+        } finally {
+          if (didErr) throw err;
+        }
+      }
+    };
+  }
+
   function getInternetExplorerVersion() {
   	var ua = window.navigator.userAgent;
 
@@ -110,7 +182,7 @@
   	}
   }
 
-  var ResizeObserver = { render: function render() {
+  var ResizeObserver$1 = { render: function render() {
   		var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('div', { staticClass: "resize-observer", attrs: { "tabindex": "-1" } });
   	}, staticRenderFns: [], _scopeId: 'data-v-b329ee4c',
   	name: 'resize-observer',
@@ -166,8 +238,8 @@
 
   // Install the components
   function install(Vue) {
-  	Vue.component('resize-observer', ResizeObserver);
-  	Vue.component('ResizeObserver', ResizeObserver);
+  	Vue.component('resize-observer', ResizeObserver$1);
+  	Vue.component('ResizeObserver', ResizeObserver$1);
   }
 
   // Plugin
@@ -582,7 +654,7 @@
   var script = {
     name: 'RecycleScroller',
     components: {
-      ResizeObserver: ResizeObserver
+      ResizeObserver: ResizeObserver$1
     },
     directives: {
       ObserveVisibility: ObserveVisibility
@@ -1347,9 +1419,36 @@
     },
     inheritAttrs: false,
     provide: function provide() {
+      if (typeof ResizeObserver !== 'undefined') {
+        this.$_resizeObserver = new ResizeObserver(function (entries) {
+          var _iterator = _createForOfIteratorHelper(entries),
+              _step;
+
+          try {
+            for (_iterator.s(); !(_step = _iterator.n()).done;) {
+              var entry = _step.value;
+
+              if (entry.target) {
+                var event = new CustomEvent('resize', {
+                  detail: {
+                    contentRect: entry.contentRect
+                  }
+                });
+                entry.target.dispatchEvent(event);
+              }
+            }
+          } catch (err) {
+            _iterator.e(err);
+          } finally {
+            _iterator.f();
+          }
+        });
+      }
+
       return {
         vscrollData: this.vscrollData,
-        vscrollParent: this
+        vscrollParent: this,
+        vscrollResizeObserver: this.$_resizeObserver
       };
     },
     props: _objectSpread2({}, props, {
@@ -1384,10 +1483,6 @@
           var size = sizes[id];
 
           if (typeof size === 'undefined' && !this.$_undefinedMap[id]) {
-            // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-            this.$_undefinedSizes++; // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-
-            this.$_undefinedMap[id] = true;
             size = 0;
           }
 
@@ -1481,15 +1576,19 @@
         var el = this.$el; // Item is inserted to the DOM
 
         this.$nextTick(function () {
-          // Item sizes are computed
-          var cb = function cb() {
-            el.scrollTop = el.scrollHeight;
+          el.scrollTop = Number.MAX_SAFE_INTEGER; // Item sizes are computed
 
-            if (_this.$_undefinedSizes === 0) {
-              _this.$_scrollingToBottom = false;
-            } else {
-              requestAnimationFrame(cb);
-            }
+          var cb = function cb() {
+            el.scrollTop = Number.MAX_SAFE_INTEGER;
+            requestAnimationFrame(function () {
+              el.scrollTop = Number.MAX_SAFE_INTEGER;
+
+              if (_this.$_undefinedSizes === 0) {
+                _this.$_scrollingToBottom = false;
+              } else {
+                requestAnimationFrame(cb);
+              }
+            });
           };
 
           requestAnimationFrame(cb);
@@ -1591,7 +1690,7 @@
 
   var script$2 = {
     name: 'DynamicScrollerItem',
-    inject: ['vscrollData', 'vscrollParent'],
+    inject: ['vscrollData', 'vscrollParent', 'vscrollResizeObserver'],
     props: {
       item: {
         required: true
@@ -1637,7 +1736,27 @@
         }
       },
       active: function active(value) {
-        if (value && this.$_pendingVScrollUpdate === this.id) {
+        if (!this.size) {
+          if (value) {
+            if (!this.vscrollParent.$_undefinedMap[this.id]) {
+              this.vscrollParent.$_undefinedSizes++;
+              this.vscrollParent.$_undefinedMap[this.id] = true;
+            }
+          } else {
+            if (this.vscrollParent.$_undefinedMap[this.id]) {
+              this.vscrollParent.$_undefinedSizes--;
+              this.vscrollParent.$_undefinedMap[this.id] = false;
+            }
+          }
+        }
+
+        if (this.vscrollResizeObserver) {
+          if (value) {
+            this.observeSize();
+          } else {
+            this.unobserveSize();
+          }
+        } else if (value && this.$_pendingVScrollUpdate === this.id) {
           this.updateSize();
         }
       }
@@ -1649,27 +1768,31 @@
       this.$_forceNextVScrollUpdate = null;
       this.updateWatchData();
 
-      var _loop = function _loop(k) {
-        _this.$watch(function () {
-          return _this.sizeDependencies[k];
-        }, _this.onDataUpdate);
-      };
+      if (!this.vscrollResizeObserver) {
+        var _loop = function _loop(k) {
+          _this.$watch(function () {
+            return _this.sizeDependencies[k];
+          }, _this.onDataUpdate);
+        };
 
-      for (var k in this.sizeDependencies) {
-        _loop(k);
+        for (var k in this.sizeDependencies) {
+          _loop(k);
+        }
+
+        this.vscrollParent.$on('vscroll:update', this.onVscrollUpdate);
+        this.vscrollParent.$on('vscroll:update-size', this.onVscrollUpdateSize);
       }
-
-      this.vscrollParent.$on('vscroll:update', this.onVscrollUpdate);
-      this.vscrollParent.$on('vscroll:update-size', this.onVscrollUpdateSize);
     },
     mounted: function mounted() {
       if (this.vscrollData.active) {
         this.updateSize();
+        this.observeSize();
       }
     },
     beforeDestroy: function beforeDestroy() {
       this.vscrollParent.$off('vscroll:update', this.onVscrollUpdate);
       this.vscrollParent.$off('vscroll:update-size', this.onVscrollUpdateSize);
+      this.unobserveSize();
     },
     methods: {
       updateSize: function updateSize() {
@@ -1686,9 +1809,6 @@
         } else {
           this.$_forceNextVScrollUpdate = this.id;
         }
-      },
-      getBounds: function getBounds() {
-        return this.$el.getBoundingClientRect();
       },
       updateWatchData: function updateWatchData() {
         var _this2 = this;
@@ -1723,26 +1843,42 @@
 
         this.$nextTick(function () {
           if (_this3.id === id) {
-            var bounds = _this3.getBounds();
+            var width = _this3.$el.offsetWidth;
+            var height = _this3.$el.offsetHeight;
 
-            var size = Math.round(_this3.vscrollParent.direction === 'vertical' ? bounds.height : bounds.width);
-
-            if (size && _this3.size !== size) {
-              if (_this3.vscrollParent.$_undefinedMap[id]) {
-                _this3.vscrollParent.$_undefinedSizes--;
-                _this3.vscrollParent.$_undefinedMap[id] = undefined;
-              }
-
-              _this3.$set(_this3.vscrollData.sizes, _this3.id, size);
-
-              _this3.$set(_this3.vscrollData.validSizes, _this3.id, true);
-
-              if (_this3.emitResize) _this3.$emit('resize', _this3.id);
-            }
+            _this3.applySize(width, height);
           }
 
           _this3.$_pendingSizeUpdate = null;
         });
+      },
+      applySize: function applySize(width, height) {
+        var size = Math.round(this.vscrollParent.direction === 'vertical' ? height : width);
+
+        if (size && this.size !== size) {
+          if (this.vscrollParent.$_undefinedMap[this.id]) {
+            this.vscrollParent.$_undefinedSizes--;
+            this.vscrollParent.$_undefinedMap[this.id] = undefined;
+          }
+
+          this.$set(this.vscrollData.sizes, this.id, size);
+          this.$set(this.vscrollData.validSizes, this.id, true);
+          if (this.emitResize) this.$emit('resize', this.id);
+        }
+      },
+      observeSize: function observeSize() {
+        this.vscrollResizeObserver.observe(this.$el.parentNode);
+        this.$el.parentNode.addEventListener('resize', this.onResize);
+      },
+      unobserveSize: function unobserveSize() {
+        this.vscrollResizeObserver.unobserve(this.$el.parentNode);
+        this.$el.parentNode.removeEventListener('resize', this.onResize);
+      },
+      onResize: function onResize(event) {
+        var _event$detail$content = event.detail.contentRect,
+            width = _event$detail$content.width,
+            height = _event$detail$content.height;
+        this.applySize(width, height);
       }
     },
     render: function render(h) {
@@ -1887,7 +2023,7 @@
 
   var plugin$2 = {
     // eslint-disable-next-line no-undef
-    version: "1.0.0-rc.2",
+    version: "1.0.0",
     install: function install(Vue, options) {
       var finalOptions = Object.assign({}, {
         installComponents: true,
