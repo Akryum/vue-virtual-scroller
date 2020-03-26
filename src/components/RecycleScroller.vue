@@ -496,7 +496,7 @@ export default {
                 start,
                 end: start + size,
               }
-              resolve(scrollState);
+              resolve(scrollState)
             })
           })
         } else if (isVertical) {
@@ -509,7 +509,7 @@ export default {
                 start,
                 end,
               }
-              resolve(scrollState);
+              resolve(scrollState)
             })
           })
         } else {
@@ -522,7 +522,7 @@ export default {
                 start,
                 end,
               }
-              resolve(scrollState);
+              resolve(scrollState)
             })
           })
         }
