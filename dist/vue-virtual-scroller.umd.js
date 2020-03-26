@@ -1412,6 +1412,7 @@
       undefined
     );
 
+  var MAX_SCROLL = 9999999999;
   var script$1 = {
     name: 'DynamicScroller',
     components: {
@@ -1576,12 +1577,12 @@
         var el = this.$el; // Item is inserted to the DOM
 
         this.$nextTick(function () {
-          el.scrollTop = Number.MAX_SAFE_INTEGER; // Item sizes are computed
+          el.scrollTop = MAX_SCROLL; // Item sizes are computed
 
           var cb = function cb() {
-            el.scrollTop = Number.MAX_SAFE_INTEGER;
+            el.scrollTop = MAX_SCROLL;
             requestAnimationFrame(function () {
-              el.scrollTop = Number.MAX_SAFE_INTEGER;
+              el.scrollTop = MAX_SCROLL;
 
               if (_this.$_undefinedSizes === 0) {
                 _this.$_scrollingToBottom = false;
@@ -2023,7 +2024,7 @@
 
   var plugin$2 = {
     // eslint-disable-next-line no-undef
-    version: "1.0.0",
+    version: "1.0.1",
     install: function install(Vue, options) {
       var finalOptions = Object.assign({}, {
         installComponents: true,
