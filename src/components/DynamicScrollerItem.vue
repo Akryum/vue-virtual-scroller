@@ -110,10 +110,6 @@ export default {
       }
     },
 
-    getBounds () {
-      return this.$el.getBoundingClientRect()
-    },
-
     updateWatchData () {
       if (this.watchData) {
         this.$_watchData = this.$watch('data', () => {
@@ -143,7 +139,10 @@ export default {
     computeSize (id) {
       this.$nextTick(() => {
         if (this.id === id) {
-          const bounds = this.getBounds()
+          const bounds = {
+            width: this.$el.offsetWidth,
+            height: this.$el.offsetHeight,
+          }
           const size = Math.round(this.vscrollParent.direction === 'vertical' ? bounds.height : bounds.width)
           if (size && this.size !== size) {
             if (this.vscrollParent.$_undefinedMap[id]) {
