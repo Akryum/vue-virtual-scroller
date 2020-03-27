@@ -70,7 +70,8 @@
   "browserslist": [
     "> 1%",
     "last 2 versions",
-    "not dead"
+    "ie >= 9",
+    "not ie <= 8"
   ],
   "resolutions": {
     "vue": "2.5.22"
