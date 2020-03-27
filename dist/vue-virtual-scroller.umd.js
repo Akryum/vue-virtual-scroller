@@ -1868,10 +1868,12 @@
         }
       },
       observeSize: function observeSize() {
+        if (!this.vscrollResizeObserver) return;
         this.vscrollResizeObserver.observe(this.$el.parentNode);
         this.$el.parentNode.addEventListener('resize', this.onResize);
       },
       unobserveSize: function unobserveSize() {
+        if (!this.vscrollResizeObserver) return;
         this.vscrollResizeObserver.unobserve(this.$el.parentNode);
         this.$el.parentNode.removeEventListener('resize', this.onResize);
       },
@@ -2024,7 +2026,7 @@
 
   var plugin$2 = {
     // eslint-disable-next-line no-undef
-    version: "1.0.1",
+    version: "1.0.2",
     install: function install(Vue, options) {
       var finalOptions = Object.assign({}, {
         installComponents: true,
