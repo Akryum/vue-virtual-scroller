@@ -191,12 +191,12 @@ export default {
       const el = this.$el
       // Item is inserted to the DOM
       this.$nextTick(() => {
-        el.scrollTop = el.scrollHeight
+        el.scrollTop = el.scrollHeight + 5000
         // Item sizes are computed
         const cb = () => {
-          el.scrollTop = el.scrollHeight
+          el.scrollTop = el.scrollHeight + 5000
           requestAnimationFrame(() => {
-            el.scrollTop = el.scrollHeight
+            el.scrollTop = el.scrollHeight + 5000
             if (this.$_undefinedSizes === 0) {
               this.$_scrollingToBottom = false
             } else {
