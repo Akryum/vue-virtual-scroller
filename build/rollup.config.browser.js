@@ -7,6 +7,7 @@ const config = Object.assign({}, base, {
     name: 'VueVirtualScroller',
     file: 'dist/vue-virtual-scroller.min.js',
     format: 'iife',
+    sourcemap: true,
   },
 })
 
