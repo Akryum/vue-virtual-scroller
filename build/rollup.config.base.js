@@ -17,7 +17,9 @@ export default {
     resolve({
       mainFields: ['module', 'jsnext', 'main', 'browser'],
     }),
-    eslint(),
+    eslint({
+      include: ['src/**/*.{js,vue}'],
+    }),
     vue({
       css: false,
       style: {
