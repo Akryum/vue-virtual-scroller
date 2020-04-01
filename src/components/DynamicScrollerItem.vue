@@ -1,4 +1,5 @@
 <script>
+import fastdom from 'fastdom'
 export default {
   name: 'DynamicScrollerItem',
 
@@ -162,12 +163,22 @@ export default {
       this.updateSize()
     },
 
+    getBounds () {
+      return new Promise((resolve, reject) => {
+        fastdom.measure(() => {
+          resolve({
+            width: this.$el.offsetWidth,
+            height: this.$el.offsetHeight,
+          })
+        })
+      })
+    },
+
     computeSize (id) {
-      this.$nextTick(() => {
+      this.$nextTick(async () => {
         if (this.id === id) {
-          const width = this.$el.offsetWidth
-          const height = this.$el.offsetHeight
-          this.applySize(width, height)
+          const bounds = await this.getBounds()
+          this.applySize(bounds.width, bounds.height)
         }
         this.$_pendingSizeUpdate = null
       })
