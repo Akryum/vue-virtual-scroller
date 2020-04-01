@@ -160,7 +160,7 @@ export default {
         return
       }
 
-      this.$el.scrollTop = this.$el.scrollTop + offset
+      this.$el.scrollTop += offset
     },
   },
 
