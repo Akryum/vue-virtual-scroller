@@ -712,18 +712,26 @@
           var items = this.items;
           var field = this.sizeField;
           var minItemSize = this.minItemSize;
+          var computedMinSize = 10000;
           var accumulator = 0;
           var current;
 
           for (var i = 0, l = items.length; i < l; i++) {
             current = items[i][field] || minItemSize;
+
+            if (current < computedMinSize) {
+              computedMinSize = current;
+            }
+
             accumulator += current;
             sizes[i] = {
               accumulator: accumulator,
               size: current
             };
-          }
+          } // eslint-disable-next-line
 
+
+          this.$_computedMinItemSize = computedMinSize;
           return sizes;
         }
 
@@ -752,8 +760,11 @@
       this.$_views = new Map();
       this.$_unusedViews = new Map();
       this.$_scrollDirty = false;
+      this.$_lastUpdateScrollPosition = 0; // In SSR mode, we also prerender the same number of item for the first render
+      // to avoir mismatch between server and client templates
 
-      if (this.$isServer) {
+      if (this.prerender) {
+        this.$_prerender = true;
         this.updateVisibleItems(false);
       }
     },
@@ -762,6 +773,9 @@
 
       this.applyPageMode();
       this.$nextTick(function () {
+        // In SSR mode, render the real number of visible items
+        _this.$_prerender = false;
+
         _this.updateVisibleItems(true);
 
         _this.ready = true;
@@ -821,7 +835,7 @@
           requestAnimationFrame(function () {
             _this2.$_scrollDirty = false;
 
-            var _this2$updateVisibleI = _this2.updateVisibleItems(false),
+            var _this2$updateVisibleI = _this2.updateVisibleItems(false, true),
                 continuous = _this2$updateVisibleI.continuous; // It seems sometimes chrome doesn't fire scroll event :/
             // When non continous scrolling is ending, we force a refresh
 
@@ -848,7 +862,9 @@
         }
       },
       updateVisibleItems: function updateVisibleItems(checkItem) {
+        var checkPositionDiff = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var itemSize = this.itemSize;
+        var minItemSize = this.$_computedMinItemSize;
         var typeField = this.typeField;
         var keyField = this.simpleArray ? null : this.keyField;
         var items = this.items;
@@ -862,12 +878,25 @@
 
         if (!count) {
           startIndex = endIndex = totalSize = 0;
-        } else if (this.$isServer) {
+        } else if (this.$_prerender) {
           startIndex = 0;
           endIndex = this.prerender;
           totalSize = null;
         } else {
-          var scroll = this.getScroll();
+          var scroll = this.getScroll(); // Skip update if use hasn't scrolled enough
+
+          if (checkPositionDiff) {
+            var positionDiff = scroll.start - this.$_lastUpdateScrollPosition;
+            if (positionDiff < 0) positionDiff = -positionDiff;
+
+            if (itemSize === null && positionDiff < minItemSize || positionDiff < itemSize) {
+              return {
+                continuous: false
+              };
+            }
+          }
+
+          this.$_lastUpdateScrollPosition = scroll.start;
           var buffer = this.buffer;
           scroll.start -= buffer;
           scroll.end += buffer; // Variable size mode
@@ -1036,7 +1065,11 @@
 
         this.$_startIndex = startIndex;
         this.$_endIndex = endIndex;
-        if (this.emitUpdate) this.$emit('update', startIndex, endIndex);
+        if (this.emitUpdate) this.$emit('update', startIndex, endIndex); // After the user has finished scrolling
+        // Sort views so text selection is correct
+
+        clearTimeout(this.$_sortTimer);
+        this.$_sortTimer = setTimeout(this.sortViews, 300);
         return {
           continuous: continuous
         };
@@ -1138,6 +1171,13 @@
           console.log('Make sure the scroller has a fixed height (or width) and \'overflow-y\' (or \'overflow-x\') set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.');
         });
         throw new Error('Rendered items limit reached');
+      },
+      sortViews: function sortViews() {
+        this.pool.sort(function (viewA, viewB) {
+          return viewA.nr.index - viewB.nr.index;
+        }); // Remove text selections as they will most likely be wrong or partial
+
+        window.getSelection().removeAllRanges();
       }
     }
   };
@@ -1644,6 +1684,10 @@
         type: Boolean,
         default: false
       },
+
+      /**
+       * Indicates if the view is actively used to display an item.
+       */
       active: {
         type: Boolean,
         required: true
@@ -1671,6 +1715,9 @@
       },
       size: function size() {
         return this.vscrollData.validSizes[this.id] && this.vscrollData.sizes[this.id] || 0;
+      },
+      finalActive: function finalActive() {
+        return this.active && this.vscrollData.active;
       }
     },
     watch: {
@@ -1680,7 +1727,7 @@
           this.onDataUpdate();
         }
       },
-      active: function active(value) {
+      finalActive: function finalActive(value) {
         if (!this.size) {
           if (value) {
             if (!this.vscrollParent.$_undefinedMap[this.id]) {
@@ -1741,15 +1788,12 @@
     },
     methods: {
       updateSize: function updateSize() {
-        if (this.active && this.vscrollData.active) {
+        if (this.finalActive) {
           if (this.$_pendingSizeUpdate !== this.id) {
             this.$_pendingSizeUpdate = this.id;
             this.$_forceNextVScrollUpdate = null;
             this.$_pendingVScrollUpdate = null;
-
-            if (this.active && this.vscrollData.active) {
-              this.computeSize(this.id);
-            }
+            this.computeSize(this.id);
           }
         } else {
           this.$_forceNextVScrollUpdate = this.id;
@@ -1772,7 +1816,8 @@
       onVscrollUpdate: function onVscrollUpdate(_ref) {
         var force = _ref.force;
 
-        if (!this.active && force) {
+        // If not active, sechedule a size update when it becomes active
+        if (!this.finalActive && force) {
           this.$_pendingVScrollUpdate = this.id;
         }
 
@@ -1970,7 +2015,7 @@
 
   var plugin$2 = {
     // eslint-disable-next-line no-undef
-    version: "1.0.4",
+    version: "1.0.6",
     install: function install(Vue, options) {
       var finalOptions = Object.assign({}, {
         installComponents: true,
