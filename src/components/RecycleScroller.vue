@@ -136,13 +136,19 @@ export default {
         const items = this.items
         const field = this.sizeField
         const minItemSize = this.minItemSize
+        let computedMinSize = 10000
         let accumulator = 0
         let current
         for (let i = 0, l = items.length; i < l; i++) {
           current = items[i][field] || minItemSize
+          if (current < computedMinSize) {
+            computedMinSize = current
+          }
           accumulator += current
           sizes[i] = { accumulator, size: current }
         }
+        // eslint-disable-next-line
+        this.$_computedMinItemSize = computedMinSize
         return sizes
       }
       return []
@@ -175,6 +181,7 @@ export default {
     this.$_views = new Map()
     this.$_unusedViews = new Map()
     this.$_scrollDirty = false
+    this.$_lastUpdateScrollPosition = 0
 
     // In SSR mode, we also prerender the same number of item for the first render
     // to avoir mismatch between server and client templates
@@ -245,7 +252,7 @@ export default {
         this.$_scrollDirty = true
         requestAnimationFrame(() => {
           this.$_scrollDirty = false
-          const { continuous } = this.updateVisibleItems(false)
+          const { continuous } = this.updateVisibleItems(false, true)
 
           // It seems sometimes chrome doesn't fire scroll event :/
           // When non continous scrolling is ending, we force a refresh
@@ -270,8 +277,9 @@ export default {
       }
     },
 
-    updateVisibleItems (checkItem) {
+    updateVisibleItems (checkItem, checkPositionDiff = false) {
       const itemSize = this.itemSize
+      const minItemSize = this.$_computedMinItemSize
       const typeField = this.typeField
       const keyField = this.simpleArray ? null : this.keyField
       const items = this.items
@@ -291,6 +299,18 @@ export default {
         totalSize = null
       } else {
         const scroll = this.getScroll()
+
+        // Skip update if use hasn't scrolled enough
+        if (checkPositionDiff) {
+          let positionDiff = scroll.start - this.$_lastUpdateScrollPosition
+          if (positionDiff < 0) positionDiff = -positionDiff
+          if ((itemSize === null && positionDiff < minItemSize) || positionDiff < itemSize) {
+            return {
+              continuous: false,
+            }
+          }
+        }
+
         const buffer = this.buffer
         scroll.start -= buffer
         scroll.end += buffer
