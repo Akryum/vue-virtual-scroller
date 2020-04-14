@@ -176,7 +176,10 @@ export default {
     this.$_unusedViews = new Map()
     this.$_scrollDirty = false
 
-    if (this.$isServer) {
+    // In SSR mode, we also prerender the same number of item for the first render
+    // to avoir mismatch between server and client templates
+    if (this.prerender) {
+      this.$_prerender = true
       this.updateVisibleItems(false)
     }
   },
@@ -184,6 +187,8 @@ export default {
   mounted () {
     this.applyPageMode()
     this.$nextTick(() => {
+      // In SSR mode, render the real number of visible items
+      this.$_prerender = false
       this.updateVisibleItems(true)
       this.ready = true
     })
@@ -280,7 +285,7 @@ export default {
 
       if (!count) {
         startIndex = endIndex = totalSize = 0
-      } else if (this.$isServer) {
+      } else if (this.$_prerender) {
         startIndex = 0
         endIndex = this.prerender
         totalSize = null
