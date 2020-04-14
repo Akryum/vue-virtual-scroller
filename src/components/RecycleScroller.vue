@@ -310,6 +310,7 @@ export default {
             }
           }
         }
+        this.$_lastUpdateScrollPosition = scroll.start
 
         const buffer = this.buffer
         scroll.start -= buffer
