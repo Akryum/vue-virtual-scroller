@@ -19,6 +19,9 @@ export default {
       default: false,
     },
 
+    /**
+     * Indicates if the view is actively used to display an item.
+     */
     active: {
       type: Boolean,
       required: true,
@@ -53,6 +56,10 @@ export default {
     size () {
       return (this.vscrollData.validSizes[this.id] && this.vscrollData.sizes[this.id]) || 0
     },
+
+    finalActive () {
+      return this.active && this.vscrollData.active
+    },
   },
 
   watch: {
@@ -64,7 +71,7 @@ export default {
       }
     },
 
-    active (value) {
+    finalActive (value) {
       if (!this.size) {
         if (value) {
           if (!this.vscrollParent.$_undefinedMap[this.id]) {
@@ -122,14 +129,12 @@ export default {
 
   methods: {
     updateSize () {
-      if (this.active && this.vscrollData.active) {
+      if (this.finalActive) {
         if (this.$_pendingSizeUpdate !== this.id) {
           this.$_pendingSizeUpdate = this.id
           this.$_forceNextVScrollUpdate = null
           this.$_pendingVScrollUpdate = null
-          if (this.active && this.vscrollData.active) {
-            this.computeSize(this.id)
-          }
+          this.computeSize(this.id)
         }
       } else {
         this.$_forceNextVScrollUpdate = this.id
@@ -150,9 +155,11 @@ export default {
     },
 
     onVscrollUpdate ({ force }) {
-      if (!this.active && force) {
+      // If not active, sechedule a size update when it becomes active
+      if (!this.finalActive && force) {
         this.$_pendingVScrollUpdate = this.id
       }
+
       if (this.$_forceNextVScrollUpdate === this.id || force || !this.size) {
         this.updateSize()
       }
