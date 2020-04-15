@@ -372,7 +372,6 @@ export default {
       let view
 
       const continuous = startIndex <= this.$_endIndex && endIndex >= this.$_startIndex
-      let unusedIndex
 
       if (this.$_continuous !== continuous) {
         if (continuous) {
@@ -407,9 +406,7 @@ export default {
         }
       }
 
-      if (!continuous) {
-        unusedIndex = new Map()
-      }
+      let unusedIndex = continuous ? null : new Map();
 
       let item, type, unusedPool
       let v
