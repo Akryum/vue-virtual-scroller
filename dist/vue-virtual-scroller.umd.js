@@ -891,7 +891,7 @@
 
             if (itemSize === null && positionDiff < minItemSize || positionDiff < itemSize) {
               return {
-                continuous: false
+                continuous: true
               };
             }
           }
@@ -954,7 +954,6 @@
         this.totalSize = totalSize;
         var view;
         var continuous = startIndex <= this.$_endIndex && endIndex >= this.$_startIndex;
-        var unusedIndex;
 
         if (this.$_continuous !== continuous) {
           if (continuous) {
@@ -988,10 +987,7 @@
           }
         }
 
-        if (!continuous) {
-          unusedIndex = new Map();
-        }
-
+        var unusedIndex = continuous ? null : new Map();
         var item, type, unusedPool;
         var v;
 
@@ -1013,10 +1009,10 @@
 
           if (!view) {
             type = item[typeField];
+            unusedPool = unusedViews.get(type);
 
             if (continuous) {
-              unusedPool = unusedViews.get(type); // Reuse existing view
-
+              // Reuse existing view
               if (unusedPool && unusedPool.length) {
                 view = unusedPool.pop();
                 view.item = item;
@@ -1028,24 +1024,22 @@
                 view = this.addView(pool, _i3, item, key, type);
               }
             } else {
-              unusedPool = unusedViews.get(type);
-              v = unusedIndex.get(type) || 0; // Use existing view
+              if (!unusedPool || v >= unusedPool.length) {
+                view = this.addView(pool, _i3, item, key, type);
+                this.unuseView(view, true);
+              } // Use existing view
               // We don't care if they are already used
               // because we are not in continous scrolling
 
-              if (unusedPool && v < unusedPool.length) {
-                view = unusedPool[v];
-                view.item = item;
-                view.nr.used = true;
-                view.nr.index = _i3;
-                view.nr.key = key;
-                view.nr.type = type;
-                unusedIndex.set(type, v + 1);
-              } else {
-                view = this.addView(pool, _i3, item, key, type);
-                this.unuseView(view, true);
-              }
 
+              v = unusedIndex.get(type) || 0;
+              view = unusedPool[v];
+              view.item = item;
+              view.nr.used = true;
+              view.nr.index = _i3;
+              view.nr.key = key;
+              view.nr.type = type;
+              unusedIndex.set(type, v + 1);
               v++;
             }
 
@@ -2013,7 +2007,7 @@
 
   var plugin$2 = {
     // eslint-disable-next-line no-undef
-    version: "1.0.7",
+    version: "1.0.8",
     install: function install(Vue, options) {
       var finalOptions = Object.assign({}, {
         installComponents: true,
