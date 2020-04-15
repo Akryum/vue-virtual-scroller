@@ -306,7 +306,7 @@ export default {
           if (positionDiff < 0) positionDiff = -positionDiff
           if ((itemSize === null && positionDiff < minItemSize) || positionDiff < itemSize) {
             return {
-              continuous: false,
+              continuous: true,
             }
           }
         }
