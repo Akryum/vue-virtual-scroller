@@ -705,9 +705,7 @@ var script = {
     sortViews: function sortViews() {
       this.pool.sort(function (viewA, viewB) {
         return viewA.nr.index - viewB.nr.index;
-      }); // Remove text selections as they will most likely be wrong or partial
-
-      window.getSelection().removeAllRanges();
+      });
     }
   }
 };
@@ -1545,7 +1543,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.0.6",
+  version: "1.0.7",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
