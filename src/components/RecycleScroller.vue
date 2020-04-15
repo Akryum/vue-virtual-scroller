@@ -291,14 +291,10 @@ export default {
       let startIndex, endIndex
       let totalSize
 
-      if (!count) {
-        startIndex = endIndex = totalSize = 0
-      } else if (this.$_prerender) {
-        startIndex = 0
-        endIndex = this.prerender
-        totalSize = null
-      } else {
-        const scroll = this.getScroll()
+      let scroll
+
+      if (count && !this.$_prerender) {
+        scroll = this.getScroll()
 
         // Skip update if use hasn't scrolled enough
         if (checkPositionDiff) {
@@ -310,6 +306,15 @@ export default {
             }
           }
         }
+      }
+
+      if (!count) {
+        startIndex = endIndex = totalSize = 0
+      } else if (this.$_prerender) {
+        startIndex = 0
+        endIndex = this.prerender
+        totalSize = null
+      } else {
         this.$_lastUpdateScrollPosition = scroll.start
 
         const buffer = this.buffer
