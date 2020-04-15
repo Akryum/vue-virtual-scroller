@@ -445,6 +445,8 @@ export default {
               view = this.addView(pool, i, item, key, type)
               this.unuseView(view, true)
             }
+            unusedPool = unusedViews.get(type)
+
             // Use existing view
             // We don't care if they are already used
             // because we are not in continous scrolling
