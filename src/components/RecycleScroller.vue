@@ -592,8 +592,6 @@ export default {
 
     sortViews () {
       this.pool.sort((viewA, viewB) => viewA.nr.index - viewB.nr.index)
-      // Remove text selections as they will most likely be wrong or partial
-      window.getSelection().removeAllRanges()
     },
   },
 }
