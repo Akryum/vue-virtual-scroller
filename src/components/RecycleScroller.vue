@@ -252,11 +252,11 @@ export default {
         this.$_scrollDirty = true
         requestAnimationFrame(() => {
           this.$_scrollDirty = false
-          const { continuous, checkPositionDiff } = this.updateVisibleItems(false, true)
+          const { continuous } = this.updateVisibleItems(false, true)
 
           // It seems sometimes chrome doesn't fire scroll event :/
           // When non continous scrolling is ending, we force a refresh
-          if (!continuous && !checkPositionDiff) {
+          if (!continuous) {
             clearTimeout(this.$_refreshTimout)
             this.$_refreshTimout = setTimeout(this.handleScroll, 100)
           }
@@ -306,8 +306,7 @@ export default {
           if (positionDiff < 0) positionDiff = -positionDiff
           if ((itemSize === null && positionDiff < minItemSize) || positionDiff < itemSize) {
             return {
-              continuous: false,
-              checkPositionDiff
+              continuous: true,
             }
           }
         }
