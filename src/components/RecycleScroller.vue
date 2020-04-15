@@ -372,7 +372,6 @@ export default {
       let view
 
       const continuous = startIndex <= this.$_endIndex && endIndex >= this.$_startIndex
-      let unusedIndex
 
       if (this.$_continuous !== continuous) {
         if (continuous) {
@@ -407,9 +406,7 @@ export default {
         }
       }
 
-      if (!continuous) {
-        unusedIndex = new Map()
-      }
+      let unusedIndex = continuous ? null : new Map();
 
       let item, type, unusedPool
       let v
@@ -429,9 +426,9 @@ export default {
         // No view assigned to item
         if (!view) {
           type = item[typeField]
+          unusedPool = unusedViews.get(type)
 
           if (continuous) {
-            unusedPool = unusedViews.get(type)
             // Reuse existing view
             if (unusedPool && unusedPool.length) {
               view = unusedPool.pop()
@@ -444,23 +441,21 @@ export default {
               view = this.addView(pool, i, item, key, type)
             }
           } else {
-            unusedPool = unusedViews.get(type)
-            v = unusedIndex.get(type) || 0
-            // Use existing view
-            // We don't care if they are already used
-            // because we are not in continous scrolling
-            if (unusedPool && v < unusedPool.length) {
-              view = unusedPool[v]
-              view.item = item
-              view.nr.used = true
-              view.nr.index = i
-              view.nr.key = key
-              view.nr.type = type
-              unusedIndex.set(type, v + 1)
-            } else {
+            if (!unusedPool || v >= unusedPool.length) {
               view = this.addView(pool, i, item, key, type)
               this.unuseView(view, true)
             }
+            // Use existing view
+            // We don't care if they are already used
+            // because we are not in continous scrolling
+            v = unusedIndex.get(type) || 0
+            view = unusedPool[v]
+            view.item = item
+            view.nr.used = true
+            view.nr.index = i
+            view.nr.key = key
+            view.nr.type = type
+            unusedIndex.set(type, v + 1)
             v++
           }
           views.set(key, view)
