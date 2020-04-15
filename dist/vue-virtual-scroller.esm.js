@@ -190,6 +190,14 @@ var script = {
     ObserveVisibility: ObserveVisibility
   },
   props: _objectSpread2({}, props, {
+    wrapperClasses: {
+      type: String,
+      default: ''
+    },
+    itemClasses: {
+      type: String,
+      default: ''
+    },
     itemSize: {
       type: Number,
       default: null
@@ -834,7 +842,7 @@ var __vue_render__ = function() {
         "div",
         {
           ref: "wrapper",
-          staticClass: "vue-recycle-scroller__item-wrapper",
+          class: "vue-recycle-scroller__item-wrapper " + _vm.wrapperClasses,
           style:
             ((_obj$1 = {}),
             (_obj$1[_vm.direction === "vertical" ? "minHeight" : "minWidth"] =
@@ -846,8 +854,11 @@ var __vue_render__ = function() {
             "div",
             {
               key: view.nr.id,
-              staticClass: "vue-recycle-scroller__item-view",
-              class: { hover: _vm.hoverKey === view.nr.key },
+              class: {
+                "vue-recycle-scroller__item-view ": true,
+                itemClasses: true,
+                hover: _vm.hoverKey === view.nr.key
+              },
               style: _vm.ready
                 ? {
                     transform:
