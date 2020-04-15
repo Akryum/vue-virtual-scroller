@@ -1027,10 +1027,11 @@
               if (!unusedPool || v >= unusedPool.length) {
                 view = this.addView(pool, _i3, item, key, type);
                 this.unuseView(view, true);
-              } // Use existing view
+              }
+
+              unusedPool = unusedViews.get(type); // Use existing view
               // We don't care if they are already used
               // because we are not in continous scrolling
-
 
               v = unusedIndex.get(type) || 0;
               view = unusedPool[v];
@@ -2007,7 +2008,7 @@
 
   var plugin$2 = {
     // eslint-disable-next-line no-undef
-    version: "1.0.8",
+    version: "1.0.9",
     install: function install(Vue, options) {
       var finalOptions = Object.assign({}, {
         installComponents: true,
