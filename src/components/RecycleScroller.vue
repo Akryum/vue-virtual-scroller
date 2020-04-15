@@ -29,7 +29,7 @@
         :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
         :class="{
           'vue-recycle-scroller__item-view ': true,
-          itemClasses: true,
+          [itemClasses]: true,
           hover: hoverKey === view.nr.key
         }"
         @mouseenter="hoverKey = view.nr.key"

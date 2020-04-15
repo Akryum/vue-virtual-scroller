@@ -1320,15 +1320,18 @@
               _obj$1)
           },
           _vm._l(_vm.pool, function(view) {
+            var _obj;
             return _c(
               "div",
               {
                 key: view.nr.id,
-                class: {
-                  "vue-recycle-scroller__item-view ": true,
-                  itemClasses: true,
-                  hover: _vm.hoverKey === view.nr.key
-                },
+                class:
+                  ((_obj = {
+                    "vue-recycle-scroller__item-view ": true
+                  }),
+                  (_obj[_vm.itemClasses] = true),
+                  (_obj.hover = _vm.hoverKey === view.nr.key),
+                  _obj),
                 style: _vm.ready
                   ? {
                       transform:
