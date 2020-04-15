@@ -426,9 +426,9 @@ export default {
         // No view assigned to item
         if (!view) {
           type = item[typeField]
+          unusedPool = unusedViews.get(type)
 
           if (continuous) {
-            unusedPool = unusedViews.get(type)
             // Reuse existing view
             if (unusedPool && unusedPool.length) {
               view = unusedPool.pop()
@@ -441,7 +441,6 @@ export default {
               view = this.addView(pool, i, item, key, type)
             }
           } else {
-            unusedPool = unusedViews.get(type)
             v = unusedIndex.get(type) || 0
             // Use existing view
             // We don't care if they are already used
