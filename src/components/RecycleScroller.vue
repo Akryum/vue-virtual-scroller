@@ -406,7 +406,7 @@ export default {
         }
       }
 
-      let unusedIndex = continuous ? null : new Map();
+      const unusedIndex = continuous ? null : new Map()
 
       let item, type, unusedPool
       let v
