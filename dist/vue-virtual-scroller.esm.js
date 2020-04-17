@@ -554,16 +554,17 @@ var script = {
               view = this.addView(pool, _i3, item, key, type);
             }
           } else {
+            // Use existing view
+            // We don't care if they are already used
+            // because we are not in continous scrolling
+            v = unusedIndex.get(type) || 0;
+
             if (!unusedPool || v >= unusedPool.length) {
               view = this.addView(pool, _i3, item, key, type);
               this.unuseView(view, true);
+              unusedPool = unusedViews.get(type);
             }
 
-            unusedPool = unusedViews.get(type); // Use existing view
-            // We don't care if they are already used
-            // because we are not in continous scrolling
-
-            v = unusedIndex.get(type) || 0;
             view = unusedPool[v];
             view.item = item;
             view.nr.used = true;
@@ -1538,7 +1539,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.0.9",
+  version: "1.0.10",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
