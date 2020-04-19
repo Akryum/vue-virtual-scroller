@@ -1305,43 +1305,54 @@
                 _vm.totalSize + "px"),
               _obj$1)
           },
-          _vm._l(_vm.pool, function(view) {
-            return _c(
-              "div",
-              {
-                key: view.nr.id,
-                staticClass: "vue-recycle-scroller__item-view",
-                class: { hover: _vm.hoverKey === view.nr.key },
-                style: _vm.ready
-                  ? {
-                      transform:
-                        "translate" +
-                        (_vm.direction === "vertical" ? "Y" : "X") +
-                        "(" +
-                        view.position +
-                        "px)"
+          [
+            _vm._l(_vm.pool, function(view) {
+              return _c(
+                "div",
+                {
+                  key: view.nr.id,
+                  staticClass: "vue-recycle-scroller__item-view",
+                  class: { hover: _vm.hoverKey === view.nr.key },
+                  style: _vm.ready
+                    ? {
+                        transform:
+                          "translate" +
+                          (_vm.direction === "vertical" ? "Y" : "X") +
+                          "(" +
+                          view.position +
+                          "px)"
+                      }
+                    : null,
+                  on: {
+                    mouseenter: function($event) {
+                      _vm.hoverKey = view.nr.key;
+                    },
+                    mouseleave: function($event) {
+                      _vm.hoverKey = null;
                     }
-                  : null,
-                on: {
-                  mouseenter: function($event) {
-                    _vm.hoverKey = view.nr.key;
-                  },
-                  mouseleave: function($event) {
-                    _vm.hoverKey = null;
                   }
-                }
-              },
-              [
-                _vm._t("default", null, {
-                  item: view.item,
-                  index: view.nr.index,
-                  active: view.nr.used
-                })
-              ],
-              2
-            )
-          }),
-          0
+                },
+                [
+                  _vm._t("default", null, {
+                    item: view.item,
+                    index: view.nr.index,
+                    active: view.nr.used
+                  })
+                ],
+                2
+              )
+            }),
+            _vm._v(" "),
+            _vm.$slots.empty && !_vm.items.length
+              ? _c(
+                  "div",
+                  { staticClass: "vue-recycle-scroller__slot" },
+                  [_vm._t("empty")],
+                  2
+                )
+              : _vm._e()
+          ],
+          2
         ),
         _vm._v(" "),
         _vm.$slots.after
@@ -1629,7 +1640,9 @@
         _vm._v(" "),
         _c("template", { slot: "before" }, [_vm._t("before")], 2),
         _vm._v(" "),
-        _c("template", { slot: "after" }, [_vm._t("after")], 2)
+        _c("template", { slot: "after" }, [_vm._t("after")], 2),
+        _vm._v(" "),
+        _c("template", { slot: "empty" }, [_vm._t("empty")], 2)
       ],
       2
     )
