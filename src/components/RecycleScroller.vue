@@ -574,8 +574,8 @@ export default {
 
     scrollToPosition (position) {
       const direction = this.direction === 'vertical'
-        ? { scroll: 'scrollTop', start: 'top', size: 'height' }
-        : { scroll: 'scrollLeft', start: 'left', size: 'width' }
+        ? { scroll: 'scrollTop', start: 'top' }
+        : { scroll: 'scrollLeft', start: 'left' }
 
       if (this.pageMode) {
         const viewportEl = ScrollParent(this.$el)
