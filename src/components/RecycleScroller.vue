@@ -573,11 +573,23 @@ export default {
     },
 
     scrollToPosition (position) {
-      if (this.direction === 'vertical') {
-        this.$el.scrollTop = position
-      } else {
-        this.$el.scrollLeft = position
+      const direction = this.direction === 'vertical'
+        ? { scroll: 'scrollTop', start: 'top', size: 'height' }
+        : { scroll: 'scrollLeft', start: 'left', size: 'width' }
+
+      if (this.pageMode) {
+        const viewportEl = ScrollParent(this.$el)
+        // HTML doesn't overflow like other elements
+        const scrollTop = viewportEl.tagName === 'HTML' ? 0 : viewportEl[direction.scroll]
+        const viewport = viewportEl.getBoundingClientRect()
+
+        const scroller = this.$el.getBoundingClientRect()
+        const scrollerPosition = scroller[direction.start] - viewport[direction.start]
+        viewportEl[direction.scroll] = position + scrollTop + scrollerPosition
+        return
       }
+
+      this.$el[direction.scroll] = position
     },
 
     itemsLimitError () {
