@@ -298,7 +298,7 @@ export default {
 
         // Skip update if use hasn't scrolled enough
         if (checkPositionDiff) {
-          let positionDiff = scroll.start - this.$_lastUpdateScrollPosition
+          let positionDiff = scroll.originalStart - this.$_lastUpdateScrollPosition
           if (positionDiff < 0) positionDiff = -positionDiff
           if ((itemSize === null && positionDiff < minItemSize) || positionDiff < itemSize) {
             return {
@@ -315,7 +315,7 @@ export default {
         endIndex = this.prerender
         totalSize = null
       } else {
-        this.$_lastUpdateScrollPosition = scroll.start
+        this.$_lastUpdateScrollPosition = scroll.originalStart
 
         const buffer = this.buffer
         scroll.start -= buffer
@@ -507,13 +507,15 @@ export default {
     getScroll () {
       const { $el: el, direction } = this
       const isVertical = direction === 'vertical'
-      let scrollState
 
       if (this.pageMode) {
         const bounds = el.getBoundingClientRect()
         const boundsSize = isVertical ? bounds.height : bounds.width
-        let start = -(isVertical ? bounds.top : bounds.left)
-        let size = isVertical ? window.innerHeight : window.innerWidth
+        const originalStart = -(isVertical ? bounds.top : bounds.left)
+        const originalSize = isVertical ? window.innerHeight : window.innerWidth
+        let start = originalStart
+        let size = originalSize
+
         if (start < 0) {
           size += start
           start = 0
@@ -521,23 +523,26 @@ export default {
         if (start + size > boundsSize) {
           size = boundsSize - start
         }
-        scrollState = {
+        return {
+          originalStart,
           start,
           end: start + size,
         }
-      } else if (isVertical) {
-        scrollState = {
+      }
+
+      if (isVertical) {
+        return {
+          originalStart: el.scrollTop,
           start: el.scrollTop,
           end: el.scrollTop + el.clientHeight,
         }
       } else {
-        scrollState = {
+        return {
+          originalStart: el.scrollLeft,
           start: el.scrollLeft,
           end: el.scrollLeft + el.clientWidth,
         }
       }
-
-      return scrollState
     },
 
     applyPageMode () {
