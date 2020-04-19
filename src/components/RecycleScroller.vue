@@ -21,14 +21,17 @@
     <div
       ref="wrapper"
       :style="{ [direction === 'vertical' ? 'minHeight' : 'minWidth']: totalSize + 'px' }"
-      class="vue-recycle-scroller__item-wrapper"
+      :class="'vue-recycle-scroller__item-wrapper ' + wrapperClasses"
     >
       <div
         v-for="view of pool"
         :key="view.nr.id"
         :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
-        class="vue-recycle-scroller__item-view"
-        :class="{ hover: hoverKey === view.nr.key }"
+        :class="{
+          'vue-recycle-scroller__item-view ': true,
+          [itemClasses]: true,
+          hover: hoverKey === view.nr.key
+        }"
         @mouseenter="hoverKey = view.nr.key"
         @mouseleave="hoverKey = null"
       >
@@ -76,6 +79,16 @@ export default {
 
   props: {
     ...props,
+
+    wrapperClasses: {
+      type: String,
+      default: '',
+    },
+
+    itemClasses: {
+      type: String,
+      default: '',
+    },
 
     itemSize: {
       type: Number,

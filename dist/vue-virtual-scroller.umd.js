@@ -660,6 +660,14 @@
       ObserveVisibility: ObserveVisibility
     },
     props: _objectSpread2({}, props, {
+      wrapperClasses: {
+        type: String,
+        default: ''
+      },
+      itemClasses: {
+        type: String,
+        default: ''
+      },
       itemSize: {
         type: Number,
         default: null
@@ -1298,7 +1306,7 @@
           "div",
           {
             ref: "wrapper",
-            staticClass: "vue-recycle-scroller__item-wrapper",
+            class: "vue-recycle-scroller__item-wrapper " + _vm.wrapperClasses,
             style:
               ((_obj$1 = {}),
               (_obj$1[_vm.direction === "vertical" ? "minHeight" : "minWidth"] =
@@ -1306,12 +1314,18 @@
               _obj$1)
           },
           _vm._l(_vm.pool, function(view) {
+            var _obj;
             return _c(
               "div",
               {
                 key: view.nr.id,
-                staticClass: "vue-recycle-scroller__item-view",
-                class: { hover: _vm.hoverKey === view.nr.key },
+                class:
+                  ((_obj = {
+                    "vue-recycle-scroller__item-view ": true
+                  }),
+                  (_obj[_vm.itemClasses] = true),
+                  (_obj.hover = _vm.hoverKey === view.nr.key),
+                  _obj),
                 style: _vm.ready
                   ? {
                       transform:
