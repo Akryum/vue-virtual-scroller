@@ -298,8 +298,7 @@ export default {
 
         // Skip update if use hasn't scrolled enough
         if (checkPositionDiff) {
-          let positionDiff = scroll.originalStart - this.$_lastUpdateScrollPosition
-          if (positionDiff < 0) positionDiff = -positionDiff
+          const positionDiff = Math.abs(scroll.originalStart - this.$_lastUpdateScrollPosition)
           if ((itemSize === null && positionDiff < minItemSize) || positionDiff < itemSize) {
             return {
               continuous: true,
