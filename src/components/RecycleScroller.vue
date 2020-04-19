@@ -319,7 +319,7 @@ export default {
           if (positionDiff < 0) positionDiff = -positionDiff
           if ((itemSize === null && positionDiff < minItemSize) || positionDiff < itemSize) {
             return {
-              continuous: false,
+              continuous: true,
             }
           }
         }
@@ -385,7 +385,6 @@ export default {
       let view
 
       const continuous = startIndex <= this.$_endIndex && endIndex >= this.$_startIndex
-      let unusedIndex
 
       if (this.$_continuous !== continuous) {
         if (continuous) {
@@ -420,9 +419,7 @@ export default {
         }
       }
 
-      if (!continuous) {
-        unusedIndex = new Map()
-      }
+      const unusedIndex = continuous ? null : new Map()
 
       let item, type, unusedPool
       let v
@@ -442,9 +439,9 @@ export default {
         // No view assigned to item
         if (!view) {
           type = item[typeField]
+          unusedPool = unusedViews.get(type)
 
           if (continuous) {
-            unusedPool = unusedViews.get(type)
             // Reuse existing view
             if (unusedPool && unusedPool.length) {
               view = unusedPool.pop()
@@ -457,23 +454,24 @@ export default {
               view = this.addView(pool, i, item, key, type)
             }
           } else {
-            unusedPool = unusedViews.get(type)
-            v = unusedIndex.get(type) || 0
             // Use existing view
             // We don't care if they are already used
             // because we are not in continous scrolling
-            if (unusedPool && v < unusedPool.length) {
-              view = unusedPool[v]
-              view.item = item
-              view.nr.used = true
-              view.nr.index = i
-              view.nr.key = key
-              view.nr.type = type
-              unusedIndex.set(type, v + 1)
-            } else {
+            v = unusedIndex.get(type) || 0
+
+            if (!unusedPool || v >= unusedPool.length) {
               view = this.addView(pool, i, item, key, type)
               this.unuseView(view, true)
+              unusedPool = unusedViews.get(type)
             }
+
+            view = unusedPool[v]
+            view.item = item
+            view.nr.used = true
+            view.nr.index = i
+            view.nr.key = key
+            view.nr.type = type
+            unusedIndex.set(type, v + 1)
             v++
           }
           views.set(key, view)
@@ -605,8 +603,6 @@ export default {
 
     sortViews () {
       this.pool.sort((viewA, viewB) => viewA.nr.index - viewB.nr.index)
-      // Remove text selections as they will most likely be wrong or partial
-      window.getSelection().removeAllRanges()
     },
   },
 }
