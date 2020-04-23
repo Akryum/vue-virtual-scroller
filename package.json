@@ -1,5 +1,5 @@
 {
-  "name": "vue-virtual-scroller",
+  "name": "@startinfinity/vue-virtual-scroller",
   "description": "Smooth scrolling for any amount of data",
   "version": "1.0.10",
   "author": {
