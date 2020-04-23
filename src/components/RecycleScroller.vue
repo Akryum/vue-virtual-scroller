@@ -486,8 +486,6 @@ export default {
 
       // After the user has finished scrolling
       // Sort views so text selection is correct
-      clearTimeout(this.$_sortTimer)
-      this.$_sortTimer = setTimeout(this.sortViews, 300)
 
       return {
         continuous,
@@ -618,10 +616,6 @@ export default {
         console.log('Make sure the scroller has a fixed height (or width) and \'overflow-y\' (or \'overflow-x\') set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.')
       })
       throw new Error('Rendered items limit reached')
-    },
-
-    sortViews () {
-      this.pool.sort((viewA, viewB) => viewA.nr.index - viewB.nr.index)
     },
   },
 }
