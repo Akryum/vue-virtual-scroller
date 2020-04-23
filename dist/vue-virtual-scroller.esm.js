@@ -405,6 +405,21 @@ var script = {
       var pool = this.pool;
       var startIndex, endIndex;
       var totalSize;
+      var scroll;
+
+      if (count && !this.$_prerender) {
+        scroll = this.getScroll(); // Skip update if use hasn't scrolled enough
+
+        if (checkPositionDiff) {
+          var positionDiff = Math.abs(scroll.originalStart - this.$_lastUpdateScrollPosition);
+
+          if (itemSize === null && positionDiff < minItemSize || positionDiff < itemSize) {
+            return {
+              continuous: true
+            };
+          }
+        }
+      }
 
       if (!count) {
         startIndex = endIndex = totalSize = 0;
@@ -413,20 +428,7 @@ var script = {
         endIndex = this.prerender;
         totalSize = null;
       } else {
-        var scroll = this.getScroll(); // Skip update if use hasn't scrolled enough
-
-        if (checkPositionDiff) {
-          var positionDiff = scroll.start - this.$_lastUpdateScrollPosition;
-          if (positionDiff < 0) positionDiff = -positionDiff;
-
-          if (itemSize === null && positionDiff < minItemSize || positionDiff < itemSize) {
-            return {
-              continuous: true
-            };
-          }
-        }
-
-        this.$_lastUpdateScrollPosition = scroll.start;
+        this.$_lastUpdateScrollPosition = scroll.originalStart;
         var buffer = this.buffer;
         scroll.start -= buffer;
         scroll.end += buffer; // Variable size mode
@@ -594,8 +596,6 @@ var script = {
       if (this.emitUpdate) this.$emit('update', startIndex, endIndex); // After the user has finished scrolling
       // Sort views so text selection is correct
 
-      clearTimeout(this.$_sortTimer);
-      this.$_sortTimer = setTimeout(this.sortViews, 300);
       return {
         continuous: continuous
       };
@@ -613,13 +613,14 @@ var script = {
       var el = this.$el,
           direction = this.direction;
       var isVertical = direction === 'vertical';
-      var scrollState;
 
       if (this.pageMode) {
         var bounds = el.getBoundingClientRect();
         var boundsSize = isVertical ? bounds.height : bounds.width;
-        var start = -(isVertical ? bounds.top : bounds.left);
-        var size = isVertical ? window.innerHeight : window.innerWidth;
+        var originalStart = -(isVertical ? bounds.top : bounds.left);
+        var originalSize = isVertical ? window.innerHeight : window.innerWidth;
+        var start = originalStart;
+        var size = originalSize;
 
         if (start < 0) {
           size += start;
@@ -630,23 +631,26 @@ var script = {
           size = boundsSize - start;
         }
 
-        scrollState = {
+        return {
+          originalStart: originalStart,
           start: start,
           end: start + size
         };
-      } else if (isVertical) {
-        scrollState = {
+      }
+
+      if (isVertical) {
+        return {
+          originalStart: el.scrollTop,
           start: el.scrollTop,
           end: el.scrollTop + el.clientHeight
         };
       } else {
-        scrollState = {
+        return {
+          originalStart: el.scrollLeft,
           start: el.scrollLeft,
           end: el.scrollLeft + el.clientWidth
         };
       }
-
-      return scrollState;
     },
     applyPageMode: function applyPageMode() {
       if (this.pageMode) {
@@ -672,36 +676,61 @@ var script = {
       this.listenerTarget = null;
     },
     scrollToItem: function scrollToItem(index) {
-      var scroll;
+      var _this$scrollToPositio = this.scrollToPosition(index),
+          viewport = _this$scrollToPositio.viewport,
+          scrollDirection = _this$scrollToPositio.scrollDirection,
+          scrollDistance = _this$scrollToPositio.scrollDistance;
 
-      if (this.itemSize === null) {
-        scroll = index > 0 ? this.sizes[index - 1].accumulator : 0;
-      } else {
-        scroll = index * this.itemSize;
-      }
-
-      this.scrollToPosition(scroll);
+      viewport[scrollDirection] = scrollDistance;
     },
-    scrollToPosition: function scrollToPosition(position) {
-      if (this.direction === 'vertical') {
-        this.$el.scrollTop = position;
-      } else {
-        this.$el.scrollLeft = position;
-      }
-    },
-    itemsLimitError: function itemsLimitError() {
+    scrollToPosition: function scrollToPosition(index) {
       var _this4 = this;
 
+      var getPositionOfItem = function getPositionOfItem(index) {
+        if (_this4.itemSize === null) {
+          return index > 0 ? _this4.sizes[index - 1].accumulator : 0;
+        } else {
+          return index * _this4.itemSize;
+        }
+      };
+
+      var position = getPositionOfItem(index);
+      var direction = this.direction === 'vertical' ? {
+        scroll: 'scrollTop',
+        start: 'top'
+      } : {
+        scroll: 'scrollLeft',
+        start: 'left'
+      };
+
+      if (this.pageMode) {
+        var viewportEl = ScrollParent(this.$el); // HTML doesn't overflow like other elements
+
+        var scrollTop = viewportEl.tagName === 'HTML' ? 0 : viewportEl[direction.scroll];
+        var viewport = viewportEl.getBoundingClientRect();
+        var scroller = this.$el.getBoundingClientRect();
+        var scrollerPosition = scroller[direction.start] - viewport[direction.start];
+        return {
+          viewport: viewportEl,
+          scrollDirection: direction.scroll,
+          scrollDistance: position + scrollTop + scrollerPosition
+        };
+      }
+
+      return {
+        viewport: this.$el,
+        scrollDirection: direction.scroll,
+        scrollDistance: position
+      };
+    },
+    itemsLimitError: function itemsLimitError() {
+      var _this5 = this;
+
       setTimeout(function () {
-        console.log('It seems the scroller element isn\'t scrolling, so it tries to render all the items at once.', 'Scroller:', _this4.$el);
+        console.log('It seems the scroller element isn\'t scrolling, so it tries to render all the items at once.', 'Scroller:', _this5.$el);
         console.log('Make sure the scroller has a fixed height (or width) and \'overflow-y\' (or \'overflow-x\') set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.');
       });
       throw new Error('Rendered items limit reached');
-    },
-    sortViews: function sortViews() {
-      this.pool.sort(function (viewA, viewB) {
-        return viewA.nr.index - viewB.nr.index;
-      });
     }
   }
 };
@@ -1539,7 +1568,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.0.10",
+  version: "1.1.0",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
