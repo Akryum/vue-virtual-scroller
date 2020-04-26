@@ -870,7 +870,6 @@ var __vue_render__ = function() {
             {
               key: view.nr.id,
               staticClass: "vue-recycle-scroller__item-view",
-              class: { hover: _vm.hoverKey === view.nr.key },
               style: _vm.ready
                 ? {
                     transform:
@@ -883,10 +882,10 @@ var __vue_render__ = function() {
                 : null,
               on: {
                 mouseenter: function($event) {
-                  _vm.hoverKey = view.nr.key;
+                  return $event.target.classList.add("hover")
                 },
                 mouseleave: function($event) {
-                  _vm.hoverKey = null;
+                  return $event.target.classList.remove("hover")
                 }
               }
             },
@@ -1568,7 +1567,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.1.0",
+  version: '"1.1.1"',
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
