@@ -228,11 +228,10 @@ export default {
     unuseView (view, fake = false) {
       const unusedViews = this.$_unusedViews
       const type = view.nr.type
-      let unusedPool = unusedViews.get(type)
-      if (!unusedPool) {
-        unusedPool = []
-        unusedViews.set(type, unusedPool)
+      if (!unusedViews.get(type)) {
+        unusedViews.set(type, [])
       }
+      const unusedPool = unusedViews.get(type)
       unusedPool.push(view)
       if (!fake) {
         view.nr.used = false
