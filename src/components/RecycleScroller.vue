@@ -286,8 +286,6 @@ export default {
       const views = this.$_views
       const unusedViews = this.$_unusedViews
       const pool = this.pool
-      let startIndex, endIndex
-      let totalSize
 
       let scroll
 
@@ -305,13 +303,22 @@ export default {
         }
       }
 
-      if (!count) {
-        startIndex = endIndex = totalSize = 0
-      } else if (this.$_prerender) {
-        startIndex = 0
-        endIndex = this.prerender
-        totalSize = null
-      } else {
+      function getStartEnd () {
+        if (!count) {
+          return {
+            startIndex: 0,
+            endIndex: 0,
+            totalSize: 0,
+          }
+        }
+        if (this.$_prerender) {
+          return {
+            startIndex: 0,
+            endIndex: this.prerender,
+            totalSize: null,
+          }
+        }
+
         this.$_lastUpdateScrollPosition = scroll.originalStart
 
         const buffer = this.buffer
@@ -338,32 +345,42 @@ export default {
             i = ~~((a + b) / 2)
           } while (i !== oldI)
           i < 0 && (i = 0)
-          startIndex = i
+          const startIndex = i
 
           // For container style
-          totalSize = sizes[count - 1].accumulator
+          const totalSize = sizes[count - 1].accumulator
 
           // Searching for endIndex
-          for (endIndex = i; endIndex < count && sizes[endIndex].accumulator < scroll.end; endIndex++);
-          if (endIndex === -1) {
-            endIndex = items.length - 1
-          } else {
-            endIndex++
-            // Bounds
-            endIndex > count && (endIndex = count)
+          let endIndex
+          for (endIndex = i; endIndex < count && sizes[endIndex].accumulator < scroll.end; endIndex++) {
+            if (endIndex === -1) {
+              endIndex = items.length - 1
+            } else {
+              endIndex++
+              // Bounds
+              endIndex > count && (endIndex = count)
+            }
           }
-        } else {
-          // Fixed size mode
-          startIndex = ~~(scroll.start / itemSize)
-          endIndex = Math.ceil(scroll.end / itemSize)
 
-          // Bounds
-          startIndex < 0 && (startIndex = 0)
-          endIndex > count && (endIndex = count)
+          return {
+            startIndex,
+            endIndex,
+            totalSize,
+          }
+        }
+        // Fixed size mode
+        const startIndex = Math.max(0, ~~(scroll.start / itemSize))
+        const endIndex = Math.min(count, Math.ceil(scroll.end / itemSize))
+        const totalSize = count * itemSize
 
-          totalSize = count * itemSize
+        return {
+          startIndex,
+          endIndex,
+          totalSize,
         }
       }
+
+      const { startIndex, endIndex, totalSize } = getStartEnd.call(this)
 
       if (endIndex - startIndex > config.itemsLimit) {
         this.itemsLimitError()
