@@ -47,8 +47,6 @@
         name="after"
       />
     </div>
-
-    <ResizeObserver @notify="handleResize" />
   </div>
 </template>
 
