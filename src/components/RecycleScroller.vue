@@ -179,7 +179,7 @@ export default {
     this.$_endIndex = 0
     this.$_views = new Map()
     this.$_unusedViews = new Map()
-    this.$_scrollDirty = false
+    this.$_scrollAnimationRequest = null
     this.$_lastUpdateScrollPosition = 0
 
     // In SSR mode, we also prerender the same number of item for the first render
@@ -248,20 +248,18 @@ export default {
     },
 
     handleScroll (event) {
-      if (!this.$_scrollDirty) {
-        this.$_scrollDirty = true
-        requestAnimationFrame(() => {
-          this.$_scrollDirty = false
-          const { continuous } = this.updateVisibleItems(false, true)
+      cancelAnimationFrame(this.$_scrollAnimationRequest)
+      this.$_scrollAnimationRequest = requestAnimationFrame(() => {
+        this.$_scrollAnimationRequest = false
+        const { continuous } = this.updateVisibleItems(false, true)
 
-          // It seems sometimes chrome doesn't fire scroll event :/
-          // When non continous scrolling is ending, we force a refresh
-          if (!continuous) {
-            clearTimeout(this.$_refreshTimout)
-            this.$_refreshTimout = setTimeout(this.handleScroll, 100)
-          }
-        })
-      }
+        // It seems sometimes chrome doesn't fire scroll event :/
+        // When non continous scrolling is ending, we force a refresh
+        if (!continuous) {
+          clearTimeout(this.$_refreshTimout)
+          this.$_refreshTimout = setTimeout(this.handleScroll, 100)
+        }
+      })
     },
 
     handleVisibilityChange (isVisible, entry) {
@@ -358,7 +356,6 @@ export default {
       }
     },
     updateVisibleItems (checkItem, checkPositionDiff = false) {
-      console.log('updating')
       const itemSize = this.itemSize
       const minItemSize = this.$_computedMinItemSize
       const typeField = this.typeField
@@ -378,6 +375,7 @@ export default {
         // Skip update if use hasn't scrolled enough
         if (checkPositionDiff) {
           const positionDiff = Math.abs(scroll.originalStart - this.$_lastUpdateScrollPosition)
+
           if ((itemSize === null && positionDiff < minItemSize) || positionDiff < itemSize) {
             return {
               continuous: true,
