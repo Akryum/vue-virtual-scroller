@@ -51,7 +51,6 @@
 </template>
 
 <script>
-import { ResizeObserver } from 'vue-resize'
 import { ObserveVisibility } from 'vue-observe-visibility'
 import ScrollParent from 'scrollparent'
 import config from '../config'
@@ -62,10 +61,6 @@ let uid = 0
 
 export default {
   name: 'RecycleScroller',
-
-  components: {
-    ResizeObserver,
-  },
 
   directives: {
     ObserveVisibility,

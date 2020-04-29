@@ -1,4 +1,3 @@
-import { ResizeObserver as ResizeObserver$1 } from 'vue-resize';
 import { ObserveVisibility } from 'vue-observe-visibility';
 import ScrollParent from 'scrollparent';
 import Vue from 'vue';
@@ -183,9 +182,6 @@ if (typeof window !== 'undefined') {
 var uid = 0;
 var script = {
   name: 'RecycleScroller',
-  components: {
-    ResizeObserver: ResizeObserver$1
-  },
   directives: {
     ObserveVisibility: ObserveVisibility
   },
@@ -289,7 +285,7 @@ var script = {
     this.$_endIndex = 0;
     this.$_views = new Map();
     this.$_unusedViews = new Map();
-    this.$_scrollDirty = false;
+    this.$_scrollAnimationRequest = null;
     this.$_lastUpdateScrollPosition = 0; // In SSR mode, we also prerender the same number of item for the first render
     // to avoir mismatch between server and client templates
 
@@ -302,6 +298,11 @@ var script = {
     var _this = this;
 
     this.applyPageMode();
+
+    var _this$startEndIndex = this.startEndIndex(this.getScroll()),
+        totalSize = _this$startEndIndex.totalSize;
+
+    this.$refs.wrapper.style[this.direction === 'vertical' ? 'minHeight' : 'minWidth'] = totalSize + 'px';
     this.$nextTick(function () {
       // In SSR mode, render the real number of visible items
       _this.$_prerender = false;
@@ -338,13 +339,12 @@ var script = {
       var fake = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
       var unusedViews = this.$_unusedViews;
       var type = view.nr.type;
-      var unusedPool = unusedViews.get(type);
 
-      if (!unusedPool) {
-        unusedPool = [];
-        unusedViews.set(type, unusedPool);
+      if (!unusedViews.get(type)) {
+        unusedViews.set(type, []);
       }
 
+      var unusedPool = unusedViews.get(type);
       unusedPool.push(view);
 
       if (!fake) {
@@ -360,28 +360,26 @@ var script = {
     handleScroll: function handleScroll(event) {
       var _this2 = this;
 
-      if (!this.$_scrollDirty) {
-        this.$_scrollDirty = true;
-        requestAnimationFrame(function () {
-          _this2.$_scrollDirty = false;
+      cancelAnimationFrame(this.$_scrollAnimationRequest);
+      this.$_scrollAnimationRequest = requestAnimationFrame(function () {
+        _this2.$_scrollAnimationRequest = false;
 
-          var _this2$updateVisibleI = _this2.updateVisibleItems(false, true),
-              continuous = _this2$updateVisibleI.continuous; // It seems sometimes chrome doesn't fire scroll event :/
-          // When non continous scrolling is ending, we force a refresh
+        var _this2$updateVisibleI = _this2.updateVisibleItems(false, true),
+            continuous = _this2$updateVisibleI.continuous; // It seems sometimes chrome doesn't fire scroll event :/
+        // When non continous scrolling is ending, we force a refresh
 
 
-          if (!continuous) {
-            clearTimeout(_this2.$_refreshTimout);
-            _this2.$_refreshTimout = setTimeout(_this2.handleScroll, 100);
-          }
-        });
-      }
+        if (!continuous) {
+          clearTimeout(_this2.$_refreshTimout);
+          _this2.$_refreshTimout = setTimeout(_this2.handleScroll, 100);
+        }
+      });
     },
     handleVisibilityChange: function handleVisibilityChange(isVisible, entry) {
       var _this3 = this;
 
       if (this.ready) {
-        if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {
+        if (isVisible) {
           this.$emit('visible');
           requestAnimationFrame(function () {
             _this3.updateVisibleItems(false);
@@ -390,6 +388,87 @@ var script = {
           this.$emit('hidden');
         }
       }
+    },
+    startEndIndex: function startEndIndex(scroll) {
+      var itemSize = this.itemSize;
+      var items = this.items;
+      var count = items.length;
+      var sizes = this.sizes;
+
+      if (!count) {
+        return {
+          startIndex: 0,
+          endIndex: 0,
+          totalSize: 0
+        };
+      }
+
+      if (this.$_prerender) {
+        return {
+          startIndex: 0,
+          endIndex: this.prerender,
+          totalSize: null
+        };
+      }
+
+      this.$_lastUpdateScrollPosition = scroll.originalStart;
+      var buffer = this.buffer;
+      scroll.start -= buffer;
+      scroll.end += buffer; // Variable size mode
+
+      if (itemSize === null) {
+        var h;
+        var a = 0;
+        var b = count - 1;
+        var i = ~~(count / 2);
+        var oldI; // Searching for startIndex
+
+        do {
+          oldI = i;
+          h = sizes[i].accumulator;
+
+          if (h < scroll.start) {
+            a = i;
+          } else if (i < count - 1 && sizes[i + 1].accumulator > scroll.start) {
+            b = i;
+          }
+
+          i = ~~((a + b) / 2);
+        } while (i !== oldI);
+
+        i < 0 && (i = 0);
+        var _startIndex = i; // For container style
+
+        var _totalSize = sizes[count - 1].accumulator; // Searching for endIndex
+
+        var _endIndex;
+
+        for (_endIndex = i; _endIndex < count && sizes[_endIndex].accumulator < scroll.end; _endIndex++) {
+          if (_endIndex === -1) {
+            _endIndex = items.length - 1;
+          } else {
+            _endIndex++; // Bounds
+
+            _endIndex > count && (_endIndex = count);
+          }
+        }
+
+        return {
+          startIndex: _startIndex,
+          endIndex: _endIndex,
+          totalSize: _totalSize
+        };
+      } // Fixed size mode
+
+
+      var startIndex = Math.max(0, ~~(scroll.start / itemSize));
+      var endIndex = Math.min(count, Math.ceil(scroll.end / itemSize));
+      var totalSize = count * itemSize;
+      return {
+        startIndex: startIndex,
+        endIndex: endIndex,
+        totalSize: totalSize
+      };
     },
     updateVisibleItems: function updateVisibleItems(checkItem) {
       var checkPositionDiff = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
@@ -403,8 +482,6 @@ var script = {
       var views = this.$_views;
       var unusedViews = this.$_unusedViews;
       var pool = this.pool;
-      var startIndex, endIndex;
-      var totalSize;
       var scroll;
 
       if (count && !this.$_prerender) {
@@ -421,63 +498,10 @@ var script = {
         }
       }
 
-      if (!count) {
-        startIndex = endIndex = totalSize = 0;
-      } else if (this.$_prerender) {
-        startIndex = 0;
-        endIndex = this.prerender;
-        totalSize = null;
-      } else {
-        this.$_lastUpdateScrollPosition = scroll.originalStart;
-        var buffer = this.buffer;
-        scroll.start -= buffer;
-        scroll.end += buffer; // Variable size mode
-
-        if (itemSize === null) {
-          var h;
-          var a = 0;
-          var b = count - 1;
-          var i = ~~(count / 2);
-          var oldI; // Searching for startIndex
-
-          do {
-            oldI = i;
-            h = sizes[i].accumulator;
-
-            if (h < scroll.start) {
-              a = i;
-            } else if (i < count - 1 && sizes[i + 1].accumulator > scroll.start) {
-              b = i;
-            }
-
-            i = ~~((a + b) / 2);
-          } while (i !== oldI);
-
-          i < 0 && (i = 0);
-          startIndex = i; // For container style
-
-          totalSize = sizes[count - 1].accumulator; // Searching for endIndex
-
-          for (endIndex = i; endIndex < count && sizes[endIndex].accumulator < scroll.end; endIndex++) {
-          }
-
-          if (endIndex === -1) {
-            endIndex = items.length - 1;
-          } else {
-            endIndex++; // Bounds
-
-            endIndex > count && (endIndex = count);
-          }
-        } else {
-          // Fixed size mode
-          startIndex = ~~(scroll.start / itemSize);
-          endIndex = Math.ceil(scroll.end / itemSize); // Bounds
-
-          startIndex < 0 && (startIndex = 0);
-          endIndex > count && (endIndex = count);
-          totalSize = count * itemSize;
-        }
-      }
+      var _this$startEndIndex2 = this.startEndIndex(scroll),
+          startIndex = _this$startEndIndex2.startIndex,
+          endIndex = _this$startEndIndex2.endIndex,
+          totalSize = _this$startEndIndex2.totalSize;
 
       if (endIndex - startIndex > config.itemsLimit) {
         this.itemsLimitError();
@@ -492,16 +516,16 @@ var script = {
           views.clear();
           unusedViews.clear();
 
-          for (var _i = 0, l = pool.length; _i < l; _i++) {
-            view = pool[_i];
+          for (var i = 0, l = pool.length; i < l; i++) {
+            view = pool[i];
             this.unuseView(view);
           }
         }
 
         this.$_continuous = continuous;
       } else if (continuous) {
-        for (var _i2 = 0, _l = pool.length; _i2 < _l; _i2++) {
-          view = pool[_i2];
+        for (var _i = 0, _l = pool.length; _i < _l; _i++) {
+          view = pool[_i];
 
           if (view.nr.used) {
             // Update view item index
@@ -523,8 +547,8 @@ var script = {
       var item, type, unusedPool;
       var v;
 
-      for (var _i3 = startIndex; _i3 < endIndex; _i3++) {
-        item = items[_i3];
+      for (var _i2 = startIndex; _i2 < endIndex; _i2++) {
+        item = items[_i2];
         var key = keyField ? item[keyField] : item;
 
         if (key == null) {
@@ -533,7 +557,7 @@ var script = {
 
         view = views.get(key);
 
-        if (!itemSize && !sizes[_i3].size) {
+        if (!itemSize && !sizes[_i2].size) {
           if (view) this.unuseView(view);
           continue;
         } // No view assigned to item
@@ -549,11 +573,11 @@ var script = {
               view = unusedPool.pop();
               view.item = item;
               view.nr.used = true;
-              view.nr.index = _i3;
+              view.nr.index = _i2;
               view.nr.key = key;
               view.nr.type = type;
             } else {
-              view = this.addView(pool, _i3, item, key, type);
+              view = this.addView(pool, _i2, item, key, type);
             }
           } else {
             // Use existing view
@@ -562,7 +586,7 @@ var script = {
             v = unusedIndex.get(type) || 0;
 
             if (!unusedPool || v >= unusedPool.length) {
-              view = this.addView(pool, _i3, item, key, type);
+              view = this.addView(pool, _i2, item, key, type);
               this.unuseView(view, true);
               unusedPool = unusedViews.get(type);
             }
@@ -570,7 +594,7 @@ var script = {
             view = unusedPool[v];
             view.item = item;
             view.nr.used = true;
-            view.nr.index = _i3;
+            view.nr.index = _i2;
             view.nr.key = key;
             view.nr.type = type;
             unusedIndex.set(type, v + 1);
@@ -585,9 +609,9 @@ var script = {
 
 
         if (itemSize === null) {
-          view.position = sizes[_i3 - 1].accumulator;
+          view.position = sizes[_i2 - 1].accumulator;
         } else {
-          view.position = _i3 * itemSize;
+          view.position = _i2 * itemSize;
         }
       }
 
@@ -909,11 +933,8 @@ var __vue_render__ = function() {
             [_vm._t("after")],
             2
           )
-        : _vm._e(),
-      _vm._v(" "),
-      _c("ResizeObserver", { on: { notify: _vm.handleResize } })
-    ],
-    1
+        : _vm._e()
+    ]
   )
 };
 var __vue_staticRenderFns__ = [];
@@ -1567,7 +1588,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: '"1.1.1"',
+  version: "1.2.0",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
