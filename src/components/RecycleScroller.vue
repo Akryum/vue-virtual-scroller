@@ -192,6 +192,8 @@ export default {
 
   mounted () {
     this.applyPageMode()
+    const { totalSize } = this.startEndIndex(this.getScroll())
+    this.$refs.wrapper.style[this.direction === 'vertical' ? 'minHeight' : 'minWidth'] = totalSize + 'px'
     this.$nextTick(() => {
       // In SSR mode, render the real number of visible items
       this.$_prerender = false
@@ -264,7 +266,7 @@ export default {
 
     handleVisibilityChange (isVisible, entry) {
       if (this.ready) {
-        if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {
+        if (isVisible) {
           this.$emit('visible')
           requestAnimationFrame(() => {
             this.updateVisibleItems(false)
@@ -274,8 +276,89 @@ export default {
         }
       }
     },
+    startEndIndex (scroll) {
+      const itemSize = this.itemSize
+      const items = this.items
+      const count = items.length
+      const sizes = this.sizes
 
+      if (!count) {
+        return {
+          startIndex: 0,
+          endIndex: 0,
+          totalSize: 0,
+        }
+      }
+      if (this.$_prerender) {
+        return {
+          startIndex: 0,
+          endIndex: this.prerender,
+          totalSize: null,
+        }
+      }
+
+      this.$_lastUpdateScrollPosition = scroll.originalStart
+
+      const buffer = this.buffer
+      scroll.start -= buffer
+      scroll.end += buffer
+
+      // Variable size mode
+      if (itemSize === null) {
+        let h
+        let a = 0
+        let b = count - 1
+        let i = ~~(count / 2)
+        let oldI
+
+        // Searching for startIndex
+        do {
+          oldI = i
+          h = sizes[i].accumulator
+          if (h < scroll.start) {
+            a = i
+          } else if (i < count - 1 && sizes[i + 1].accumulator > scroll.start) {
+            b = i
+          }
+          i = ~~((a + b) / 2)
+        } while (i !== oldI)
+        i < 0 && (i = 0)
+        const startIndex = i
+
+        // For container style
+        const totalSize = sizes[count - 1].accumulator
+
+        // Searching for endIndex
+        let endIndex
+        for (endIndex = i; endIndex < count && sizes[endIndex].accumulator < scroll.end; endIndex++) {
+          if (endIndex === -1) {
+            endIndex = items.length - 1
+          } else {
+            endIndex++
+            // Bounds
+            endIndex > count && (endIndex = count)
+          }
+        }
+
+        return {
+          startIndex,
+          endIndex,
+          totalSize,
+        }
+      }
+      // Fixed size mode
+      const startIndex = Math.max(0, ~~(scroll.start / itemSize))
+      const endIndex = Math.min(count, Math.ceil(scroll.end / itemSize))
+      const totalSize = count * itemSize
+
+      return {
+        startIndex,
+        endIndex,
+        totalSize,
+      }
+    },
     updateVisibleItems (checkItem, checkPositionDiff = false) {
+      console.log('updating')
       const itemSize = this.itemSize
       const minItemSize = this.$_computedMinItemSize
       const typeField = this.typeField
@@ -303,84 +386,7 @@ export default {
         }
       }
 
-      function getStartEnd () {
-        if (!count) {
-          return {
-            startIndex: 0,
-            endIndex: 0,
-            totalSize: 0,
-          }
-        }
-        if (this.$_prerender) {
-          return {
-            startIndex: 0,
-            endIndex: this.prerender,
-            totalSize: null,
-          }
-        }
-
-        this.$_lastUpdateScrollPosition = scroll.originalStart
-
-        const buffer = this.buffer
-        scroll.start -= buffer
-        scroll.end += buffer
-
-        // Variable size mode
-        if (itemSize === null) {
-          let h
-          let a = 0
-          let b = count - 1
-          let i = ~~(count / 2)
-          let oldI
-
-          // Searching for startIndex
-          do {
-            oldI = i
-            h = sizes[i].accumulator
-            if (h < scroll.start) {
-              a = i
-            } else if (i < count - 1 && sizes[i + 1].accumulator > scroll.start) {
-              b = i
-            }
-            i = ~~((a + b) / 2)
-          } while (i !== oldI)
-          i < 0 && (i = 0)
-          const startIndex = i
-
-          // For container style
-          const totalSize = sizes[count - 1].accumulator
-
-          // Searching for endIndex
-          let endIndex
-          for (endIndex = i; endIndex < count && sizes[endIndex].accumulator < scroll.end; endIndex++) {
-            if (endIndex === -1) {
-              endIndex = items.length - 1
-            } else {
-              endIndex++
-              // Bounds
-              endIndex > count && (endIndex = count)
-            }
-          }
-
-          return {
-            startIndex,
-            endIndex,
-            totalSize,
-          }
-        }
-        // Fixed size mode
-        const startIndex = Math.max(0, ~~(scroll.start / itemSize))
-        const endIndex = Math.min(count, Math.ceil(scroll.end / itemSize))
-        const totalSize = count * itemSize
-
-        return {
-          startIndex,
-          endIndex,
-          totalSize,
-        }
-      }
-
-      const { startIndex, endIndex, totalSize } = getStartEnd.call(this)
+      const { startIndex, endIndex, totalSize } = this.startEndIndex(scroll)
 
       if (endIndex - startIndex > config.itemsLimit) {
         this.itemsLimitError()
