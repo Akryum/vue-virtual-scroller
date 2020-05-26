@@ -38,6 +38,15 @@
           :active="view.nr.used"
         />
       </div>
+
+      <div
+        v-if="$slots.empty && !items.length"
+        class="vue-recycle-scroller__slot"
+      >
+        <slot
+          name="empty"
+        />
+      </div>
     </div>
 
     <div

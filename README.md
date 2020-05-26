@@ -214,6 +214,7 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
   <slot name="before"></slot>
   <wrapper>
     <!-- Reused view pools here -->
+    <slot name="empty"></slot>
   </wrapper>
   <slot name="after"></slot>
 </main>
