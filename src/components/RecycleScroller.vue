@@ -18,12 +18,14 @@
       />
     </div>
 
-    <div
+    <component
+      :is="listTag"
       ref="wrapper"
       :style="{ [direction === 'vertical' ? 'minHeight' : 'minWidth']: totalSize + 'px' }"
       class="vue-recycle-scroller__item-wrapper"
     >
-      <div
+      <component
+        :is="itemTag"
         v-for="view of pool"
         :key="view.nr.id"
         :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
@@ -37,8 +39,8 @@
           :index="view.nr.index"
           :active="view.nr.used"
         />
-      </div>
-    </div>
+      </component>
+    </component>
 
     <div
       v-if="$slots.after"

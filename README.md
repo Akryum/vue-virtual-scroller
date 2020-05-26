@@ -193,6 +193,8 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 - `prerender` (default: `0`): render a fixed number of items for Server-Side Rendering (SSR).
 - `buffer` (default: `200`): amount of pixel to add to edges of the scrolling visible area to start rendering items further away.
 - `emitUpdate` (default: `false`): emit a `'update'` event each time the virtual scroller content is updated (can impact performance).
+- `listTag` (default: `'div'`): the element to render as the list's wrapper.
+- `itemTag` (default: `'div'`): the element to render as the list item (the direct parent of the default slot content).
 
 ### Events
 
