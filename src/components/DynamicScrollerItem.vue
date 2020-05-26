@@ -50,7 +50,9 @@ export default {
 
   computed: {
     id () {
-      return this.vscrollData.simpleArray ? this.index : this.item[this.vscrollData.keyField]
+      if (this.vscrollData.simpleArray) return this.index;
+      if (this.item.hasOwnProperty(this.vscrollData.keyField)) return this.item[this.vscrollData.keyField];
+      throw new Error(`keyField '${this.vscrollData.keyField}' not found in your item. You should set a valid keyField prop on your Scroller`);
     },
 
     size () {
