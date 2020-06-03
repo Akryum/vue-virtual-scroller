@@ -26,11 +26,10 @@
       <div
         v-for="view of pool"
         :key="view.nr.id"
-        :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
+        :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)`, zIndex: pool.length - view.nr.index } : null"
         class="vue-recycle-scroller__item-view"
-        :class="{ hover: hoverKey === view.nr.key }"
-        @mouseenter="hoverKey = view.nr.key"
-        @mouseleave="hoverKey = null"
+        @mouseenter="$event.target.classList.add('hover')"
+        @mouseleave="$event.target.classList.remove('hover')"
       >
         <slot
           :item="view.item"
@@ -48,13 +47,10 @@
         name="after"
       />
     </div>
-
-    <ResizeObserver @notify="handleResize" />
   </div>
 </template>
 
 <script>
-import { ResizeObserver } from 'vue-resize'
 import { ObserveVisibility } from 'vue-observe-visibility'
 import ScrollParent from 'scrollparent'
 import config from '../config'
@@ -65,10 +61,6 @@ let uid = 0
 
 export default {
   name: 'RecycleScroller',
-
-  components: {
-    ResizeObserver,
-  },
 
   directives: {
     ObserveVisibility,
@@ -180,7 +172,7 @@ export default {
     this.$_endIndex = 0
     this.$_views = new Map()
     this.$_unusedViews = new Map()
-    this.$_scrollDirty = false
+    this.$_scrollAnimationRequest = null
     this.$_lastUpdateScrollPosition = 0
 
     // In SSR mode, we also prerender the same number of item for the first render
@@ -193,6 +185,8 @@ export default {
 
   mounted () {
     this.applyPageMode()
+    const { totalSize } = this.startEndIndex(this.getScroll())
+    this.$refs.wrapper.style[this.direction === 'vertical' ? 'minHeight' : 'minWidth'] = totalSize + 'px'
     this.$nextTick(() => {
       // In SSR mode, render the real number of visible items
       this.$_prerender = false
@@ -229,11 +223,10 @@ export default {
     unuseView (view, fake = false) {
       const unusedViews = this.$_unusedViews
       const type = view.nr.type
-      let unusedPool = unusedViews.get(type)
-      if (!unusedPool) {
-        unusedPool = []
-        unusedViews.set(type, unusedPool)
+      if (!unusedViews.get(type)) {
+        unusedViews.set(type, [])
       }
+      const unusedPool = unusedViews.get(type)
       unusedPool.push(view)
       if (!fake) {
         view.nr.used = false
@@ -248,25 +241,23 @@ export default {
     },
 
     handleScroll (event) {
-      if (!this.$_scrollDirty) {
-        this.$_scrollDirty = true
-        requestAnimationFrame(() => {
-          this.$_scrollDirty = false
-          const { continuous } = this.updateVisibleItems(false, true)
+      cancelAnimationFrame(this.$_scrollAnimationRequest)
+      this.$_scrollAnimationRequest = requestAnimationFrame(() => {
+        this.$_scrollAnimationRequest = false
+        const { continuous } = this.updateVisibleItems(false, true)
 
-          // It seems sometimes chrome doesn't fire scroll event :/
-          // When non continous scrolling is ending, we force a refresh
-          if (!continuous) {
-            clearTimeout(this.$_refreshTimout)
-            this.$_refreshTimout = setTimeout(this.handleScroll, 100)
-          }
-        })
-      }
+        // It seems sometimes chrome doesn't fire scroll event :/
+        // When non continous scrolling is ending, we force a refresh
+        if (!continuous) {
+          clearTimeout(this.$_refreshTimout)
+          this.$_refreshTimout = setTimeout(this.handleScroll, 100)
+        }
+      })
     },
 
     handleVisibilityChange (isVisible, entry) {
       if (this.ready) {
-        if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {
+        if (isVisible) {
           this.$emit('visible')
           requestAnimationFrame(() => {
             this.updateVisibleItems(false)
@@ -276,7 +267,87 @@ export default {
         }
       }
     },
+    startEndIndex (scroll) {
+      const itemSize = this.itemSize
+      const items = this.items
+      const count = items.length
+      const sizes = this.sizes
 
+      if (!count) {
+        return {
+          startIndex: 0,
+          endIndex: 0,
+          totalSize: 0,
+        }
+      }
+      if (this.$_prerender) {
+        return {
+          startIndex: 0,
+          endIndex: this.prerender,
+          totalSize: null,
+        }
+      }
+
+      this.$_lastUpdateScrollPosition = scroll.originalStart
+
+      const buffer = this.buffer
+      scroll.start -= buffer
+      scroll.end += buffer
+
+      // Variable size mode
+      if (itemSize === null) {
+        let h
+        let a = 0
+        let b = count - 1
+        let i = ~~(count / 2)
+        let oldI
+
+        // Searching for startIndex
+        do {
+          oldI = i
+          h = sizes[i].accumulator
+          if (h < scroll.start) {
+            a = i
+          } else if (i < count - 1 && sizes[i + 1].accumulator > scroll.start) {
+            b = i
+          }
+          i = ~~((a + b) / 2)
+        } while (i !== oldI)
+        i < 0 && (i = 0)
+        const startIndex = i
+
+        // For container style
+        const totalSize = sizes[count - 1].accumulator
+
+        // Searching for endIndex
+        let endIndex
+        for (endIndex = i; endIndex < count && sizes[endIndex].accumulator < scroll.end; endIndex++) {
+          if (endIndex === -1) {
+            endIndex = items.length - 1
+          } else {
+            endIndex++
+            // Bounds
+            endIndex > count && (endIndex = count)
+          }
+        }
+
+        return {
+          startIndex,
+          endIndex,
+          totalSize,
+        }
+      }
+      // Fixed size mode
+      const startIndex = Math.max(0, ~~(scroll.start / itemSize))
+      const endIndex = Math.min(count, Math.ceil(scroll.end / itemSize))
+      const totalSize = count * itemSize
+
+      return {
+        startIndex,
+        endIndex,
+        totalSize,
+      }
+    },
     updateVisibleItems (checkItem, checkPositionDiff = false) {
       const itemSize = this.itemSize
       const minItemSize = this.$_computedMinItemSize
@@ -288,80 +359,25 @@ export default {
       const views = this.$_views
       const unusedViews = this.$_unusedViews
       const pool = this.pool
-      let startIndex, endIndex
-      let totalSize
 
-      if (!count) {
-        startIndex = endIndex = totalSize = 0
-      } else if (this.$_prerender) {
-        startIndex = 0
-        endIndex = this.prerender
-        totalSize = null
-      } else {
-        const scroll = this.getScroll()
+      let scroll
+
+      if (count && !this.$_prerender) {
+        scroll = this.getScroll()
 
         // Skip update if use hasn't scrolled enough
         if (checkPositionDiff) {
-          let positionDiff = scroll.start - this.$_lastUpdateScrollPosition
-          if (positionDiff < 0) positionDiff = -positionDiff
+          const positionDiff = Math.abs(scroll.originalStart - this.$_lastUpdateScrollPosition)
+
           if ((itemSize === null && positionDiff < minItemSize) || positionDiff < itemSize) {
             return {
               continuous: true,
             }
           }
         }
-        this.$_lastUpdateScrollPosition = scroll.start
-
-        const buffer = this.buffer
-        scroll.start -= buffer
-        scroll.end += buffer
-
-        // Variable size mode
-        if (itemSize === null) {
-          let h
-          let a = 0
-          let b = count - 1
-          let i = ~~(count / 2)
-          let oldI
-
-          // Searching for startIndex
-          do {
-            oldI = i
-            h = sizes[i].accumulator
-            if (h < scroll.start) {
-              a = i
-            } else if (i < count - 1 && sizes[i + 1].accumulator > scroll.start) {
-              b = i
-            }
-            i = ~~((a + b) / 2)
-          } while (i !== oldI)
-          i < 0 && (i = 0)
-          startIndex = i
-
-          // For container style
-          totalSize = sizes[count - 1].accumulator
-
-          // Searching for endIndex
-          for (endIndex = i; endIndex < count && sizes[endIndex].accumulator < scroll.end; endIndex++);
-          if (endIndex === -1) {
-            endIndex = items.length - 1
-          } else {
-            endIndex++
-            // Bounds
-            endIndex > count && (endIndex = count)
-          }
-        } else {
-          // Fixed size mode
-          startIndex = ~~(scroll.start / itemSize)
-          endIndex = Math.ceil(scroll.end / itemSize)
-
-          // Bounds
-          startIndex < 0 && (startIndex = 0)
-          endIndex > count && (endIndex = count)
-
-          totalSize = count * itemSize
-        }
       }
+
+      const { startIndex, endIndex, totalSize } = this.startEndIndex(scroll)
 
       if (endIndex - startIndex > config.itemsLimit) {
         this.itemsLimitError()
@@ -482,8 +498,6 @@ export default {
 
       // After the user has finished scrolling
       // Sort views so text selection is correct
-      clearTimeout(this.$_sortTimer)
-      this.$_sortTimer = setTimeout(this.sortViews, 300)
 
       return {
         continuous,
@@ -502,13 +516,15 @@ export default {
     getScroll () {
       const { $el: el, direction } = this
       const isVertical = direction === 'vertical'
-      let scrollState
 
       if (this.pageMode) {
         const bounds = el.getBoundingClientRect()
         const boundsSize = isVertical ? bounds.height : bounds.width
-        let start = -(isVertical ? bounds.top : bounds.left)
-        let size = isVertical ? window.innerHeight : window.innerWidth
+        const originalStart = -(isVertical ? bounds.top : bounds.left)
+        const originalSize = isVertical ? window.innerHeight : window.innerWidth
+        let start = originalStart
+        let size = originalSize
+
         if (start < 0) {
           size += start
           start = 0
@@ -516,23 +532,26 @@ export default {
         if (start + size > boundsSize) {
           size = boundsSize - start
         }
-        scrollState = {
+        return {
+          originalStart,
           start,
           end: start + size,
         }
-      } else if (isVertical) {
-        scrollState = {
+      }
+
+      if (isVertical) {
+        return {
+          originalStart: el.scrollTop,
           start: el.scrollTop,
           end: el.scrollTop + el.clientHeight,
         }
       } else {
-        scrollState = {
+        return {
+          originalStart: el.scrollLeft,
           start: el.scrollLeft,
           end: el.scrollLeft + el.clientWidth,
         }
       }
-
-      return scrollState
     },
 
     applyPageMode () {
@@ -563,20 +582,43 @@ export default {
     },
 
     scrollToItem (index) {
-      let scroll
-      if (this.itemSize === null) {
-        scroll = index > 0 ? this.sizes[index - 1].accumulator : 0
-      } else {
-        scroll = index * this.itemSize
-      }
-      this.scrollToPosition(scroll)
+      const { viewport, scrollDirection, scrollDistance } = this.scrollToPosition(index)
+      viewport[scrollDirection] = scrollDistance
     },
 
-    scrollToPosition (position) {
-      if (this.direction === 'vertical') {
-        this.$el.scrollTop = position
-      } else {
-        this.$el.scrollLeft = position
+    scrollToPosition (index) {
+      const getPositionOfItem = (index) => {
+        if (this.itemSize === null) {
+          return index > 0 ? this.sizes[index - 1].accumulator : 0
+        } else {
+          return index * this.itemSize
+        }
+      }
+      const position = getPositionOfItem(index)
+      const direction = this.direction === 'vertical'
+        ? { scroll: 'scrollTop', start: 'top' }
+        : { scroll: 'scrollLeft', start: 'left' }
+
+      if (this.pageMode) {
+        const viewportEl = ScrollParent(this.$el)
+        // HTML doesn't overflow like other elements
+        const scrollTop = viewportEl.tagName === 'HTML' ? 0 : viewportEl[direction.scroll]
+        const viewport = viewportEl.getBoundingClientRect()
+
+        const scroller = this.$el.getBoundingClientRect()
+        const scrollerPosition = scroller[direction.start] - viewport[direction.start]
+
+        return {
+          viewport: viewportEl,
+          scrollDirection: direction.scroll,
+          scrollDistance: position + scrollTop + scrollerPosition,
+        }
+      }
+
+      return {
+        viewport: this.$el,
+        scrollDirection: direction.scroll,
+        scrollDistance: position,
       }
     },
 
@@ -586,10 +628,6 @@ export default {
         console.log('Make sure the scroller has a fixed height (or width) and \'overflow-y\' (or \'overflow-x\') set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.')
       })
       throw new Error('Rendered items limit reached')
-    },
-
-    sortViews () {
-      this.pool.sort((viewA, viewB) => viewA.nr.index - viewB.nr.index)
     },
   },
 }
