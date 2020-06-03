@@ -901,7 +901,8 @@ var __vue_render__ = function() {
                       (_vm.direction === "vertical" ? "Y" : "X") +
                       "(" +
                       view.position +
-                      "px)"
+                      "px)",
+                    zIndex: _vm.pool.length - view.nr.index
                   }
                 : null,
               on: {
@@ -1588,7 +1589,7 @@ function registerComponents(Vue, prefix) {
 
 var plugin = {
   // eslint-disable-next-line no-undef
-  version: "1.2.0",
+  version: "1.2.1",
   install: function install(Vue, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,

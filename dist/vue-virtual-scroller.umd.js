@@ -1259,7 +1259,8 @@
                         (_vm.direction === "vertical" ? "Y" : "X") +
                         "(" +
                         view.position +
-                        "px)"
+                        "px)",
+                      zIndex: _vm.pool.length - view.nr.index
                     }
                   : null,
                 on: {
@@ -1946,7 +1947,7 @@
 
   var plugin$1 = {
     // eslint-disable-next-line no-undef
-    version: "1.2.0",
+    version: "1.2.1",
     install: function install(Vue, options) {
       var finalOptions = Object.assign({}, {
         installComponents: true,
