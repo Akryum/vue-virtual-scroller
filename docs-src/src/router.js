@@ -7,6 +7,7 @@ import Dynamic from './components/DynamicScrollerDemo.vue'
 import TestChat from './components/TestChat.vue'
 import SimpleList from './components/SimpleList.vue'
 import HorizontalDemo from './components/HorizontalDemo.vue'
+import ChatDemo from './components/ChatDemo.vue'
 
 Vue.use(VueRouter)
 
@@ -18,5 +19,6 @@ export default new VueRouter({
     { path: '/test-chat', name: 'test-chat', component: TestChat },
     { path: '/simple-list', name: 'simple-list', component: SimpleList },
     { path: '/horizontal', name: 'horizontal', component: HorizontalDemo },
+    { path: '/chat', name: 'chat', component: ChatDemo },
   ],
 })

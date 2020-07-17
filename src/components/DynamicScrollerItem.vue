@@ -5,9 +5,11 @@ export default {
   inject: [
     'vscrollData',
     'vscrollParent',
+    'vscrollResizeObserver',
   ],
 
   props: {
+    // eslint-disable-next-line vue/require-prop-types
     item: {
       required: true,
     },
@@ -17,6 +19,9 @@ export default {
       default: false,
     },
 
+    /**
+     * Indicates if the view is actively used to display an item.
+     */
     active: {
       type: Boolean,
       required: true,
@@ -51,6 +56,10 @@ export default {
     size () {
       return (this.vscrollData.validSizes[this.id] && this.vscrollData.sizes[this.id]) || 0
     },
+
+    finalActive () {
+      return this.active && this.vscrollData.active
+    },
   },
 
   watch: {
@@ -62,8 +71,28 @@ export default {
       }
     },
 
-    active (value) {
-      if (value && this.$_pendingVScrollUpdate === this.id) {
+    finalActive (value) {
+      if (!this.size) {
+        if (value) {
+          if (!this.vscrollParent.$_undefinedMap[this.id]) {
+            this.vscrollParent.$_undefinedSizes++
+            this.vscrollParent.$_undefinedMap[this.id] = true
+          }
+        } else {
+          if (this.vscrollParent.$_undefinedMap[this.id]) {
+            this.vscrollParent.$_undefinedSizes--
+            this.vscrollParent.$_undefinedMap[this.id] = false
+          }
+        }
+      }
+
+      if (this.vscrollResizeObserver) {
+        if (value) {
+          this.observeSize()
+        } else {
+          this.unobserveSize()
+        }
+      } else if (value && this.$_pendingVScrollUpdate === this.id) {
         this.updateSize()
       }
     },
@@ -75,43 +104,41 @@ export default {
     this.$_forceNextVScrollUpdate = null
     this.updateWatchData()
 
-    for (const k in this.sizeDependencies) {
-      this.$watch(() => this.sizeDependencies[k], this.onDataUpdate)
-    }
+    if (!this.vscrollResizeObserver) {
+      for (const k in this.sizeDependencies) {
+        this.$watch(() => this.sizeDependencies[k], this.onDataUpdate)
+      }
 
-    this.vscrollParent.$on('vscroll:update', this.onVscrollUpdate)
-    this.vscrollParent.$on('vscroll:update-size', this.onVscrollUpdateSize)
+      this.vscrollParent.$on('vscroll:update', this.onVscrollUpdate)
+      this.vscrollParent.$on('vscroll:update-size', this.onVscrollUpdateSize)
+    }
   },
 
   mounted () {
     if (this.vscrollData.active) {
       this.updateSize()
+      this.observeSize()
     }
   },
 
   beforeDestroy () {
     this.vscrollParent.$off('vscroll:update', this.onVscrollUpdate)
     this.vscrollParent.$off('vscroll:update-size', this.onVscrollUpdateSize)
+    this.unobserveSize()
   },
 
   methods: {
     updateSize () {
-      if (this.active && this.vscrollData.active) {
+      if (this.finalActive) {
         if (this.$_pendingSizeUpdate !== this.id) {
           this.$_pendingSizeUpdate = this.id
           this.$_forceNextVScrollUpdate = null
           this.$_pendingVScrollUpdate = null
-          if (this.active && this.vscrollData.active) {
-            this.computeSize(this.id)
-          }
+          this.computeSize(this.id)
         }
       } else {
         this.$_forceNextVScrollUpdate = this.id
       }
-    },
-
-    getBounds () {
-      return this.$el.getBoundingClientRect()
     },
 
     updateWatchData () {
@@ -128,9 +155,11 @@ export default {
     },
 
     onVscrollUpdate ({ force }) {
-      if (!this.active && force) {
+      // If not active, sechedule a size update when it becomes active
+      if (!this.finalActive && force) {
         this.$_pendingVScrollUpdate = this.id
       }
+
       if (this.$_forceNextVScrollUpdate === this.id || force || !this.size) {
         this.updateSize()
       }
@@ -143,20 +172,42 @@ export default {
     computeSize (id) {
       this.$nextTick(() => {
         if (this.id === id) {
-          const bounds = this.getBounds()
-          const size = Math.round(this.vscrollParent.direction === 'vertical' ? bounds.height : bounds.width)
-          if (size && this.size !== size) {
-            if (this.vscrollParent.$_undefinedMap[id]) {
-              this.vscrollParent.$_undefinedSizes--
-              this.vscrollParent.$_undefinedMap[id] = undefined
-            }
-            this.$set(this.vscrollData.sizes, this.id, size)
-            this.$set(this.vscrollData.validSizes, this.id, true)
-            if (this.emitResize) this.$emit('resize', this.id)
-          }
+          const width = this.$el.offsetWidth
+          const height = this.$el.offsetHeight
+          this.applySize(width, height)
         }
         this.$_pendingSizeUpdate = null
       })
+    },
+
+    applySize (width, height) {
+      const size = Math.round(this.vscrollParent.direction === 'vertical' ? height : width)
+      if (size && this.size !== size) {
+        if (this.vscrollParent.$_undefinedMap[this.id]) {
+          this.vscrollParent.$_undefinedSizes--
+          this.vscrollParent.$_undefinedMap[this.id] = undefined
+        }
+        this.$set(this.vscrollData.sizes, this.id, size)
+        this.$set(this.vscrollData.validSizes, this.id, true)
+        if (this.emitResize) this.$emit('resize', this.id)
+      }
+    },
+
+    observeSize () {
+      if (!this.vscrollResizeObserver) return
+      this.vscrollResizeObserver.observe(this.$el.parentNode)
+      this.$el.parentNode.addEventListener('resize', this.onResize)
+    },
+
+    unobserveSize () {
+      if (!this.vscrollResizeObserver) return
+      this.vscrollResizeObserver.unobserve(this.$el.parentNode)
+      this.$el.parentNode.removeEventListener('resize', this.onResize)
+    },
+
+    onResize (event) {
+      const { width, height } = event.detail.contentRect
+      this.applySize(width, height)
     },
   },
 

@@ -5,14 +5,32 @@
         <span class="package-name">vue-virtual-scroller</span>
       </span>
 
-      <router-link :to="{ name: 'home' }" exact>Home</router-link>
-      <router-link :to="{ name: 'recycle' }">Recycle scroller</router-link>
-      <router-link :to="{ name: 'dynamic' }">Dynamic scroller</router-link>
-      <router-link :to="{ name: 'horizontal' }">Horizontal</router-link>
-      <router-link :to="{ name: 'test-chat' }">Scroll to bottom</router-link>
-      <router-link :to="{ name: 'simple-list' }">Simple array</router-link>
+      <router-link
+        :to="{ name: 'home' }"
+        exact
+      >
+        Home
+      </router-link>
+      <router-link :to="{ name: 'recycle' }">
+        Recycle scroller
+      </router-link>
+      <router-link :to="{ name: 'dynamic' }">
+        Dynamic scroller
+      </router-link>
+      <router-link :to="{ name: 'horizontal' }">
+        Horizontal
+      </router-link>
+      <router-link :to="{ name: 'test-chat' }">
+        Scroll to bottom
+      </router-link>
+      <router-link :to="{ name: 'simple-list' }">
+        Simple array
+      </router-link>
+      <router-link :to="{ name: 'chat' }">
+        Chat demo
+      </router-link>
     </nav>
-    <router-view class="page"/>
+    <router-view class="page" />
   </div>
 </template>
 

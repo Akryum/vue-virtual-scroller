@@ -6,6 +6,7 @@ const config = Object.assign({}, base, {
     name: 'vue-virtual-scroller',
     file: 'dist/vue-virtual-scroller.umd.js',
     format: 'umd',
+    sourcemap: true,
   },
 })
 
