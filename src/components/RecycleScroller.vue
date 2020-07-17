@@ -203,6 +203,7 @@ export default {
 
   beforeDestroy () {
     this.removeListeners()
+    clearTimeout(this.scrollTimeout)
   },
 
   methods: {
@@ -248,19 +249,29 @@ export default {
     },
 
     handleScroll (event) {
-      if (!this.$_scrollDirty) {
-        this.$_scrollDirty = true
-        requestAnimationFrame(() => {
-          this.$_scrollDirty = false
-          const { continuous } = this.updateVisibleItems(false, true)
+      const job = () => {
+        if (!this.$_scrollDirty) {
+          this.$_scrollDirty = true
+          requestAnimationFrame(() => {
+            this.$_scrollDirty = false
+            const { continuous } = this.updateVisibleItems(false, true)
 
-          // It seems sometimes chrome doesn't fire scroll event :/
-          // When non continous scrolling is ending, we force a refresh
-          if (!continuous) {
-            clearTimeout(this.$_refreshTimout)
-            this.$_refreshTimout = setTimeout(this.handleScroll, 100)
-          }
-        })
+            // It seems sometimes chrome doesn't fire scroll event :/
+            // When non continous scrolling is ending, we force a refresh
+            if (!continuous) {
+              clearTimeout(this.$_refreshTimeout)
+              this.$_refreshTimeout = setTimeout(this.handleScroll, 100)
+            }
+          })
+        }
+      }
+
+      clearTimeout(this.scrollTimeout)
+
+      if (this.debounce) {
+        this.scrollTimeout = setTimeout(job, parseInt(this.debounce))
+      } else {
+        job()
       }
     },
 

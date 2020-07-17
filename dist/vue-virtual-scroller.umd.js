@@ -629,6 +629,10 @@
       validator: function validator(value) {
         return ['vertical', 'horizontal'].includes(value);
       }
+    },
+    debounce: {
+      type: [Number, String],
+      default: 0
     }
   };
   function simpleArray() {
@@ -783,6 +787,7 @@
     },
     beforeDestroy: function beforeDestroy() {
       this.removeListeners();
+      clearTimeout(this.scrollTimeout);
     },
     methods: {
       addView: function addView(pool, index, item, key, type) {
@@ -830,21 +835,31 @@
       handleScroll: function handleScroll(event) {
         var _this2 = this;
 
-        if (!this.$_scrollDirty) {
-          this.$_scrollDirty = true;
-          requestAnimationFrame(function () {
-            _this2.$_scrollDirty = false;
+        var job = function job() {
+          if (!_this2.$_scrollDirty) {
+            _this2.$_scrollDirty = true;
+            requestAnimationFrame(function () {
+              _this2.$_scrollDirty = false;
 
-            var _this2$updateVisibleI = _this2.updateVisibleItems(false, true),
-                continuous = _this2$updateVisibleI.continuous; // It seems sometimes chrome doesn't fire scroll event :/
-            // When non continous scrolling is ending, we force a refresh
+              var _this2$updateVisibleI = _this2.updateVisibleItems(false, true),
+                  continuous = _this2$updateVisibleI.continuous; // It seems sometimes chrome doesn't fire scroll event :/
+              // When non continous scrolling is ending, we force a refresh
 
 
-            if (!continuous) {
-              clearTimeout(_this2.$_refreshTimout);
-              _this2.$_refreshTimout = setTimeout(_this2.handleScroll, 100);
-            }
-          });
+              if (!continuous) {
+                clearTimeout(_this2.$_refreshTimeout);
+                _this2.$_refreshTimeout = setTimeout(_this2.handleScroll, 100);
+              }
+            });
+          }
+        };
+
+        clearTimeout(this.scrollTimeout);
+
+        if (this.debounce) {
+          this.scrollTimeout = setTimeout(job, parseInt(this.debounce));
+        } else {
+          job();
         }
       },
       handleVisibilityChange: function handleVisibilityChange(isVisible, entry) {
@@ -1593,6 +1608,7 @@
               items: _vm.itemsWithSize,
               "min-item-size": _vm.minItemSize,
               direction: _vm.direction,
+              debounce: _vm.debounce,
               "key-field": "id"
             },
             on: { resize: _vm.onScrollerResize, visible: _vm.onScrollerVisible },
