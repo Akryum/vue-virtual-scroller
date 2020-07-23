@@ -295,7 +295,8 @@ export default {
         startIndex = endIndex = totalSize = 0
       } else if (this.$_prerender) {
         startIndex = 0
-        endIndex = this.prerender
+        // Don't cause an error from an OOB if items are less than the prerender amount
+        endIndex = Math.min(this.prerender, items.length)
         totalSize = null
       } else {
         const scroll = this.getScroll()
