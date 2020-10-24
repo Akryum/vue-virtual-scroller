@@ -9,6 +9,7 @@
     @resize="onScrollerResize"
     @visible="onScrollerVisible"
     v-on="listeners"
+    :buffer="buffer"
   >
     <template slot-scope="{ item: itemWithSize, index, active }">
       <slot
@@ -74,6 +75,11 @@ export default {
     minItemSize: {
       type: [Number, String],
       required: true,
+    },
+
+    buffer: {
+      type: Number,
+      default: 200,
     },
   },
 
