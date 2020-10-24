@@ -4,6 +4,7 @@
     :items="itemsWithSize"
     :min-item-size="minItemSize"
     :direction="direction"
+    :buffer="buffer"
     key-field="id"
     v-bind="$attrs"
     @resize="onScrollerResize"
@@ -74,6 +75,11 @@ export default {
     minItemSize: {
       type: [Number, String],
       required: true,
+    },
+
+    buffer: {
+      type: Number,
+      default: 200,
     },
   },
 
