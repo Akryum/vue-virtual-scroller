@@ -4,12 +4,12 @@
     :items="itemsWithSize"
     :min-item-size="minItemSize"
     :direction="direction"
+    :buffer="buffer"
     key-field="id"
     v-bind="$attrs"
     @resize="onScrollerResize"
     @visible="onScrollerVisible"
     v-on="listeners"
-    :buffer="buffer"
   >
     <template slot-scope="{ item: itemWithSize, index, active }">
       <slot
