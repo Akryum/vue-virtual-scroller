@@ -29,8 +29,7 @@
         :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
         class="vue-recycle-scroller__item-view"
         :class="{ hover: hoverKey === view.nr.key }"
-        @mouseenter="hoverKey = view.nr.key"
-        @mouseleave="hoverKey = null"
+        v-on="detectHover ? { mouseenter: () => hoverKey = view.nr.key, mouseleave: () => hoverKey = null } : {}"
       >
         <slot
           :item="view.item"
@@ -115,6 +114,11 @@ export default {
     emitUpdate: {
       type: Boolean,
       default: false,
+    },
+
+    detectHover: {
+      type: Boolean,
+      default: true,
     },
   },
 
