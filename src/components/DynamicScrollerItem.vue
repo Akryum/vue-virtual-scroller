@@ -121,7 +121,7 @@ export default {
     }
   },
 
-  beforeDestroy () {
+  beforeUnmount () {
     this.vscrollParent.$off('vscroll:update', this.onVscrollUpdate)
     this.vscrollParent.$off('vscroll:update-size', this.onVscrollUpdateSize)
     this.unobserveSize()
