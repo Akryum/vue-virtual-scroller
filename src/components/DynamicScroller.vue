@@ -68,6 +68,12 @@ export default {
     }
   },
 
+  emits: [
+    'resize',
+    'visible',
+    'vscroll:update',
+  ],
+
   props: {
     ...props,
 
