@@ -54,6 +54,7 @@
 </template>
 
 <script>
+import { shallowReactive } from 'vue'
 import { ResizeObserver } from 'vue-resize'
 import { ObserveVisibility } from 'vue-observe-visibility'
 import ScrollParent from 'scrollparent'
@@ -73,6 +74,13 @@ export default {
   directives: {
     ObserveVisibility,
   },
+
+  emits: [
+    'update',
+    'resize',
+    'visible',
+    'hidden',
+  ],
 
   props: {
     ...props,
@@ -201,26 +209,22 @@ export default {
     })
   },
 
-  beforeDestroy () {
+  beforeUnmount () {
     this.removeListeners()
   },
 
   methods: {
     addView (pool, index, item, key, type) {
-      const view = {
+      const view = shallowReactive({
         item,
         position: 0,
-      }
-      const nonReactive = {
-        id: uid++,
-        index,
-        used: true,
-        key,
-        type,
-      }
-      Object.defineProperty(view, 'nr', {
-        configurable: false,
-        value: nonReactive,
+        nr: {
+          id: uid++,
+          index,
+          used: true,
+          key,
+          type,
+        },
       })
       pool.push(view)
       return view
