@@ -35,7 +35,7 @@
   "dependencies": {
     "scrollparent": "^2.0.1",
     "vue-observe-visibility": "^0.4.4",
-    "vue-resize": "^0.4.5"
+    "vue-resize": "^1.0.1"
   },
   "peerDependencies": {
     "vue": "^2.6.11"
