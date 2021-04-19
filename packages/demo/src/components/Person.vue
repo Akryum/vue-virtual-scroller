@@ -1,16 +1,19 @@
 <template>
-  <div class="tr person" @click="edit">
+  <div
+    class="tr person"
+    @click="edit"
+  >
     <div class="td index">
-      {{index}}
+      {{ index }}
     </div>
     <div class="td">
       <div class="info">
         <img
+          :key="item.value.avatar"
           class="avatar"
           :src="item.value.avatar"
-          :key="item.value.avatar"
-        />
-        <span>{{item.value.name}}</span>
+        >
+        <span>{{ item.value.name }}</span>
       </div>
     </div>
   </div>
@@ -30,6 +33,7 @@ export default {
 
   methods: {
     edit () {
+      // eslint-disable-next-line vue/no-mutating-props
       this.item.value.name += '#'
     },
   },
