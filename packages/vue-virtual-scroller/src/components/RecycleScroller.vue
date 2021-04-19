@@ -57,7 +57,7 @@
 import { shallowReactive, markRaw } from 'vue'
 import { ResizeObserver } from 'vue-resize'
 import { ObserveVisibility } from 'vue-observe-visibility'
-import ScrollParent from 'scrollparent'
+import { getScrollParent } from '../scrollparent'
 import config from '../config'
 import { props, simpleArray } from './common'
 import { supportsPassive } from '../utils'
@@ -496,7 +496,7 @@ export default {
     },
 
     getListenerTarget () {
-      let target = ScrollParent(this.$el)
+      let target = getScrollParent(this.$el)
       // Fix global scroll target for Chrome and Safari
       if (window.document && (target === window.document.documentElement || target === window.document.body)) {
         target = window

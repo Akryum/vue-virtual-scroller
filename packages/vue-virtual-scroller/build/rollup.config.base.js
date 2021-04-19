@@ -33,9 +33,12 @@ export default {
     babel({
       exclude: 'node_modules/**',
     }),
-    cjs(),
+    cjs({
+      include: /node_modules/,
+    }),
     replace({
       VERSION: JSON.stringify(config.version),
+      preventAssignment: true,
     }),
   ],
   watch: {
