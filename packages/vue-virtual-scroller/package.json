@@ -1,0 +1,67 @@
+{
+  "name": "vue-virtual-scroller",
+  "description": "Smooth scrolling for any amount of data",
+  "version": "2.0.0-alpha.1",
+  "author": {
+    "name": "Guillaume Chau",
+    "email": "guillaume.b.chau@gmail.com"
+  },
+  "keywords": [
+    "vue",
+    "vuejs",
+    "plugin"
+  ],
+  "license": "MIT",
+  "main": "dist/vue-virtual-scroller.umd.js",
+  "module": "dist/vue-virtual-scroller.esm.js",
+  "unpkg": "dist/vue-virtual-scroller.min.js",
+  "scripts": {
+    "build": "npm run build:browser && npm run build:es && npm run build:umd",
+    "build:browser": "rollup --config build/rollup.config.browser.js",
+    "build:es": "rollup --config build/rollup.config.es.js",
+    "build:umd": "rollup --config build/rollup.config.umd.js",
+    "prepublishOnly": "npm run lint && npm run build",
+    "dev": "cross-env NODE_ENV=development rollup --config build/rollup.config.es.js --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Akryum/vue-virtual-scroller.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Akryum/vue-virtual-scroller/issues"
+  },
+  "homepage": "https://github.com/Akryum/vue-virtual-scroller#readme",
+  "dependencies": {
+    "mitt": "^2.1.0",
+    "scrollparent": "^2.0.1",
+    "vue-observe-visibility": "^2.0.0-alpha.1",
+    "vue-resize": "^2.0.0-alpha.1"
+  },
+  "peerDependencies": {
+    "vue": "^3.0.11"
+  },
+  "devDependencies": {
+    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@rollup/plugin-replace": "^2.3.1",
+    "@vue/compiler-sfc": "^3.0.11",
+    "autoprefixer": "^9.7.5",
+    "clean-css": "^4.1.8",
+    "cross-env": "^7.0.2",
+    "fs-extra": "^9.1.0",
+    "rollup": "^2.2.0",
+    "rollup-plugin-css-only": "^2.0.0",
+    "rollup-plugin-css-porter": "^1.0.2",
+    "rollup-plugin-terser": "^5.3.0",
+    "rollup-plugin-vue": "^6.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ],
+  "resolutions": {
+    "vue": "2.5.22"
+  }
+}
