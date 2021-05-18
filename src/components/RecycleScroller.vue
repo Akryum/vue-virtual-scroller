@@ -17,29 +17,39 @@
         name="before"
       />
     </div>
-
+  <!-- Formatting recycle scroller with draggable library. Modified lines: 21-52 -->
     <div
       ref="wrapper"
       :style="{ [direction === 'vertical' ? 'minHeight' : 'minWidth']: totalSize + 'px' }"
       class="vue-recycle-scroller__item-wrapper"
+      :class="{ potentialDrop: isPotentialDrop(this.stage), dragEnter: isDragEnter(this.stage) }"
     >
-      <div
-        v-for="view of pool"
-        :key="view.nr.id"
-        :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
-        class="vue-recycle-scroller__item-view"
-        :class="{ hover: hoverKey === view.nr.key }"
-        @mouseenter="hoverKey = view.nr.key"
-        @mouseleave="hoverKey = null"
-      >
-        <slot
-          :item="view.item"
-          :index="view.nr.index"
-          :active="view.nr.used"
-        />
-      </div>
+    <Container class = "container"
+      :id="'stage' + stage.id"
+      :group-name = "'cardDroppable'"
+      :get-child-payload = "($event) => getChildPayload(stage.id, $event)"
+      :should-animate-drop = "shouldAnimateDrop"
+      :non-drag-area-selector = "'.noDrag'"
+      @drag-start = "dragStart"
+      @drag-end = "dragEnd"
+      @drag-enter = "() => dragEnter(stage.id, true)"
+      @drag-leave = "() => dragEnter(stage.id, false)"
+      @drop = "onDrop(stage.id, $event)">
+      <Draggable  v-for="view of pool" :key="view.nr.id"
+          :style="ready ? {[direction === 'vertical' ? 'top' : 'left'] : `${view.position}px`, willChange : 'auto'} : null"
+          class="vue-recycle-scroller__item-view"
+          :class="{ hover: hoverKey === view.nr.key, hideCards: dragging}"
+          @mouseenter="hoverKey = view.nr.key"
+          @mouseleave="hoverKey = null"
+        >
+          <slot
+            :item="view.item"
+            :index="view.nr.index"
+            :active="view.nr.used"
+          />
+      </Draggable>
+    </Container>
     </div>
-
     <div
       v-if="$slots.after"
       class="vue-recycle-scroller__slot"
@@ -60,6 +70,8 @@ import ScrollParent from 'scrollparent'
 import config from '../config'
 import { props, simpleArray } from './common'
 import { supportsPassive } from '../utils'
+import { mapState, mapGetters } from 'vuex'
+import { Container, Draggable } from "vue-smooth-dnd"
 
 let uid = 0
 
@@ -67,7 +79,7 @@ export default {
   name: 'RecycleScroller',
 
   components: {
-    ResizeObserver,
+    ResizeObserver, Container, Draggable
   },
 
   directives: {
@@ -76,6 +88,12 @@ export default {
 
   props: {
     ...props,
+
+  // Added stage prop
+    stage: {
+      type: Object,
+      default: {},
+    },
 
     itemSize: {
       type: Number,
@@ -124,10 +142,17 @@ export default {
       totalSize: 0,
       ready: false,
       hoverKey: null,
+      dragging: false,
     }
   },
 
   computed: {
+    // Added mapState and mapGetters
+    ...mapState('sales', ['stageInfo', 'stageOrder', 'stages', 'smartViewId']),
+    ...mapState('offers', ['offers', 'currentSet', 'ownerFilter']),
+    ...mapState('users', ['currentUser']),
+    ...mapGetters('sales', ['currentSmartView']),
+
     sizes () {
       if (this.itemSize === null) {
         const sizes = {
@@ -206,6 +231,84 @@ export default {
   },
 
   methods: {
+    // Added new methods: Lines 235-310
+    isPotentialDrop (stage) {
+      return this.dragging && this.dragging != stage.id
+    },
+
+    isDragEnter (stage) {
+       return this.isPotentialDrop(stage.id) && stage.dragEnter
+    },
+
+    onDrop (stageId, dropResult) {
+      let removing = dropResult.removedIndex != null;
+      let adding = dropResult.addedIndex != null;
+
+      let sameColumn = removing && adding;
+      let notAffected = !removing && !adding;
+      if (notAffected || sameColumn)
+      { return; }
+      this.dragEnter(stageId, false)
+
+      let opportunity = dropResult.payload
+      let opportunityId = dropResult.payload.id
+
+      let offer = this.offers[opportunity.offerId]
+      if (offer && offer.created_by.id != this.currentUser.id) {
+        if (removing) {
+          notifications.toast({
+            message: "You do not have permissions to move this card",
+            icon: 'alert'
+          });
+        }
+        return
+      }
+      
+      if (removing) {
+        this.$store.commit('sales/removeFromStage', { stageId, opportunityId })
+        return
+      };
+
+      let newOpportunity = Object.assign({}, opportunity, { stageId: stageId })
+      this.$store.commit('sales/addToStage', { stageId, opportunity: newOpportunity })
+      let editResult = this.$store.dispatch('sales/editOpportunity', { opportunityId, changes: { stage_id: stageId } });
+      editResult.then(result => {
+         if (result) {return}
+         else {
+           notifications.toast({
+            message: 'Error in saving card movement',
+            icon: 'alert'
+           });
+         };
+         return
+       })
+    },
+
+    dragEnter (stageId, entering) {
+        this.$store.commit('sales/updateStages',
+          {stageIds: [stageId],
+          changes: 
+            {dragEnter: entering}})
+    },
+
+    dragStart ({ index, payload }) {
+      this.dragging = payload.stageId;
+    },
+
+    dragEnd (dragResult) { 
+      this.dragging = false 
+    },
+
+    getChildPayload (stageId, itemIndex) {
+      var id = document.getElementById('stage' + stageId);
+      var childId = id.childNodes[itemIndex].childNodes[0].id
+      return this.stages[stageId][childId];
+    },
+
+    shouldAnimateDrop (sourceContainerOptions, payload) { 
+      return false;
+    },
+
     addView (pool, index, item, key, type) {
       const view = {
         item,
@@ -478,7 +581,10 @@ export default {
       this.$_startIndex = startIndex
       this.$_endIndex = endIndex
 
-      if (this.emitUpdate) this.$emit('update', startIndex, endIndex)
+      if (this.emitUpdate) {
+        this.$emit('update', startIndex, endIndex)
+        console.log("something" + startIndex + ' ' + endIndex)
+      }
 
       // After the user has finished scrolling
       // Sort views so text selection is correct
@@ -596,6 +702,41 @@ export default {
 </script>
 
 <style>
+
+.hideCards {
+  opacity: 0;
+}
+
+.scrollZone {
+    height: 700px !important;
+    width: 100%;
+    overflow-y: auto;
+}
+
+.smooth-dnd-container.vertical > .smooth-dnd-draggable-wrapper.cardContainer {
+  overflow: visible !important
+}
+
+.vue-recycle-scroller__item-wrapper > .container {
+  height: 100%;
+  min-height: 400px;
+}
+
+.potentialDrop {
+    border: 3px dashed #2F80ED;
+    border-radius:0em 5px;
+    background-color: rgba(184, 218, 241, 0.5);
+    width: calc(100% - 6px);
+    height: calc(100% - 64px);
+}
+
+.dragEnter {
+    background-color: rgba(222, 255, 185, 0.3) !important;
+    border-color: #76B13A !important;
+    transition: background-color 0.2s;
+    transition: border-color 0.2s;
+}
+
 .vue-recycle-scroller {
   position: relative;
 }
