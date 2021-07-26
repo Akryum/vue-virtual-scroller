@@ -44,7 +44,7 @@
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.0",
     "@rollup/plugin-commonjs": "^11.0.2",
-    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@rollup/plugin-node-resolve": "^13.0.4",
     "@rollup/plugin-replace": "^2.3.1",
     "autoprefixer": "^9.7.5",
     "babel-eslint": "^10.1.0",
