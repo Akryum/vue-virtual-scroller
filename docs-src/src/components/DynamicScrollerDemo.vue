@@ -17,7 +17,11 @@
           The message heights are unknown.
         </div>
       </template>
-
+      <template #after>
+        <div class="notice">
+          You have reached the end.
+        </div>
+      </template>
       <template v-slot="{ item, index, active }">
         <DynamicScrollerItem
           :item="item"
