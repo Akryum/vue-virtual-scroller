@@ -580,11 +580,10 @@ export default {
     },
 
     scrollToPosition (position) {
-      if (this.direction === 'vertical') {
-        this.$el.scrollTop = position
-      } else {
-        this.$el.scrollLeft = position
-      }
+      this.$el.scrollTo({
+        [this.direction === 'vertical' ? 'top' : 'left']: position,
+        behavior: this.smooth ? 'smooth' : 'auto',
+      })
     },
 
     itemsLimitError () {
