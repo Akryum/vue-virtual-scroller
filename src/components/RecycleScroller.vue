@@ -47,6 +47,8 @@
         name="after"
       />
     </div>
+
+    <ResizeObserver @notify="handleResize" />
   </div>
 </template>
 
@@ -56,14 +58,18 @@ import ScrollParent from 'scrollparent'
 import config from '../config'
 import { props, simpleArray } from './common'
 import { supportsPassive } from '../utils'
-
+import { ResizeObserver } from 'vue-resize'
 let uid = 0
 
 export default {
   name: 'RecycleScroller',
 
+  components: {
+    ResizeObserver
+  },
+
   directives: {
-    ObserveVisibility,
+    ObserveVisibility
   },
 
   props: {
