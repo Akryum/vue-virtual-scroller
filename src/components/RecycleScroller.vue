@@ -65,11 +65,11 @@ export default {
   name: 'RecycleScroller',
 
   components: {
-    ResizeObserver
+    ResizeObserver,
   },
 
   directives: {
-    ObserveVisibility
+    ObserveVisibility,
   },
 
   props: {
