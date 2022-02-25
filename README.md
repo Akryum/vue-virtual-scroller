@@ -11,8 +11,11 @@ For Vue 3 support, see [here](https://github.com/Akryum/vue-virtual-scroller/tre
 
 ## Sponsors
 
-
-[![sponsors logos](https://guillaume-chau.info/sponsors.png)](https://guillaume-chau.info/sponsors)
+<p align="center">
+  <a href="https://guillaume-chau.info/sponsors/" target="_blank">
+    <img src='https://akryum.netlify.app/sponsors.svg'/>
+  </a>
+</p>
 
 ## Table of contents
 
