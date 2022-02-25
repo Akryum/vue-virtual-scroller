@@ -14,6 +14,11 @@ export const props = {
     default: 'vertical',
     validator: (value) => ['vertical', 'horizontal'].includes(value),
   },
+
+  detectHover: {
+    type: Boolean,
+    default: false,
+  },
 }
 
 export function simpleArray () {
