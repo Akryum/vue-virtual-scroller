@@ -204,9 +204,9 @@ export default {
   activated() {
     const lastPosition = this.$_lastUpdateScrollPosition;
     if (typeof lastPosition === 'number') {
-      setTimeout(() => {
+      this.$nextTick(() => {
         this.scrollToPosition(lastPosition);
-      }, 0)
+      });
     }
   },
 
