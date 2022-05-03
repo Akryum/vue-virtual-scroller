@@ -162,10 +162,18 @@ export default {
       return []
     },
 
+    itemsSize() {
+      return this.items.length
+    },
+
     simpleArray,
   },
 
   watch: {
+    itemsSize () {
+      this.updateVisibleItems(true)
+    },
+
     items () {
       this.updateVisibleItems(true)
     },
