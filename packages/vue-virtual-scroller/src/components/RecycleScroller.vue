@@ -393,9 +393,9 @@ export default {
           view = pool[i]
           if (view.nr.used) {
             // Update view item index
-            if (checkItem) {
+            if (checkItem && keyField) {
               view.nr.index = items.findIndex(
-                item => keyField ? item[keyField] === view.item[keyField] : item === view.item,
+                item => item[keyField] === view.item[keyField],
               )
             }
 
@@ -417,7 +417,7 @@ export default {
       let v
       for (let i = startIndex; i < endIndex; i++) {
         item = items[i]
-        const key = keyField ? item[keyField] : item
+        const key = keyField ? item[keyField] : i
         if (key == null) {
           throw new Error(`Key is ${key} on item (keyField is '${keyField}')`)
         }
