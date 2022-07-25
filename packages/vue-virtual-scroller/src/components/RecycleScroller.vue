@@ -458,7 +458,9 @@ export default {
               view.item = item
               view.nr.index = i
               view.nr.key = key
-              view.nr.type = type
+              if (view.nr.type !== type) {
+                console.warn("Reused view's type does not match pool's type")
+              }
             } else {
               view = this.createView(pool, i, item, key, type)
             }
@@ -485,8 +487,10 @@ export default {
           }
           views.set(key, view)
         } else {
-          view.nr.used = true
           view.item = item
+          if (!view.nr.used) {
+            console.warn("Expected existing view's used flag to be true, got " + view.nr.used)
+          }
         }
 
         // Update position
