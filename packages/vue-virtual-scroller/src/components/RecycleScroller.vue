@@ -26,11 +26,11 @@
       class="vue-recycle-scroller__item-wrapper"
       :class="listClass"
     >
-      <component
-        :is="itemTag"
+      <ItemView
         v-for="view of pool"
         ref="items"
         :key="view.nr.id"
+        :item-tag="itemTag"
         :style="ready
           ? [
             (disableTransform
@@ -59,7 +59,7 @@
           :index="view.nr.index"
           :active="view.nr.used"
         />
-      </component>
+      </ItemView>
 
       <slot
         name="empty"
@@ -88,6 +88,7 @@ import { getScrollParent } from '../scrollparent'
 import config from '../config'
 import { props, simpleArray } from './common'
 import { supportsPassive } from '../utils'
+import ItemView from './ItemView.vue'
 
 let uid = 0
 
@@ -95,6 +96,7 @@ export default {
   name: 'RecycleScroller',
 
   components: {
+    ItemView,
     ResizeObserver,
   },
 
