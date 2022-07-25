@@ -282,7 +282,7 @@ export default {
       }
     },
 
-    updateVisibleItems (checkItem, checkPositionDiff = false) {
+    updateVisibleItems (itemsChanged, checkPositionDiff = false) {
       const itemSize = this.itemSize
       const minItemSize = this.$_computedMinItemSize
       const typeField = this.typeField
@@ -393,7 +393,7 @@ export default {
           view = pool[i]
           if (view.nr.used) {
             // Update view item index
-            if (checkItem) {
+            if (itemsChanged) {
               view.nr.index = items.findIndex(
                 item => keyField ? item[keyField] === view.item[keyField] : item === view.item,
               )
