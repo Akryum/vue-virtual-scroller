@@ -214,7 +214,7 @@ export default {
   },
 
   methods: {
-    addView (pool, index, item, key, type) {
+    createView (pool, index, item, key, type) {
       const nr = markRaw({
         id: uid++,
         index,
@@ -443,7 +443,7 @@ export default {
               view.nr.key = key
               view.nr.type = type
             } else {
-              view = this.addView(pool, i, item, key, type)
+              view = this.createView(pool, i, item, key, type)
             }
           } else {
             // Use existing view
@@ -452,7 +452,7 @@ export default {
             v = unusedIndex.get(type) || 0
 
             if (!unusedPool || v >= unusedPool.length) {
-              view = this.addView(pool, i, item, key, type)
+              view = this.createView(pool, i, item, key, type)
               this.unuseView(view, true)
               unusedPool = unusedViews.get(type)
             }
