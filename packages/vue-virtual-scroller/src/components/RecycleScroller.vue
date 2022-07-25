@@ -231,6 +231,17 @@ export default {
       return view
     },
 
+    getRecycledView (type) {
+      const recycledPool = this.getRecycledPool(type)
+      if (recycledPool && recycledPool.length) {
+        const view = recycledPool.pop()
+        view.nr.used = true
+        return view
+      } else {
+        return null
+      }
+    },
+
     removeAndRecycleView (view, fake = false) {
       const unusedViews = this.$_unusedViews
       const type = view.nr.type
@@ -431,14 +442,12 @@ export default {
         // No view assigned to item
         if (!view) {
           type = item[typeField]
-          unusedPool = unusedViews.get(type)
+          view = this.getRecycledView(type)
 
           if (continuous) {
             // Reuse existing view
-            if (unusedPool && unusedPool.length) {
-              view = unusedPool.pop()
+            if (view) {
               view.item = item
-              view.nr.used = true
               view.nr.index = i
               view.nr.key = key
               view.nr.type = type
