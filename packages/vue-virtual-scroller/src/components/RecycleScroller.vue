@@ -258,6 +258,14 @@ export default {
       }
     },
 
+    removeAndRecycleAllViews () {
+      this.$_views.clear()
+      this.$_recycledPools.clear()
+      for (let i = 0, l = this.pool.length; i < l; i++) {
+        this.removeAndRecycleView(this.pool[i])
+      }
+    },
+
     handleResize () {
       this.$emit('resize')
       if (this.ready) this.updateVisibleItems(false)
@@ -391,12 +399,7 @@ export default {
 
       if (this.$_continuous !== continuous) {
         if (continuous) {
-          views.clear()
-          unusedViews.clear()
-          for (let i = 0, l = pool.length; i < l; i++) {
-            view = pool[i]
-            this.removeAndRecycleView(view)
-          }
+          this.removeAndRecycleAllViews()
         }
         this.$_continuous = continuous
       } else if (continuous) {
