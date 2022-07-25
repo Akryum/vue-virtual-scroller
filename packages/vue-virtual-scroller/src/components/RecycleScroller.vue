@@ -254,15 +254,13 @@ export default {
       }
     },
 
-    removeAndRecycleView (view, fake = false) {
+    removeAndRecycleView (view) {
       const type = view.nr.type
       const recycledPool = this.getRecycledPool(type)
       recycledPool.push(view)
-      if (!fake) {
-        view.nr.used = false
-        view.position = -9999
-        this.$_views.delete(view.nr.key)
-      }
+      view.nr.used = false
+      view.position = -9999
+      this.$_views.delete(view.nr.key)
     },
 
     removeAndRecycleAllViews () {
