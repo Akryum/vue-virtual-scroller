@@ -214,6 +214,16 @@ export default {
   },
 
   methods: {
+    getRecycledPool (type) {
+      const recycledPools = this.$_recycledPools
+      let recycledPool = recycledPools.get(type)
+      if (!recycledPool) {
+        recycledPool = []
+        recycledPools.set(type, recycledPool)
+      }
+      return recycledPool
+    },
+
     createView (pool, index, item, key, type) {
       const nr = markRaw({
         id: uid++,
@@ -243,14 +253,9 @@ export default {
     },
 
     removeAndRecycleView (view, fake = false) {
-      const unusedViews = this.$_unusedViews
       const type = view.nr.type
-      let unusedPool = unusedViews.get(type)
-      if (!unusedPool) {
-        unusedPool = []
-        unusedViews.set(type, unusedPool)
-      }
-      unusedPool.push(view)
+      const recycledPool = this.getRecycledPool(type)
+      recycledPool.push(view)
       if (!fake) {
         view.nr.used = false
         view.position = -9999
