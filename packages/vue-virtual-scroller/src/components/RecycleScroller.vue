@@ -231,7 +231,7 @@ export default {
       return view
     },
 
-    unuseView (view, fake = false) {
+    removeAndRecycleView (view, fake = false) {
       const unusedViews = this.$_unusedViews
       const type = view.nr.type
       let unusedPool = unusedViews.get(type)
@@ -384,7 +384,7 @@ export default {
           unusedViews.clear()
           for (let i = 0, l = pool.length; i < l; i++) {
             view = pool[i]
-            this.unuseView(view)
+            this.removeAndRecycleView(view)
           }
         }
         this.$_continuous = continuous
@@ -405,7 +405,7 @@ export default {
               view.nr.index < startIndex ||
               view.nr.index >= endIndex
             ) {
-              this.unuseView(view)
+              this.removeAndRecycleView(view)
             }
           }
         }
@@ -424,7 +424,7 @@ export default {
         view = views.get(key)
 
         if (!itemSize && !sizes[i].size) {
-          if (view) this.unuseView(view)
+          if (view) this.removeAndRecycleView(view)
           continue
         }
 
@@ -453,7 +453,7 @@ export default {
 
             if (!unusedPool || v >= unusedPool.length) {
               view = this.createView(pool, i, item, key, type)
-              this.unuseView(view, true)
+              this.removeAndRecycleView(view, true)
               unusedPool = unusedViews.get(type)
             }
 
