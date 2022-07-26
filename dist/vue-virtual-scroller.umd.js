@@ -691,6 +691,10 @@
       emitUpdate: {
         type: Boolean,
         default: false
+      },
+      detectHover: {
+        type: Boolean,
+        default: true
       }
     }),
     data: function data() {
@@ -1308,29 +1312,33 @@
           _vm._l(_vm.pool, function(view) {
             return _c(
               "div",
-              {
-                key: view.nr.id,
-                staticClass: "vue-recycle-scroller__item-view",
-                class: { hover: _vm.hoverKey === view.nr.key },
-                style: _vm.ready
+              _vm._g(
+                {
+                  key: view.nr.id,
+                  staticClass: "vue-recycle-scroller__item-view",
+                  class: { hover: _vm.hoverKey === view.nr.key },
+                  style: _vm.ready
+                    ? {
+                        transform:
+                          "translate" +
+                          (_vm.direction === "vertical" ? "Y" : "X") +
+                          "(" +
+                          view.position +
+                          "px)"
+                      }
+                    : null
+                },
+                _vm.detectHover
                   ? {
-                      transform:
-                        "translate" +
-                        (_vm.direction === "vertical" ? "Y" : "X") +
-                        "(" +
-                        view.position +
-                        "px)"
+                      mouseenter: function() {
+                        return (_vm.hoverKey = view.nr.key)
+                      },
+                      mouseleave: function() {
+                        return (_vm.hoverKey = null)
+                      }
                     }
-                  : null,
-                on: {
-                  mouseenter: function($event) {
-                    _vm.hoverKey = view.nr.key;
-                  },
-                  mouseleave: function($event) {
-                    _vm.hoverKey = null;
-                  }
-                }
-              },
+                  : {}
+              ),
               [
                 _vm._t("default", null, {
                   item: view.item,
