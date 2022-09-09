@@ -194,7 +194,7 @@ export default {
     },
 
     observeSize () {
-      if (!this.vscrollResizeObserver) return
+      if (!this.vscrollResizeObserver || !this.$el.parentNode) return
       this.vscrollResizeObserver.observe(this.$el.parentNode)
       this.$el.parentNode.addEventListener('resize', this.onResize)
     },
