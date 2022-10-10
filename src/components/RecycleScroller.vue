@@ -203,6 +203,15 @@ export default {
     })
   },
 
+  activated() {
+    const lastPosition = this.$_lastUpdateScrollPosition;
+    if (typeof lastPosition === 'number') {
+      this.$nextTick(() => {
+        this.scrollToPosition(lastPosition);
+      });
+    }
+  },
+
   beforeDestroy () {
     this.removeListeners()
   },
