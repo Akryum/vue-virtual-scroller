@@ -12,6 +12,7 @@
     <div
       v-if="$slots.before"
       class="vue-recycle-scroller__slot"
+      ref="before"
     >
       <slot
         name="before"
@@ -43,6 +44,7 @@
     <div
       v-if="$slots.after"
       class="vue-recycle-scroller__slot"
+      ref="after"
     >
       <slot
         name="after"
@@ -320,6 +322,18 @@ export default {
         const buffer = this.buffer
         scroll.start -= buffer
         scroll.end += buffer
+
+        // account for leading slot
+        if (this.$refs.before){
+          const lead = this.$refs.before.scrollHeight;
+          scroll.start -= lead;
+        }
+
+        // account for trailing slot
+        if (this.$refs.after){
+          const trail = this.$refs.after.scrollHeight;
+          scroll.end += trail;
+        }
 
         // Variable size mode
         if (itemSize === null) {
