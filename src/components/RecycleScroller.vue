@@ -28,9 +28,9 @@
         :key="view.nr.id"
         :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
         class="vue-recycle-scroller__item-view"
-        :class="{ hover: detectHover && hoverKey === view.nr.key }"
-        @mouseenter="detectHover && (hoverKey = view.nr.key)"
-        @mouseleave="detectHover && (hoverKey = null)"
+        :class="{ hover: !skipHover && hoverKey === view.nr.key }"
+        @mouseenter="!skipHover && (hoverKey = view.nr.key)"
+        @mouseleave="!skipHover && (hoverKey = null)"
       >
         <slot
           :item="view.item"
@@ -117,9 +117,9 @@ export default {
       default: false,
     },
 
-    detectHover: {
+    skipHover: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
 
