@@ -143,7 +143,7 @@ export default {
 
     updateWatchData () {
       if (this.watchData) {
-        this.$_watchData = this.$watch('data', () => {
+        this.$_watchData = this.$watch('item', () => {
           this.onDataUpdate()
         }, {
           deep: true,
