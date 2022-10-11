@@ -15,6 +15,11 @@ export const props = {
     validator: (value) => ['vertical', 'horizontal'].includes(value),
   },
 
+  debounce: {
+    type: [Number, String],
+    default: 0,
+  },
+
   listTag: {
     type: String,
     default: 'div',
