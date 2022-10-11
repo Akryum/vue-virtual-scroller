@@ -217,7 +217,7 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 - `minItemSize`: minimum size used if the height (or width in horizontal mode) of a item is unknown.
 - `sizeField` (default: `'size'`): field used to get the item's size in variable size mode.
 - `typeField` (default: `'type'`): field used to differentiate different kinds of components in the list. For each distinct type, a pool of recycled items will be created.
-- `keyField` (default: `'id'`): field used to identify items and optimize managing rendered views. The prop must be passed when is used with object list, otherwise the list `'items'` will be not renderized.
+- `keyField` (default: `'id'`): field used to identify items and optimize managing rendered views. The prop must be passed when is used with object list, otherwise the list `'items'` will be not rendered.
 - `pageMode` (default: `false`): enable [Page mode](#page-mode).
 - `prerender` (default: `0`): render a fixed number of items for Server-Side Rendering (SSR).
 - `buffer` (default: `200`): amount of pixel to add to edges of the scrolling visible area to start rendering items further away.
