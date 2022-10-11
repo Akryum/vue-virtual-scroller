@@ -50,9 +50,10 @@ export default {
 
   computed: {
     id () {
-      if (this.vscrollData.simpleArray) return this.index;
-      if (this.item.hasOwnProperty(this.vscrollData.keyField)) return this.item[this.vscrollData.keyField];
-      throw new Error(`keyField '${this.vscrollData.keyField}' not found in your item. You should set a valid keyField prop on your Scroller`);
+      if (this.vscrollData.simpleArray) return this.index
+      // eslint-disable-next-line no-prototype-builtins
+      if (this.item.hasOwnProperty(this.vscrollData.keyField)) return this.item[this.vscrollData.keyField]
+      throw new Error(`keyField '${this.vscrollData.keyField}' not found in your item. You should set a valid keyField prop on your Scroller`)
     },
 
     size () {
