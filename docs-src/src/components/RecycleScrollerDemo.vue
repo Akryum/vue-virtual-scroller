@@ -43,6 +43,15 @@
         > buffer
       </span>
       <span>
+        <button @mousedown="$refs.scroller.scrollToItem(scrollTo)">Scroll To: </button>
+        <input
+          v-model.number="scrollTo"
+          type="number"
+          min="0"
+          :max="list.length - 1"
+        >
+      </span>
+      <span>
         <button @mousedown="renderScroller = !renderScroller">Toggle render</button>
         <button @mousedown="showScroller = !showScroller">Toggle visibility</button>
       </span>
@@ -122,6 +131,7 @@ export default {
     enableLetters: true,
     pageMode: false,
     pageModeFullPage: true,
+    scrollTo: 100,
     updateParts: { viewStartIdx: 0, viewEndIdx: 0, visibleStartIdx: 0, visibleEndIdx: 0 },
     showMessageBeforeItems: true,
   }),
