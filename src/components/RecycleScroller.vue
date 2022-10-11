@@ -563,44 +563,43 @@ export default {
     },
 
     scrollToItem (index) {
-      const { viewport, scrollDirection, scrollDistance } = this.scrollToPosition(index)
-      viewport[scrollDirection] = scrollDistance
+      let scroll
+      if (this.itemSize === null) {
+        scroll = index > 0 ? this.sizes[index - 1].accumulator : 0
+      } else {
+        scroll = index * this.itemSize
+      }
+      this.scrollToPosition(scroll)
     },
 
-    scrollToPosition (index) {
-      const getPositionOfItem = (index) => {
-        if (this.itemSize === null) {
-          return index > 0 ? this.sizes[index - 1].accumulator : 0
-        } else {
-          return index * this.itemSize
-        }
-      }
-      const position = getPositionOfItem(index)
+    scrollToPosition (position) {
       const direction = this.direction === 'vertical'
         ? { scroll: 'scrollTop', start: 'top' }
         : { scroll: 'scrollLeft', start: 'left' }
+
+      let viewport
+      let scrollDirection
+      let scrollDistance
 
       if (this.pageMode) {
         const viewportEl = ScrollParent(this.$el)
         // HTML doesn't overflow like other elements
         const scrollTop = viewportEl.tagName === 'HTML' ? 0 : viewportEl[direction.scroll]
-        const viewport = viewportEl.getBoundingClientRect()
+        const bounds = viewportEl.getBoundingClientRect()
 
         const scroller = this.$el.getBoundingClientRect()
-        const scrollerPosition = scroller[direction.start] - viewport[direction.start]
+        const scrollerPosition = scroller[direction.start] - bounds[direction.start]
 
-        return {
-          viewport: viewportEl,
-          scrollDirection: direction.scroll,
-          scrollDistance: position + scrollTop + scrollerPosition,
-        }
+        viewport = viewportEl
+        scrollDirection = direction.scroll
+        scrollDistance = position + scrollTop + scrollerPosition
+      } else {
+        viewport = this.$el
+        scrollDirection = direction.scroll
+        scrollDistance = position
       }
 
-      return {
-        viewport: this.$el,
-        scrollDirection: direction.scroll,
-        scrollDistance: position,
-      }
+      viewport[scrollDirection] = scrollDistance
     },
 
     itemsLimitError () {
