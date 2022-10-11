@@ -19,6 +19,16 @@ export const props = {
     type: [Number, String],
     default: 0,
   },
+
+  listTag: {
+    type: String,
+    default: 'div',
+  },
+
+  itemTag: {
+    type: String,
+    default: 'div',
+  },
 }
 
 export function simpleArray () {
