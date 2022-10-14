@@ -402,8 +402,8 @@ export default {
 
         // No view assigned to item
         if (!view) {
-          if (i === items.length - 1) this.$emit('scrolledtoend')
-          if (i === 0) this.$emit('scrolledtobegin')
+          if (i === items.length - 1) this.$emit('scroll-end')
+          if (i === 0) this.$emit('scroll-start')
 
           type = item[typeField]
 
