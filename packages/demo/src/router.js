@@ -10,7 +10,7 @@ import ChatDemo from './components/ChatDemo.vue'
 import GridDemo from './components/GridDemo.vue'
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', name: 'home', component: Home },
     { path: '/recycle', name: 'recycle', component: Recycle },

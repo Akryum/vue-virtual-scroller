@@ -27,7 +27,7 @@
     <template #after>
       <slot name="after" />
     </template>
-    <template slot="empty">
+    <template #empty>
       <slot name="empty" />
     </template>
   </RecycleScroller>

@@ -13,7 +13,6 @@
       v-if="$slots.before"
       ref="before"
       class="vue-recycle-scroller__slot"
-      ref="before"
     >
       <slot
         name="before"
@@ -64,7 +63,6 @@
       v-if="$slots.after"
       ref="after"
       class="vue-recycle-scroller__slot"
-      ref="after"
     >
       <slot
         name="after"
@@ -181,6 +179,8 @@ export default {
     'visible',
     'hidden',
     'update',
+    'scroll-start',
+    'scroll-end',
   ],
 
   data () {
@@ -700,7 +700,7 @@ export default {
       let scrollDistance
 
       if (this.pageMode) {
-        const viewportEl = ScrollParent(this.$el)
+        const viewportEl = getScrollParent(this.$el)
         // HTML doesn't overflow like other elements
         const scrollTop = viewportEl.tagName === 'HTML' ? 0 : viewportEl[direction.scroll]
         const bounds = viewportEl.getBoundingClientRect()
