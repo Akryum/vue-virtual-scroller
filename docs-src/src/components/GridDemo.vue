@@ -5,7 +5,7 @@ export default {
   data () {
     return {
       list: [],
-      perRow: 6,
+      gridItems: 6,
       scrollTo: 500,
     }
   },
@@ -22,18 +22,18 @@ export default {
       <label>
         Per row
         <input
-          v-model.number="perRow"
+          v-model.number="gridItems"
           type="number"
           min="2"
-          max="100"
-        >
-        <input
-          v-model.number="perRow"
-          type="range"
-          min="2"
-          max="100"
+          max="20"
         >
       </label>
+      <input
+        v-model.number="gridItems"
+        type="range"
+        min="2"
+        max="20"
+      >
       <span>
         <button @mousedown="$refs.scroller.scrollToItem(scrollTo)">Scroll To: </button>
         <input
@@ -50,7 +50,7 @@ export default {
       class="scroller"
       :items="list"
       :item-size="128"
-      :per-row="perRow"
+      :grid-items="gridItems"
     >
       <template #default="{ item, index }">
         <div class="item">

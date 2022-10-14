@@ -32,8 +32,8 @@
         :key="view.nr.id"
         :style="ready ? {
           transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px) translate${direction === 'vertical' ? 'X' : 'Y'}(${view.offset}px)`,
-          width: perRow ? `${itemSize}px` : undefined,
-          height: perRow ? `${itemSize}px` : undefined,
+          width: gridItems ? `${itemSize}px` : undefined,
+          height: gridItems ? `${itemSize}px` : undefined,
         } : null"
         class="vue-recycle-scroller__item-view"
         :class="[
@@ -102,7 +102,7 @@ export default {
       default: null,
     },
 
-    perRow: {
+    gridItems: {
       type: Number,
       default: 1,
     },
@@ -224,7 +224,7 @@ export default {
       deep: true,
     },
 
-    perRow () {
+    gridItems () {
       this.updateVisibleItems(true)
     },
   },
@@ -244,8 +244,8 @@ export default {
       this.updateVisibleItems(false)
     }
 
-    if (this.perRow && !this.itemSize) {
-      console.error('[vue-recycle-scroller] You must provide an itemSize when using perRow')
+    if (this.gridItems && !this.itemSize) {
+      console.error('[vue-recycle-scroller] You must provide an itemSize when using gridItems')
     }
   },
 
@@ -346,7 +346,7 @@ export default {
 
     updateVisibleItems (checkItem, checkPositionDiff = false) {
       const itemSize = this.itemSize
-      const perRow = this.perRow
+      const gridItems = this.gridItems
       const minItemSize = this.$_computedMinItemSize
       const typeField = this.typeField
       const keyField = this.simpleArray ? null : this.keyField
@@ -440,12 +440,12 @@ export default {
           for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeSize + sizes[visibleEndIndex].accumulator) < scroll.end; visibleEndIndex++);
         } else {
           // Fixed size mode
-          startIndex = ~~(scroll.start / itemSize * perRow)
-          const remainer = startIndex % perRow
+          startIndex = ~~(scroll.start / itemSize * gridItems)
+          const remainer = startIndex % gridItems
           startIndex -= remainer
-          endIndex = Math.ceil(scroll.end / itemSize * perRow)
-          visibleStartIndex = Math.max(0, Math.floor((scroll.start - beforeSize) / itemSize * perRow))
-          visibleEndIndex = Math.floor((scroll.end - beforeSize) / itemSize * perRow)
+          endIndex = Math.ceil(scroll.end / itemSize * gridItems)
+          visibleStartIndex = Math.max(0, Math.floor((scroll.start - beforeSize) / itemSize * gridItems))
+          visibleEndIndex = Math.floor((scroll.end - beforeSize) / itemSize * gridItems)
 
           // Bounds
           startIndex < 0 && (startIndex = 0)
@@ -453,7 +453,7 @@ export default {
           visibleStartIndex < 0 && (visibleStartIndex = 0)
           visibleEndIndex > count && (visibleEndIndex = count)
 
-          totalSize = Math.ceil(count / perRow) * itemSize
+          totalSize = Math.ceil(count / gridItems) * itemSize
         }
       }
 
@@ -569,8 +569,8 @@ export default {
           view.position = sizes[i - 1].accumulator
           view.offset = 0
         } else {
-          view.position = Math.floor(i / perRow) * itemSize
-          view.offset = (i % perRow) * itemSize
+          view.position = Math.floor(i / gridItems) * itemSize
+          view.offset = (i % gridItems) * itemSize
         }
       }
 
@@ -666,7 +666,7 @@ export default {
       if (this.itemSize === null) {
         scroll = index > 0 ? this.sizes[index - 1].accumulator : 0
       } else {
-        scroll = Math.floor(index / this.perRow) * this.itemSize
+        scroll = Math.floor(index / this.gridItems) * this.itemSize
       }
       this.scrollToPosition(scroll)
     },
