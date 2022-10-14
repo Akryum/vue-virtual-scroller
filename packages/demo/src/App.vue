@@ -28,6 +28,9 @@
     <router-link :to="{ name: 'chat' }">
       Chat demo
     </router-link>
+    <router-link :to="{ name: 'grid' }">
+      Grid demo
+    </router-link>
   </nav>
   <router-view />
 </template>
@@ -58,6 +61,9 @@ body {
 
 .menu {
   flex: auto 0 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .menu,

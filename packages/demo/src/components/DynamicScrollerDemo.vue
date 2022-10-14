@@ -5,13 +5,16 @@
         v-model="search"
         placeholder="Filter..."
       >
+      <span>({{ updateParts.viewStartIdx }} - [{{ updateParts.visibleStartIdx }} - {{ updateParts.visibleEndIdx }}] - {{ updateParts.viewEndIdx }})</span>
     </div>
 
     <DynamicScroller
       :items="filteredItems"
       :min-item-size="54"
+      :emit-update="true"
       class="scroller"
       @resize="onResize"
+      @update="onUpdate"
     >
       <template #before>
         <div class="notice">
@@ -73,6 +76,7 @@ export default {
     return {
       items,
       search: '',
+      updateParts: { viewStartIdx: 0, viewEndIdx: 0, visibleStartIdx: 0, visibleEndIdx: 0 },
     }
   },
 
@@ -93,6 +97,13 @@ export default {
     onResize () {
       console.log('resize')
     },
+
+    onUpdate (viewStartIndex, viewEndIndex, visibleStartIndex, visibleEndIndex) {
+      this.updateParts.viewStartIdx = viewStartIndex
+      this.updateParts.viewEndIdx = viewEndIndex
+      this.updateParts.visibleStartIdx = visibleStartIndex
+      this.updateParts.visibleEndIdx = visibleEndIndex
+    },
   },
 }
 </script>
@@ -107,6 +118,19 @@ export default {
 
 .scroller {
   flex: auto 1 1;
+}
+
+.scroller {
+  border: solid 1px #42b983;
+}
+
+.toolbar {
+  flex: auto 0 0;
+  text-align: center;
+}
+
+.toolbar > *:not(:last-child) {
+  margin-right: 24px;
 }
 
 .notice {

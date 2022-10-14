@@ -1,24 +1,28 @@
 {
-  "name": "demo",
-  "version": "0.1.0",
+  "name": "vue-virtual-scroller-docs",
+  "description": "Demos for vue-virtual-scroller",
+  "version": "1.0.0",
+  "author": "Guillaume Chau <guillaume.b.chau@gmail.com>",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "test:e2e": "vue-cli-service test:e2e"
+    "dev": "vite dev --port 8080",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "core-js": "^3.6.5",
-    "faker": "^5.5.3",
-    "vue": "^3.0.0",
-    "vue-router": "^4.0.0-0",
+    "@faker-js/faker": "^7.6.0",
+    "vue": "^3.2.41",
+    "vue-router": "^4.1.5",
     "vue-virtual-scroller": "^2.0.0-alpha.1"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.5.0",
-    "@vue/cli-plugin-e2e-cypress": "~4.5.0",
-    "@vue/cli-plugin-router": "~4.5.0",
-    "@vue/cli-service": "~4.5.0",
-    "@vue/compiler-sfc": "^3.0.0"
-  }
+    "@vitejs/plugin-vue": "^3.1.2",
+    "vue-template-compiler": "^2.5.17",
+    "vite": "^3.1.8"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
 }

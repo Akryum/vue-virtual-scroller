@@ -56,7 +56,10 @@ export default {
 
   computed: {
     id () {
-      return this.vscrollData.simpleArray ? this.index : this.item[this.vscrollData.keyField]
+      if (this.vscrollData.simpleArray) return this.index
+      // eslint-disable-next-line no-prototype-builtins
+      if (this.item.hasOwnProperty(this.vscrollData.keyField)) return this.item[this.vscrollData.keyField]
+      throw new Error(`keyField '${this.vscrollData.keyField}' not found in your item. You should set a valid keyField prop on your Scroller`)
     },
 
     size () {
@@ -147,7 +150,7 @@ export default {
 
     updateWatchData () {
       if (this.watchData) {
-        this.$_watchData = this.$watch('data', () => {
+        this.$_watchData = this.$watch('item', () => {
           this.onDataUpdate()
         }, {
           deep: true,
@@ -198,7 +201,7 @@ export default {
     },
 
     observeSize () {
-      if (!this.vscrollResizeObserver) return
+      if (!this.vscrollResizeObserver || !this.$el.parentNode) return
       this.vscrollResizeObserver.observe(this.$el.parentNode)
       this.$el.parentNode.addEventListener('resize', this.onResize)
     },

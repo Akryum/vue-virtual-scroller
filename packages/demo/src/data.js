@@ -1,10 +1,10 @@
-import faker from 'faker'
+import { faker } from '@faker-js/faker'
 
 let uid = 0
 
 function generateItem () {
   return {
-    name: faker.name.findName(),
+    name: faker.name.fullName(),
     avatar: faker.internet.avatar(),
   }
 }

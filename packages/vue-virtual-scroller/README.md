@@ -1,9 +1,13 @@
 # vue-virtual-scroller
 
 [![npm](https://img.shields.io/npm/v/vue-virtual-scroller.svg) ![npm](https://img.shields.io/npm/dm/vue-virtual-scroller.svg)](https://www.npmjs.com/package/vue-virtual-scroller)
-[![vue2](https://img.shields.io/badge/vue-3.x-brightgreen.svg)](https://vuejs.org/)
+[![vue3](https://img.shields.io/badge/vue-3.x-brightgreen.svg)](https://vuejs.org/)
+
+[Docs](./packages/vue-virtual-scroller/README.md)
 
 Blazing fast scrolling of any amount of data | [Live demo](https://akryum.github.io/vue-virtual-scroller/) | [Video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k)
+
+For Vue 2 support, see [here](https://github.com/Akryum/vue-virtual-scroller/tree/v1/packages/vue-virtual-scroller)
 
 [💚️ Become a Sponsor](https://github.com/sponsors/Akryum)
 
@@ -175,6 +179,8 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 - `items`: list of items you want to display in the scroller.
 - `direction` (default: `'vertical'`): scrolling direction, either `'vertical'` or `'horizontal'`.
 - `itemSize` (default: `null`): display height (or width in horizontal mode) of the items in pixels used to calculate the scroll size and position. If it is set to `null` (the default value), it will use [variable size mode](#variable-size-mode).
+- `gridItems`: display that many items on the same line to create a grid. You must put a value for `itemSize` to use this prop (dynamic sizes are not supported).
+- `itemSecondarySize`: size in pixels (width in vertical mode, height in horizontal mode) of the items in the grid when `gridItems` is set. If `itemSecondarySize` is not set, it will use the value of `itemSize`.
 - `minItemSize`: minimum size used if the height (or width in horizontal mode) of a item is unknown.
 - `sizeField` (default: `'size'`): field used to get the item's size in variable size mode.
 - `typeField` (default: `'type'`): field used to differentiate different kinds of components in the list. For each distinct type, a pool of recycled items will be created.
@@ -183,13 +189,19 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 - `prerender` (default: `0`): render a fixed number of items for Server-Side Rendering (SSR).
 - `buffer` (default: `200`): amount of pixel to add to edges of the scrolling visible area to start rendering items further away.
 - `emitUpdate` (default: `false`): emit a `'update'` event each time the virtual scroller content is updated (can impact performance).
+- `listClass` (default: `''`): custom classes added to the item list wrapper.
+- `itemClass` (default: `''`): custom classes added to each item.
+- `listTag` (default: `'div'`): the element to render as the list's wrapper.
+- `itemTag` (default: `'div'`): the element to render as the list item (the direct parent of the default slot content).
 
 ### Events
 
 - `resize`: emitted when the size of the scroller changes.
 - `visible`: emitted when the scroller considers itself to be visible in the page.
 - `hidden`: emitted when the scroller is hidden in the page.
-- `update (startIndex, endIndex)`: emitted each time the views are updated, only if `emitUpdate` prop is `true`
+- `update (startIndex, endIndex, visibleStartIndex, visibleEndIndex)`: emitted each time the views are updated, only if `emitUpdate` prop is `true`
+- `scroll-start`: emitted when the first item is rendered.
+- `scroll-end`: emitted when the last item is rendered.
 
 ### Default scoped slot props
 
@@ -204,6 +216,7 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
   <slot name="before"></slot>
   <wrapper>
     <!-- Reused view pools here -->
+    <slot name="empty"></slot>
   </wrapper>
   <slot name="after"></slot>
 </main>

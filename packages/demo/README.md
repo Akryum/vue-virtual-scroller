@@ -1,29 +1,16 @@
-# demo
+# vue-virtual-scroller-demos
 
-## Project setup
-```
+> Demos for vue-virtual-scroller
+
+## Build Setup
+
+``` bash
+# install dependencies
 yarn install
-```
 
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
+# serve with hot reload at localhost:8080
+yarn run dev
 
-### Compiles and minifies for production
+# build for production with minification
+yarn run build
 ```
-yarn build
-```
-
-### Run your end-to-end tests
-```
-yarn test:e2e
-```
-
-### Lints and fixes files
-```
-yarn lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
