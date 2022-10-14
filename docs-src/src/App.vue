@@ -29,6 +29,9 @@
       <router-link :to="{ name: 'chat' }">
         Chat demo
       </router-link>
+      <router-link :to="{ name: 'grid' }">
+        Grid demo
+      </router-link>
     </nav>
     <router-view class="page" />
   </div>
