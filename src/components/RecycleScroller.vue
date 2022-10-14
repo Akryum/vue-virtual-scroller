@@ -87,16 +87,6 @@ export default {
   props: {
     ...props,
 
-    listClass: {
-      type: String,
-      default: '',
-    },
-
-    itemClass: {
-      type: String,
-      default: '',
-    },
-
     itemSize: {
       type: Number,
       default: null,
@@ -150,6 +140,16 @@ export default {
     itemTag: {
       type: String,
       default: 'div',
+    },
+
+    listClass: {
+      type: [String, Object, Array],
+      default: '',
+    },
+
+    itemClass: {
+      type: [String, Object, Array],
+      default: '',
     },
   },
 
