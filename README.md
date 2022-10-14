@@ -186,6 +186,7 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 - `items`: list of items you want to display in the scroller.
 - `direction` (default: `'vertical'`): scrolling direction, either `'vertical'` or `'horizontal'`.
 - `itemSize` (default: `null`): display height (or width in horizontal mode) of the items in pixels used to calculate the scroll size and position. If it is set to `null` (the default value), it will use [variable size mode](#variable-size-mode).
+- `gridItems`: display that many items on the same line to create a grid. You must put a value for `itemSize` to use this prop (dynamic sizes are not supported).
 - `minItemSize`: minimum size used if the height (or width in horizontal mode) of a item is unknown.
 - `sizeField` (default: `'size'`): field used to get the item's size in variable size mode.
 - `typeField` (default: `'type'`): field used to differentiate different kinds of components in the list. For each distinct type, a pool of recycled items will be created.

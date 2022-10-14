@@ -104,7 +104,7 @@ export default {
 
     gridItems: {
       type: Number,
-      default: 1,
+      default: undefined,
     },
 
     minItemSize: {

@@ -20,7 +20,7 @@ export default {
   <div class="wrapper">
     <div class="toolbar">
       <label>
-        Per row
+        Grid items per row
         <input
           v-model.number="gridItems"
           type="number"
