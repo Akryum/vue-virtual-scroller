@@ -45,7 +45,7 @@ export default {
   provide () {
     if (typeof ResizeObserver !== 'undefined') {
       this.$_resizeObserver = new ResizeObserver(entries => {
-        window.requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
           if (!Array.isArray(entries) || !entries.length) {
             return
           }
