@@ -58,6 +58,7 @@
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0",
     "eslint-plugin-vue": "^6.2.2",
+    "fs-extra": "^10.1.0",
     "rollup": "^2.2.0",
     "rollup-plugin-babel": "^4.4.0",
     "rollup-plugin-css-only": "^2.0.0",

@@ -6,7 +6,7 @@ import replace from '@rollup/plugin-replace'
 import { eslint } from 'rollup-plugin-eslint'
 import css from 'rollup-plugin-css-only'
 import autoprefixer from 'autoprefixer'
-import fs from 'fs'
+import fs from 'fs-extra'
 import CleanCSS from 'clean-css'
 
 const config = require('../package.json')
@@ -28,6 +28,7 @@ export default {
     }),
     css({
       output: styles => {
+        fs.ensureDirSync('dist')
         const file = require.resolve('vue-resize/dist/vue-resize.css')
         styles += fs.readFileSync(file, { encoding: 'utf8' })
         fs.writeFileSync('dist/vue-virtual-scroller.css', new CleanCSS().minify(styles).styles)
