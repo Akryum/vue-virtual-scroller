@@ -87,7 +87,7 @@ export default {
   flex: 1;
 }
 
-.scroller >>> .hover img {
+.scroller :deep(.hover) img {
   opacity: 0.5;
 }
 
