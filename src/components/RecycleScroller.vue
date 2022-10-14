@@ -11,6 +11,7 @@
   >
     <div
       v-if="$slots.before"
+      ref="before"
       class="vue-recycle-scroller__slot"
     >
       <slot
@@ -18,33 +19,38 @@
       />
     </div>
 
-    <div
+    <component
+      :is="listTag"
       ref="wrapper"
       :style="{ [direction === 'vertical' ? 'minHeight' : 'minWidth']: totalSize + 'px' }"
       :class="'vue-recycle-scroller__item-wrapper ' + wrapperClasses"
     >
-      <div
+      <component
+        :is="itemTag"
         v-for="view of pool"
         :key="view.nr.id"
         :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
-        :class="{
-          'vue-recycle-scroller__item-view ': true,
-          [itemClasses]: true,
-          hover: hoverKey === view.nr.key
-        }"
-        @mouseenter="hoverKey = view.nr.key"
-        @mouseleave="hoverKey = null"
+        class="vue-recycle-scroller__item-view"
+        :class="[
+          itemClasses,
+          {
+            hover: !skipHover && hoverKey === view.nr.key
+          },
+        ]"
+        @mouseenter="!skipHover && (hoverKey = view.nr.key)"
+        @mouseleave="!skipHover && (hoverKey = null)"
       >
         <slot
           :item="view.item"
           :index="view.nr.index"
           :active="view.nr.used"
         />
-      </div>
-    </div>
+      </component>
+    </component>
 
     <div
       v-if="$slots.after"
+      ref="after"
       class="vue-recycle-scroller__slot"
     >
       <slot
@@ -129,6 +135,21 @@ export default {
       type: Boolean,
       default: false,
     },
+
+    skipHover: {
+      type: Boolean,
+      default: false,
+    },
+
+    listTag: {
+      type: String,
+      default: 'div',
+    },
+
+    itemTag: {
+      type: String,
+      default: 'div',
+    },
   },
 
   data () {
@@ -212,6 +233,15 @@ export default {
       this.updateVisibleItems(true)
       this.ready = true
     })
+  },
+
+  activated () {
+    const lastPosition = this.$_lastUpdateScrollPosition
+    if (typeof lastPosition === 'number') {
+      this.$nextTick(() => {
+        this.scrollToPosition(lastPosition)
+      })
+    }
   },
 
   beforeDestroy () {
@@ -303,12 +333,13 @@ export default {
       const pool = this.pool
       let startIndex, endIndex
       let totalSize
+      let visibleStartIndex, visibleEndIndex
 
       if (!count) {
-        startIndex = endIndex = totalSize = 0
+        startIndex = endIndex = visibleStartIndex = visibleEndIndex = totalSize = 0
       } else if (this.$_prerender) {
-        startIndex = 0
-        endIndex = this.prerender
+        startIndex = visibleStartIndex = 0
+        endIndex = visibleEndIndex = this.prerender
         totalSize = null
       } else {
         const scroll = this.getScroll()
@@ -328,6 +359,19 @@ export default {
         const buffer = this.buffer
         scroll.start -= buffer
         scroll.end += buffer
+
+        // account for leading slot
+        let beforeSize = 0
+        if (this.$refs.before) {
+          beforeSize = this.$refs.before.scrollHeight
+          scroll.start -= beforeSize
+        }
+
+        // account for trailing slot
+        if (this.$refs.after) {
+          const afterSize = this.$refs.after.scrollHeight
+          scroll.end += afterSize
+        }
 
         // Variable size mode
         if (itemSize === null) {
@@ -363,14 +407,24 @@ export default {
             // Bounds
             endIndex > count && (endIndex = count)
           }
+
+          // search visible startIndex
+          for (visibleStartIndex = startIndex; visibleStartIndex < count && (beforeSize + sizes[visibleStartIndex].accumulator) < scroll.start; visibleStartIndex++);
+
+          // search visible endIndex
+          for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeSize + sizes[visibleEndIndex].accumulator) < scroll.end; visibleEndIndex++);
         } else {
           // Fixed size mode
           startIndex = ~~(scroll.start / itemSize)
           endIndex = Math.ceil(scroll.end / itemSize)
+          visibleStartIndex = Math.max(0, Math.floor((scroll.start - beforeSize) / itemSize))
+          visibleEndIndex = Math.floor((scroll.end - beforeSize) / itemSize)
 
           // Bounds
           startIndex < 0 && (startIndex = 0)
           endIndex > count && (endIndex = count)
+          visibleStartIndex < 0 && (visibleStartIndex = 0)
+          visibleEndIndex > count && (visibleEndIndex = count)
 
           totalSize = count * itemSize
         }
@@ -491,7 +545,7 @@ export default {
       this.$_startIndex = startIndex
       this.$_endIndex = endIndex
 
-      if (this.emitUpdate) this.$emit('update', startIndex, endIndex)
+      if (this.emitUpdate) this.$emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex)
 
       // After the user has finished scrolling
       // Sort views so text selection is correct
@@ -586,11 +640,33 @@ export default {
     },
 
     scrollToPosition (position) {
-      if (this.direction === 'vertical') {
-        this.$el.scrollTop = position
+      const direction = this.direction === 'vertical'
+        ? { scroll: 'scrollTop', start: 'top' }
+        : { scroll: 'scrollLeft', start: 'left' }
+
+      let viewport
+      let scrollDirection
+      let scrollDistance
+
+      if (this.pageMode) {
+        const viewportEl = ScrollParent(this.$el)
+        // HTML doesn't overflow like other elements
+        const scrollTop = viewportEl.tagName === 'HTML' ? 0 : viewportEl[direction.scroll]
+        const bounds = viewportEl.getBoundingClientRect()
+
+        const scroller = this.$el.getBoundingClientRect()
+        const scrollerPosition = scroller[direction.start] - bounds[direction.start]
+
+        viewport = viewportEl
+        scrollDirection = direction.scroll
+        scrollDistance = position + scrollTop + scrollerPosition
       } else {
-        this.$el.scrollLeft = position
+        viewport = this.$el
+        scrollDirection = direction.scroll
+        scrollDistance = position
       }
+
+      viewport[scrollDirection] = scrollDistance
     },
 
     itemsLimitError () {

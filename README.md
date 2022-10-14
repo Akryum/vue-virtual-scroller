@@ -5,43 +5,15 @@
 
 Blazing fast scrolling of any amount of data | [Live demo](https://akryum.github.io/vue-virtual-scroller/) | [Video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k)
 
-<p>
-  <a href="https://www.patreon.com/akryum" target="_blank">
-    <img src="https://c5.patreon.com/external/logo/become_a_patron_button.png" alt="Become a Patreon">
-  </a>
-</p>
+For Vue 3 support, see [here](https://github.com/Akryum/vue-virtual-scroller/tree/next/packages/vue-virtual-scroller)
+
+[💚️ Become a Sponsor](https://github.com/sponsors/Akryum)
 
 ## Sponsors
 
-### Gold
-
 <p align="center">
-  <a href="https://www.sumcumo.com/en/" target="_blank">
-    <img src="https://cdn.discordapp.com/attachments/258614093362102272/570728242399674380/logo-sumcumo.png" alt="sum.cumo logo" width="400px">
-  </a>
-</p>
-
-### Silver
-
-<p align="center">
-  <a href="https://vueschool.io/" target="_blank">
-    <img src="https://vueschool.io/img/logo/vueschool_logo_multicolor.svg" alt="VueSchool logo" width="200px">
-  </a>
-
-  <a href="https://www.vuemastery.com/" target="_blank">
-    <img src="https://cdn.discordapp.com/attachments/258614093362102272/557267759130607630/Vue-Mastery-Big.png" alt="Vue Mastery logo" width="200px">
-  </a>
-</p>
-
-### Bronze
-
-<p align="center">
-  <a href="https://vuetifyjs.com" target="_blank">
-    <img src="https://cdn.discordapp.com/attachments/537832759985700914/537832771691872267/Horizontal_Logo_-_Dark.png" width="100">
-  </a>
-
-  <a href="https://www.frontenddeveloperlove.com/" target="_blank" title="Frontend Developer Love">
-    <img src="https://cdn.discordapp.com/attachments/258614093362102272/557267744249085953/frontend_love-logo.png" width="56">
+  <a href="https://guillaume-chau.info/sponsors/" target="_blank">
+    <img src='https://akryum.netlify.app/sponsors.svg'/>
   </a>
 </p>
 
@@ -224,13 +196,15 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 - `emitUpdate` (default: `false`): emit a `'update'` event each time the virtual scroller content is updated (can impact performance).
 - `wrapperClasses` (default: `''`): custom classes added to the item list wrapper.
 - `itemClasses` (default: `''`): custom classes added to each item.
+- `listTag` (default: `'div'`): the element to render as the list's wrapper.
+- `itemTag` (default: `'div'`): the element to render as the list item (the direct parent of the default slot content).
 
 ### Events
 
 - `resize`: emitted when the size of the scroller changes.
 - `visible`: emitted when the scroller considers itself to be visible in the page.
 - `hidden`: emitted when the scroller is hidden in the page.
-- `update (startIndex, endIndex)`: emitted each time the views are updated, only if `emitUpdate` prop is `true`
+- `update (startIndex, endIndex, visibleStartIndex, visibleEndIndex)`: emitted each time the views are updated, only if `emitUpdate` prop is `true`
 
 ### Default scoped slot props
 
