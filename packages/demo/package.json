@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite dev --port 8080",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --port 8080"
   },
   "dependencies": {
     "@faker-js/faker": "^7.6.0",
