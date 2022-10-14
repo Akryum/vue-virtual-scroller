@@ -63,6 +63,9 @@ body {
 
 .menu {
   flex: auto 0 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .menu,

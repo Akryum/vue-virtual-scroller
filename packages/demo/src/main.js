@@ -1,7 +1,7 @@
 import Vue from 'vue'
 // vue-virtual-scroller
-import VirtualScroller, { RecycleScroller as Comp } from '../../'
-import '../../dist/vue-virtual-scroller.css'
+import VirtualScroller, { RecycleScroller as Comp } from 'vue-virtual-scroller'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 // App
 import router from './router'
 import App from './App.vue'
