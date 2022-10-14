@@ -499,6 +499,9 @@ export default {
 
         // No view assigned to item
         if (!view) {
+          if (i === items.length - 1) this.$emit('scroll-end')
+          if (i === 0) this.$emit('scroll-start')
+
           type = item[typeField]
           unusedPool = unusedViews.get(type)
 

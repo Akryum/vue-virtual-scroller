@@ -205,6 +205,8 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 - `visible`: emitted when the scroller considers itself to be visible in the page.
 - `hidden`: emitted when the scroller is hidden in the page.
 - `update (startIndex, endIndex, visibleStartIndex, visibleEndIndex)`: emitted each time the views are updated, only if `emitUpdate` prop is `true`
+- `scroll-start`: emitted when the first item is rendered.
+- `scroll-end`: emitted when the last item is rendered.
 
 ### Default scoped slot props
 
