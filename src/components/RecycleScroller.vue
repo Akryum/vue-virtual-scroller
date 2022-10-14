@@ -432,8 +432,8 @@ export default {
           const remainer = startIndex % perRow
           startIndex -= remainer
           endIndex = Math.ceil(scroll.end / itemSize * perRow)
-          visibleStartIndex = Math.max(0, Math.floor((scroll.start - beforeSize) / itemSize))
-          visibleEndIndex = Math.floor((scroll.end - beforeSize) / itemSize)
+          visibleStartIndex = Math.max(0, Math.floor((scroll.start - beforeSize) / itemSize * perRow))
+          visibleEndIndex = Math.floor((scroll.end - beforeSize) / itemSize * perRow)
 
           // Bounds
           startIndex < 0 && (startIndex = 0)
