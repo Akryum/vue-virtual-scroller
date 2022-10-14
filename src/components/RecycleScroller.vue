@@ -344,7 +344,7 @@ export default {
         startIndex = endIndex = visibleStartIndex = visibleEndIndex = totalSize = 0
       } else if (this.$_prerender) {
         startIndex = visibleStartIndex = 0
-        endIndex = visibleEndIndex = this.prerender
+        endIndex = visibleEndIndex = Math.min(this.prerender, items.length)
         totalSize = null
       } else {
         const scroll = this.getScroll()
