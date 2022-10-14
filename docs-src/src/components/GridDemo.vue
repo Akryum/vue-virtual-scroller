@@ -51,6 +51,7 @@ export default {
       :items="list"
       :item-size="128"
       :grid-items="gridItems"
+      :item-secondary-size="100"
     >
       <template #default="{ item, index }">
         <div class="item">
@@ -92,6 +93,7 @@ export default {
 
 .item {
   position: relative;
+  height: 100%;
 }
 
 .index {
@@ -108,5 +110,6 @@ img {
   width: 100%;
   height: 100%;
   background: #eee;
+  object-fit: cover;
 }
 </style>

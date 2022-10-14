@@ -32,8 +32,8 @@
         :key="view.nr.id"
         :style="ready ? {
           transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px) translate${direction === 'vertical' ? 'X' : 'Y'}(${view.offset}px)`,
-          width: gridItems ? `${itemSize}px` : undefined,
-          height: gridItems ? `${itemSize}px` : undefined,
+          width: gridItems ? `${direction === 'vertical' ? itemSecondarySize || itemSize : itemSize}px` : undefined,
+          height: gridItems ? `${direction === 'horizontal' ? itemSecondarySize || itemSize : itemSize}px` : undefined,
         } : null"
         class="vue-recycle-scroller__item-view"
         :class="[
@@ -103,6 +103,11 @@ export default {
     },
 
     gridItems: {
+      type: Number,
+      default: undefined,
+    },
+
+    itemSecondarySize: {
       type: Number,
       default: undefined,
     },
@@ -227,6 +232,10 @@ export default {
     gridItems () {
       this.updateVisibleItems(true)
     },
+
+    itemSecondarySize () {
+      this.updateVisibleItems(true)
+    },
   },
 
   created () {
@@ -347,6 +356,7 @@ export default {
     updateVisibleItems (checkItem, checkPositionDiff = false) {
       const itemSize = this.itemSize
       const gridItems = this.gridItems
+      const itemSecondarySize = this.itemSecondarySize || itemSize
       const minItemSize = this.$_computedMinItemSize
       const typeField = this.typeField
       const keyField = this.simpleArray ? null : this.keyField
@@ -570,7 +580,7 @@ export default {
           view.offset = 0
         } else {
           view.position = Math.floor(i / gridItems) * itemSize
-          view.offset = (i % gridItems) * itemSize
+          view.offset = (i % gridItems) * itemSecondarySize
         }
       }
 
