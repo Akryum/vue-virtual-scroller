@@ -23,7 +23,8 @@
       :is="listTag"
       ref="wrapper"
       :style="{ [direction === 'vertical' ? 'minHeight' : 'minWidth']: totalSize + 'px' }"
-      :class="'vue-recycle-scroller__item-wrapper ' + wrapperClasses"
+      class="vue-recycle-scroller__item-wrapper"
+      :class="listClass"
     >
       <component
         :is="itemTag"
@@ -32,7 +33,7 @@
         :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
         class="vue-recycle-scroller__item-view"
         :class="[
-          itemClasses,
+          itemClass,
           {
             hover: !skipHover && hoverKey === view.nr.key
           },
@@ -86,12 +87,12 @@ export default {
   props: {
     ...props,
 
-    wrapperClasses: {
+    listClass: {
       type: String,
       default: '',
     },
 
-    itemClasses: {
+    itemClass: {
       type: String,
       default: '',
     },
