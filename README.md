@@ -3,13 +3,28 @@
 [![npm](https://img.shields.io/npm/v/vue-virtual-scroller.svg) ![npm](https://img.shields.io/npm/dm/vue-virtual-scroller.svg)](https://www.npmjs.com/package/vue-virtual-scroller)
 [![vue2](https://img.shields.io/badge/vue-2.x-brightgreen.svg)](https://vuejs.org/)
 
-Smooth scroll with any amount of data ([demo](https://akryum.github.io/vue-virtual-scroller/)).
+Blazing fast scrolling of any amount of data | [Live demo](https://akryum.github.io/vue-virtual-scroller/) | [Video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k)
+
+For Vue 3 support, see [here](https://github.com/Akryum/vue-virtual-scroller/tree/next/packages/vue-virtual-scroller)
+
+[💚️ Become a Sponsor](https://github.com/sponsors/Akryum)
+
+## Sponsors
+
+<p align="center">
+  <a href="https://guillaume-chau.info/sponsors/" target="_blank">
+    <img src='https://akryum.netlify.app/sponsors.svg'/>
+  </a>
+</p>
 
 ## Table of contents
 
 - [Installation](#installation)
 - [Usage](#usage)
-- [Example](#example)
+  - [RecycleScroller](#recyclescroller)
+  - [DynamicScroller](#dynamicscroller)
+  - [DynamicScrollerItem](#dynamicscrolleritem)
+  - [IdState](#idstate)
 
 # Installation
 
@@ -17,7 +32,7 @@ Smooth scroll with any amount of data ([demo](https://akryum.github.io/vue-virtu
 npm install --save vue-virtual-scroller
 ```
 
-**⚠️ `vue-virtual-scroller` now uses [vue-observe-visibility](https://github.com/Akryum/vue-observe-visibility#installation) to automatically refresh itself when shown to prevent display glitches. This means you need to include the polyfills needed by `vue-observe-visibility` for this to work.**
+**⚠️ `vue-virtual-scroller` now uses [vue-observe-visibility](https://github.com/Akryum/vue-observe-visibility#installation) to automatically refresh itself when shown to prevent display glitches. This means you need to include the [Intersection Observer polyfill](https://github.com/w3c/IntersectionObserver/tree/master/polyfill) needed by `vue-observe-visibility` for this to work in old browsers (like Internet Explorer).**
 
 ## Default import
 
@@ -34,34 +49,16 @@ Use specific components:
 
 ```javascript
 import Vue from 'vue'
-import { VirtualScroller } from 'vue-virtual-scroller'
+import { RecycleScroller } from 'vue-virtual-scroller'
 
-Vue.component('virtual-scroller', VirtualScroller)
+Vue.component('RecycleScroller', RecycleScroller)
 ```
 
-**⚠️ A css file is included when importing the package. You may have to setup your bundler to embed the css in your page.**
+**⚠️ The line below should be included when importing the package:**
 
-## Distribution import
-
-Install all the components:
-
-```javascript
+```js
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
-import VueVirtualScroller from 'vue-virtual-scroller/dist/vue-virtual-scroller'
-
-Vue.use(VueVirtualScroller)
 ```
-
-Use specific components:
-
-```javascript
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
-import { VirtualScroller } from 'vue-virtual-scroller/dist/vue-virtual-scroller'
-
-Vue.component('virtual-scroller', VirtualScroller)
-```
-
-**⚠️ You may have to setup your bundler to embed the css file in your page.**
 
 ## Browser
 
@@ -69,119 +66,214 @@ Vue.component('virtual-scroller', VirtualScroller)
 <link rel="stylesheet" href="vue-virtual-scroller/dist/vue-virtual-scroller.css"/>
 
 <script src="vue.js"></script>
-<script src="vue-virtual-scroller/dist/vue-virtual-scroller.js"></script>
+<script src="vue-virtual-scroller/dist/vue-virtual-scroller.min.js"></script>
 ```
 
-Install all the components:
+If Vue is detected, the plugin will be installed automatically. If not, install the component:
 
 ```javascript
 Vue.use(VueVirtualScroller)
 ```
 
-Use specific components:
+Or register it with a custom name:
 
 ```javascript
-Vue.component('virtual-scroller', VueVirtualScroller.VirtualScroller)
+Vue.component('RecycleScroller', VueVirtualScroller.RecycleScroller)
 ```
-
-## Source import
-
-Install all the components:
-
-```javascript
-import Vue from 'vue'
-import VueVirtualScroller from 'vue-virtual-scroller/src'
-
-Vue.use(VueVirtualScroller)
-```
-
-Use specific components:
-
-```javascript
-import Vue from 'vue'
-import { VirtualScroller } from 'vue-virtual-scroller/src'
-
-Vue.component('virtual-scroller', VirtualScroller)
-```
-
-**⚠️ You need to configure your bundler to compile `.vue` files.** More info [in the official documentation](https://vuejs.org/v2/guide/single-file-components.html).
 
 # Usage
 
-The virtual scroller has three main props:
+There are several components provided by `vue-virtual-scroller`:
 
-- `items` is the list of items you want to display in the scroller. There can be several types of item.
-- `itemHeight` is the display height of the items in pixels used to calculate the scroll height and position. If it set to null (default value), it will use [variable height mode](#variable-height-mode).
-- `renderers` is a map of component definitions objects or names for each item type ([more details](#renderers)). If you don't define `renderers`, the scroller will use *scoped slots* ([see below](#scoped-slots)).
+[RecycleScroller](#recyclescroller) is a component that only renders the visible items in your list. It also re-uses components and dom elements to be as efficient and performant as possible.
 
-You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). Unless you are using [variable height mode](#variable-height-mode), all items should have the same height to prevent display glitches.
+[DynamicScroller](#dynamicscroller) is a component that wraps the RecycleScroller component and extends its features to include dynamic size management. The main use case for this is when you **do not know the size of the items** in advance. The Dynamic Scroller automatically "discovers" item dimensions as it renders new items during scrolling.
 
-> The browsers have a height limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
+[DynamicScrollerItem](#dynamicscrolleritem) must wrap each item in a DynamicScroller to handle size computations.
 
-## Renderers
+[IdState](#idstate) is a mixin that ease the local state management in reused components inside a RecycleScroller.
 
-The optional `renderers` prop is an object containing a component definition for each possible value of the item type. If you don't set this prop, [scoped slots](#scoped-slots) will be used instead. **The component definition must have an `item` prop, that will get the item object to render in the scroller.** It will also receive an `index` prop.
+## RecycleScroller
 
-There are additional props you can use:
+RecycleScroller is a virtual scroller that only renders the visible items. As the user scrolls, RecycleScroller reuses all components and DOM nodes to maintain optimal performance.
 
-- `typeField` to customize which field is used on the items to get their type and use the corresponding definition in the `renderers` map. The default is `'type'`.
-- `keyField` to customize which field is used on the items to set their `key` special attribute (see [the documation](https://vuejs.org/v2/api/#key)). The default is `'id'`.
+### Basic usage
 
-**For better performance, you should use the `keyField` prop that will set the `key` attribute. Warning! You shouldn't expect items to have the key set at all times, since the scroller may disable them depending on the situation.**
-
-## Scoped slots
-
-Alternatively, you can use [scoped slots](https://vuejs.org/v2/guide/components.html#Scoped-Slots) instead of `renderers`. This is active when you don't define the `renderers` prop on the virtual scroller.
-
-The scope will contain the row's item in the `item` attribute, so you can write `scope="props"` and then use `props.item`. It will also have an `index` attribute.
-
-Here is an example:
+Use the scoped slot to render each item in the list:
 
 ```html
-<virtual-scroller class="scroller" :items="items" item-height="42" content-tag="table">
-  <template scope="props">
-    <tr v-if="props.item.type === 'letter'" class="letter" :key="props.itemKey">
-      <td>
-        {{props.item.value}} Scoped
-      </td>
-    </tr>
+<template>
+  <RecycleScroller
+    class="scroller"
+    :items="list"
+    :item-size="32"
+    key-field="id"
+    v-slot="{ item }"
+  >
+    <div class="user">
+      {{ item.name }}
+    </div>
+  </RecycleScroller>
+</template>
 
-    <tr v-if="props.item.type === 'person'" class="person" :key="props.itemKey">
-      <td>
-        {{props.item.value.name}}
-      </td>
-    </tr>
-  </template>
-</virtual-scroller>
+<script>
+export default {
+  props: {
+    list: Array,
+  },
+}
+</script>
+
+<style scoped>
+.scroller {
+  height: 100%;
+}
+
+.user {
+  height: 32%;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+}
+</style>
 ```
 
-**For better performance, you should set the `key` attribute on direct children using the `itemKey` field from the scoped slot and set the `keyField` prop on the virtual scroller.**
+### Important notes
 
-## Page mode
+- **⚠️ You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). Unless you are using [variable size mode](#variable-size-mode), all items should have the same height (or width in horizontal mode) to prevent display glitches.**
+- **⚠️ If the items are objects, the scroller needs to be able to identify them. By default it will look for an `id` field on the items. This can be configured with the `keyField` prop if you are using another field name.**
+- It is not recommended to use functional components inside RecycleScroller since the components are reused (so it will actually be slower).
+- The list item components must be reactive to the `item` prop being updated without being re-created (use computed props or watchers to properly react to props changes!).
+- You don't need to set `key` on list content (but you should on all nested `<img>` elements to prevent load glitches).
+- The browsers have a size limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
+- Since DOM elements are reused for items, it's recommended to define hover styles using the provided `hover` class instead of the `:hover` state selector (e.g. `.vue-recycle-scroller__item-view.hover` or `.hover .some-element-inside-the-item-view`).
 
-The page mode expand the virtual-scroller and use the page viewport to compute which items are visible. That way, you can use it in a big page with HTML elements before or after (like a header and a footer). Just set the `page-mode` props to `true`:
+### How does it work?
+
+- The RecycleScroller creates pools of views to render visible items to the user.
+- A view holds a rendered item, and is reused inside its pool.
+- For each type of item, a new pool is created so that the same components (and DOM trees) are reused for the same type.
+- Views can be deactivated if they go off-screen, and can be reused anytime for a newly visible item.
+
+Here is what the internals of RecycleScroller look like in vertical mode:
+
+```html
+<RecycleScroller>
+  <!-- Wrapper element with a pre-calculated total height -->
+  <wrapper
+    :style="{ height: computedTotalHeight + 'px' }"
+  >
+    <!-- Each view is translated to the computed position -->
+    <view
+      v-for="view of pool"
+      :style="{ transform: 'translateY(' + view.computedTop + 'px)' }"
+    >
+      <!-- Your elements will be rendered here -->
+      <slot
+        :item="view.item"
+        :index="view.nr.index"
+        :active="view.nr.used"
+      />
+    </view>
+  </wrapper>
+</RecycleScroller>
+```
+
+When the user scrolls inside RecycleScroller, the views are mostly just moved around to fill the new visible space, and the default slot properties updated. That way we get the minimum amount of components/elements creation and destruction and we use the full power of Vue virtual-dom diff algorithm to optimize DOM operations!
+
+### Props
+
+- `items`: list of items you want to display in the scroller.
+- `direction` (default: `'vertical'`): scrolling direction, either `'vertical'` or `'horizontal'`.
+- `itemSize` (default: `null`): display height (or width in horizontal mode) of the items in pixels used to calculate the scroll size and position. If it is set to `null` (the default value), it will use [variable size mode](#variable-size-mode).
+- `minItemSize`: minimum size used if the height (or width in horizontal mode) of a item is unknown.
+- `sizeField` (default: `'size'`): field used to get the item's size in variable size mode.
+- `typeField` (default: `'type'`): field used to differentiate different kinds of components in the list. For each distinct type, a pool of recycled items will be created.
+- `keyField` (default: `'id'`): field used to identify items and optimize managing rendered views.
+- `pageMode` (default: `false`): enable [Page mode](#page-mode).
+- `prerender` (default: `0`): render a fixed number of items for Server-Side Rendering (SSR).
+- `buffer` (default: `200`): amount of pixel to add to edges of the scrolling visible area to start rendering items further away.
+- `emitUpdate` (default: `false`): emit a `'update'` event each time the virtual scroller content is updated (can impact performance).
+- `listClass` (default: `''`): custom classes added to the item list wrapper.
+- `itemClass` (default: `''`): custom classes added to each item.
+- `listTag` (default: `'div'`): the element to render as the list's wrapper.
+- `itemTag` (default: `'div'`): the element to render as the list item (the direct parent of the default slot content).
+
+### Events
+
+- `resize`: emitted when the size of the scroller changes.
+- `visible`: emitted when the scroller considers itself to be visible in the page.
+- `hidden`: emitted when the scroller is hidden in the page.
+- `update (startIndex, endIndex, visibleStartIndex, visibleEndIndex)`: emitted each time the views are updated, only if `emitUpdate` prop is `true`
+- `scroll-start`: emitted when the first item is rendered.
+- `scroll-end`: emitted when the last item is rendered.
+
+### Default scoped slot props
+
+- `item`: item being rendered in a view.
+- `index`: reflects each item's position in the `items` array
+- `active`: whether or not the view is active. An active view is considered visible and being positioned by `RecycleScroller`. An inactive view is not considered visible and is hidden from the user. Any rendering-related computations should be skipped if the view is inactive.
+
+### Other Slots
+
+```html
+<main>
+  <slot name="before"></slot>
+  <wrapper>
+    <!-- Reused view pools here -->
+    <slot name="empty"></slot>
+  </wrapper>
+  <slot name="after"></slot>
+</main>
+```
+
+Example:
+
+```html
+<RecycleScroller
+  class="scroller"
+  :items="list"
+  :item-size="32"
+>
+  <template #before>
+    Hey! I'm a message displayed before the items!
+  </template>
+
+  <template v-slot="{ item }">
+    <div class="user">
+      {{ item.name }}
+    </div>
+  </template>
+</RecycleScroller>
+```
+
+### Page mode
+
+The page mode expands the virtual-scroller and uses the page viewport to compute which items are visible. That way, you can use it in a big page with HTML elements before or after (like a header and a footer). Set the `page-mode` prop to `true`:
 
 ```html
 <header>
   <menu></menu>
 </header>
 
-<virtual-scroller page-mode></virtual-scroller>
+<RecycleScroller page-mode>
+  <!-- ... -->
+</RecycleScroller>
 
 <footer>
   Copyright 2017 - Cat
 </footer>
 ```
 
-## Variable height mode
+### Variable size mode
 
 **⚠️ This mode can be performance heavy with a lot of items. Use with caution.**
 
-If the `itemHeight` prop is not set or set to `null`, the virtual scroller will switch to Variable height mode. You then need to expose a number field on the item objects with the height of the item element.
+If the `itemSize` prop is not set or is set to `null`, the virtual scroller will switch to variable size mode. You then need to expose a number field on the item objects with the size of the item element.
 
-**⚠️ You still need to set the height of the items with CSS correctly (with classes for example).**
+**⚠️ You still need to set the size of the items with CSS correctly (with classes for example).**
 
-Use the `heightField` prop (default is `'height'`) to set the field used by the scroller to get the height for each item.
+Use the `sizeField` prop (default is `'size'`) to set the field used by the scroller to get the size for each item.
 
 Example:
 
@@ -190,162 +282,192 @@ const items = [
   {
     id: 1,
     label: 'Title',
-    height: 64,
+    size: 64,
   },
   {
     id: 2,
     label: 'Foo',
-    height: 32,
+    size: 32,
   },
   {
     id: 3,
     label: 'Bar',
-    height: 32,
+    size: 32,
   },
 ]
 ```
 
-## Customizing the tags
+### Buffer
 
-These are optional props you can use to change the DOM tags used in the virtual scroller:
+You can set the `buffer` prop (in pixels) on the virtual-scroller to extend the viewport considered when determining the visible items. For example, if you set a buffer of 1000 pixels, the virtual-scroller will start rendering items that are 1000 pixels below the bottom of the scroller visible area, and will keep the items that are 1000 pixels above the top of the visible area.
 
-- `mainTag` to change the DOM tag of the component root element. The default is `'div'`.
-- `containerTag` to change the DOM tag of the element simulating the height. The default is `'div'`.
-- `contentTag` to change the DOM tag of the element containing the items. The default is `'div'`. For example, you can change this to `'table'`.
-
-The component template is structured like this:
+The default value is `200`.
 
 ```html
-<main>
-  <container>
-    <content>
-      <!-- Your items here -->
-    </content>
-  </container>
-</main>
+<RecycleScroller :buffer="200" />
 ```
 
-If you set `contentTag` to `'table'`, the actual result in the DOM will look like the following:
+### Server-Side Rendering
+
+The `prerender` props can be set as the number of items to render on the server inside the virtual scroller:
 
 ```html
-<div>
-  <div>
-    <table>
-      <!-- Your items here -->
-    </table>
-  </div>
-</div>
+<RecycleScroller
+  :items="items"
+  :item-size="42"
+  :prerender="10"
+>
 ```
 
-## Customizing the classes
+## DynamicScroller
 
-You can use the following props to customize the container and content elements CSS classes:
+This works just like the RecycleScroller, but it can render items with unknown sizes!
 
-- `containerClass`
-- `contentClass`
-
-
-## Slots
-
-There are 4 slots you can use to inject things inside the scroller (it may be usefull to add a `thead` or `tbody`):
-
-```html
-<main>
-  <slot name="before-container"></slot>
-  <container>
-    <slot name="before-content"></slot>
-    <content>
-      <!-- Your items here -->
-    </content>
-    <slot name="after-content"></slot>
-  </container>
-  <slot name="after-container"></slot>
-</main>
-```
-
-# Example
+### Basic usage
 
 ```html
 <template>
-  <div class="demo">
-    <virtual-scroller
-      class="scroller"
-      :items="items"
-      :renderers="renderers"
-      item-height="22"
-      type-field="type">
-    </virtual-scroller>
-  </div>
+  <DynamicScroller
+    :items="items"
+    :min-item-size="54"
+    class="scroller"
+  >
+    <template v-slot="{ item, index, active }">
+      <DynamicScrollerItem
+        :item="item"
+        :active="active"
+        :size-dependencies="[
+          item.message,
+        ]"
+        :data-index="index"
+      >
+        <div class="avatar">
+          <img
+            :src="item.avatar"
+            :key="item.avatar"
+            alt="avatar"
+            class="image"
+          >
+        </div>
+        <div class="text">{{ item.message }}</div>
+      </DynamicScrollerItem>
+    </template>
+  </DynamicScroller>
 </template>
 
 <script>
-// Data with a type field
-const items = [
-  { type: 'letter', value: 'A' },
-  { type: 'person', value: { name: 'Alan' } },
-  { type: 'person', value: { name: 'Alice' } },
-]
-
-import Letter from './Letter.vue'
-import Item from './Item.vue'
-
-// Bind the components to the item type
-const renderers = Object.freeze({
-  letter: Letter,
-  person: Item,
-})
-
 export default {
-  data: () => ({
-    items,
-    renderers,
-  }),
+  props: {
+    items: Array,
+  },
 }
 </script>
 
-<style>
+<style scoped>
 .scroller {
   height: 100%;
-}
-
-.scroller .item {
-  height: 22px;
 }
 </style>
 ```
 
-`Letter.vue` source:
+### Important notes
+
+- `minItemSize` is required for the initial render of items.
+- `DynamicScroller` won't detect size changes on its own, but you can put values that can affect the item size with `size-dependencies` on [DynamicScrollerItem](#dynamicscrolleritem).
+- You don't need to have a `size` field on the items.
+
+### Props
+
+Extends all the RecycleScroller props.
+
+- It's not recommended to change `sizeField` prop since all the size management is done internally.
+
+### Events
+
+Extends all the RecycleScroller events.
+
+### Default scoped slot props
+
+Extends all the RecycleScroller scoped slot props.
+
+### Other slots
+
+Extends all the RecycleScroller other slots.
+
+## DynamicScrollerItem
+
+The component that should wrap all the items in a DynamicScroller.
+
+### Props
+
+- `item` (required): the item rendered in the scroller.
+- `active` (required): is the holding view active in RecycleScroller. Will prevent unnecessary size recomputation.
+- `sizeDependencies`: values that can affect the size of the item. This prop will be watched and if one value changes, the size will be recomputed. Recommended instead of `watchData`.
+- `watchData` (default: `false`): deeply watch `item` for changes to re-calculate the size (not recommended, can impact performance).
+- `tag` (default: `'div'`): element used to render the component.
+- `emitResize` (default: `false`): emit the `resize` event each time the size is recomputed (can impact performance).
+
+### Events
+
+- `resize`: emitted each time the size is recomputed, only if `emitResize` prop is `true`.
+
+## IdState
+
+This is convenience mixin that can replace `data` in components being rendered in a RecycleScroller.
+
+### Why is this useful?
+
+Since the components in RecycleScroller are reused, you can't directly use the Vue standard `data` properties: otherwise they will be shared with different items in the list!
+
+IdState will instead provide an `idState` object which is equivalent to `$data`, but it's linked to a single item with its identifier (you can change which field with `idProp` param).
+
+### Example
+
+In this example, we use the `id` of the `item` to have a "scoped" state to the item:
 
 ```html
 <template>
-  <div class="letter">({{item.index}}) {{item.value}}</div>
+  <div class="question">
+    <p>{{ item.question }}</p>
+    <button @click="idState.replyOpen = !idState.replyOpen">Reply</button>
+    <textarea
+      v-if="idState.replyOpen"
+      v-model="idState.replyText"
+      placeholder="Type your reply"
+    />
+  </div>
 </template>
 
 <script>
+import { IdState } from 'vue-virtual-scroller'
+
 export default {
-  props: ['item'],
-}
-</script>
-```
+  mixins: [
+    IdState({
+      // You can customize this
+      idProp: vm => vm.item.id,
+    }),
+  ],
 
-`Item.vue` source:
+  props: {
+    // Item in the list
+    item: Object,
+  },
 
-```html
-<template>
-  <div class="person" @click="edit">({{item.index}}) {{item.value.name}}</div>
-</template>
-
-<script>
-export default {
-  props: ['item'],
-  methods: {
-    edit () {
-      this.item.value.name += '*'
-    },
+  // This replaces data () { ... }
+  idState () {
+    return {
+      replyOpen: false,
+      replyText: '',
+    }
   },
 }
 </script>
 ```
+
+### Parameters
+
+- `idProp` (default: `vm => vm.item.id`): field name on the component (for example: `'id'`) or function returning the id.
 
 ---
 
