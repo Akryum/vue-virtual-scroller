@@ -50,19 +50,24 @@ export default {
   provide () {
     if (typeof ResizeObserver !== 'undefined') {
       this.$_resizeObserver = new ResizeObserver(entries => {
-        for (const entry of entries) {
-          if (entry.target) {
-            const event = new CustomEvent(
-              'resize',
-              {
-                detail: {
-                  contentRect: entry.contentRect,
-                },
-              },
-            )
-            entry.target.dispatchEvent(event)
+        requestAnimationFrame(() => {
+          if (!Array.isArray(entries)) {
+            return
           }
-        }
+          for (const entry of entries) {
+            if (entry.target) {
+              const event = new CustomEvent(
+                'resize',
+                {
+                  detail: {
+                    contentRect: entry.contentRect,
+                  },
+                },
+              )
+              entry.target.dispatchEvent(event)
+            }
+          }
+        })
       })
     }
 
