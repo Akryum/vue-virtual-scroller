@@ -10,6 +10,9 @@
       <button @click="addItems(10)">
         Add 10 items
       </button>
+      <button @click="addItems(50)">
+        Add 50 items
+      </button>
     </div>
 
     <DynamicScroller
@@ -25,12 +28,7 @@
         :active="active"
         :data-index="index"
       >
-        <div
-          class="message"
-          :style="{
-            height: `${item.size}px`,
-          }"
-        >
+        <div class="message">
           {{ item.text }}
         </div>
       </DynamicScrollerItem>
@@ -54,9 +52,8 @@ export default {
     addItems (count = 1) {
       for (let i = 0; i < count; i++) {
         this.items.push({
-          text: faker.lorem.sentence(),
+          text: faker.lorem.lines(),
           id: this.items.length + 1,
-          size: Math.random() * 120 + 40,
         })
       }
       this.scrollToBottom()
