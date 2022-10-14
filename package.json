@@ -2,9 +2,6 @@
   "name": "vue-virtual-scroller-monorepo",
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
     "build": "lerna run build --ignore demo",
     "release": "lerna publish",
@@ -21,7 +18,6 @@
     "eslint-plugin-node": "^11.0.0",
     "eslint-plugin-promise": "^5.1.0",
     "eslint-plugin-standard": "^5.0.0",
-    "eslint-plugin-vue": "^7.9.0",
-    "lerna": "^3.22.1"
+    "eslint-plugin-vue": "^7.9.0"
   }
 }
