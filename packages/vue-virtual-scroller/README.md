@@ -5,7 +5,7 @@
 
 Blazing fast scrolling of any amount of data | [Live demo](https://akryum.github.io/vue-virtual-scroller/) | [Video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k)
 
-For Vue 3 support, see [here](https://github.com/Akryum/vue-virtual-scroller/tree/next/packages/vue-virtual-scroller)
+For Vue 3 support, see [here](https://github.com/Akryum/vue-virtual-scroller/tree/master/packages/vue-virtual-scroller)
 
 [💚️ Become a Sponsor](https://github.com/sponsors/Akryum)
 
