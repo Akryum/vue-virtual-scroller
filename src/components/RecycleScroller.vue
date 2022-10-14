@@ -38,8 +38,10 @@
             hover: !skipHover && hoverKey === view.nr.key
           },
         ]"
-        @mouseenter="!skipHover && (hoverKey = view.nr.key)"
-        @mouseleave="!skipHover && (hoverKey = null)"
+        v-on="skipHover ? {} : {
+          mouseenter: () => { hoverKey = view.nr.key },
+          mouseleave: () => { hoverKey = null },
+        }"
       >
         <slot
           :item="view.item"
