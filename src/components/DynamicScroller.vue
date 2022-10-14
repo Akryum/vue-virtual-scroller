@@ -28,6 +28,9 @@
     <template slot="after">
       <slot name="after" />
     </template>
+    <template slot="empty">
+      <slot name="empty" />
+    </template>
   </RecycleScroller>
 </template>
 

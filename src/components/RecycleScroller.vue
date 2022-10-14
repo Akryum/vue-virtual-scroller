@@ -47,6 +47,10 @@
           :active="view.nr.used"
         />
       </component>
+
+      <slot
+        name="empty"
+      />
     </component>
 
     <div
