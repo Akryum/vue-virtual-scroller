@@ -9,6 +9,7 @@ export default {
   ],
 
   props: {
+    // eslint-disable-next-line vue/require-prop-types
     item: {
       required: true,
     },
@@ -18,6 +19,9 @@ export default {
       default: false,
     },
 
+    /**
+     * Indicates if the view is actively used to display an item.
+     */
     active: {
       type: Boolean,
       required: true,
@@ -46,11 +50,18 @@ export default {
 
   computed: {
     id () {
-      return this.vscrollData.simpleArray ? this.index : this.item[this.vscrollData.keyField]
+      if (this.vscrollData.simpleArray) return this.index
+      // eslint-disable-next-line no-prototype-builtins
+      if (this.item.hasOwnProperty(this.vscrollData.keyField)) return this.item[this.vscrollData.keyField]
+      throw new Error(`keyField '${this.vscrollData.keyField}' not found in your item. You should set a valid keyField prop on your Scroller`)
     },
 
     size () {
       return (this.vscrollData.validSizes[this.id] && this.vscrollData.sizes[this.id]) || 0
+    },
+
+    finalActive () {
+      return this.active && this.vscrollData.active
     },
   },
 
@@ -63,7 +74,7 @@ export default {
       }
     },
 
-    active (value) {
+    finalActive (value) {
       if (!this.size) {
         if (value) {
           if (!this.vscrollParent.$_undefinedMap[this.id]) {
@@ -121,14 +132,12 @@ export default {
 
   methods: {
     updateSize () {
-      if (this.active && this.vscrollData.active) {
+      if (this.finalActive) {
         if (this.$_pendingSizeUpdate !== this.id) {
           this.$_pendingSizeUpdate = this.id
           this.$_forceNextVScrollUpdate = null
           this.$_pendingVScrollUpdate = null
-          if (this.active && this.vscrollData.active) {
-            this.computeSize(this.id)
-          }
+          this.computeSize(this.id)
         }
       } else {
         this.$_forceNextVScrollUpdate = this.id
@@ -137,7 +146,7 @@ export default {
 
     updateWatchData () {
       if (this.watchData) {
-        this.$_watchData = this.$watch('data', () => {
+        this.$_watchData = this.$watch('item', () => {
           this.onDataUpdate()
         }, {
           deep: true,
@@ -149,9 +158,11 @@ export default {
     },
 
     onVscrollUpdate ({ force }) {
-      if (!this.active && force) {
+      // If not active, sechedule a size update when it becomes active
+      if (!this.finalActive && force) {
         this.$_pendingVScrollUpdate = this.id
       }
+
       if (this.$_forceNextVScrollUpdate === this.id || force || !this.size) {
         this.updateSize()
       }
@@ -186,11 +197,13 @@ export default {
     },
 
     observeSize () {
+      if (!this.vscrollResizeObserver || !this.$el.parentNode) return
       this.vscrollResizeObserver.observe(this.$el.parentNode)
       this.$el.parentNode.addEventListener('resize', this.onResize)
     },
 
     unobserveSize () {
+      if (!this.vscrollResizeObserver) return
       this.vscrollResizeObserver.unobserve(this.$el.parentNode)
       this.$el.parentNode.removeEventListener('resize', this.onResize)
     },

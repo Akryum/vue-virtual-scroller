@@ -4,7 +4,9 @@
     :items="itemsWithSize"
     :min-item-size="minItemSize"
     :direction="direction"
-    key-field="id"
+    :key-field="keyField"
+    :list-tag="listTag"
+    :item-tag="itemTag"
     v-bind="$attrs"
     @resize="onScrollerResize"
     @visible="onScrollerVisible"
@@ -26,14 +28,15 @@
     <template slot="after">
       <slot name="after" />
     </template>
+    <template slot="empty">
+      <slot name="empty" />
+    </template>
   </RecycleScroller>
 </template>
 
 <script>
 import RecycleScroller from './RecycleScroller.vue'
 import { props, simpleArray } from './common'
-
-const MAX_SCROLL = 9999999999
 
 export default {
   name: 'DynamicScroller',
@@ -47,19 +50,24 @@ export default {
   provide () {
     if (typeof ResizeObserver !== 'undefined') {
       this.$_resizeObserver = new ResizeObserver(entries => {
-        for (const entry of entries) {
-          if (entry.target) {
-            const event = new CustomEvent(
-              'resize',
-              {
-                detail: {
-                  contentRect: entry.contentRect,
-                },
-              },
-            )
-            entry.target.dispatchEvent(event)
+        requestAnimationFrame(() => {
+          if (!Array.isArray(entries)) {
+            return
           }
-        }
+          for (const entry of entries) {
+            if (entry.target) {
+              const event = new CustomEvent(
+                'resize',
+                {
+                  detail: {
+                    contentRect: entry.contentRect,
+                  },
+                },
+              )
+              entry.target.dispatchEvent(event)
+            }
+          }
+        })
       })
     }
 
@@ -140,9 +148,33 @@ export default {
     direction (value) {
       this.forceUpdate(true)
     },
+
+    itemsWithSize (next, prev) {
+      const scrollTop = this.$el.scrollTop
+
+      // Calculate total diff between prev and next sizes
+      // over current scroll top. Then add it to scrollTop to
+      // avoid jumping the contents that the user is seeing.
+      let prevActiveTop = 0; let activeTop = 0
+      const length = Math.min(next.length, prev.length)
+      for (let i = 0; i < length; i++) {
+        if (prevActiveTop >= scrollTop) {
+          break
+        }
+        prevActiveTop += prev[i].size || this.minItemSize
+        activeTop += next[i].size || this.minItemSize
+      }
+      const offset = activeTop - prevActiveTop
+
+      if (offset === 0) {
+        return
+      }
+
+      this.$el.scrollTop += offset
+    },
   },
 
-  created () {
+  beforeCreate () {
     this.$_updates = []
     this.$_undefinedSizes = 0
     this.$_undefinedMap = {}
@@ -193,12 +225,12 @@ export default {
       const el = this.$el
       // Item is inserted to the DOM
       this.$nextTick(() => {
-        el.scrollTop = MAX_SCROLL
+        el.scrollTop = el.scrollHeight + 5000
         // Item sizes are computed
         const cb = () => {
-          el.scrollTop = MAX_SCROLL
+          el.scrollTop = el.scrollHeight + 5000
           requestAnimationFrame(() => {
-            el.scrollTop = MAX_SCROLL
+            el.scrollTop = el.scrollHeight + 5000
             if (this.$_undefinedSizes === 0) {
               this.$_scrollingToBottom = false
             } else {
