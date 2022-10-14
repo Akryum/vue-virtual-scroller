@@ -243,6 +243,10 @@ export default {
       this.$_prerender = true
       this.updateVisibleItems(false)
     }
+
+    if (this.perRow && !this.itemSize) {
+      console.error('[vue-recycle-scroller] You must provide an itemSize when using perRow')
+    }
   },
 
   mounted () {
