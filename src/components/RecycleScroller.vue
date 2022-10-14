@@ -30,7 +30,11 @@
         :is="itemTag"
         v-for="view of pool"
         :key="view.nr.id"
-        :style="ready ? { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
+        :style="ready ? {
+          transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px) translate${direction === 'vertical' ? 'X' : 'Y'}(${view.offset}px)`,
+          width: perRow ? `${itemSize}px` : undefined,
+          height: perRow ? `${itemSize}px` : undefined,
+        } : null"
         class="vue-recycle-scroller__item-view"
         :class="[
           itemClass,
@@ -218,6 +222,10 @@ export default {
         this.updateVisibleItems(false)
       },
       deep: true,
+    },
+
+    perRow () {
+      this.updateVisibleItems(true)
     },
   },
 
@@ -555,8 +563,10 @@ export default {
         // Update position
         if (itemSize === null) {
           view.position = sizes[i - 1].accumulator
+          view.offset = 0
         } else {
           view.position = Math.floor(i / perRow) * itemSize
+          view.offset = (i % perRow) * itemSize
         }
       }
 
