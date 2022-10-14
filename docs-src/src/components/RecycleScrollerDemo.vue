@@ -84,6 +84,8 @@
           @update="onUpdate"
           @visible="onVisible"
           @hidden="onHidden"
+          @scroll-start="onScrollStart"
+          @scroll-end="onScrollEnd"
         >
           <template v-slot="props">
             <div
@@ -205,6 +207,14 @@ export default {
 
     onHidden () {
       console.log('hidden')
+    },
+
+    onScrollStart () {
+      console.log('scroll start')
+    },
+
+    onScrollEnd () {
+      console.log('scroll end')
     },
   },
 }
