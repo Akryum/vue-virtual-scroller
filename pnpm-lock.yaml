@@ -39,7 +39,7 @@ importers:
       vite: ^3.1.8
       vue: ^3.2.41
       vue-router: ^4.1.5
-      vue-virtual-scroller: ^2.0.0-alpha.1
+      vue-virtual-scroller: workspace:*
     dependencies:
       '@faker-js/faker': 7.6.0
       vue: 3.2.41
