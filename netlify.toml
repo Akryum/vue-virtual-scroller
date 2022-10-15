@@ -1,0 +1,8 @@
+[build.environment]
+  NODE_VERSION = "16"
+  NPM_FLAGS = "--version" # prevent Netlify npm install
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
