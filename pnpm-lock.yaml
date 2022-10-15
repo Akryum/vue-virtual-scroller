@@ -8,6 +8,7 @@ importers:
       '@babel/core': ^7.9.0
       '@babel/preset-env': ^7.9.0
       babel-eslint: ^10.1.0
+      conventional-changelog-cli: ^2.2.2
       eslint: ^7.24.0
       eslint-config-standard: ^16.0.2
       eslint-plugin-html: ^6.0.0
@@ -21,6 +22,7 @@ importers:
       '@babel/core': 7.19.3
       '@babel/preset-env': 7.19.4_@babel+core@7.19.3
       babel-eslint: 10.1.0_eslint@7.32.0
+      conventional-changelog-cli: 2.2.2
       eslint: 7.32.0
       eslint-config-standard: 16.0.3_wnerebu6rbpsve3qx7qqwvcqtq
       eslint-plugin-html: 6.2.0
