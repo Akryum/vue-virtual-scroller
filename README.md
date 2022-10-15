@@ -5,7 +5,7 @@
 
 [Docs](./packages/vue-virtual-scroller/README.md)
 
-Blazing fast scrolling of any amount of data | [Live demo](https://akryum.github.io/vue-virtual-scroller/) | [Video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k)
+Blazing fast scrolling of any amount of data | [Live demo](https://vue-virtual-scroller-demo.netlify.app/) | [Video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k)
 
 For Vue 2 support, see [here](https://github.com/Akryum/vue-virtual-scroller/tree/v1/packages/vue-virtual-scroller)
 
