@@ -355,7 +355,7 @@ export default {
 
     updateVisibleItems (checkItem, checkPositionDiff = false) {
       const itemSize = this.itemSize
-      const gridItems = this.gridItems
+      const gridItems = this.gridItems || 1
       const itemSecondarySize = this.itemSecondarySize || itemSize
       const minItemSize = this.$_computedMinItemSize
       const typeField = this.typeField
@@ -654,9 +654,11 @@ export default {
 
     addListeners () {
       this.listenerTarget = this.getListenerTarget()
-      this.listenerTarget.addEventListener('scroll', this.handleScroll, supportsPassive ? {
-        passive: true,
-      } : false)
+      this.listenerTarget.addEventListener('scroll', this.handleScroll, supportsPassive
+        ? {
+            passive: true,
+          }
+        : false)
       this.listenerTarget.addEventListener('resize', this.handleResize)
     },
 
