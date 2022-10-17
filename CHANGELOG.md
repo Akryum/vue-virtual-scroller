@@ -2,7 +2,7 @@
 
 ### Bug Fixes
 
-* Account for the height of the leading and trailing slots when calculating visible items, fix [#685](https://github.com/Akryum/vue-virtual-scroller/issues/685) ([#754](https://github.com/Akryum/vue-virtual-scroller/issues/754)) ([fe72c43](https://github.com/Akryum/vue-virtual-scroller/commit/fe72c438f72d03153d92f0e47f49ba9ff769b83c))
+* fix: height NaN, fix [#757](https://github.com/Akryum/vue-virtual-scroller/issues/757)
 
 
 
