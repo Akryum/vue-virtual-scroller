@@ -1,3 +1,11 @@
+# [2.0.0-beta.2](https://github.com/Akryum/vue-virtual-scroller/compare/v1.1.1...v2.0.0-beta.2) (2022-10-17)
+
+### Bug Fixes
+
+* Account for the height of the leading and trailing slots when calculating visible items, fix [#685](https://github.com/Akryum/vue-virtual-scroller/issues/685) ([#754](https://github.com/Akryum/vue-virtual-scroller/issues/754)) ([fe72c43](https://github.com/Akryum/vue-virtual-scroller/commit/fe72c438f72d03153d92f0e47f49ba9ff769b83c))
+
+
+
 # [2.0.0-beta.1](https://github.com/Akryum/vue-virtual-scroller/compare/v1.1.0...v2.0.0-beta.1) (2022-10-15)
 
 
