@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@akryum/sheep': ^0.4.0
+      '@akryum/sheep': ^0.4.2
       '@babel/core': ^7.9.0
       '@babel/preset-env': ^7.9.0
       babel-eslint: ^10.1.0
@@ -18,7 +18,7 @@ importers:
       eslint-plugin-standard: ^5.0.0
       eslint-plugin-vue: ^7.9.0
     devDependencies:
-      '@akryum/sheep': 0.4.0
+      '@akryum/sheep': 0.4.2
       '@babel/core': 7.19.3
       '@babel/preset-env': 7.19.4_@babel+core@7.19.3
       babel-eslint: 10.1.0_eslint@7.32.0
@@ -94,8 +94,8 @@ importers:
 
 packages:
 
-  /@akryum/sheep/0.4.0:
-    resolution: {integrity: sha512-ciYxUJkAL1rVf743SmjziEH9pwcZb51AAw+1+aNFxl9Qzzh7bs104f2IXNUd1WAv+Y6DJ/PJ6QooMKY95/STeg==}
+  /@akryum/sheep/0.4.2:
+    resolution: {integrity: sha512-+Yq1UJ0JqXVMGC+gq57agAkBQ3YgyYjoNIhLDGC5oYaAvfEPXAro0EAZvtFG9SmrEgHHdtPY01BTUnyfdS9ScQ==}
     hasBin: true
     dependencies:
       conventional-changelog-cli: 2.2.2

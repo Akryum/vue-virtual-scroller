@@ -8,7 +8,7 @@
     "lint": "eslint --ext .js,.vue packages"
   },
   "devDependencies": {
-    "@akryum/sheep": "^0.4.0",
+    "@akryum/sheep": "^0.4.2",
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.0",
     "babel-eslint": "^10.1.0",
