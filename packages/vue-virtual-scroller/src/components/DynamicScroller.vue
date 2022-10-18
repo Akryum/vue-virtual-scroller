@@ -4,7 +4,7 @@
     :items="itemsWithSize"
     :min-item-size="minItemSize"
     :direction="direction"
-    :key-field="keyField"
+    key-field="id"
     :list-tag="listTag"
     :item-tag="itemTag"
     v-bind="$attrs"
@@ -45,8 +45,6 @@ export default {
     RecycleScroller,
   },
 
-  inheritAttrs: false,
-
   provide () {
     if (typeof ResizeObserver !== 'undefined') {
       this.$_resizeObserver = new ResizeObserver(entries => {
@@ -77,6 +75,8 @@ export default {
       vscrollResizeObserver: this.$_resizeObserver,
     }
   },
+
+  inheritAttrs: false,
 
   props: {
     ...props,
