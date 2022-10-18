@@ -500,9 +500,7 @@ export default {
           if (view.nr.used) {
             // Update view item index
             if (checkItem) {
-              view.nr.index = items.findIndex(
-                item => keyField ? item[keyField] === view.item[keyField] : item === view.item,
-              )
+              view.nr.index = items.indexOf(view.item)
             }
 
             // Check if index is still in visible range

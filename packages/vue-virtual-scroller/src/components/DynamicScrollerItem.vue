@@ -149,7 +149,7 @@ export default {
     },
 
     updateWatchData () {
-      if (this.watchData) {
+      if (this.watchData && !this.vscrollResizeObserver) {
         this.$_watchData = this.$watch('item', () => {
           this.onDataUpdate()
         }, {
@@ -188,7 +188,7 @@ export default {
     },
 
     applySize (width, height) {
-      const size = Math.round(this.vscrollParent.direction === 'vertical' ? height : width)
+      const size = ~~(this.vscrollParent.direction === 'vertical' ? height : width)
       if (size && this.size !== size) {
         if (this.vscrollParent.$_undefinedMap[this.id]) {
           this.vscrollParent.$_undefinedSizes--
