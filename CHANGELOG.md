@@ -1,3 +1,17 @@
+# [2.0.0-beta.3](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2022-10-18)
+
+
+### Performance Improvements
+
+* small code changes to maximize performance ([3b4dbf3](https://github.com/Akryum/vue-virtual-scroller/commit/3b4dbf39f480745d53e4bb43217c2b35975e4ab6))
+
+
+### Reverts
+
+* pass key-field prop [#732](https://github.com/Akryum/vue-virtual-scroller/issues/732), fix [#758](https://github.com/Akryum/vue-virtual-scroller/issues/758) ([8d221e6](https://github.com/Akryum/vue-virtual-scroller/commit/8d221e6978e4924ab125337fc91f6b6de7a1f497))
+
+
+
 # [2.0.0-beta.2](https://github.com/Akryum/vue-virtual-scroller/compare/v1.1.1...v2.0.0-beta.2) (2022-10-17)
 
 ### Bug Fixes
