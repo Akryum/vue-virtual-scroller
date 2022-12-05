@@ -75,6 +75,7 @@ export default {
     watchData: 'updateWatchData',
 
     id () {
+      this.$el.$_vs_id = this.id
       if (!this.size) {
         this.onDataUpdate()
       }
@@ -124,7 +125,9 @@ export default {
 
   mounted () {
     if (this.vscrollData.active) {
-      this.updateSize()
+      if (!this.vscrollResizeObserver) {
+        this.updateSize()
+      }
       this.observeSize()
     }
   },
@@ -201,20 +204,22 @@ export default {
     },
 
     observeSize () {
-      if (!this.vscrollResizeObserver || !this.$el.parentNode) return
-      this.vscrollResizeObserver.observe(this.$el.parentNode)
-      this.$el.parentNode.addEventListener('resize', this.onResize)
+      if (!this.vscrollResizeObserver) return
+      this.vscrollResizeObserver.observe(this.$el)
+      this.$el.$_vs_id = this.id
+      this.$el.$_vs_onResize = this.onResize
     },
 
     unobserveSize () {
       if (!this.vscrollResizeObserver) return
-      this.vscrollResizeObserver.unobserve(this.$el.parentNode)
-      this.$el.parentNode.removeEventListener('resize', this.onResize)
+      this.vscrollResizeObserver.unobserve(this.$el)
+      this.$el.$_vs_onResize = undefined
     },
 
-    onResize (event) {
-      const { width, height } = event.detail.contentRect
-      this.applySize(width, height)
+    onResize (id, width, height) {
+      if (this.id === id) {
+        this.applySize(width, height)
+      }
     },
   },
 
