@@ -495,7 +495,7 @@ export default {
       const continuous = startIndex <= this.$_endIndex && endIndex >= this.$_startIndex
 
       if (this.$_continuous !== continuous) {
-        if (continuous) {
+        if (!continuous) {
           views.clear()
           unusedViews.clear()
           for (let i = 0, l = pool.length; i < l; i++) {
