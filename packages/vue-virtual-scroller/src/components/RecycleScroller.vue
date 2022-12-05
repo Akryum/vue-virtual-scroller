@@ -220,6 +220,15 @@ export default {
     },
 
     simpleArray,
+
+    itemIndexByKey () {
+      const { keyField, items } = this
+      const result = {}
+      for (let i = 0, l = items.length; i < l; i++) {
+        result[items[i][keyField]] = i
+      }
+      return result
+    },
   },
 
   watch: {
@@ -373,6 +382,7 @@ export default {
       const views = this.$_views
       const unusedViews = this.$_unusedViews
       const pool = this.pool
+      const itemIndexByKey = this.itemIndexByKey
       let startIndex, endIndex
       let totalSize
       let visibleStartIndex, visibleEndIndex
@@ -500,7 +510,7 @@ export default {
           if (view.nr.used) {
             // Update view item index
             if (checkItem) {
-              view.nr.index = items.indexOf(view.item)
+              view.nr.index = itemIndexByKey[view.item[keyField]]
             }
 
             // Check if index is still in visible range
