@@ -90,7 +90,6 @@ export default {
       vscrollData: {
         active: true,
         sizes: {},
-        validSizes: {},
         keyField: this.keyField,
         simpleArray: false,
       },
@@ -124,7 +123,7 @@ export default {
 
   watch: {
     items () {
-      this.forceUpdate(false)
+      this.forceUpdate()
     },
 
     simpleArray: {
@@ -196,9 +195,9 @@ export default {
       this.$emit('visible')
     },
 
-    forceUpdate (clear = true) {
+    forceUpdate (clear = false) {
       if (clear || this.simpleArray) {
-        this.vscrollData.validSizes = {}
+        this.vscrollData.sizes = {}
       }
       this.$_events.emit('vscroll:update', { force: true })
     },

@@ -63,7 +63,7 @@ export default {
     },
 
     size () {
-      return (this.vscrollData.validSizes[this.id] && this.vscrollData.sizes[this.id]) || 0
+      return this.vscrollData.sizes[this.id] || 0
     },
 
     finalActive () {
@@ -198,7 +198,6 @@ export default {
           this.vscrollParent.$_undefinedMap[this.id] = undefined
         }
         this.vscrollData.sizes[this.id] = size
-        this.vscrollData.validSizes[this.id] = true
         if (this.emitResize) this.$emit('resize', this.id)
       }
     },
