@@ -53,7 +53,7 @@ export default {
             return
           }
           for (const entry of entries) {
-            if (entry.target?.$_vs_onResize) {
+            if (entry.target && entry.target.$_vs_onResize) {
               const resizeObserverSize = entry.borderBoxSize[0]
               entry.target.$_vs_onResize(entry.target.$_vs_id, resizeObserverSize.inlineSize, resizeObserverSize.blockSize)
             }
