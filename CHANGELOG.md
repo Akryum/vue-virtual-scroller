@@ -1,3 +1,15 @@
+# [2.0.0-beta.4](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.3...v2.0.0-beta.4) (2022-12-06)
+
+
+### Bug Fixes
+
+* improved dynamic scroller resize observer logic ([40f58b3](https://github.com/Akryum/vue-virtual-scroller/commit/40f58b3e3a411df36c09d59cc3776719f60d93cf))
+* item sizes getting 'disabled' resulting in gaps ([55b4ab1](https://github.com/Akryum/vue-virtual-scroller/commit/55b4ab1df1b4998178f2f03a53c112086a2633f2))
+* unusing views after non-continuous scroll ([11488b7](https://github.com/Akryum/vue-virtual-scroller/commit/11488b7d8ffdfe1384fe808e4a49c1ba95ad1383))
+* views incorrectly unused (proxy identity comparison) ([395bbfb](https://github.com/Akryum/vue-virtual-scroller/commit/395bbfb73588455795ecc5b144281ce5fda042ff))
+
+
+
 # [2.0.0-beta.3](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2022-10-18)
 
 
