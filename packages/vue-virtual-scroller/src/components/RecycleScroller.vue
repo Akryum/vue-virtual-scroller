@@ -527,7 +527,7 @@ export default {
 
       const unusedIndex = continuous ? null : new Map()
 
-      let item, type, unusedPool
+      let item, type
       let v
       for (let i = startIndex; i < endIndex; i++) {
         item = items[i]
@@ -542,23 +542,19 @@ export default {
           continue
         }
 
+        let unusedPool = unusedViews.get(type)
+
         // No view assigned to item
         if (!view) {
           if (i === items.length - 1) this.$emit('scroll-end')
           if (i === 0) this.$emit('scroll-start')
 
           type = item[typeField]
-          unusedPool = unusedViews.get(type)
 
           if (continuous) {
             // Reuse existing view
             if (unusedPool && unusedPool.length) {
               view = unusedPool.pop()
-              view.item = item
-              view.nr.used = true
-              view.nr.index = i
-              view.nr.key = key
-              view.nr.type = type
             } else {
               view = this.addView(pool, i, item, key, type)
             }
@@ -575,22 +571,24 @@ export default {
             }
 
             view = unusedPool[v]
-            view.item = item
-            view.nr.used = true
-            view.nr.index = i
-            view.nr.key = key
-            view.nr.type = type
             unusedIndex.set(type, v + 1)
-            v++
           }
-          views.set(key, view)
         } else {
-          view.item = item
-          view.nr.used = true
-          view.nr.index = i
-          view.nr.key = key
-          view.nr.type = type
+          // View already assigned to item
+          if (unusedPool) {
+            const index = unusedPool.indexOf(view)
+            if (index !== -1) unusedPool.splice(index, 1)
+          }
         }
+
+        // Assign view to item
+        views.delete(view.nr.key)
+        view.item = item
+        view.nr.used = true
+        view.nr.index = i
+        view.nr.key = key
+        view.nr.type = type
+        views.set(key, view)
 
         // Update position
         if (itemSize === null) {
