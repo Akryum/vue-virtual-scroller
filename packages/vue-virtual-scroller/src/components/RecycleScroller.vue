@@ -585,8 +585,11 @@ export default {
           }
           views.set(key, view)
         } else {
-          view.nr.used = true
           view.item = item
+          view.nr.used = true
+          view.nr.index = i
+          view.nr.key = key
+          view.nr.type = type
         }
 
         // Update position
