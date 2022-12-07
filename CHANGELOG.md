@@ -1,3 +1,20 @@
+# [2.0.0-beta.5](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.4...v2.0.0-beta.5) (2022-12-07)
+
+
+### Bug Fixes
+
+* duplicate active views ([1ef796b](https://github.com/Akryum/vue-virtual-scroller/commit/1ef796b42143da6d4e74f83b8ac88176128e6d77))
+* **DynamicScroller:** gaps caused by DOM reusing not triggering ResizeObserver ([a21e191](https://github.com/Akryum/vue-virtual-scroller/commit/a21e1915d76741a2806abd3a702d450f722879c8))
+* inconsistent state on reused view ([a14747d](https://github.com/Akryum/vue-virtual-scroller/commit/a14747d33d75eaf7fe820370436d70e82562939b))
+* views map corruption + view not removed from unusedPool ([cef8860](https://github.com/Akryum/vue-virtual-scroller/commit/cef886085c52f62736cf4c404a32f4f4fce6d229))
+
+
+### Performance Improvements
+
+* unnecessary loop ([86d0d07](https://github.com/Akryum/vue-virtual-scroller/commit/86d0d0776e26542d1b94484ec6ff5410733d3f18))
+
+
+
 # [2.0.0-beta.4](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.3...v2.0.0-beta.4) (2022-12-06)
 
 
