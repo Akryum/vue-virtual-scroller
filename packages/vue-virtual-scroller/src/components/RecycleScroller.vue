@@ -330,7 +330,6 @@ export default {
       if (!fake) {
         view.nr.used = false
         view.position = -9999
-        this.$_views.delete(view.nr.key)
       }
     },
 
@@ -534,12 +533,10 @@ export default {
         }
 
         let unusedPool = unusedViews.get(type)
+        let newlyUsedView = false
 
         // No view assigned to item
         if (!view) {
-          if (i === items.length - 1) this.$emit('scroll-end')
-          if (i === 0) this.$emit('scroll-start')
-
           type = item[typeField]
 
           if (continuous) {
@@ -564,22 +561,33 @@ export default {
             view = unusedPool[v]
             unusedIndex.set(type, v + 1)
           }
+
+          // Assign view to item
+          views.delete(view.nr.key)
+          view.item = item
+          view.nr.used = true
+          view.nr.index = i
+          view.nr.key = key
+          view.nr.type = type
+          views.set(key, view)
+
+          newlyUsedView = true
         } else {
           // View already assigned to item
-          if (unusedPool) {
-            const index = unusedPool.indexOf(view)
-            if (index !== -1) unusedPool.splice(index, 1)
+          if (!view.nr.used) {
+            view.nr.used = true
+            newlyUsedView = true
+            if (unusedPool) {
+              const index = unusedPool.indexOf(view)
+              if (index !== -1) unusedPool.splice(index, 1)
+            }
           }
         }
 
-        // Assign view to item
-        views.delete(view.nr.key)
-        view.item = item
-        view.nr.used = true
-        view.nr.index = i
-        view.nr.key = key
-        view.nr.type = type
-        views.set(key, view)
+        if (newlyUsedView) {
+          if (i === items.length - 1) this.$emit('scroll-end')
+          if (i === 0) this.$emit('scroll-start')
+        }
 
         // Update position
         if (itemSize === null) {
