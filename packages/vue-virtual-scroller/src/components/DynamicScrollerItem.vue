@@ -86,7 +86,7 @@ export default {
         const oldSize = this.vscrollData.sizes[oldValue]
         const size = this.vscrollData.sizes[value]
         if (oldSize != null && oldSize !== size) {
-          this._applySize(oldSize)
+          this.applySize(oldSize)
         }
       }
     },
@@ -192,20 +192,20 @@ export default {
         if (this.id === id) {
           const width = this.$el.offsetWidth
           const height = this.$el.offsetHeight
-          this.applySize(width, height)
+          this.applyWidthHeight(width, height)
         }
         this.$_pendingSizeUpdate = null
       })
     },
 
-    applySize (width, height) {
+    applyWidthHeight (width, height) {
       const size = ~~(this.vscrollParent.direction === 'vertical' ? height : width)
       if (size && this.size !== size) {
-        this._applySize(size)
+        this.applySize(size)
       }
     },
 
-    _applySize (size) {
+    applySize (size) {
       if (this.vscrollParent.$_undefinedMap[this.id]) {
         this.vscrollParent.$_undefinedSizes--
         this.vscrollParent.$_undefinedMap[this.id] = undefined
@@ -233,7 +233,7 @@ export default {
 
     onResize (id, width, height) {
       if (this.id === id) {
-        this.applySize(width, height)
+        this.applyWidthHeight(width, height)
       }
     },
   },
