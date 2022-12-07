@@ -74,10 +74,20 @@ export default {
   watch: {
     watchData: 'updateWatchData',
 
-    id () {
+    id (value, oldValue) {
       this.$el.$_vs_id = this.id
       if (!this.size) {
         this.onDataUpdate()
+      }
+
+      if (this.$_sizeObserved) {
+        // In case the old item had the same size, it won't trigger the ResizeObserver
+        // since we are reusing the same DOM node
+        const oldSize = this.vscrollData.sizes[oldValue]
+        const size = this.vscrollData.sizes[value]
+        if (oldSize != null && oldSize !== size) {
+          this._applySize(oldSize)
+        }
       }
     },
 
@@ -124,10 +134,8 @@ export default {
   },
 
   mounted () {
-    if (this.vscrollData.active) {
-      if (!this.vscrollResizeObserver) {
-        this.updateSize()
-      }
+    if (this.finalActive) {
+      this.updateSize()
       this.observeSize()
     }
   },
@@ -193,26 +201,34 @@ export default {
     applySize (width, height) {
       const size = ~~(this.vscrollParent.direction === 'vertical' ? height : width)
       if (size && this.size !== size) {
-        if (this.vscrollParent.$_undefinedMap[this.id]) {
-          this.vscrollParent.$_undefinedSizes--
-          this.vscrollParent.$_undefinedMap[this.id] = undefined
-        }
-        this.vscrollData.sizes[this.id] = size
-        if (this.emitResize) this.$emit('resize', this.id)
+        this._applySize(size)
       }
+    },
+
+    _applySize (size) {
+      if (this.vscrollParent.$_undefinedMap[this.id]) {
+        this.vscrollParent.$_undefinedSizes--
+        this.vscrollParent.$_undefinedMap[this.id] = undefined
+      }
+      this.vscrollData.sizes[this.id] = size
+      if (this.emitResize) this.$emit('resize', this.id)
     },
 
     observeSize () {
       if (!this.vscrollResizeObserver) return
+      if (this.$_sizeObserved) return
       this.vscrollResizeObserver.observe(this.$el)
       this.$el.$_vs_id = this.id
       this.$el.$_vs_onResize = this.onResize
+      this.$_sizeObserved = true
     },
 
     unobserveSize () {
       if (!this.vscrollResizeObserver) return
+      if (!this.$_sizeObserved) return
       this.vscrollResizeObserver.unobserve(this.$el)
       this.$el.$_vs_onResize = undefined
+      this.$_sizeObserved = false
     },
 
     onResize (id, width, height) {
