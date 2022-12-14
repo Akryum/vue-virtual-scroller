@@ -532,13 +532,13 @@ export default {
           continue
         }
 
+        type = item[typeField]
+
         let unusedPool = unusedViews.get(type)
         let newlyUsedView = false
 
         // No view assigned to item
         if (!view) {
-          type = item[typeField]
-
           if (continuous) {
             // Reuse existing view
             if (unusedPool && unusedPool.length) {
