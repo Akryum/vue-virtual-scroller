@@ -737,7 +737,7 @@ export default {
     },
 
     sortViews () {
-      this.pool.sort((viewA, viewB) => viewA.index - viewB.index)
+      this.pool.sort((viewA, viewB) => viewA.nr.index - viewB.nr.index)
     },
   },
 }
