@@ -690,10 +690,11 @@ export default {
 
     scrollToItem (index) {
       let scroll
+      const gridItems = this.gridItems || 1
       if (this.itemSize === null) {
         scroll = index > 0 ? this.sizes[index - 1].accumulator : 0
       } else {
-        scroll = Math.floor(index / this.gridItems) * this.itemSize
+        scroll = Math.floor(index / gridItems) * this.itemSize
       }
       this.scrollToPosition(scroll)
     },
