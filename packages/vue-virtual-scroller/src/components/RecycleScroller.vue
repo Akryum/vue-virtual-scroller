@@ -148,6 +148,11 @@ export default {
       default: false,
     },
 
+    updateInterval: {
+      type: Number,
+      default: 0,
+    },
+
     skipHover: {
       type: Boolean,
       default: false,
@@ -341,7 +346,9 @@ export default {
     handleScroll (event) {
       if (!this.$_scrollDirty) {
         this.$_scrollDirty = true
-        requestAnimationFrame(() => {
+        if (this.$_updateTimeout) return
+
+        const requestUpdate = () => requestAnimationFrame(() => {
           this.$_scrollDirty = false
           const { continuous } = this.updateVisibleItems(false, true)
 
@@ -349,9 +356,19 @@ export default {
           // When non continous scrolling is ending, we force a refresh
           if (!continuous) {
             clearTimeout(this.$_refreshTimout)
-            this.$_refreshTimout = setTimeout(this.handleScroll, 100)
+            this.$_refreshTimout = setTimeout(this.handleScroll, this.updateInterval + 100)
           }
         })
+
+        requestUpdate()
+
+        // Schedule the next update with throttling
+        if (this.updateInterval) {
+          this.$_updateTimeout = setTimeout(() => {
+            this.$_updateTimeout = 0
+            if (this.$_scrollDirty) requestUpdate();
+          }, this.updateInterval)
+        }
       }
     },
 
@@ -607,7 +624,7 @@ export default {
       // After the user has finished scrolling
       // Sort views so text selection is correct
       clearTimeout(this.$_sortTimer)
-      this.$_sortTimer = setTimeout(this.sortViews, 300)
+      this.$_sortTimer = setTimeout(this.sortViews, this.updateInterval + 300)
 
       return {
         continuous,
