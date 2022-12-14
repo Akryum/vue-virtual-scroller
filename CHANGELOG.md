@@ -1,3 +1,21 @@
+# [2.0.0-beta.6](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.5...v2.0.0-beta.6) (2022-12-14)
+
+
+### Bug Fixes
+
+* keyField issue for class instances, fix [#770](https://github.com/Akryum/vue-virtual-scroller/issues/770) ([#771](https://github.com/Akryum/vue-virtual-scroller/issues/771)) ([1559ca8](https://github.com/Akryum/vue-virtual-scroller/commit/1559ca87e9195b6a1c5bada13de7f7b755a2fb6c))
+* **RecycleScroller:** gridItems is undefined when scrollToItem, fix [#773](https://github.com/Akryum/vue-virtual-scroller/issues/773) ([#761](https://github.com/Akryum/vue-virtual-scroller/issues/761)) ([7c809ad](https://github.com/Akryum/vue-virtual-scroller/commit/7c809ad1d612824867490c7bd5ce2861110412eb))
+* sorting views not working, [#772](https://github.com/Akryum/vue-virtual-scroller/issues/772) ([0b199d1](https://github.com/Akryum/vue-virtual-scroller/commit/0b199d14c846ecc00b93f989adbe29961dc68aad))
+* view not unused if item no longer present, fix [#774](https://github.com/Akryum/vue-virtual-scroller/issues/774) ([bd51403](https://github.com/Akryum/vue-virtual-scroller/commit/bd514031f537978f0343317bb9cee550c5bfd7ad))
+* views not reused correctly ([d5a8d75](https://github.com/Akryum/vue-virtual-scroller/commit/d5a8d759090f9af656865dd98648941fb2c71fa2))
+
+
+### Features
+
+* allow throttling update calls ([#764](https://github.com/Akryum/vue-virtual-scroller/issues/764)) ([9ba57d7](https://github.com/Akryum/vue-virtual-scroller/commit/9ba57d7d84c06d2ad265a266958292081704f218))
+
+
+
 # [2.0.0-beta.5](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.4...v2.0.0-beta.5) (2022-12-07)
 
 
