@@ -581,7 +581,6 @@ export default {
 
           // Assign view to item
           views.delete(view.nr.key)
-          view.item = item
           view.nr.used = true
           view.nr.index = i
           view.nr.key = key
@@ -600,6 +599,9 @@ export default {
             }
           }
         }
+
+        // Always set item in case it's a new object with the same key
+        view.item = item
 
         if (newlyUsedView) {
           if (i === items.length - 1) this.$emit('scroll-end')
