@@ -1,3 +1,12 @@
+# [2.0.0-beta.7](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.6...v2.0.0-beta.7) (2022-12-14)
+
+
+### Bug Fixes
+
+* items not updating if new object reference, fix [#690](https://github.com/Akryum/vue-virtual-scroller/issues/690) ([5b5df8c](https://github.com/Akryum/vue-virtual-scroller/commit/5b5df8cdc231f989e7fc6d6677d02e9ef695d1b9))
+
+
+
 # [2.0.0-beta.6](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.5...v2.0.0-beta.6) (2022-12-14)
 
 
