@@ -366,7 +366,7 @@ export default {
         if (this.updateInterval) {
           this.$_updateTimeout = setTimeout(() => {
             this.$_updateTimeout = 0
-            if (this.$_scrollDirty) requestUpdate();
+            if (this.$_scrollDirty) requestUpdate()
           }, this.updateInterval)
         }
       }
