@@ -505,7 +505,7 @@ export default {
 
             // Check if index is still in visible range
             if (
-              view.nr.index === -1 ||
+              view.nr.index == null ||
               view.nr.index < startIndex ||
               view.nr.index >= endIndex
             ) {
