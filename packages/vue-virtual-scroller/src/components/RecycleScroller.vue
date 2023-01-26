@@ -56,6 +56,7 @@
 
       <slot
         name="empty"
+        v-if="items.length <= 0"
       />
     </component>
 
