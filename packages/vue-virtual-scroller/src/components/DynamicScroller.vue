@@ -21,10 +21,16 @@
         }"
       />
     </template>
-    <template #before>
+    <template
+      v-if="$slots.before"
+      #before
+    >
       <slot name="before" />
     </template>
-    <template #after>
+    <template
+      v-if="$slots.after"
+      #after
+    >
       <slot name="after" />
     </template>
     <template #empty>
