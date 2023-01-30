@@ -27,6 +27,7 @@
       :class="listClass"
     >
       <component
+        ref="items"
         :is="itemTag"
         v-for="view of pool"
         :key="view.nr.id"
