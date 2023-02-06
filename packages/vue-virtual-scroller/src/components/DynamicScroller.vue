@@ -54,8 +54,17 @@ export default {
           }
           for (const entry of entries) {
             if (entry.target && entry.target.$_vs_onResize) {
-              const resizeObserverSize = entry.borderBoxSize[0]
-              entry.target.$_vs_onResize(entry.target.$_vs_id, resizeObserverSize.inlineSize, resizeObserverSize.blockSize)
+              let width, height
+              if (entry.borderBoxSize) {
+                const resizeObserverSize = entry.borderBoxSize[0]
+                width = resizeObserverSize.inlineSize
+                height = resizeObserverSize.blockSize
+              } else {
+                // @TODO remove when contentRect is deprecated
+                width = entry.contentRect.width
+                height = entry.contentRect.height
+              }
+              entry.target.$_vs_onResize(entry.target.$_vs_id, width, height)
             }
           }
         })
