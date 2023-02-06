@@ -1,3 +1,12 @@
+# [2.0.0-beta.8](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.7...v2.0.0-beta.8) (2023-02-06)
+
+
+### Bug Fixes
+
+* borderBoxSize not available in older browsers ([8f90971](https://github.com/Akryum/vue-virtual-scroller/commit/8f9097138d2f90ece8348141ac320c47ff7ab64a))
+
+
+
 # [2.0.0-beta.7](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.6...v2.0.0-beta.7) (2022-12-14)
 
 
