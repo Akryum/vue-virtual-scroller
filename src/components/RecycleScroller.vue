@@ -26,7 +26,11 @@
       <div
         v-for="view of pool"
         :key="view.nr.id"
-        :style="ready ? view.item.modal ? {[direction === 'vertical' ? 'top' : 'left'] : `${view.position}px`, willChange : 'unset'} : { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
+        :style="ready
+          ? disableTransform
+            ? { [direction === 'vertical' ? 'top' : 'left']
+            : `${view.position}px`, willChange : 'unset'}
+          : { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px)` } : null"
         class="vue-recycle-scroller__item-view"
         :class="{ hover: hoverKey === view.nr.key }"
         @mouseenter="hoverKey = view.nr.key"
@@ -113,6 +117,11 @@ export default {
     },
 
     emitUpdate: {
+      type: Boolean,
+      default: false,
+    },
+
+    disableTransform: {
       type: Boolean,
       default: false,
     },
