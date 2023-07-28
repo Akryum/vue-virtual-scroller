@@ -30,6 +30,7 @@
         v-for="view of pool"
         ref="items"
         :key="view.nr.id"
+        :view="view"
         :item-tag="itemTag"
         :style="ready
           ? [
@@ -53,13 +54,7 @@
           mouseenter: () => { hoverKey = view.nr.key },
           mouseleave: () => { hoverKey = null },
         }"
-      >
-        <slot
-          :item="view.item"
-          :index="view.nr.index"
-          :active="view.nr.used"
-        />
-      </ItemView>
+      />
 
       <slot
         name="empty"
