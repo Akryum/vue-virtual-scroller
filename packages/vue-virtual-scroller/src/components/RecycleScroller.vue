@@ -27,15 +27,21 @@
       :class="listClass"
     >
       <component
-        ref="items"
         :is="itemTag"
         v-for="view of pool"
+        ref="items"
         :key="view.nr.id"
-        :style="ready ? {
-          transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px) translate${direction === 'vertical' ? 'X' : 'Y'}(${view.offset}px)`,
-          width: gridItems ? `${direction === 'vertical' ? itemSecondarySize || itemSize : itemSize}px` : undefined,
-          height: gridItems ? `${direction === 'horizontal' ? itemSecondarySize || itemSize : itemSize}px` : undefined,
-        } : null"
+        :style="ready
+          ? [
+            (disableTransform
+              ? { [direction === 'vertical' ? 'top' : 'left'] : `${view.position}px`, willChange: 'unset' }
+              : { transform: `translate${direction === 'vertical' ? 'Y' : 'X'}(${view.position}px) translate${direction === 'vertical' ? 'X' : 'Y'}(${view.offset}px)` }),
+            {
+              width: gridItems ? `${direction === 'vertical' ? itemSecondarySize || itemSize : itemSize}px` : undefined,
+              height: gridItems ? `${direction === 'horizontal' ? itemSecondarySize || itemSize : itemSize}px` : undefined,
+            }
+          ]
+          : null"
         class="vue-recycle-scroller__item-view"
         :class="[
           itemClass,
@@ -145,6 +151,11 @@ export default {
     },
 
     emitUpdate: {
+      type: Boolean,
+      default: false,
+    },
+
+    disableTransform: {
       type: Boolean,
       default: false,
     },
