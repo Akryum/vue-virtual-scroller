@@ -241,15 +241,6 @@ export default {
     },
 
     simpleArray,
-
-    itemIndexByKey () {
-      const { keyField, items } = this
-      const result = {}
-      for (let i = 0, l = items.length; i < l; i++) {
-        result[items[i][keyField]] = i
-      }
-      return result
-    },
   },
 
   watch: {
@@ -438,7 +429,6 @@ export default {
       const sizes = this.sizes
       const views = this.$_views
       const pool = this.pool
-      const itemIndexByKey = this.itemIndexByKey
       let startIndex, endIndex
       let totalSize
       let visibleStartIndex, visibleEndIndex
@@ -550,43 +540,24 @@ export default {
 
       const continuous = startIndex <= this.$_endIndex && endIndex >= this.$_startIndex
 
-      if (this.$_continuous !== continuous) {
-        if (continuous) {
-          views.clear()
-          unusedViews.clear()
-          for (let i = 0, l = pool.length; i < l; i++) {
-            view = pool[i]
-            this.unuseView(view)
-          }
-        }
-        this.$_continuous = continuous
-      } else if (continuous) {
+      // Step 1: Mark any invisible elements as unused
+      if (!continuous || itemsChanged) {
+        this.removeAndRecycleAllViews()
+      } else {
         for (let i = 0, l = pool.length; i < l; i++) {
           view = pool[i]
           if (view.nr.used) {
-            // Update view item index
-            if (checkItem) {
-              view.nr.index = items.findIndex(
-                item => keyField ? item[keyField] === view.item[keyField] : item === view.item,
-              )
-            }
-
-            // Check if index is still in visible range
-            if (
-              view.nr.index === -1 ||
-              view.nr.index < startIndex ||
-              view.nr.index >= endIndex
-            ) {
-              this.unuseView(view)
+            const viewVisible = view.nr.index >= startIndex && view.nr.index < endIndex
+            const viewSize = itemSize || sizes[i].size
+            if (!viewVisible || !viewSize) {
+              this.removeAndRecycleView(view)
             }
           }
         }
       }
 
-      const unusedIndex = continuous ? null : new Map()
-
-      let item, type, unusedPool
-      let v
+      // Step 2: Assign a view and update props for every view that became visible
+      let item, type
       for (let i = startIndex; i < endIndex; i++) {
         const elementSize = itemSize || sizes[i].size
         if (!elementSize) continue
@@ -597,70 +568,28 @@ export default {
         }
         view = views.get(key)
 
-        if (!itemSize && !sizes[i].size) {
-          if (view) this.unuseView(view)
-          continue
-        }
-
-        // No view assigned to item
         if (!view) {
+          // Item just became visible
           type = item[typeField]
-          unusedPool = unusedViews.get(type)
+          view = this.getRecycledView(type)
 
-          if (continuous) {
-            // Reuse existing view
-            if (unusedPool && unusedPool.length) {
-              view = unusedPool.pop()
-              view.item = item
-              view.nr.used = true
-              view.nr.index = i
-              view.nr.key = key
-              view.nr.type = type
-            } else {
-              view = this.addView(pool, i, item, key, type)
-            }
-          } else {
-            // Use existing view
-            // We don't care if they are already used
-            // because we are not in continous scrolling
-            v = unusedIndex.get(type) || 0
-
-            if (!unusedPool || v >= unusedPool.length) {
-              view = this.addView(pool, i, item, key, type)
-              this.unuseView(view, true)
-              unusedPool = unusedViews.get(type)
-            }
-
-            view = unusedPool[v]
+          if (view) {
             view.item = item
-            view.nr.used = true
             view.nr.index = i
             view.nr.key = key
-            view.nr.type = type
-            unusedIndex.set(type, v + 1)
-            v++
+            if (view.nr.type !== type) {
+              console.warn("Reused view's type does not match pool's type")
+            }
+          } else {
+            // No recycled view available, create a new one
+            view = this.createView(pool, i, item, key, type)
           }
-
-          // Assign view to item
-          views.delete(view.nr.key)
-          view.nr.used = true
-          view.nr.index = i
-          view.nr.key = key
-          view.nr.type = type
           views.set(key, view)
-
-          newlyUsedView = true
         } else {
-          view.nr.used = true
-          view.item = item
-        }
-
-        // Always set item in case it's a new object with the same key
-        view.item = item
-
-        if (newlyUsedView) {
-          if (i === items.length - 1) this.$emit('scroll-end')
-          if (i === 0) this.$emit('scroll-start')
+          if (view.item !== item) { view.item = item }
+          if (!view.nr.used) {
+            console.warn("Expected existing view's used flag to be true, got " + view.nr.used)
+          }
         }
 
         // Update position
