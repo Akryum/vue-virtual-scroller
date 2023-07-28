@@ -592,6 +592,7 @@ export default {
           // View already assigned to item
           if (!view.nr.used) {
             view.nr.used = true
+            view.nr.index = i
             newlyUsedView = true
             if (unusedPool) {
               const index = unusedPool.indexOf(view)
