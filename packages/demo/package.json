@@ -1,0 +1,27 @@
+{
+  "name": "demo",
+  "description": "Demos for vue-virtual-scroller",
+  "version": "1.0.0",
+  "author": "Guillaume Chau <guillaume.b.chau@gmail.com>",
+  "private": true,
+  "scripts": {
+    "dev": "vite dev --port 8080",
+    "build": "vite build",
+    "preview": "vite preview --port 8080"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^7.6.0",
+    "vue": "^3.2.41",
+    "vue-router": "^4.1.5",
+    "vue-virtual-scroller": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^3.1.2",
+    "vite": "^3.1.8"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}
