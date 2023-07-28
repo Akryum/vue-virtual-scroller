@@ -54,7 +54,11 @@
           mouseenter: () => { hoverKey = view.nr.key },
           mouseleave: () => { hoverKey = null },
         }"
-      />
+      >
+        <template #default="props">
+          <slot v-bind="props" />
+        </template>
+      </ItemView>
 
       <slot
         name="empty"
@@ -202,6 +206,9 @@ export default {
       pool: [],
       totalSize: 0,
       ready: false,
+      /**
+       * We need the key of the hovered item to prevent ItemView that gets recycled to keep the hover state.
+       */
       hoverKey: null,
     }
   },
