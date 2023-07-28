@@ -26,11 +26,12 @@
       class="vue-recycle-scroller__item-wrapper"
       :class="listClass"
     >
-      <component
-        :is="itemTag"
+      <ItemView
         v-for="view of pool"
         ref="items"
         :key="view.nr.id"
+        :view="view"
+        :item-tag="itemTag"
         :style="ready
           ? [
             (disableTransform
@@ -54,12 +55,10 @@
           mouseleave: () => { hoverKey = null },
         }"
       >
-        <slot
-          :item="view.item"
-          :index="view.nr.index"
-          :active="view.nr.used"
-        />
-      </component>
+        <template #default="props">
+          <slot v-bind="props" />
+        </template>
+      </ItemView>
 
       <slot
         name="empty"
@@ -88,6 +87,7 @@ import { getScrollParent } from '../scrollparent'
 import config from '../config'
 import { props, simpleArray } from './common'
 import { supportsPassive } from '../utils'
+import ItemView from './ItemView.vue'
 
 let uid = 0
 
@@ -95,6 +95,7 @@ export default {
   name: 'RecycleScroller',
 
   components: {
+    ItemView,
     ResizeObserver,
   },
 
@@ -205,6 +206,9 @@ export default {
       pool: [],
       totalSize: 0,
       ready: false,
+      /**
+       * We need the key of the hovered item to prevent ItemView that gets recycled to keep the hover state.
+       */
       hoverKey: null,
     }
   },
