@@ -702,6 +702,40 @@ export default {
       this.scrollToPosition(scroll)
     },
 
+    scrollIntoItem (index, scrollDown = true) {
+      let scroll
+      if (this.itemSize === null) {
+        scroll = index > 0 ? this.sizes[index - 1].accumulator : 0
+      } else {
+        scroll = index * this.itemSize
+      }
+      if (scrollDown === false) {
+        const scrollTop = this.$el.scrollTop
+        const offset = Math.abs(scrollTop - scroll);
+        const position = scrollTop - offset
+        if (scrollTop >= scroll && offset !== 0) {
+          this.scrollToPosition(position)
+        }
+      }
+      else {
+        let nextScroll;
+        if (this.itemSize === null) {
+          nextScroll = index > 0 ? this.sizes[index].accumulator : 0
+        } else {
+          nextScroll = index * this.itemSize
+        }
+        const scrollTop = this.$el.scrollTop
+        const viewPortHeight = this.$el?.getBoundingClientRect()?.height || 0;
+        const nextScrollOffset = Math.abs(scrollTop - nextScroll)
+        if (viewPortHeight !== 0
+          && nextScrollOffset >= viewPortHeight
+          && (nextScrollOffset % viewPortHeight) >= 0) {
+          const offset = Math.abs(viewPortHeight - nextScroll);
+          this.scrollToPosition(offset)
+        }
+      }
+    },
+    
     scrollToPosition (position) {
       const direction = this.direction === 'vertical'
         ? { scroll: 'scrollTop', start: 'top' }
