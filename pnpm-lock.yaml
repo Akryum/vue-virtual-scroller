@@ -65,10 +65,10 @@ importers:
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^3.1.2
-        version: 3.1.2(vite@3.1.8)(vue@3.2.41)
+        version: 3.1.2(vite@3.2.7)(vue@3.2.41)
       vite:
-        specifier: ^3.1.8
-        version: 3.1.8
+        specifier: ^3.2.7
+        version: 3.2.7
 
   packages/vue-virtual-scroller:
     dependencies:
@@ -1488,14 +1488,14 @@ packages:
       '@types/node': 18.11.0
     dev: true
 
-  /@vitejs/plugin-vue@3.1.2(vite@3.1.8)(vue@3.2.41):
+  /@vitejs/plugin-vue@3.1.2(vite@3.2.7)(vue@3.2.41):
     resolution: {integrity: sha512-3zxKNlvA3oNaKDYX0NBclgxTQ1xaFdL7PzwF6zj9tGFziKwmBa3Q/6XcJQxudlT81WxDjEhHmevvIC4Orc1LhQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
       vite: ^3.0.0
       vue: ^3.2.25
     dependencies:
-      vite: 3.1.8
+      vite: 3.2.7
       vue: 3.2.41
     dev: true
 
@@ -3997,14 +3997,6 @@ packages:
       estree-walker: 0.6.1
     dev: true
 
-  /rollup@2.78.1:
-    resolution: {integrity: sha512-VeeCgtGi4P+o9hIg+xz4qQpRl6R401LWEXBmxYKOV4zlF82lyhgh2hTZnheFUbANE8l2A41F458iwj2vEYaXJg==}
-    engines: {node: '>=10.0.0'}
-    hasBin: true
-    optionalDependencies:
-      fsevents: 2.3.2
-    dev: true
-
   /rollup@2.79.1:
     resolution: {integrity: sha512-uKxbd0IhMZOhjAiD5oAFp7BqvkA4Dv47qpOCtaNvng4HBwdbWtdOh8f5nZNuk2rp51PMGk3bzfWu5oayNEuYnw==}
     engines: {node: '>=10.0.0'}
@@ -4425,21 +4417,27 @@ packages:
       spdx-expression-parse: 3.0.1
     dev: true
 
-  /vite@3.1.8:
-    resolution: {integrity: sha512-m7jJe3nufUbuOfotkntGFupinL/fmuTNuQmiVE7cH2IZMuf4UbfbGYMUT3jVWgGYuRVLY9j8NnrRqgw5rr5QTg==}
+  /vite@3.2.7:
+    resolution: {integrity: sha512-29pdXjk49xAP0QBr0xXqu2s5jiQIXNvE/xwd0vUizYT2Hzqe4BksNNoWllFVXJf4eLZ+UlVQmXfB4lWrc+t18g==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
+      '@types/node': '>= 14'
       less: '*'
       sass: '*'
       stylus: '*'
+      sugarss: '*'
       terser: ^5.4.0
     peerDependenciesMeta:
+      '@types/node':
+        optional: true
       less:
         optional: true
       sass:
         optional: true
       stylus:
+        optional: true
+      sugarss:
         optional: true
       terser:
         optional: true
@@ -4447,7 +4445,7 @@ packages:
       esbuild: 0.15.11
       postcss: 8.4.18
       resolve: 1.22.1
-      rollup: 2.78.1
+      rollup: 2.79.1
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
