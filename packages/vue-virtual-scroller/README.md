@@ -198,6 +198,9 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 - `emitUpdate` (default: `false`): emit a `'update'` event each time the virtual scroller content is updated (can impact performance).
 - `listClass` (default: `''`): custom classes added to the item list wrapper.
 - `itemClass` (default: `''`): custom classes added to each item.
+- `rootTag` (default: `'div'`): the element to render as the root container.
+- `beforeTag` (default: `'div'`): the element to render as the before slot wrapper.
+- `afterTag` (default: `'div'`): the element to render as the after slot wrapper.
 - `listTag` (default: `'div'`): the element to render as the list's wrapper.
 - `itemTag` (default: `'div'`): the element to render as the list item (the direct parent of the default slot content).
 

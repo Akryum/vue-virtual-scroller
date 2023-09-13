@@ -15,6 +15,21 @@ export const props = {
     validator: (value) => ['vertical', 'horizontal'].includes(value),
   },
 
+  rootTag: {
+    type: String,
+    default: 'div',
+  },
+
+  beforeTag: {
+    type: String,
+    default: 'div',
+  },
+
+  afterTag: {
+    type: String,
+    default: 'div',
+  },
+
   listTag: {
     type: String,
     default: 'div',
