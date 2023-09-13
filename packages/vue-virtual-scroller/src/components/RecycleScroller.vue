@@ -747,6 +747,7 @@ export default {
 <style>
 .vue-recycle-scroller {
   position: relative;
+  display: block;
 }
 
 .vue-recycle-scroller.direction-vertical:not(.page-mode) {
