@@ -4,7 +4,7 @@
     :items="itemsWithSize"
     :min-item-size="minItemSize"
     :direction="direction"
-    key-field="id"
+    :key-field="keyField"
     :list-tag="listTag"
     :item-tag="itemTag"
     v-bind="$attrs"
