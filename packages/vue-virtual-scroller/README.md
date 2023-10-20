@@ -51,6 +51,30 @@ app.component('RecycleScroller', RecycleScroller)
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 ```
 
+## Nuxt 3
+
+In order to use with Nuxt 3 you can use a Nuxt plugin to do so.
+
+Create a ``plugins/`` folder and a file for the plugin, then paste the code below:
+
+```js
+// virtualScroller.ts
+import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
+import {
+  DynamicScroller,
+  DynamicScrollerItem,
+  RecycleScroller,
+} from "vue-virtual-scroller";
+
+export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.vueApp.component("RecycleScroller", RecycleScroller);
+  nuxtApp.vueApp.component("DynamicScroller", DynamicScroller);
+  nuxtApp.vueApp.component("DynamicScrollerItem", DynamicScrollerItem);
+});
+```
+
+Make sure to import only the components that you want in the plugin file (there's no need to import them in anywhere because Nuxt already does it for us).
+
 ## Browser
 
 ```html
