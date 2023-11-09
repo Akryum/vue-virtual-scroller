@@ -775,26 +775,26 @@ export default {
   position: relative;
 }
 
-.vue-recycle-scroller.ready .vue-recycle-scroller__item-view {
+.vue-recycle-scroller.ready, .vue-recycle-scroller__item-view {
   position: absolute;
   top: 0;
   left: 0;
   will-change: transform;
 }
 
-.vue-recycle-scroller.direction-vertical .vue-recycle-scroller__item-wrapper {
+.vue-recycle-scroller.direction-vertical, .vue-recycle-scroller__item-wrapper {
   width: 100%;
 }
 
-.vue-recycle-scroller.direction-horizontal .vue-recycle-scroller__item-wrapper {
+.vue-recycle-scroller.direction-horizontal, .vue-recycle-scroller__item-wrapper {
   height: 100%;
 }
 
-.vue-recycle-scroller.ready.direction-vertical .vue-recycle-scroller__item-view {
+.vue-recycle-scroller.ready.direction-vertical, .vue-recycle-scroller__item-view {
   width: 100%;
 }
 
-.vue-recycle-scroller.ready.direction-horizontal .vue-recycle-scroller__item-view {
+.vue-recycle-scroller.ready.direction-horizontal, .vue-recycle-scroller__item-view {
   height: 100%;
 }
 </style>
