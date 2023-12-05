@@ -378,6 +378,7 @@ export default {
     handleScroll (event) {
       if (!this.$_scrollDirty) {
         this.$_scrollDirty = true
+        this.$emit('scroll-start', this.getScroll());
         if (this.$_updateTimeout) return
 
         const requestUpdate = () => requestAnimationFrame(() => {
@@ -389,6 +390,7 @@ export default {
           if (!continuous) {
             clearTimeout(this.$_refreshTimeout)
             this.$_refreshTimeout = setTimeout(this.handleScroll, this.updateInterval + 100)
+            this.$emit('scroll-end', this.getScroll());
           }
         })
 
