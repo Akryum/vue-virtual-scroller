@@ -9,7 +9,7 @@
     }"
     @scroll.passive="handleScroll"
   >
-    <div
+    <template
       v-if="$slots.before"
       ref="before"
       class="vue-recycle-scroller__slot"
@@ -17,7 +17,7 @@
       <slot
         name="before"
       />
-    </div>
+    </template>
 
     <component
       :is="listTag"
@@ -65,7 +65,7 @@
       />
     </component>
 
-    <div
+    <template
       v-if="$slots.after"
       ref="after"
       class="vue-recycle-scroller__slot"
@@ -73,7 +73,7 @@
       <slot
         name="after"
       />
-    </div>
+    </template>
 
     <ResizeObserver @notify="handleResize" />
   </div>
