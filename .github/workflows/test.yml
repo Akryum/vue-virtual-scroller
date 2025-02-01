@@ -2,7 +2,7 @@ name: Tests
 on: [push, pull_request]
 
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
 
     steps:
