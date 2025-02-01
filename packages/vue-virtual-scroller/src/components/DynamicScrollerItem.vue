@@ -85,7 +85,10 @@ export default {
         // since we are reusing the same DOM node
         const oldSize = this.vscrollData.sizes[oldValue]
         const size = this.vscrollData.sizes[value]
-        if (oldSize != null && oldSize !== size) {
+
+        if (size != null && size !== oldSize) {
+          this.applySize(size)
+        } else if (oldSize != null && oldSize !== size) {
           this.applySize(oldSize)
         }
       }
