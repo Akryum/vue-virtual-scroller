@@ -20,5 +20,5 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Test
+      - name: ESLint
         run: pnpm lint
