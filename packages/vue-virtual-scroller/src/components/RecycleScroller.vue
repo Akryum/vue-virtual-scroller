@@ -40,6 +40,7 @@
             {
               width: gridItems ? `${direction === 'vertical' ? itemSecondarySize || itemSize : itemSize}px` : undefined,
               height: gridItems ? `${direction === 'horizontal' ? itemSecondarySize || itemSize : itemSize}px` : undefined,
+              visibility: view.nr.used ? 'visible' : 'hidden',
             }
           ]
           : null"
