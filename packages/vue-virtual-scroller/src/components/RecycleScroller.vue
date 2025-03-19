@@ -379,6 +379,8 @@ export default {
     handleScroll (event) {
       if (!this.$_scrollDirty) {
         this.$_scrollDirty = true
+        const scroll = this.getScroll()
+        this.$emit('scroll-start',scroll);
         if (this.$_updateTimeout) return
 
         const requestUpdate = () => requestAnimationFrame(() => {
@@ -388,8 +390,9 @@ export default {
           // It seems sometimes chrome doesn't fire scroll event :/
           // When non continous scrolling is ending, we force a refresh
           if (!continuous) {
-            clearTimeout(this.$_refreshTimout)
-            this.$_refreshTimout = setTimeout(this.handleScroll, this.updateInterval + 100)
+            clearTimeout(this.$_refreshTimeout)
+            this.$_refreshTimeout = setTimeout(this.handleScroll, this.updateInterval + 100)
+            this.$emit('scroll-end', scroll);
           }
         })
 
