@@ -637,7 +637,9 @@ export default {
         const boundsSize = isVertical ? bounds.height : bounds.width
         let start = -(isVertical ? bounds.top : bounds.left)
         let size = isVertical ? window.innerHeight : window.innerWidth
-        if (start < 0) {
+        let originStart = isVertical ? bounds.top : bounds.left;
+        // Fix start value when the el is scrolling from under the viewport to the middle of the viewport
+        if (start < 0 && !(originStart > 0 && originStart < size)) {
           size += start
           start = 0
         }
