@@ -13,6 +13,7 @@
       v-if="$slots.before"
       ref="before"
       class="vue-recycle-scroller__slot"
+      :style="beforeStyle"
     >
       <slot
         name="before"
@@ -70,6 +71,7 @@
       v-if="$slots.after"
       ref="after"
       class="vue-recycle-scroller__slot"
+      :style="afterStyle"
     >
       <slot
         name="after"
@@ -191,6 +193,20 @@ export default {
       type: [String, Object, Array],
       default: '',
     },
+
+    beforeStyle:{
+      type: Object,
+      default: ()=>{
+
+      }
+    },
+
+    afterStyle:{
+      type: Object,
+      default: ()=>{
+        
+      }
+    }
   },
 
   emits: [
