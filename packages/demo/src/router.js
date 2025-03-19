@@ -1,13 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import Home from './components/Home.vue'
-import Recycle from './components/RecycleScrollerDemo.vue'
-import Dynamic from './components/DynamicScrollerDemo.vue'
-import TestChat from './components/TestChat.vue'
-import SimpleList from './components/SimpleList.vue'
-import HorizontalDemo from './components/HorizontalDemo.vue'
 import ChatDemo from './components/ChatDemo.vue'
+import Dynamic from './components/DynamicScrollerDemo.vue'
 import GridDemo from './components/GridDemo.vue'
+import Home from './components/Home.vue'
+import HorizontalDemo from './components/HorizontalDemo.vue'
+import Recycle from './components/RecycleScrollerDemo.vue'
+import SimpleList from './components/SimpleList.vue'
+import TestChat from './components/TestChat.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

@@ -1,18 +1,18 @@
-import config from './config'
-
-import RecycleScroller from './components/RecycleScroller.vue'
 import DynamicScroller from './components/DynamicScroller.vue'
+
 import DynamicScrollerItem from './components/DynamicScrollerItem.vue'
+import RecycleScroller from './components/RecycleScroller.vue'
+import config from './config'
 
 export { default as IdState } from './mixins/IdState'
 
 export {
-  RecycleScroller,
   DynamicScroller,
   DynamicScrollerItem,
+  RecycleScroller,
 }
 
-function registerComponents (app, prefix) {
+function registerComponents(app, prefix) {
   app.component(`${prefix}recycle-scroller`, RecycleScroller)
   app.component(`${prefix}RecycleScroller`, RecycleScroller)
   app.component(`${prefix}dynamic-scroller`, DynamicScroller)
@@ -24,7 +24,7 @@ function registerComponents (app, prefix) {
 const plugin = {
   // eslint-disable-next-line no-undef
   version: VERSION,
-  install (app, options) {
+  install(app, options) {
     const finalOptions = Object.assign({}, {
       installComponents: true,
       componentsPrefix: '',

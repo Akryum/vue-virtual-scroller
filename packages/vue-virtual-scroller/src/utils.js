@@ -1,13 +1,21 @@
-export let supportsPassive = false
+let _supportsPassive = false
+
+export function supportsPassive() {
+  return _supportsPassive
+}
 
 if (typeof window !== 'undefined') {
-  supportsPassive = false
+  _supportsPassive = false
   try {
     const opts = Object.defineProperty({}, 'passive', {
-      get () {
-        supportsPassive = true
+      get() {
+        _supportsPassive = true
       },
     })
     window.addEventListener('test', null, opts)
-  } catch (e) {}
+  }
+  // eslint-disable-next-line unused-imports/no-unused-vars
+  catch (e) {
+    // noop
+  }
 }

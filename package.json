@@ -2,28 +2,20 @@
   "name": "vue-virtual-scroller-monorepo",
   "version": "2.0.0-beta.8",
   "private": true,
-  "scripts": {
-    "build": "pnpm run -r --filter=!demo build",
-    "release": "pnpm run lint && pnpm run build && sheep release -b master --tag next",
-    "lint": "eslint --ext .js,.vue packages"
-  },
-  "devDependencies": {
-    "@akryum/sheep": "^0.4.2",
-    "@babel/core": "^7.9.0",
-    "@babel/preset-env": "^7.9.0",
-    "babel-eslint": "^10.1.0",
-    "conventional-changelog-cli": "^2.2.2",
-    "eslint": "^7.24.0",
-    "eslint-config-standard": "^16.0.2",
-    "eslint-plugin-html": "^6.0.0",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-node": "^11.0.0",
-    "eslint-plugin-promise": "^5.1.0",
-    "eslint-plugin-standard": "^5.0.0",
-    "eslint-plugin-vue": "^7.9.0"
-  },
   "packageManager": "pnpm@10.6.5+sha512.cdf928fca20832cd59ec53826492b7dc25dc524d4370b6b4adbf65803d32efaa6c1c88147c0ae4e8d579a6c9eec715757b50d4fa35eea179d868eada4ed043af",
   "engines": {
     "node": ">=23"
+  },
+  "scripts": {
+    "build": "pnpm run -r --filter=!demo build",
+    "release": "pnpm run lint && pnpm run build && sheep release -b main --force",
+    "lint": "eslint --cache"
+  },
+  "devDependencies": {
+    "@akryum/sheep": "^0.5.2",
+    "@antfu/eslint-config": "^4.10.1",
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
+    "eslint": "^9.22.0"
   }
 }

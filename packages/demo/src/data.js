@@ -2,14 +2,14 @@ import { faker } from '@faker-js/faker'
 
 let uid = 0
 
-function generateItem () {
+function generateItem() {
   return {
     name: faker.name.fullName(),
     avatar: faker.internet.avatar(),
   }
 }
 
-export function getData (count, letters) {
+export function getData(count, letters) {
   const raw = {}
 
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('')
@@ -52,7 +52,7 @@ export function getData (count, letters) {
   return list
 }
 
-export function addItem (list) {
+export function addItem(list) {
   list.push({
     id: uid++,
     index: list.length + 1,
@@ -62,7 +62,7 @@ export function addItem (list) {
   })
 }
 
-export function generateMessage () {
+export function generateMessage() {
   return {
     avatar: faker.internet.avatar(),
     message: faker.lorem.text(),

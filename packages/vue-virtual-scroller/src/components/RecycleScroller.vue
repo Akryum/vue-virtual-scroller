@@ -673,7 +673,7 @@ export default {
 
     addListeners () {
       this.listenerTarget = this.getListenerTarget()
-      this.listenerTarget.addEventListener('scroll', this.handleScroll, supportsPassive
+      this.listenerTarget.addEventListener('scroll', this.handleScroll, supportsPassive()
         ? {
             passive: true,
           }

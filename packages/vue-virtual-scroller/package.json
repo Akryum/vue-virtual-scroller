@@ -1,20 +1,31 @@
 {
   "name": "vue-virtual-scroller",
-  "description": "Smooth scrolling for any amount of data",
   "version": "2.0.0-beta.8",
+  "description": "Smooth scrolling for any amount of data",
   "author": {
     "name": "Guillaume Chau",
     "email": "guillaume.b.chau@gmail.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Akryum/vue-virtual-scroller#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Akryum/vue-virtual-scroller.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Akryum/vue-virtual-scroller/issues"
   },
   "keywords": [
     "vue",
     "vuejs",
     "plugin"
   ],
-  "license": "MIT",
   "main": "dist/vue-virtual-scroller.umd.js",
   "module": "dist/vue-virtual-scroller.esm.js",
   "unpkg": "dist/vue-virtual-scroller.min.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "npm run build:browser && npm run build:es && npm run build:umd",
     "build:browser": "rollup --config build/rollup.config.browser.js",
@@ -24,21 +35,13 @@
     "dev": "cross-env NODE_ENV=development rollup --config build/rollup.config.es.js --watch",
     "lint": "cd ../../ && yarn run lint"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Akryum/vue-virtual-scroller.git"
+  "peerDependencies": {
+    "vue": "^3.2.0"
   },
-  "bugs": {
-    "url": "https://github.com/Akryum/vue-virtual-scroller/issues"
-  },
-  "homepage": "https://github.com/Akryum/vue-virtual-scroller#readme",
   "dependencies": {
     "mitt": "^2.1.0",
     "vue-observe-visibility": "^2.0.0-alpha.1",
     "vue-resize": "^2.0.0-alpha.1"
-  },
-  "peerDependencies": {
-    "vue": "^3.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.19.3",
@@ -58,9 +61,6 @@
     "rollup-plugin-vue": "^6.0.0",
     "vue": "^3.2.41"
   },
-  "files": [
-    "dist"
-  ],
   "browserslist": [
     "> 1%",
     "last 2 versions",

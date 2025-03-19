@@ -7,21 +7,22 @@ export default function ({
 
   // @vue/component
   return {
-    data () {
+    data() {
       return {
         idState: null,
       }
     },
 
-    created () {
+    created() {
       this.$_id = null
       if (typeof idProp === 'function') {
         this.$_getId = () => idProp.call(this, this)
-      } else {
+      }
+      else {
         this.$_getId = () => this[idProp]
       }
       this.$watch(this.$_getId, {
-        handler (value) {
+        handler(value) {
           this.$nextTick(() => {
             this.$_id = value
           })
@@ -31,7 +32,7 @@ export default function ({
       this.$_updateIdState()
     },
 
-    beforeUpdate () {
+    beforeUpdate() {
       this.$_updateIdState()
     },
 
@@ -40,22 +41,23 @@ export default function ({
        * Initialize an idState
        * @param {number|string} id Unique id for the data
        */
-      $_idStateInit (id) {
+      $_idStateInit(id) {
         const factory = this.$options.idState
         if (typeof factory === 'function') {
           const data = factory.call(this, this)
           store[id] = data
           this.$_id = id
           return data
-        } else {
-          throw new Error('[mixin IdState] Missing `idState` function on component definition.')
+        }
+        else {
+          throw new TypeError('[mixin IdState] Missing `idState` function on component definition.')
         }
       },
 
       /**
        * Ensure idState is created and up-to-date
        */
-      $_updateIdState () {
+      $_updateIdState() {
         const id = this.$_getId()
         if (id == null) {
           console.warn(`No id found for IdState with idProp: '${idProp}'.`)

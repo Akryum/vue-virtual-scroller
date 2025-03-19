@@ -1,12 +1,12 @@
 import { babel } from '@rollup/plugin-babel'
-import resolve from '@rollup/plugin-node-resolve'
-import vue from 'rollup-plugin-vue'
 import cjs from '@rollup/plugin-commonjs'
+import resolve from '@rollup/plugin-node-resolve'
 import replace from '@rollup/plugin-replace'
-import css from 'rollup-plugin-css-only'
 import autoprefixer from 'autoprefixer'
-import fs from 'fs-extra'
 import CleanCSS from 'clean-css'
+import fs from 'fs-extra'
+import css from 'rollup-plugin-css-only'
+import vue from 'rollup-plugin-vue'
 
 const config = require('../package.json')
 
@@ -23,7 +23,7 @@ export default {
       },
     }),
     css({
-      output: styles => {
+      output: (styles) => {
         const file = require.resolve('vue-resize/dist/vue-resize.css')
         styles += fs.readFileSync(file, { encoding: 'utf8' })
         fs.ensureDirSync('dist')

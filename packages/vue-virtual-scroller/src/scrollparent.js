@@ -1,26 +1,28 @@
 // Fork of https://github.com/olahol/scrollparent.js to be able to build with Rollup
 
-const regex = /(auto|scroll)/
+const regex = /auto|scroll/
 
-function parents (node, ps) {
-  if (node.parentNode === null) { return ps }
+function parents(node, ps) {
+  if (node.parentNode === null) {
+    return ps
+  }
 
   return parents(node.parentNode, ps.concat([node]))
 }
 
-const style = function (node, prop) {
+function style(node, prop) {
   return getComputedStyle(node, null).getPropertyValue(prop)
 }
 
-const overflow = function (node) {
+function overflow(node) {
   return style(node, 'overflow') + style(node, 'overflow-y') + style(node, 'overflow-x')
 }
 
-const scroll = function (node) {
+function scroll(node) {
   return regex.test(overflow(node))
 }
 
-export function getScrollParent (node) {
+export function getScrollParent(node) {
   if (!(node instanceof HTMLElement || node instanceof SVGElement)) {
     return
   }
