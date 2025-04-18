@@ -249,6 +249,10 @@ export default {
       this.updateVisibleItems(true)
     },
 
+    'items.length' () {
+      this.updateVisibleItems(true)
+    },
+
     pageMode () {
       this.applyPageMode()
       this.updateVisibleItems(false)
