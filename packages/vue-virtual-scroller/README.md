@@ -240,6 +240,10 @@ Example:
   </template>
 </RecycleScroller>
 ```
+### Methods
+
+* `scrollToItem(index)` - Scrolls to the item at the given index.
+* `scrollToPosition(position)` - Scrolls to the given position in pixels.
 
 ### Page mode
 
@@ -387,6 +391,11 @@ Extends all the RecycleScroller scoped slot props.
 ### Other slots
 
 Extends all the RecycleScroller other slots.
+
+### Methods
+
+* `scrollToItem(index)` - Scrolls to the item at the given index.
+* `scrollToBottom()` - Scrolls to the end of the list.
 
 ## DynamicScrollerItem
 
