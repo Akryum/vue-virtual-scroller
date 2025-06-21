@@ -240,13 +240,10 @@ Example:
   </template>
 </RecycleScroller>
 ```
-### Programmatic Scrolling
+### Methods
 
-The virtual scroller components provide useful methods that allow you to programmatically scroll.
-
-* `scrollToItem(index)` - Available on RecycleScroller and DynamicScroller
-* `scrollToPosition(position)` - Available on RecycleScroller
-* `scrollToBottom()` - Available on DynamicScroller
+* `scrollToItem(index)` - Scrolls to the item at the given index.
+* `scrollToPosition(position)` - Scrolls to the given position in pixels.
 
 ### Page mode
 
@@ -394,6 +391,11 @@ Extends all the RecycleScroller scoped slot props.
 ### Other slots
 
 Extends all the RecycleScroller other slots.
+
+### Methods
+
+* `scrollToItem(index)` - Scrolls to the item at the given index.
+* `scrollToBottom()` - Scrolls to the end of the list.
 
 ## DynamicScrollerItem
 
