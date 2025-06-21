@@ -240,6 +240,13 @@ Example:
   </template>
 </RecycleScroller>
 ```
+### Programmatic Scrolling
+
+The virtual scroller components provide useful methods that allow you to programmatically scroll.
+
+* `scrollToItem(index)` - Available on RecycleScroller and DynamicScroller
+* `scrollToPosition(position)` - Available on RecycleScroller
+* `scrollToBottom()` - Available on DynamicScroller
 
 ### Page mode
 
