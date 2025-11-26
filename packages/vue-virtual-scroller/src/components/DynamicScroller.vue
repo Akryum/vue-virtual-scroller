@@ -7,7 +7,10 @@
     key-field="id"
     :list-tag="listTag"
     :item-tag="itemTag"
+    :emit-update="emitUpdate"
+    :skip-hover="skipHover"
     v-bind="$attrs"
+    @update="onUpdate"
     @resize="onScrollerResize"
     @visible="onScrollerVisible"
   >
@@ -89,6 +92,16 @@ export default {
   props: {
     ...props,
 
+    emitUpdate: {
+      type: Boolean,
+      default: false,
+    },
+
+    skipHover: {
+      type: Boolean,
+      default: false,
+    },
+
     minItemSize: {
       type: [Number, String],
       required: true,
@@ -96,6 +109,7 @@ export default {
   },
 
   emits: [
+    'update',
     'resize',
     'visible',
   ],
@@ -197,6 +211,10 @@ export default {
   },
 
   methods: {
+    onUpdate (startIndex, endIndex, visibleStartIndex, visibleEndIndex) {
+      this.$emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex)
+    },
+
     onScrollerResize () {
       const scroller = this.$refs.scroller
       if (scroller) {
