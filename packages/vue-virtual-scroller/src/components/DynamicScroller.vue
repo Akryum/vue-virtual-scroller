@@ -10,7 +10,7 @@
     :emit-update="emitUpdate"
     :skip-hover="skipHover"
     v-bind="$attrs"
-    @update="onUpdate"
+    @update="$emit('update', ...arguments)"
     @resize="onScrollerResize"
     @visible="onScrollerVisible"
   >
@@ -211,10 +211,6 @@ export default {
   },
 
   methods: {
-    onUpdate (startIndex, endIndex, visibleStartIndex, visibleEndIndex) {
-      this.$emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex)
-    },
-
     onScrollerResize () {
       const scroller = this.$refs.scroller
       if (scroller) {
