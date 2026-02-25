@@ -745,7 +745,7 @@ export default {
       // Check if any view index is not in sequence (detect gaps)
       return this.pool
         .filter(({ nr }) => nr.used)
-        .every(({ nr }, i) => i === 0 || nr.index !== this.pool[i - 1].index + 1)
+        .some(({ nr }, i, arr) => i > 0 && nr.index !== arr[i - 1].nr.index + 1)
     },
 
     sortViews () {
