@@ -1,6 +1,6 @@
 let _supportsPassive = false
 
-export function supportsPassive() {
+export function supportsPassive(): boolean {
   return _supportsPassive
 }
 
@@ -12,10 +12,9 @@ if (typeof window !== 'undefined') {
         _supportsPassive = true
       },
     })
-    window.addEventListener('test', null, opts)
+    window.addEventListener('test', null as any, opts)
   }
-  // eslint-disable-next-line unused-imports/no-unused-vars
-  catch (e) {
+  catch {
     // noop
   }
 }

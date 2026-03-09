@@ -1,3 +1,112 @@
+<script>
+import { addItem, getData } from '../data'
+
+import Person from './Person.vue'
+
+export default {
+  components: {
+    Person,
+  },
+
+  data: () => ({
+    items: [],
+    count: 10000,
+    renderScroller: true,
+    showScroller: true,
+    scopedSlots: false,
+    buffer: 200,
+    poolSize: 2000,
+    enableLetters: true,
+    pageMode: false,
+    pageModeFullPage: true,
+    scrollTo: 100,
+    updateParts: { viewStartIdx: 0, viewEndIdx: 0, visibleStartIdx: 0, visibleEndIdx: 0 },
+    showMessageBeforeItems: true,
+  }),
+
+  computed: {
+    countInput: {
+      get() {
+        return this.count
+      },
+      set(val) {
+        if (val > 500000) {
+          val = 500000
+        }
+        else if (val < 0) {
+          val = 0
+        }
+        this.count = val
+      },
+    },
+
+    itemHeight() {
+      return this.enableLetters ? null : 50
+    },
+
+    list() {
+      return this.items.map(
+        item => ({ ...{
+          random: Math.random(),
+        }, ...item }),
+      )
+    },
+  },
+
+  watch: {
+    count() {
+      this.generateItems()
+    },
+    enableLetters() {
+      this.generateItems()
+    },
+  },
+
+  mounted() {
+    this.$nextTick(this.generateItems)
+    window.scroller = this.$refs.scroller
+  },
+
+  methods: {
+    generateItems() {
+      console.log(`Generating ${this.count} items...`)
+      const time = Date.now()
+      const items = getData(this.count, this.enableLetters)
+      console.log(`Generated ${items.length} in ${Date.now() - time}ms`)
+      this._dirty = true
+      this.items = items
+    },
+
+    addItem() {
+      addItem(this.items)
+    },
+
+    onUpdate(viewStartIndex, viewEndIndex, visibleStartIndex, visibleEndIndex) {
+      this.updateParts.viewStartIdx = viewStartIndex
+      this.updateParts.viewEndIdx = viewEndIndex
+      this.updateParts.visibleStartIdx = visibleStartIndex
+      this.updateParts.visibleEndIdx = visibleEndIndex
+    },
+
+    onVisible() {
+      console.log('visible')
+    },
+
+    onHidden() {
+      console.log('hidden')
+    },
+
+    onScrollStart() {
+      console.log('scroll start')
+    },
+
+    onScrollEnd() {
+      console.log('scroll end')
+    },
+  },
+}
+</script>
+
 <template>
   <div
     class="recycle-scroller-demo"
@@ -111,114 +220,6 @@
     </div>
   </div>
 </template>
-
-<script>
-import { getData, addItem } from '../data'
-
-import Person from './Person.vue'
-
-export default {
-  components: {
-    Person,
-  },
-
-  data: () => ({
-    items: [],
-    count: 10000,
-    renderScroller: true,
-    showScroller: true,
-    scopedSlots: false,
-    buffer: 200,
-    poolSize: 2000,
-    enableLetters: true,
-    pageMode: false,
-    pageModeFullPage: true,
-    scrollTo: 100,
-    updateParts: { viewStartIdx: 0, viewEndIdx: 0, visibleStartIdx: 0, visibleEndIdx: 0 },
-    showMessageBeforeItems: true,
-  }),
-
-  computed: {
-    countInput: {
-      get () {
-        return this.count
-      },
-      set (val) {
-        if (val > 500000) {
-          val = 500000
-        } else if (val < 0) {
-          val = 0
-        }
-        this.count = val
-      },
-    },
-
-    itemHeight () {
-      return this.enableLetters ? null : 50
-    },
-
-    list () {
-      return this.items.map(
-        item => Object.assign({}, {
-          random: Math.random(),
-        }, item),
-      )
-    },
-  },
-
-  watch: {
-    count () {
-      this.generateItems()
-    },
-    enableLetters () {
-      this.generateItems()
-    },
-  },
-
-  mounted () {
-    this.$nextTick(this.generateItems)
-    window.scroller = this.$refs.scroller
-  },
-
-  methods: {
-    generateItems () {
-      console.log('Generating ' + this.count + ' items...')
-      const time = Date.now()
-      const items = getData(this.count, this.enableLetters)
-      console.log('Generated ' + items.length + ' in ' + (Date.now() - time) + 'ms')
-      this._dirty = true
-      this.items = items
-    },
-
-    addItem () {
-      addItem(this.items)
-    },
-
-    onUpdate (viewStartIndex, viewEndIndex, visibleStartIndex, visibleEndIndex) {
-      this.updateParts.viewStartIdx = viewStartIndex
-      this.updateParts.viewEndIdx = viewEndIndex
-      this.updateParts.visibleStartIdx = visibleStartIndex
-      this.updateParts.visibleEndIdx = visibleEndIndex
-    },
-
-    onVisible () {
-      console.log('visible')
-    },
-
-    onHidden () {
-      console.log('hidden')
-    },
-
-    onScrollStart () {
-      console.log('scroll start')
-    },
-
-    onScrollEnd () {
-      console.log('scroll end')
-    },
-  },
-}
-</script>
 
 <style scoped>
 .recycle-scroller-demo:not(.page-mode) {

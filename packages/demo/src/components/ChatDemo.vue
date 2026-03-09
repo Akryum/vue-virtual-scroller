@@ -1,3 +1,73 @@
+<script>
+import { generateMessage } from '../data'
+
+let id = 0
+
+const messages = []
+for (let i = 0; i < 10000; i++) {
+  messages.push(generateMessage())
+}
+
+export default {
+  data() {
+    return {
+      items: [],
+      search: '',
+      streaming: false,
+    }
+  },
+
+  computed: {
+    filteredItems() {
+      const { search, items } = this
+      if (!search)
+        return items
+      const lowerCaseSearch = search.toLowerCase()
+      return items.filter(i => i.message.toLowerCase().includes(lowerCaseSearch))
+    },
+  },
+
+  unmounted() {
+    this.stopStream()
+  },
+
+  methods: {
+    changeMessage(message) {
+      Object.assign(message, generateMessage())
+    },
+
+    addMessage() {
+      for (let i = 0; i < 10; i++) {
+        this.items.push({
+          id: id++,
+          ...messages[id % 10000],
+        })
+      }
+      this.scrollToBottom()
+
+      if (this.streaming) {
+        requestAnimationFrame(this.addMessage)
+      }
+    },
+
+    scrollToBottom() {
+      this.$refs.scroller.scrollToBottom()
+    },
+
+    startStream() {
+      if (this.streaming)
+        return
+      this.streaming = true
+      this.addMessage()
+    },
+
+    stopStream() {
+      this.streaming = false
+    },
+  },
+}
+</script>
+
 <template>
   <div class="chat-demo">
     <div class="toolbar">
@@ -65,74 +135,6 @@
     </DynamicScroller>
   </div>
 </template>
-
-<script>
-import { generateMessage } from '../data'
-
-let id = 0
-
-const messages = []
-for (let i = 0; i < 10000; i++) {
-  messages.push(generateMessage())
-}
-
-export default {
-  data () {
-    return {
-      items: [],
-      search: '',
-      streaming: false,
-    }
-  },
-
-  computed: {
-    filteredItems () {
-      const { search, items } = this
-      if (!search) return items
-      const lowerCaseSearch = search.toLowerCase()
-      return items.filter(i => i.message.toLowerCase().includes(lowerCaseSearch))
-    },
-  },
-
-  unmounted () {
-    this.stopStream()
-  },
-
-  methods: {
-    changeMessage (message) {
-      Object.assign(message, generateMessage())
-    },
-
-    addMessage () {
-      for (let i = 0; i < 10; i++) {
-        this.items.push({
-          id: id++,
-          ...messages[id % 10000],
-        })
-      }
-      this.scrollToBottom()
-
-      if (this.streaming) {
-        requestAnimationFrame(this.addMessage)
-      }
-    },
-
-    scrollToBottom () {
-      this.$refs.scroller.scrollToBottom()
-    },
-
-    startStream () {
-      if (this.streaming) return
-      this.streaming = true
-      this.addMessage()
-    },
-
-    stopStream () {
-      this.streaming = false
-    },
-  },
-}
-</script>
 
 <style scoped>
 .chat-demo {

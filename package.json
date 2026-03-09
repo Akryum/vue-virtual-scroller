@@ -9,13 +9,16 @@
   "scripts": {
     "build": "pnpm run -r --filter=!demo build",
     "release": "pnpm run lint && pnpm run build && sheep release -b main --force",
-    "lint": "eslint --cache"
+    "lint": "eslint --cache",
+    "test": "pnpm run -r test",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
     "@akryum/sheep": "^0.5.2",
-    "@antfu/eslint-config": "^4.10.1",
-    "@babel/core": "^7.9.0",
-    "@babel/preset-env": "^7.9.0",
-    "eslint": "^9.22.0"
+    "@antfu/eslint-config": "^7.7.0",
+    "eslint": "^10.0.2",
+    "vitepress": "^1.6.4"
   }
 }

@@ -1,3 +1,32 @@
+<script>
+import { generateMessage } from '../data'
+
+const items = []
+for (let i = 0; i < 10000; i++) {
+  items.push(generateMessage().message)
+}
+
+export default {
+  data() {
+    return {
+      items,
+      search: '',
+      dynamic: true,
+    }
+  },
+
+  computed: {
+    filteredItems() {
+      const { search, items } = this
+      if (!search)
+        return items
+      const lowerCaseSearch = search.toLowerCase()
+      return items.filter(i => i.toLowerCase().includes(lowerCaseSearch))
+    },
+  },
+}
+</script>
+
 <template>
   <div class="dynamic-scroller-demo">
     <div class="toolbar">
@@ -65,34 +94,6 @@
     </RecycleScroller>
   </div>
 </template>
-
-<script>
-import { generateMessage } from '../data'
-
-const items = []
-for (let i = 0; i < 10000; i++) {
-  items.push(generateMessage().message)
-}
-
-export default {
-  data () {
-    return {
-      items,
-      search: '',
-      dynamic: true,
-    }
-  },
-
-  computed: {
-    filteredItems () {
-      const { search, items } = this
-      if (!search) return items
-      const lowerCaseSearch = search.toLowerCase()
-      return items.filter(i => i.toLowerCase().includes(lowerCaseSearch))
-    },
-  },
-}
-</script>
 
 <style scoped>
 .dynamic-scroller-demo {

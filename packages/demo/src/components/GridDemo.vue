@@ -2,7 +2,7 @@
 import { getData } from '../data'
 
 export default {
-  data () {
+  data() {
     return {
       list: [],
       gridItems: 6,
@@ -10,7 +10,7 @@ export default {
     }
   },
 
-  mounted () {
+  mounted() {
     this.list = getData(5000)
   },
 }

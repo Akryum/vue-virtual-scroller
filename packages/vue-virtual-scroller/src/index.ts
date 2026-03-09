@@ -1,0 +1,56 @@
+import type { App } from 'vue'
+import DynamicScroller from './components/DynamicScroller.vue'
+import DynamicScrollerItem from './components/DynamicScrollerItem.vue'
+import RecycleScroller from './components/RecycleScroller.vue'
+import config from './config'
+import type { PluginOptions } from './types'
+
+export { useIdState } from './composables/useIdState'
+export { useRecycleScroller } from './composables/useRecycleScroller'
+export { useDynamicScroller } from './composables/useDynamicScroller'
+export { useDynamicScrollerItem } from './composables/useDynamicScrollerItem'
+
+export type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './composables/useRecycleScroller'
+export type { UseDynamicScrollerOptions, UseDynamicScrollerReturn } from './composables/useDynamicScroller'
+export type { UseDynamicScrollerItemOptions, UseDynamicScrollerItemReturn } from './composables/useDynamicScrollerItem'
+
+export {
+  DynamicScroller,
+  DynamicScrollerItem,
+  RecycleScroller,
+}
+
+export type * from './types'
+
+function registerComponents(app: App, prefix: string) {
+  app.component(`${prefix}recycle-scroller`, RecycleScroller)
+  app.component(`${prefix}RecycleScroller`, RecycleScroller)
+  app.component(`${prefix}dynamic-scroller`, DynamicScroller)
+  app.component(`${prefix}DynamicScroller`, DynamicScroller)
+  app.component(`${prefix}dynamic-scroller-item`, DynamicScrollerItem)
+  app.component(`${prefix}DynamicScrollerItem`, DynamicScrollerItem)
+}
+
+declare const VERSION: string
+
+const plugin = {
+  version: VERSION,
+  install(app: App, options?: PluginOptions) {
+    const finalOptions = Object.assign({}, {
+      installComponents: true,
+      componentsPrefix: '',
+    }, options)
+
+    for (const key in finalOptions) {
+      if (typeof (finalOptions as any)[key] !== 'undefined') {
+        (config as any)[key] = (finalOptions as any)[key]
+      }
+    }
+
+    if (finalOptions.installComponents) {
+      registerComponents(app, finalOptions.componentsPrefix!)
+    }
+  },
+}
+
+export default plugin
