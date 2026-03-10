@@ -520,16 +520,20 @@ export function useRecycleScroller(
     throw new Error('Rendered items limit reached')
   }
 
-  function isAnyVisibleGap(): boolean {
-    return pool.value
-      .filter(({ nr }) => nr.used)
-      .every(({ nr }, i) => i === 0 || nr.index !== pool.value[i - 1].nr.index + 1)
+  function hasVisibleViewGap(): boolean {
+    const visibleViews = pool.value.filter(({ nr }) => nr.used)
+    for (let i = 1; i < visibleViews.length; i++) {
+      if (visibleViews[i].nr.index !== visibleViews[i - 1].nr.index + 1) {
+        return true
+      }
+    }
+    return false
   }
 
   function sortViews() {
     pool.value.sort((viewA, viewB) => viewA.nr.index - viewB.nr.index)
 
-    if (isAnyVisibleGap()) {
+    if (hasVisibleViewGap()) {
       updateVisibleItems(false)
       if (_sortTimer)
         clearTimeout(_sortTimer)
