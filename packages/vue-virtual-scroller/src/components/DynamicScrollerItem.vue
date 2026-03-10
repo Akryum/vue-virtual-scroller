@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h, ref } from 'vue'
+import { ref } from 'vue'
 import { useDynamicScrollerItem } from '../composables/useDynamicScrollerItem'
 
 const props = withDefaults(defineProps<{
@@ -22,7 +22,6 @@ const emit = defineEmits<{
   resize: [id: string | number]
 }>()
 
-// Render
 defineSlots()
 
 const el = ref<HTMLElement>()
@@ -36,10 +35,11 @@ useDynamicScrollerItem(
 )
 </script>
 
-<script lang="ts">
-export default {
-  render(this: any) {
-    return h(this.$props.tag || 'div', { ref: 'el' }, this.$slots.default?.())
-  },
-}
-</script>
+<template>
+  <component
+    :is="props.tag"
+    ref="el"
+  >
+    <slot />
+  </component>
+</template>

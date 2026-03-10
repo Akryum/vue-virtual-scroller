@@ -1,3 +1,4 @@
+import type { ScrollDirection } from '../types'
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick, reactive, ref } from 'vue'
@@ -10,7 +11,7 @@ function mountHarness(initialItems: unknown[]) {
   const options = reactive({
     items: initialItems,
     keyField: 'id',
-    direction: 'vertical' as const,
+    direction: 'vertical' as ScrollDirection,
     minItemSize: 20,
   })
   const scrollerRef = ref({

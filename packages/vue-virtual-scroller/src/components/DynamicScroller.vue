@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ScrollDirection } from '../types'
+import type { ItemWithSize, ScrollDirection } from '../types'
 import { computed, ref } from 'vue'
 import { useDynamicScroller } from '../composables/useDynamicScroller'
 import RecycleScroller from './RecycleScroller.vue'
@@ -51,6 +51,16 @@ const {
   },
 )
 
+function getDefaultSlotBindings(itemWithSize: unknown, index: number, active: boolean) {
+  const typedItem = itemWithSize as ItemWithSize
+  return {
+    item: typedItem.item,
+    index,
+    active,
+    itemWithSize: typedItem,
+  }
+}
+
 // Expose
 defineExpose({
   scrollToItem,
@@ -74,14 +84,7 @@ defineExpose({
     @visible="onScrollerVisible"
   >
     <template #default="{ item: itemWithSize, index, active }">
-      <slot
-        v-bind="{
-          item: itemWithSize.item,
-          index,
-          active,
-          itemWithSize,
-        }"
-      />
+      <slot v-bind="getDefaultSlotBindings(itemWithSize, index, active)" />
     </template>
     <template
       v-if="$slots.before"

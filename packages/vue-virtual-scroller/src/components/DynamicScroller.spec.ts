@@ -64,7 +64,7 @@ const RecycleScrollerStub = defineComponent({
   },
 })
 
-function mountDynamicScroller(props: Record<string, unknown>, slots?: Record<string, unknown>) {
+function mountDynamicScroller(props: any, slots?: any) {
   return mount(DynamicScroller, {
     props,
     slots,
