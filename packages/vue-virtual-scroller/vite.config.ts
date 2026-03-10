@@ -12,7 +12,7 @@ export default defineConfig({
     vue(),
     ...(!isTest
       ? [dts({
-          tsconfigPath: './tsconfig.json',
+          tsconfigPath: './tsconfig.build.json',
         })]
       : []),
   ],
