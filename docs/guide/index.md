@@ -8,7 +8,7 @@
 
 </div>
 
-Blazing fast scrolling of any amount of data | [Demos](../demos) | [Video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k)
+Blazing fast scrolling of any amount of data | [Demos](../demos/index.md) | [Video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k)
 
 For Vue 2 support, see [here](https://github.com/Akryum/vue-virtual-scroller/tree/v1/packages/vue-virtual-scroller).
 
