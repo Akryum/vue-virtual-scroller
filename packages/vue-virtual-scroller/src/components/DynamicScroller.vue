@@ -1,48 +1,7 @@
-<template>
-  <RecycleScroller
-    ref="scroller"
-    :items="itemsWithSize"
-    :min-item-size="props.minItemSize"
-    :direction="props.direction"
-    key-field="id"
-    :list-tag="props.listTag"
-    :item-tag="props.itemTag"
-    v-bind="$attrs"
-    @resize="onScrollerResize"
-    @visible="onScrollerVisible"
-  >
-    <template #default="{ item: itemWithSize, index, active }">
-      <slot
-        v-bind="{
-          item: itemWithSize.item,
-          index,
-          active,
-          itemWithSize
-        }"
-      />
-    </template>
-    <template
-      v-if="$slots.before"
-      #before
-    >
-      <slot name="before" />
-    </template>
-    <template
-      v-if="$slots.after"
-      #after
-    >
-      <slot name="after" />
-    </template>
-    <template #empty>
-      <slot name="empty" />
-    </template>
-  </RecycleScroller>
-</template>
-
 <script setup lang="ts">
+import type { ScrollDirection } from '../types'
 import { computed, ref } from 'vue'
 import { useDynamicScroller } from '../composables/useDynamicScroller'
-import type { ScrollDirection } from '../types'
 import RecycleScroller from './RecycleScroller.vue'
 
 defineOptions({
@@ -100,3 +59,44 @@ defineExpose({
   forceUpdate,
 })
 </script>
+
+<template>
+  <RecycleScroller
+    ref="scroller"
+    :items="itemsWithSize"
+    :min-item-size="props.minItemSize"
+    :direction="props.direction"
+    key-field="id"
+    :list-tag="props.listTag"
+    :item-tag="props.itemTag"
+    v-bind="$attrs"
+    @resize="onScrollerResize"
+    @visible="onScrollerVisible"
+  >
+    <template #default="{ item: itemWithSize, index, active }">
+      <slot
+        v-bind="{
+          item: itemWithSize.item,
+          index,
+          active,
+          itemWithSize,
+        }"
+      />
+    </template>
+    <template
+      v-if="$slots.before"
+      #before
+    >
+      <slot name="before" />
+    </template>
+    <template
+      v-if="$slots.after"
+      #after
+    >
+      <slot name="after" />
+    </template>
+    <template #empty>
+      <slot name="empty" />
+    </template>
+  </RecycleScroller>
+</template>

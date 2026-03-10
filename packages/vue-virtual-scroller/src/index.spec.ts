@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import plugin, { DynamicScroller, DynamicScrollerItem, RecycleScroller } from './index'
 import config from './config'
+import plugin, { DynamicScroller, DynamicScrollerItem, RecycleScroller } from './index'
 
 const initialConfig = { ...config }
 

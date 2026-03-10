@@ -28,7 +28,7 @@ const scroller = ref<InstanceType<typeof DynamicScroller>>()
 const basePool = createMessages(1500, 303)
 
 let nextId = 1
-const stream = ref(createMessages(20, 707).map((item) => ({ ...item, id: nextId++ })))
+const stream = ref(createMessages(20, 707).map(item => ({ ...item, id: nextId++ })))
 const search = ref('')
 const streaming = ref(false)
 

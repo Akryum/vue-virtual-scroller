@@ -7,7 +7,7 @@ function parents(node: Node, ps: Node[]): Node[] {
     return ps
   }
 
-  return parents(node.parentNode, ps.concat([node]))
+  return parents(node.parentNode, [...ps, ...[node]])
 }
 
 function style(node: Element, prop: string): string {

@@ -1,6 +1,6 @@
-import { defineComponent, h } from 'vue'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent, h } from 'vue'
 import DynamicScroller from './DynamicScroller.vue'
 
 const scrollerScrollToItem = vi.fn()
@@ -76,7 +76,7 @@ function mountDynamicScroller(props: Record<string, unknown>, slots?: Record<str
   })
 }
 
-describe('DynamicScroller', () => {
+describe('dynamicScroller', () => {
   beforeEach(() => {
     scrollerScrollToItem.mockReset()
   })

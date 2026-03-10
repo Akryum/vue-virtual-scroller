@@ -1,5 +1,6 @@
-import { type ComputedRef, type MaybeRef, type MaybeRefOrGetter, computed, inject, nextTick, onBeforeUnmount, onMounted, toValue, watch } from 'vue'
+import type { ComputedRef, MaybeRef, MaybeRefOrGetter } from 'vue'
 import type { VScrollData } from '../types'
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, toValue, watch } from 'vue'
 
 export interface UseDynamicScrollerItemOptions {
   item: unknown
@@ -38,8 +39,10 @@ export function useDynamicScrollerItem(
   // Computed
   const id = computed<string | number>(() => {
     const opts = toValue(options)
-    if (vscrollData.simpleArray) return opts.index!
-    if (vscrollData.keyField in (opts.item as any)) return (opts.item as any)[vscrollData.keyField]
+    if (vscrollData.simpleArray)
+      return opts.index!
+    if (vscrollData.keyField in (opts.item as any))
+      return (opts.item as any)[vscrollData.keyField]
     throw new Error(`keyField '${vscrollData.keyField}' not found in your item. You should set a valid keyField prop on your Scroller`)
   })
 
@@ -100,7 +103,8 @@ export function useDynamicScrollerItem(
     nextTick(() => {
       if (id.value === targetId) {
         const elValue = toValue(el)
-        if (!elValue) return
+        if (!elValue)
+          return
         const width = elValue.offsetWidth
         const height = elValue.offsetHeight
         applyWidthHeight(width, height)
@@ -125,14 +129,18 @@ export function useDynamicScrollerItem(
       vscrollParent.$_undefinedMap[id.value] = undefined
     }
     vscrollData.sizes[id.value] = sizeValue
-    if (toValue(options).emitResize) callbacks?.onResize?.(id.value)
+    if (toValue(options).emitResize)
+      callbacks?.onResize?.(id.value)
   }
 
   function observeSize() {
-    if (!vscrollResizeObserver) return
-    if (_sizeObserved) return
+    if (!vscrollResizeObserver)
+      return
+    if (_sizeObserved)
+      return
     const elValue = toValue(el)
-    if (!elValue) return
+    if (!elValue)
+      return
     vscrollResizeObserver.observe(elValue)
     ;(elValue as any).$_vs_id = id.value
     ;(elValue as any).$_vs_onResize = onResize
@@ -140,10 +148,13 @@ export function useDynamicScrollerItem(
   }
 
   function unobserveSize() {
-    if (!vscrollResizeObserver) return
-    if (!_sizeObserved) return
+    if (!vscrollResizeObserver)
+      return
+    if (!_sizeObserved)
+      return
     const elValue = toValue(el)
-    if (!elValue) return
+    if (!elValue)
+      return
     vscrollResizeObserver.unobserve(elValue)
     ;(elValue as any).$_vs_onResize = undefined
     _sizeObserved = false

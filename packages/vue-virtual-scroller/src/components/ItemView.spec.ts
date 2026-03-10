@@ -1,10 +1,10 @@
-import { h } from 'vue'
+import type { View } from '../types'
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
+import { h } from 'vue'
 import ItemView from './ItemView.vue'
-import type { View } from '../types'
 
-describe('ItemView', () => {
+describe('itemView', () => {
   it('renders the configured tag and forwards slot props', () => {
     const view: View = {
       item: { label: 'Alpha' },

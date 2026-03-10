@@ -1,6 +1,6 @@
-import { computed, defineComponent, h, nextTick, ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { computed, defineComponent, h, nextTick, ref } from 'vue'
 import RecycleScroller from './RecycleScroller.vue'
 
 const mocks = vi.hoisted(() => {
@@ -34,7 +34,7 @@ const ResizeObserverStub = defineComponent({
   },
 })
 
-describe('RecycleScroller', () => {
+describe('recycleScroller', () => {
   beforeEach(() => {
     mocks.useRecycleScroller.mockReset()
     mocks.scrollToItem.mockReset()

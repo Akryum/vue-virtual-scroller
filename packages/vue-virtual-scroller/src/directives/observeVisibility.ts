@@ -51,7 +51,8 @@ function updateState(el: Element, binding: DirectiveBinding<ObserveVisibilityCal
   state.observer = new IntersectionObserver((entries) => {
     const entry = entries[0]
     const isVisible = !!entry?.isIntersecting
-    if (state.visible !== null && state.visible === isVisible) return
+    if (state.visible !== null && state.visible === isVisible)
+      return
     state.visible = isVisible
     state.callback(isVisible, entry)
   }, state.intersection)
@@ -72,7 +73,8 @@ export const ObserveVisibility: Directive<Element, ObserveVisibilityCallback | O
     updateState(el, binding)
   },
   updated(el, binding) {
-    if (binding.value === binding.oldValue) return
+    if (binding.value === binding.oldValue)
+      return
     updateState(el, binding)
   },
   unmounted(el) {

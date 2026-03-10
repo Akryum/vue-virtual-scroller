@@ -1,11 +1,3 @@
-<template>
-  <div
-    ref="el"
-    class="vue-recycle-scroller__resize-observer"
-    aria-hidden="true"
-  />
-</template>
-
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
@@ -24,7 +16,8 @@ function notify() {
 
 onMounted(() => {
   const target = el.value?.parentElement
-  if (!target) return
+  if (!target)
+    return
 
   if (typeof ResizeObserver !== 'undefined') {
     observer = new ResizeObserver(() => {
@@ -49,6 +42,14 @@ onBeforeUnmount(() => {
   }
 })
 </script>
+
+<template>
+  <div
+    ref="el"
+    class="vue-recycle-scroller__resize-observer"
+    aria-hidden="true"
+  />
+</template>
 
 <style scoped>
 .vue-recycle-scroller__resize-observer {

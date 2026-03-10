@@ -1,6 +1,7 @@
-import { type ComputedRef, type MaybeRef, type MaybeRefOrGetter, computed, nextTick, onActivated, onDeactivated, onUnmounted, provide, reactive, toValue, watch } from 'vue'
-import mitt from 'mitt'
+import type { ComputedRef, MaybeRef, MaybeRefOrGetter } from 'vue'
 import type { ItemWithSize, ScrollDirection, VScrollData } from '../types'
+import mitt from 'mitt'
+import { computed, nextTick, onActivated, onDeactivated, onUnmounted, provide, reactive, toValue, watch } from 'vue'
 
 export interface UseDynamicScrollerOptions {
   items: unknown[]
@@ -135,19 +136,22 @@ export function useDynamicScroller(
 
   function scrollToItem(index: number) {
     const scroller = toValue(scrollerRef)
-    if (scroller) scroller.scrollToItem(index)
+    if (scroller)
+      scroller.scrollToItem(index)
   }
 
   function getItemSize(item: unknown, index?: number): number {
     const opts = toValue(options)
-    const id = simpleArray.value ? (index != null ? index : opts.items.indexOf(item)) : (item as any)[opts.keyField]
+    const id = simpleArray.value ? (index ?? opts.items.indexOf(item)) : (item as any)[opts.keyField]
     return vscrollData.sizes[id] || 0
   }
 
   function scrollToBottom() {
     const elValue = toValue(el)
-    if (!elValue) return
-    if (_scrollingToBottom) return
+    if (!elValue)
+      return
+    if (_scrollingToBottom)
+      return
     _scrollingToBottom = true
     // Item is inserted to the DOM
     nextTick(() => {
@@ -184,7 +188,8 @@ export function useDynamicScroller(
 
   watch(itemsWithSize, (next, prev) => {
     const elValue = toValue(el)
-    if (!elValue) return
+    if (!elValue)
+      return
     const scrollTop = elValue.scrollTop
 
     // Calculate total diff between prev and next sizes

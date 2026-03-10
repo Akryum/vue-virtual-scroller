@@ -19,6 +19,7 @@
     "@akryum/sheep": "^0.5.2",
     "@antfu/eslint-config": "^7.7.0",
     "eslint": "^10.0.2",
+    "typescript": "^5.3.3",
     "vitepress": "^1.6.4"
   }
 }

@@ -1,6 +1,6 @@
-import { defineComponent, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
+import { defineComponent, nextTick } from 'vue'
 import { useIdState } from './useIdState'
 
 describe('useIdState', () => {

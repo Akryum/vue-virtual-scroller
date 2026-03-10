@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue'
 import DynamicScroller from '../../../../packages/vue-virtual-scroller/src/components/DynamicScroller.vue'
 import DynamicScrollerItem from '../../../../packages/vue-virtual-scroller/src/components/DynamicScrollerItem.vue'
-import DemoShell from './DemoShell.vue'
 import { avatarStyle, createMessages, mutateMessage } from './demo-data'
+import DemoShell from './DemoShell.vue'
 
 const search = ref('')
 const messages = ref(createMessages(600, 101))

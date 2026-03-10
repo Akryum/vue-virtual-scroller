@@ -33,10 +33,6 @@ export default {
       Object.assign(message, generateMessage())
     },
 
-    onResize() {
-      console.log('resize')
-    },
-
     onUpdate(viewStartIndex, viewEndIndex, visibleStartIndex, visibleEndIndex) {
       this.updateParts.viewStartIdx = viewStartIndex
       this.updateParts.viewEndIdx = viewEndIndex
@@ -62,7 +58,6 @@ export default {
       :min-item-size="54"
       :emit-update="true"
       class="scroller"
-      @resize="onResize"
       @update="onUpdate"
     >
       <template #before>

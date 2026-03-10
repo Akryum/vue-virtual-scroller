@@ -3,8 +3,8 @@ import { computed, ref } from 'vue'
 import DynamicScroller from '../../../../packages/vue-virtual-scroller/src/components/DynamicScroller.vue'
 import DynamicScrollerItem from '../../../../packages/vue-virtual-scroller/src/components/DynamicScrollerItem.vue'
 import RecycleScroller from '../../../../packages/vue-virtual-scroller/src/components/RecycleScroller.vue'
-import DemoShell from './DemoShell.vue'
 import { createSimpleStrings } from './demo-data'
+import DemoShell from './DemoShell.vue'
 
 const useDynamic = ref(true)
 const search = ref('')
@@ -66,7 +66,9 @@ const filteredRows = computed(() => {
           <div class="demo-avatar" :style="{ background: 'linear-gradient(145deg, #4a7c59, #234f35)' }">
             {{ String(index + 1).slice(-2).padStart(2, '0') }}
           </div>
-          <div class="demo-message-body">{{ item }}</div>
+          <div class="demo-message-body">
+            {{ item }}
+          </div>
           <small class="demo-message-meta">dynamic</small>
         </DynamicScrollerItem>
       </template>
@@ -83,7 +85,9 @@ const filteredRows = computed(() => {
           <div class="demo-avatar" :style="{ background: 'linear-gradient(145deg, #7b2cbf, #3c096c)' }">
             {{ String(index + 1).slice(-2).padStart(2, '0') }}
           </div>
-          <div class="demo-message-body">{{ item }}</div>
+          <div class="demo-message-body">
+            {{ item }}
+          </div>
           <small class="demo-message-meta">fixed</small>
         </div>
       </template>

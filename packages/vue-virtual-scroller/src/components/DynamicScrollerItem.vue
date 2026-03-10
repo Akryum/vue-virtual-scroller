@@ -22,18 +22,18 @@ const emit = defineEmits<{
   resize: [id: string | number]
 }>()
 
+// Render
+defineSlots()
+
 const el = ref<HTMLElement>()
 
 useDynamicScrollerItem(
   props,
   el,
   {
-    onResize: (id) => emit('resize', id),
+    onResize: id => emit('resize', id),
   },
 )
-
-// Render
-defineSlots()
 </script>
 
 <script lang="ts">

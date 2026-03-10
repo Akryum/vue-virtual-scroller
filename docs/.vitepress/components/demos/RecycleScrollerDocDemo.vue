@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import type { Person, PersonRow } from './demo-data'
 import { computed, onMounted, ref, watch } from 'vue'
 import RecycleScroller from '../../../../packages/vue-virtual-scroller/src/components/RecycleScroller.vue'
+import { avatarStyle, createPeopleRows } from './demo-data'
 import DemoShell from './DemoShell.vue'
-import { avatarStyle, createPeopleRows, type Person, type PersonRow } from './demo-data'
 
 const scroller = ref<InstanceType<typeof RecycleScroller>>()
 const count = ref(8000)

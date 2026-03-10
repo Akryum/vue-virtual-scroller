@@ -1,5 +1,14 @@
 <!-- Avoid re-renders of slots -->
 
+<script setup lang="ts">
+import type { View } from '../types'
+
+const props = defineProps<{
+  view: View
+  itemTag: string
+}>()
+</script>
+
 <template>
   <component
     :is="props.itemTag"
@@ -12,12 +21,3 @@
     />
   </component>
 </template>
-
-<script setup lang="ts">
-import type { View } from '../types'
-
-const props = defineProps<{
-  view: View
-  itemTag: string
-}>()
-</script>

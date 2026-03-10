@@ -2,14 +2,14 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import DynamicScroller from '../../../../packages/vue-virtual-scroller/src/components/DynamicScroller.vue'
 import DynamicScrollerItem from '../../../../packages/vue-virtual-scroller/src/components/DynamicScrollerItem.vue'
-import DemoShell from './DemoShell.vue'
 import { avatarStyle, createMessages } from './demo-data'
+import DemoShell from './DemoShell.vue'
 
 const scroller = ref<InstanceType<typeof DynamicScroller>>()
 const basePool = createMessages(1500, 303)
 
 let nextId = 1
-const stream = ref(createMessages(20, 707).map((item) => ({ ...item, id: nextId++ })))
+const stream = ref(createMessages(20, 707).map(item => ({ ...item, id: nextId++ })))
 const search = ref('')
 const streaming = ref(false)
 

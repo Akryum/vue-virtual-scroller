@@ -17,6 +17,9 @@ importers:
       eslint:
         specifier: ^10.0.2
         version: 10.0.2
+      typescript:
+        specifier: ^5.3.3
+        version: 5.8.2
       vitepress:
         specifier: ^1.6.4
         version: 1.6.4(@algolia/client-search@5.49.1)(@types/node@22.13.10)(change-case@5.4.4)(postcss@8.5.3)(search-insights@2.17.3)(typescript@5.8.2)

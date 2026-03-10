@@ -2,8 +2,8 @@
 import { ref } from 'vue'
 import DynamicScroller from '../../../../packages/vue-virtual-scroller/src/components/DynamicScroller.vue'
 import DynamicScrollerItem from '../../../../packages/vue-virtual-scroller/src/components/DynamicScrollerItem.vue'
-import DemoShell from './DemoShell.vue'
 import { createSimpleStrings } from './demo-data'
+import DemoShell from './DemoShell.vue'
 
 const pool = createSimpleStrings(1200, 1303)
 const scroller = ref<InstanceType<typeof DynamicScroller>>()
@@ -29,10 +29,18 @@ function addItems(count = 1) {
     description="Ported from test-chat. This stress test appends many rows and keeps the viewport pinned to the latest messages."
   >
     <template #toolbar>
-      <button class="demo-button" @click="addItems(1)">+1</button>
-      <button class="demo-button" @click="addItems(5)">+5</button>
-      <button class="demo-button" @click="addItems(20)">+20</button>
-      <button class="demo-button" @click="addItems(80)">+80</button>
+      <button class="demo-button" @click="addItems(1)">
+        +1
+      </button>
+      <button class="demo-button" @click="addItems(5)">
+        +5
+      </button>
+      <button class="demo-button" @click="addItems(20)">
+        +20
+      </button>
+      <button class="demo-button" @click="addItems(80)">
+        +80
+      </button>
       <span class="demo-chip">Messages: {{ rows.length }}</span>
     </template>
 
@@ -54,7 +62,9 @@ function addItems(count = 1) {
             {{ String((index % 99) + 1).padStart(2, '0') }}
           </div>
           <div class="demo-chat-bubble">
-            <div class="demo-message-body">{{ item.text }}</div>
+            <div class="demo-message-body">
+              {{ item.text }}
+            </div>
           </div>
           <small class="demo-message-meta">#{{ item.id }}</small>
         </DynamicScrollerItem>

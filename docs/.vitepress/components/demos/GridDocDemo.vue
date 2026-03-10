@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import type { Person } from './demo-data'
 import { computed, ref } from 'vue'
 import RecycleScroller from '../../../../packages/vue-virtual-scroller/src/components/RecycleScroller.vue'
+import { createPeopleRows, gradientAt } from './demo-data'
 import DemoShell from './DemoShell.vue'
-import { createPeopleRows, gradientAt, type Person } from './demo-data'
 
 interface GridCard extends Person {
   id: number

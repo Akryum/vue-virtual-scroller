@@ -1,6 +1,6 @@
-import { computed } from 'vue'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { computed } from 'vue'
 import DynamicScrollerItem from './DynamicScrollerItem.vue'
 
 const mocks = vi.hoisted(() => {
@@ -15,7 +15,7 @@ vi.mock('../composables/useDynamicScrollerItem', () => {
   }
 })
 
-describe('DynamicScrollerItem', () => {
+describe('dynamicScrollerItem', () => {
   beforeEach(() => {
     mocks.useDynamicScrollerItem.mockReset()
     mocks.useDynamicScrollerItem.mockReturnValue({

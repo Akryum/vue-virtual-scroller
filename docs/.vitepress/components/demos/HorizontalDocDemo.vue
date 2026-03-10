@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue'
 import DynamicScroller from '../../../../packages/vue-virtual-scroller/src/components/DynamicScroller.vue'
 import DynamicScrollerItem from '../../../../packages/vue-virtual-scroller/src/components/DynamicScrollerItem.vue'
-import DemoShell from './DemoShell.vue'
 import { avatarStyle, createMessages } from './demo-data'
+import DemoShell from './DemoShell.vue'
 
 const search = ref('')
 const rows = ref(createMessages(500, 909))
@@ -62,7 +62,9 @@ function cardWidth(message: string) {
           <div class="demo-avatar" :style="avatarStyle(item.hue)">
             {{ item.initials }}
           </div>
-          <div class="demo-message-body">{{ item.message }}</div>
+          <div class="demo-message-body">
+            {{ item.message }}
+          </div>
           <small class="demo-message-meta">{{ item.user }} · #{{ index }}</small>
         </DynamicScrollerItem>
       </template>

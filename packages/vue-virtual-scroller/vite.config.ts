@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import process from 'node:process'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
@@ -43,8 +44,8 @@ export default defineConfig({
       output: {
         exports: 'named',
         globals: {
-          'vue': 'Vue',
-          'mitt': 'mitt',
+          vue: 'Vue',
+          mitt: 'mitt',
         },
       },
     },

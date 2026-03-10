@@ -19,9 +19,10 @@ What to try:
 
 ```vue
 <script setup lang="ts">
+import type { Person } from '../.vitepress/components/demos/demo-data'
 import { computed, ref } from 'vue'
 import { RecycleScroller } from 'vue-virtual-scroller'
-import { createPeopleRows, type Person } from '../.vitepress/components/demos/demo-data'
+import { createPeopleRows } from '../.vitepress/components/demos/demo-data'
 
 interface GridCard extends Person {
   id: number

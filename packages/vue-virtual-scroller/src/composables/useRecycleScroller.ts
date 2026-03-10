@@ -1,8 +1,9 @@
-import { type ComputedRef, type MaybeRef, type MaybeRefOrGetter, type Ref, computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
-import { getScrollParent } from '../scrollparent'
-import config from '../config'
-import { supportsPassive } from '../utils'
+import type { ComputedRef, MaybeRef, MaybeRefOrGetter, Ref } from 'vue'
 import type { ScrollDirection, ScrollState, Sizes, View, ViewNonReactive } from '../types'
+import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
+import config from '../config'
+import { getScrollParent } from '../scrollparent'
+import { supportsPassive } from '../utils'
 
 export interface UseRecycleScrollerOptions {
   items: unknown[]
@@ -159,14 +160,16 @@ export function useRecycleScroller(
 
   function handleResize() {
     callbacks?.onResize?.()
-    if (ready.value) updateVisibleItems(false)
+    if (ready.value)
+      updateVisibleItems(false)
   }
 
   function handleScroll() {
     const opts = toValue(options)
     if (!_scrollDirty) {
       _scrollDirty = true
-      if (_updateTimeout) return
+      if (_updateTimeout)
+        return
 
       const requestUpdate = () => requestAnimationFrame(() => {
         _scrollDirty = false
@@ -175,7 +178,8 @@ export function useRecycleScroller(
         // It seems sometimes chrome doesn't fire scroll event :/
         // When non continuous scrolling is ending, we force a refresh
         if (!continuous) {
-          if (_refreshTimout) clearTimeout(_refreshTimout)
+          if (_refreshTimout)
+            clearTimeout(_refreshTimout)
           _refreshTimout = setTimeout(handleScroll, opts.updateInterval + 100)
         }
       })
@@ -186,7 +190,8 @@ export function useRecycleScroller(
       if (opts.updateInterval) {
         _updateTimeout = setTimeout(() => {
           _updateTimeout = null
-          if (_scrollDirty) requestUpdate()
+          if (_scrollDirty)
+            requestUpdate()
         }, opts.updateInterval)
       }
     }
@@ -207,7 +212,7 @@ export function useRecycleScroller(
   }
 
   function getListenerTarget(): Window | Element {
-    let target: Element | undefined = getScrollParent(toValue(el)!)
+    const target: Element | undefined = getScrollParent(toValue(el)!)
     // Fix global scroll target for Chrome and Safari
     if (window.document && (target === window.document.documentElement || target === window.document.body)) {
       return window
@@ -314,7 +319,8 @@ export function useRecycleScroller(
       // Skip update if user hasn't scrolled enough
       if (checkPositionDiff) {
         let positionDiff = scroll.start - _lastUpdateScrollPosition
-        if (positionDiff < 0) positionDiff = -positionDiff
+        if (positionDiff < 0)
+          positionDiff = -positionDiff
         if ((itemSize === null && positionDiff < minItemSize) || (itemSize !== null && positionDiff < itemSize)) {
           return {
             continuous: true,
@@ -362,7 +368,8 @@ export function useRecycleScroller(
           }
           i = ~~((a + b) / 2)
         } while (i !== oldI)
-        if (i < 0) i = 0
+        if (i < 0)
+          i = 0
         startIndex = i
 
         // For container style
@@ -376,7 +383,8 @@ export function useRecycleScroller(
         else {
           endIndex++
           // Bounds
-          if (endIndex > count) endIndex = count
+          if (endIndex > count)
+            endIndex = count
         }
 
         // search visible startIndex
@@ -395,10 +403,14 @@ export function useRecycleScroller(
         visibleEndIndex = Math.floor((scroll.end - beforeSize) / itemSize * gridItems)
 
         // Bounds
-        if (startIndex < 0) startIndex = 0
-        if (endIndex > count) endIndex = count
-        if (visibleStartIndex < 0) visibleStartIndex = 0
-        if (visibleEndIndex > count) visibleEndIndex = count
+        if (startIndex < 0)
+          startIndex = 0
+        if (endIndex > count)
+          endIndex = count
+        if (visibleStartIndex < 0)
+          visibleStartIndex = 0
+        if (visibleEndIndex > count)
+          visibleEndIndex = count
 
         totalSizeValue = Math.ceil(count / gridItems) * itemSize
       }
@@ -435,7 +447,8 @@ export function useRecycleScroller(
     let item: unknown, type: unknown
     for (let i = startIndex; i < endIndex; i++) {
       const elementSize = itemSize || (sizesValue[i] && sizesValue[i].size)
-      if (!elementSize) continue
+      if (!elementSize)
+        continue
       item = items[i]
       const key = keyField ? (item as any)[keyField] : i
       if (key == null) {
@@ -453,7 +466,7 @@ export function useRecycleScroller(
           view.nr.index = i
           view.nr.key = key
           if (view.nr.type !== type) {
-            console.warn("Reused view's type does not match pool's type")
+            console.warn('Reused view\'s type does not match pool\'s type')
           }
         }
         else {
@@ -463,9 +476,11 @@ export function useRecycleScroller(
         views.set(key, view)
       }
       else {
-        if (view.item !== item) { view.item = item }
+        if (view.item !== item) {
+          view.item = item
+        }
         if (!view.nr.used) {
-          console.warn("Expected existing view's used flag to be true, got " + view.nr.used)
+          console.warn(`Expected existing view's used flag to be true, got ${view.nr.used}`)
         }
       }
 
@@ -483,11 +498,13 @@ export function useRecycleScroller(
     _startIndex = startIndex
     _endIndex = endIndex
 
-    if (opts.emitUpdate) callbacks?.onUpdate?.(startIndex, endIndex, visibleStartIndex, visibleEndIndex)
+    if (opts.emitUpdate)
+      callbacks?.onUpdate?.(startIndex, endIndex, visibleStartIndex, visibleEndIndex)
 
     // After the user has finished scrolling
     // Sort views so text selection is correct
-    if (_sortTimer) clearTimeout(_sortTimer)
+    if (_sortTimer)
+      clearTimeout(_sortTimer)
     _sortTimer = setTimeout(sortViews, opts.updateInterval + 300)
 
     return {
@@ -497,8 +514,8 @@ export function useRecycleScroller(
 
   function itemsLimitError() {
     setTimeout(() => {
-      console.log('It seems the scroller element isn\'t scrolling, so it tries to render all the items at once.', 'Scroller:', toValue(el))
-      console.log('Make sure the scroller has a fixed height (or width) and \'overflow-y\' (or \'overflow-x\') set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.')
+      console.warn('It seems the scroller element isn\'t scrolling, so it tries to render all the items at once.', 'Scroller:', toValue(el))
+      console.warn('Make sure the scroller has a fixed height (or width) and \'overflow-y\' (or \'overflow-x\') set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.')
     })
     throw new Error('Rendered items limit reached')
   }
@@ -514,7 +531,8 @@ export function useRecycleScroller(
 
     if (isAnyVisibleGap()) {
       updateVisibleItems(false)
-      if (_sortTimer) clearTimeout(_sortTimer)
+      if (_sortTimer)
+        clearTimeout(_sortTimer)
     }
   }
 

@@ -69,12 +69,8 @@ export default {
 
   methods: {
     generateItems() {
-      console.log(`Generating ${this.count} items...`)
-      const time = Date.now()
-      const items = getData(this.count, this.enableLetters)
-      console.log(`Generated ${items.length} in ${Date.now() - time}ms`)
       this._dirty = true
-      this.items = items
+      this.items = getData(this.count, this.enableLetters)
     },
 
     addItem() {
@@ -86,22 +82,6 @@ export default {
       this.updateParts.viewEndIdx = viewEndIndex
       this.updateParts.visibleStartIdx = visibleStartIndex
       this.updateParts.visibleEndIdx = visibleEndIndex
-    },
-
-    onVisible() {
-      console.log('visible')
-    },
-
-    onHidden() {
-      console.log('hidden')
-    },
-
-    onScrollStart() {
-      console.log('scroll start')
-    },
-
-    onScrollEnd() {
-      console.log('scroll end')
     },
   },
 }
@@ -191,10 +171,6 @@ export default {
           size-field="height"
           :emit-update="true"
           @update="onUpdate"
-          @visible="onVisible"
-          @hidden="onHidden"
-          @scroll-start="onScrollStart"
-          @scroll-end="onScrollEnd"
         >
           <template #default="props">
             <div

@@ -1,18 +1,18 @@
 import type { App } from 'vue'
+import type { PluginOptions } from './types'
 import DynamicScroller from './components/DynamicScroller.vue'
 import DynamicScrollerItem from './components/DynamicScrollerItem.vue'
 import RecycleScroller from './components/RecycleScroller.vue'
 import config from './config'
-import type { PluginOptions } from './types'
+
+export { useDynamicScroller } from './composables/useDynamicScroller'
+export type { UseDynamicScrollerOptions, UseDynamicScrollerReturn } from './composables/useDynamicScroller'
+export { useDynamicScrollerItem } from './composables/useDynamicScrollerItem'
+export type { UseDynamicScrollerItemOptions, UseDynamicScrollerItemReturn } from './composables/useDynamicScrollerItem'
 
 export { useIdState } from './composables/useIdState'
 export { useRecycleScroller } from './composables/useRecycleScroller'
-export { useDynamicScroller } from './composables/useDynamicScroller'
-export { useDynamicScrollerItem } from './composables/useDynamicScrollerItem'
-
 export type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './composables/useRecycleScroller'
-export type { UseDynamicScrollerOptions, UseDynamicScrollerReturn } from './composables/useDynamicScroller'
-export type { UseDynamicScrollerItemOptions, UseDynamicScrollerItemReturn } from './composables/useDynamicScrollerItem'
 
 export {
   DynamicScroller,
@@ -36,10 +36,10 @@ declare const VERSION: string
 const plugin = {
   version: VERSION,
   install(app: App, options?: PluginOptions) {
-    const finalOptions = Object.assign({}, {
+    const finalOptions = { ...{
       installComponents: true,
       componentsPrefix: '',
-    }, options)
+    }, ...options }
 
     for (const key in finalOptions) {
       if (typeof (finalOptions as any)[key] !== 'undefined') {

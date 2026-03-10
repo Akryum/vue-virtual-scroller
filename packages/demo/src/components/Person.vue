@@ -2,14 +2,6 @@
 export default {
   props: ['item', 'index'],
 
-  created() {
-    console.log('created')
-  },
-
-  unmounted() {
-    console.log('unmounted')
-  },
-
   methods: {
     edit() {
       // eslint-disable-next-line vue/no-mutating-props

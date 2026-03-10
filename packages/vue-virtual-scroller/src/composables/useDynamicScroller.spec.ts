@@ -1,6 +1,6 @@
-import { defineComponent, nextTick, reactive, ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
+import { defineComponent, nextTick, reactive, ref } from 'vue'
 import { useDynamicScroller } from './useDynamicScroller'
 
 function mountHarness(initialItems: unknown[]) {
