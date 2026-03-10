@@ -1,6 +1,3 @@
-# [2.0.0-beta.8](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.7...v2.0.0-beta.8) (2023-02-06)
-
-
 ## v2.0.0-beta.9
 
 [compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.8...v2.0.0-beta.9)
@@ -60,6 +57,11 @@
 - Alex Liu ([@Mini-ghost](http://github.com/Mini-ghost))
 - Reynaldiaznan123 <reynaldiaznan450@gmail.com>
 - Vito ([@liu-lihao](http://github.com/liu-lihao))
+
+
+# [2.0.0-beta.8](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.7...v2.0.0-beta.8) (2023-02-06)
+
+
 
 ### Bug Fixes
 
