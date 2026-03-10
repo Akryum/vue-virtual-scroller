@@ -27,27 +27,12 @@ export default defineConfig({
     lib: {
       entry: 'src/index.ts',
       name: 'VueVirtualScroller',
-      formats: ['es', 'umd', 'iife'],
-      fileName: (format) => {
-        if (format === 'es')
-          return 'vue-virtual-scroller.esm.js'
-        if (format === 'umd')
-          return 'vue-virtual-scroller.umd.js'
-        if (format === 'iife')
-          return 'vue-virtual-scroller.min.js'
-        return `vue-virtual-scroller.${format}.js`
-      },
+      formats: ['es'],
+      fileName: () => 'vue-virtual-scroller.js',
     },
     sourcemap: true,
     rollupOptions: {
       external: ['vue', 'mitt'],
-      output: {
-        exports: 'named',
-        globals: {
-          vue: 'Vue',
-          mitt: 'mitt',
-        },
-      },
     },
   },
 })

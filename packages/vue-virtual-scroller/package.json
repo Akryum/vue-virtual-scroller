@@ -1,5 +1,6 @@
 {
   "name": "vue-virtual-scroller",
+  "type": "module",
   "version": "2.0.0-beta.8",
   "description": "Smooth scrolling for any amount of data",
   "author": {
@@ -23,14 +24,13 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/vue-virtual-scroller.esm.js",
-      "require": "./dist/vue-virtual-scroller.umd.js"
+      "import": "./dist/vue-virtual-scroller.js",
+      "default": "./dist/vue-virtual-scroller.js"
     },
-    "./dist/vue-virtual-scroller.css": "./dist/vue-virtual-scroller.css"
+    "./dist/vue-virtual-scroller.css": "./dist/vue-virtual-scroller.css",
+    "./index.css": "./dist/vue-virtual-scroller.css"
   },
-  "main": "dist/vue-virtual-scroller.umd.js",
-  "module": "dist/vue-virtual-scroller.esm.js",
-  "unpkg": "dist/vue-virtual-scroller.min.js",
+  "module": "dist/vue-virtual-scroller.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"

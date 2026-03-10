@@ -28,7 +28,9 @@ pnpm add vue-virtual-scroller@next
 
 ## Setup
 
-### Default import
+`vue-virtual-scroller` ships ESM only. Use it from an ESM-aware toolchain such as Vite, Nuxt, Rollup, or webpack 5.
+
+### Plugin import
 
 Install all the components:
 
@@ -50,30 +52,9 @@ app.component('RecycleScroller', RecycleScroller)
 The CSS file must be imported when using the package:
 
 ```js
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
+import 'vue-virtual-scroller/index.css'
 ```
 :::
-
-### Browser
-
-```html
-<link rel="stylesheet" href="vue-virtual-scroller/dist/vue-virtual-scroller.css"/>
-
-<script src="vue.js"></script>
-<script src="vue-virtual-scroller/dist/vue-virtual-scroller.min.js"></script>
-```
-
-Install the plugin:
-
-```js
-app.use(VueVirtualScroller)
-```
-
-Or register individual components:
-
-```js
-app.component('RecycleScroller', VueVirtualScroller.RecycleScroller)
-```
 
 ## Components
 
