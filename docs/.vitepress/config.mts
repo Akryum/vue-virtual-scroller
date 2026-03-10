@@ -41,6 +41,7 @@ export default defineConfig({
             { text: 'Headless (useRecycleScroller)', link: '/guide/use-recycle-scroller' },
           ],
         },
+        { text: 'AI & Skills', link: '/guide/ai-skills' },
       ],
       '/demos/': [
         {

@@ -33,7 +33,8 @@
   "module": "dist/vue-virtual-scroller.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "scripts": {
     "build": "vite build",
