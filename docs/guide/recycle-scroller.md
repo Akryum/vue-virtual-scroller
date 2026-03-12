@@ -136,6 +136,8 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 
 ## Other slots
 
+The `empty` slot is displayed only when `items` is empty.
+
 ```html
 <main>
   <slot name="before"></slot>

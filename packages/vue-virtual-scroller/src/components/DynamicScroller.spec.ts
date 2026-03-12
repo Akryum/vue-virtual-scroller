@@ -48,7 +48,9 @@ const RecycleScrollerStub = defineComponent({
         index,
         active: index === 0,
       })),
-      slots.empty?.(),
+      ...(props.items as unknown[]).length === 0
+        ? slots.empty?.() ?? []
+        : [],
       slots.after?.(),
       h('button', {
         class: 'emit-resize',
@@ -106,6 +108,20 @@ describe('dynamicScroller', () => {
     expect(rows[1].text()).toBe('Beta|1|inactive|b')
     expect(wrapper.find('.before-slot').exists()).toBe(true)
     expect(wrapper.find('.after-slot').exists()).toBe(true)
+    expect(wrapper.find('.empty-slot').exists()).toBe(false)
+  })
+
+  it('renders empty slot only when items is empty', () => {
+    const wrapper = mountDynamicScroller(
+      {
+        items: [],
+        minItemSize: 20,
+      },
+      {
+        empty: () => h('div', { class: 'empty-slot' }, 'empty'),
+      },
+    )
+
     expect(wrapper.find('.empty-slot').exists()).toBe(true)
   })
 

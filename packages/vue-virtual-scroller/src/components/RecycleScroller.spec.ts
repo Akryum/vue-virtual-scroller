@@ -114,9 +114,30 @@ describe('recycleScroller', () => {
     expect(wrapper.classes()).toContain('direction-vertical')
     expect(wrapper.find('.before-slot').exists()).toBe(true)
     expect(wrapper.find('.after-slot').exists()).toBe(true)
-    expect(wrapper.find('.empty-slot').exists()).toBe(true)
+    expect(wrapper.find('.empty-slot').exists()).toBe(false)
     expect(wrapper.find('.row').text()).toBe('Alpha|0|true')
     expect(wrapper.emitted('visible')).toHaveLength(1)
+  })
+
+  it('renders empty slot only when items is empty', async () => {
+    const wrapper = mount(RecycleScroller, {
+      props: {
+        items: [],
+        itemSize: 20,
+      },
+      slots: {
+        empty: () => h('div', { class: 'empty-slot' }, 'empty'),
+      },
+      global: {
+        stubs: {
+          ResizeObserver: ResizeObserverStub,
+        },
+      },
+    })
+
+    await nextTick()
+
+    expect(wrapper.find('.empty-slot').exists()).toBe(true)
   })
 
   it('wires scroll/resize handlers and exposes composable methods', async () => {

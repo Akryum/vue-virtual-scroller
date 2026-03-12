@@ -166,6 +166,7 @@ defineExpose({
       </ItemView>
 
       <slot
+        v-if="props.items.length === 0"
         name="empty"
       />
     </component>
