@@ -1,3 +1,19 @@
+## v2.0.0-beta.10
+
+[compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.9...v2.0.0-beta.10)
+
+### 🩹 Fixes
+
+- Empty slot ([5791945](https://github.com/Akryum/vue-virtual-scroller/commit/5791945))
+
+### 🏡 Chore
+
+- Changelog ([2ae2195](https://github.com/Akryum/vue-virtual-scroller/commit/2ae2195))
+
+### ❤️ Contributors
+
+- Guillaume Chau ([@Akryum](http://github.com/Akryum))
+
 ## v2.0.0-beta.9
 
 [compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.8...v2.0.0-beta.9)
