@@ -20,6 +20,7 @@ export interface UseRecycleScrollerOptions {
   prerender: number
   emitUpdate: boolean
   updateInterval: number
+  reuseByKey: boolean
 }
 
 export interface UseRecycleScrollerReturn {
@@ -441,6 +442,20 @@ export function useRecycleScroller(
           }
         }
       }
+
+      // reuseByKey mode: clean up views whose keys no longer exist in the current items
+      if (toValue(options).reuseByKey) {
+        const newKeys = new Set<string | number>()
+        for (let i = startIndex; i < endIndex; i++) {
+          const k = keyField ? (items[i] as any)[keyField] : i
+          newKeys.add(k)
+        }
+        for (const [key, v] of views) {
+          if (!newKeys.has(key)) {
+            removeAndRecycleView(v)
+          }
+        }
+      }
     }
 
     // Step 2: Assign a view and update props for every view that became visible
@@ -612,7 +627,7 @@ export function useRecycleScroller(
 
   // Watchers
   watch(() => toValue(options).items, () => {
-    updateVisibleItems(true)
+    updateVisibleItems(!toValue(options).reuseByKey)
   })
 
   watch(() => toValue(options).pageMode, () => {
