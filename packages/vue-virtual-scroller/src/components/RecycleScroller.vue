@@ -27,6 +27,7 @@ const props = withDefaults(defineProps<{
   skipHover?: boolean
   listClass?: string | Record<string, boolean> | Array<string | Record<string, boolean>>
   itemClass?: string | Record<string, boolean> | Array<string | Record<string, boolean>>
+  reuseByKey?: boolean
 }>(), {
   keyField: 'id',
   direction: 'vertical',
@@ -47,6 +48,7 @@ const props = withDefaults(defineProps<{
   skipHover: false,
   listClass: '',
   itemClass: '',
+  reuseByKey: false,
 })
 
 const emit = defineEmits<{
