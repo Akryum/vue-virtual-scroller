@@ -229,30 +229,52 @@ export function useRecycleScroller(
     if (opts.pageMode) {
       const bounds = elValue.getBoundingClientRect()
       const boundsSize = isVertical ? bounds.height : bounds.width
-      let start = -(isVertical ? bounds.top : bounds.left)
-      let size = isVertical ? window.innerHeight : window.innerWidth
-      if (start < 0) {
-        size += start
-        start = 0
+      // In pageMode, calculate position relative to the scroll container to handle
+      // cases where the scroll container is not the document itself
+      const scroller = getListenerTarget()
+      const isWindow = scroller === window
+      const scrollerBounds = isWindow ? { top: 0, left: 0, bottom: window.innerHeight, right: window.innerWidth } : (scroller as Element).getBoundingClientRect()
+      const viewportSize = isVertical
+        ? (isWindow ? window.innerHeight : scrollerBounds.bottom - scrollerBounds.top)
+        : (isWindow ? window.innerWidth : scrollerBounds.right - scrollerBounds.left)
+      // Position of the list in the scroll container's coordinate system
+      const listStart = isVertical ? bounds.top - scrollerBounds.top : bounds.left - scrollerBounds.left
+      // Compute the intersection of the viewport and the list (relative to the list itself)
+      // viewportStart/viewportEnd are the scroll container's visible area relative to itself (0 ~ viewportSize)
+      const viewportStart = 0
+      const viewportEnd = viewportSize
+
+      // Convert the viewport range to list-relative coordinates
+      // start: position of the first visible pixel in the list
+      // end: position of the last visible pixel in the list
+      const start = Math.max(0, viewportStart - listStart)
+      let end = Math.min(boundsSize, viewportEnd - listStart)
+      // Ensure end >= start
+      if (end < start) {
+        end = start
       }
-      if (start + size > boundsSize) {
-        size = boundsSize - start
-      }
+      // Get the actual scroll position of the container, used to determine if an update is needed
+      const scrollPosition = isWindow
+        ? (isVertical ? window.pageYOffset || document.documentElement.scrollTop : window.pageXOffset || document.documentElement.scrollLeft)
+        : (isVertical ? (scroller as Element).scrollTop : (scroller as Element).scrollLeft)
       scrollState = {
         start,
-        end: start + size,
+        end,
+        scrollPosition,
       }
     }
     else if (isVertical) {
       scrollState = {
         start: elValue.scrollTop,
         end: elValue.scrollTop + elValue.clientHeight,
+        scrollPosition: elValue.scrollTop,
       }
     }
     else {
       scrollState = {
         start: elValue.scrollLeft,
         end: elValue.scrollLeft + elValue.clientWidth,
+        scrollPosition: elValue.scrollLeft,
       }
     }
 
@@ -318,7 +340,7 @@ export function useRecycleScroller(
 
       // Skip update if user hasn't scrolled enough
       if (checkPositionDiff) {
-        let positionDiff = scroll.start - _lastUpdateScrollPosition
+        let positionDiff = scroll.scrollPosition - _lastUpdateScrollPosition
         if (positionDiff < 0)
           positionDiff = -positionDiff
         if ((itemSize === null && positionDiff < minItemSize) || (itemSize !== null && positionDiff < itemSize)) {
@@ -327,7 +349,7 @@ export function useRecycleScroller(
           }
         }
       }
-      _lastUpdateScrollPosition = scroll.start
+      _lastUpdateScrollPosition = scroll.scrollPosition
 
       const buffer = opts.buffer
       scroll.start -= buffer
