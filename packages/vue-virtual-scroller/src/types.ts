@@ -3,6 +3,7 @@ export type ScrollDirection = 'vertical' | 'horizontal'
 export interface ScrollState {
   start: number
   end: number
+  scrollPosition: number
 }
 
 export interface ViewNonReactive {
