@@ -233,10 +233,10 @@ export function useRecycleScroller(
       // cases where the scroll container is not the document itself
       const scroller = getListenerTarget()
       const isWindow = scroller === window
-      const scrollerBounds = isWindow ? { top: 0, left: 0, bottom: window.innerHeight, right: window.innerWidth } : (scroller as Element).getBoundingClientRect()
-      const viewportSize = isVertical
-        ? (isWindow ? window.innerHeight : scrollerBounds.bottom - scrollerBounds.top)
-        : (isWindow ? window.innerWidth : scrollerBounds.right - scrollerBounds.left)
+      const scrollerBounds = isWindow
+        ? { top: 0, left: 0, height: window.innerHeight, width: window.innerWidth }
+        : (scroller as Element).getBoundingClientRect()
+      const viewportSize = isVertical ? scrollerBounds.height : scrollerBounds.width
       // Position of the list in the scroll container's coordinate system
       const listStart = isVertical ? bounds.top - scrollerBounds.top : bounds.left - scrollerBounds.left
       // Compute the intersection of the viewport and the list (relative to the list itself)
