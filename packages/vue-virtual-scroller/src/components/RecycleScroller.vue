@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ScrollDirection } from '../types'
+import type { ScrollDirection, UpdateEventArgs } from '../types'
 import { ref } from 'vue'
 import { useRecycleScroller } from '../composables/useRecycleScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
@@ -53,7 +53,7 @@ const emit = defineEmits<{
   'resize': []
   'visible': []
   'hidden': []
-  'update': [startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number]
+  'update': UpdateEventArgs
   'scroll-start': []
   'scroll-end': []
 }>()

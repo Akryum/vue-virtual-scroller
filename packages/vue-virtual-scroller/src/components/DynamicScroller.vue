@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ItemWithSize, ScrollDirection } from '../types'
+import type { ItemWithSize, ScrollDirection, UpdateCallback, UpdateEventArgs } from '../types'
 import { computed, ref } from 'vue'
 import { useDynamicScroller } from '../composables/useDynamicScroller'
 import RecycleScroller from './RecycleScroller.vue'
@@ -27,7 +27,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  update: [startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number]
+  update: UpdateEventArgs
   resize: []
   visible: []
 }>()
@@ -66,9 +66,7 @@ function getDefaultSlotBindings(itemWithSize: unknown, index: number, active: bo
   }
 }
 
-function handleUpdate(startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) {
-  emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex)
-}
+const handleUpdate: UpdateCallback = (...args) => emit('update', ...args)
 
 // Expose
 defineExpose({

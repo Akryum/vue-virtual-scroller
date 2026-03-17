@@ -1,5 +1,5 @@
 import type { ComputedRef, MaybeRef, MaybeRefOrGetter, Ref } from 'vue'
-import type { ScrollDirection, ScrollState, Sizes, View, ViewNonReactive } from '../types'
+import type { ScrollDirection, ScrollState, Sizes, UpdateCallback, View, ViewNonReactive } from '../types'
 import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
 import config from '../config'
 import { getScrollParent } from '../scrollparent'
@@ -49,7 +49,7 @@ export function useRecycleScroller(
     onResize?: () => void
     onVisible?: () => void
     onHidden?: () => void
-    onUpdate?: (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => void
+    onUpdate?: UpdateCallback
   },
 ): UseRecycleScrollerReturn {
   // Reactive state

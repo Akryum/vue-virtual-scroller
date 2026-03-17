@@ -46,3 +46,6 @@ export interface PluginOptions {
   installComponents?: boolean
   componentsPrefix?: string
 }
+
+export type UpdateEventArgs = [startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number]
+export type UpdateCallback = (...args: UpdateEventArgs) => void
