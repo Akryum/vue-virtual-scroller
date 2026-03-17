@@ -1,21 +1,25 @@
 {
   "name": "vue-virtual-scroller-monorepo",
-  "version": "2.0.0-beta.8",
+  "version": "2.0.0-beta.10",
   "private": true,
   "packageManager": "pnpm@10.6.5+sha512.cdf928fca20832cd59ec53826492b7dc25dc524d4370b6b4adbf65803d32efaa6c1c88147c0ae4e8d579a6c9eec715757b50d4fa35eea179d868eada4ed043af",
   "engines": {
-    "node": ">=23"
+    "node": ">=24"
   },
   "scripts": {
     "build": "pnpm run -r --filter=!demo build",
     "release": "pnpm run lint && pnpm run build && sheep release -b main --force",
-    "lint": "eslint --cache"
+    "lint": "eslint --cache",
+    "test": "pnpm run -r test",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
     "@akryum/sheep": "^0.5.2",
-    "@antfu/eslint-config": "^4.10.1",
-    "@babel/core": "^7.9.0",
-    "@babel/preset-env": "^7.9.0",
-    "eslint": "^9.22.0"
+    "@antfu/eslint-config": "^7.7.0",
+    "eslint": "^10.0.2",
+    "typescript": "^5.3.3",
+    "vitepress": "^1.6.4"
   }
 }

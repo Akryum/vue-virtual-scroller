@@ -1,4 +1,82 @@
+## v2.0.0-beta.10
+
+[compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.9...v2.0.0-beta.10)
+
+### 🩹 Fixes
+
+- Empty slot ([5791945](https://github.com/Akryum/vue-virtual-scroller/commit/5791945))
+
+### 🏡 Chore
+
+- Changelog ([2ae2195](https://github.com/Akryum/vue-virtual-scroller/commit/2ae2195))
+
+### ❤️ Contributors
+
+- Guillaume Chau ([@Akryum](http://github.com/Akryum))
+
+## v2.0.0-beta.9
+
+[compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.8...v2.0.0-beta.9)
+
+### 🚀 Enhancements
+
+- Items ref ([#789](https://github.com/Akryum/vue-virtual-scroller/pull/789))
+- New `disableTransform` prop to use top/left instead of translate ([#138](https://github.com/Akryum/vue-virtual-scroller/pull/138))
+- Typescript / composition rewrite, new docs ([dff69e8](https://github.com/Akryum/vue-virtual-scroller/commit/dff69e8))
+- AI skills ([8e58315](https://github.com/Akryum/vue-virtual-scroller/commit/8e58315))
+
+### 🩹 Fixes
+
+- Index lost, fix #783 ([#784](https://github.com/Akryum/vue-virtual-scroller/pull/784), [#783](https://github.com/Akryum/vue-virtual-scroller/issues/783))
+- Avoid rendering when slot is unused ([#787](https://github.com/Akryum/vue-virtual-scroller/pull/787))
+- Rewrite view (re-)assignment logic ([#743](https://github.com/Akryum/vue-virtual-scroller/pull/743))
+- **RecycleScroller:** Introduce an item wrapper to reduce re-render ([#742](https://github.com/Akryum/vue-virtual-scroller/pull/742))
+- Flicker issue in ios when scrolling up ([#864](https://github.com/Akryum/vue-virtual-scroller/pull/864))
+- Hide view to avoid overlap when position is set to -9999px; ([#837](https://github.com/Akryum/vue-virtual-scroller/pull/837))
+- Prevent empty gaps on fast scrolling, fix (#863, #882) ([#890](https://github.com/Akryum/vue-virtual-scroller/pull/890), [#863](https://github.com/Akryum/vue-virtual-scroller/issues/863), [#882](https://github.com/Akryum/vue-virtual-scroller/issues/882))
+- Recycle scroller visible gaps computation ([5940707](https://github.com/Akryum/vue-virtual-scroller/commit/5940707))
+- Small improvements ([013279c](https://github.com/Akryum/vue-virtual-scroller/commit/013279c))
+- Build ([8efdef2](https://github.com/Akryum/vue-virtual-scroller/commit/8efdef2))
+
+### 💅 Refactors
+
+- Esm only ([4ffe378](https://github.com/Akryum/vue-virtual-scroller/commit/4ffe378))
+
+### 📖 Documentation
+
+- Fix dead link ([c6a3320](https://github.com/Akryum/vue-virtual-scroller/commit/c6a3320))
+- Update readmes ([828c184](https://github.com/Akryum/vue-virtual-scroller/commit/828c184))
+
+### 🏡 Chore
+
+- Fix cherrypick of rewrite ([c9ccc34](https://github.com/Akryum/vue-virtual-scroller/commit/c9ccc34))
+- Update lockfile ([0f2e362](https://github.com/Akryum/vue-virtual-scroller/commit/0f2e362))
+- Update pnpm + pin pnpm in package.json ([#885](https://github.com/Akryum/vue-virtual-scroller/pull/885))
+- Add pkg.pr.new ([#886](https://github.com/Akryum/vue-virtual-scroller/pull/886))
+- Add test workflow ([#887](https://github.com/Akryum/vue-virtual-scroller/pull/887))
+- Update pnpm and refresh lockfile ([47efc94](https://github.com/Akryum/vue-virtual-scroller/commit/47efc94))
+
+### ✅ Tests
+
+- **lint:** Update eslint and use antfu config ([61b9919](https://github.com/Akryum/vue-virtual-scroller/commit/61b9919))
+- **lint:** Fix ([1e2e8e0](https://github.com/Akryum/vue-virtual-scroller/commit/1e2e8e0))
+
+### ❤️ Contributors
+
+- Guillaume Chau ([@Akryum](http://github.com/Akryum))
+- Ferflores507 ([@ferflores507](http://github.com/ferflores507))
+- KaygNas <597857074@QQ.COM>
+- Hobywhan ([@hobywhan](http://github.com/hobywhan))
+- Wan Zulsarhan Wan Shaari <zulsarhan.shaari@gmail.com>
+- Tatsuyuki Ishi ([@ishitatsuyuki](http://github.com/ishitatsuyuki))
+- AousAnwar ([@AousAnwar](http://github.com/AousAnwar))
+- Alex Liu ([@Mini-ghost](http://github.com/Mini-ghost))
+- Reynaldiaznan123 <reynaldiaznan450@gmail.com>
+- Vito ([@liu-lihao](http://github.com/liu-lihao))
+
+
 # [2.0.0-beta.8](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.7...v2.0.0-beta.8) (2023-02-06)
+
 
 
 ### Bug Fixes

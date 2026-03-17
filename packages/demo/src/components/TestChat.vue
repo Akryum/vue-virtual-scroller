@@ -1,3 +1,33 @@
+<script>
+import { faker } from '@faker-js/faker'
+
+export default {
+  name: 'TestChat',
+
+  data() {
+    return {
+      items: [],
+    }
+  },
+
+  methods: {
+    addItems(count = 1) {
+      for (let i = 0; i < count; i++) {
+        this.items.push({
+          text: faker.lorem.lines(),
+          id: this.items.length + 1,
+        })
+      }
+      this.scrollToBottom()
+    },
+
+    scrollToBottom() {
+      this.$refs.scroller.scrollToBottom()
+    },
+  },
+}
+</script>
+
 <template>
   <div class="hello">
     <div>
@@ -36,36 +66,6 @@
     </DynamicScroller>
   </div>
 </template>
-
-<script>
-import { faker } from '@faker-js/faker'
-
-export default {
-  name: 'TestChat',
-
-  data () {
-    return {
-      items: [],
-    }
-  },
-
-  methods: {
-    addItems (count = 1) {
-      for (let i = 0; i < count; i++) {
-        this.items.push({
-          text: faker.lorem.lines(),
-          id: this.items.length + 1,
-        })
-      }
-      this.scrollToBottom()
-    },
-
-    scrollToBottom () {
-      this.$refs.scroller.scrollToBottom()
-    },
-  },
-}
-</script>
 
 <style scoped>
 .hello {

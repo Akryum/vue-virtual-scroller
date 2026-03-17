@@ -1,23 +1,23 @@
-<!-- Avoir re-renders of slots -->
+<!-- Avoid re-renders of slots -->
+
+<script setup lang="ts">
+import type { View } from '../types'
+
+const props = defineProps<{
+  view: View
+  itemTag: string
+}>()
+</script>
 
 <template>
   <component
-    :is="itemTag"
+    :is="props.itemTag"
     class="vue-recycle-scroller__item-view"
   >
     <slot
-      :item="view.item"
-      :index="view.nr.index"
-      :active="view.nr.used"
+      :item="props.view.item"
+      :index="props.view.nr.index"
+      :active="props.view.nr.used"
     />
   </component>
 </template>
-
-<script>
-export default {
-  props: {
-    view: Object,
-    itemTag: String,
-  },
-}
-</script>

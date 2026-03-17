@@ -1,6 +1,7 @@
 {
   "name": "vue-virtual-scroller",
-  "version": "2.0.0-beta.8",
+  "type": "module",
+  "version": "2.0.0-beta.10",
   "description": "Smooth scrolling for any amount of data",
   "author": {
     "name": "Guillaume Chau",
@@ -20,45 +21,43 @@
     "vuejs",
     "plugin"
   ],
-  "main": "dist/vue-virtual-scroller.umd.js",
-  "module": "dist/vue-virtual-scroller.esm.js",
-  "unpkg": "dist/vue-virtual-scroller.min.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/vue-virtual-scroller.js",
+      "default": "./dist/vue-virtual-scroller.js"
+    },
+    "./dist/vue-virtual-scroller.css": "./dist/vue-virtual-scroller.css",
+    "./index.css": "./dist/vue-virtual-scroller.css"
+  },
+  "module": "dist/vue-virtual-scroller.js",
+  "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "scripts": {
-    "build": "npm run build:browser && npm run build:es && npm run build:umd",
-    "build:browser": "rollup --config build/rollup.config.browser.js",
-    "build:es": "rollup --config build/rollup.config.es.js",
-    "build:umd": "rollup --config build/rollup.config.umd.js",
-    "prepublishOnly": "npm run lint && npm run build",
-    "dev": "cross-env NODE_ENV=development rollup --config build/rollup.config.es.js --watch",
-    "lint": "cd ../../ && yarn run lint"
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm run lint && pnpm run build",
+    "lint": "cd ../../ && pnpm run lint"
   },
   "peerDependencies": {
     "vue": "^3.2.0"
   },
   "dependencies": {
-    "mitt": "^2.1.0",
-    "vue-observe-visibility": "^2.0.0-alpha.1",
-    "vue-resize": "^2.0.0-alpha.1"
+    "mitt": "^2.1.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.19.3",
-    "@rollup/plugin-babel": "^5.3.0",
-    "@rollup/plugin-commonjs": "^18.0.0",
-    "@rollup/plugin-node-resolve": "^11.2.1",
-    "@rollup/plugin-replace": "^2.3.1",
-    "@vue/compiler-sfc": "^3.0.11",
-    "autoprefixer": "^9.7.5",
-    "clean-css": "^4.1.8",
-    "cross-env": "^7.0.2",
-    "fs-extra": "^9.1.0",
-    "rollup": "^2.45.2",
-    "rollup-plugin-css-only": "^2.0.0",
-    "rollup-plugin-css-porter": "^1.0.2",
-    "rollup-plugin-terser": "^5.3.0",
-    "rollup-plugin-vue": "^6.0.0",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^28.1.0",
+    "typescript": "^5.3.3",
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.0.0",
+    "vitest": "4.0.16",
     "vue": "^3.2.41"
   },
   "browserslist": [

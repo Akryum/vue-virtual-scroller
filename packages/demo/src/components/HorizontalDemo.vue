@@ -1,3 +1,41 @@
+<script>
+import { generateMessage } from '../data'
+
+const items = []
+for (let i = 0; i < 10000; i++) {
+  items.push({
+    id: i,
+    ...generateMessage(),
+  })
+}
+
+export default {
+  data() {
+    return {
+      items,
+      search: '',
+      dismissInfo: false,
+    }
+  },
+
+  computed: {
+    filteredItems() {
+      const { search, items } = this
+      if (!search)
+        return items
+      const lowerCaseSearch = search.toLowerCase()
+      return items.filter(i => i.message.toLowerCase().includes(lowerCaseSearch))
+    },
+  },
+
+  methods: {
+    changeMessage(message) {
+      Object.assign(message, generateMessage())
+    },
+  },
+}
+</script>
+
 <template>
   <div class="dynamic-scroller-demo">
     <div class="toolbar">
@@ -64,43 +102,6 @@
     </DynamicScroller>
   </div>
 </template>
-
-<script>
-import { generateMessage } from '../data'
-
-const items = []
-for (let i = 0; i < 10000; i++) {
-  items.push({
-    id: i,
-    ...generateMessage(),
-  })
-}
-
-export default {
-  data () {
-    return {
-      items,
-      search: '',
-      dismissInfo: false,
-    }
-  },
-
-  computed: {
-    filteredItems () {
-      const { search, items } = this
-      if (!search) return items
-      const lowerCaseSearch = search.toLowerCase()
-      return items.filter(i => i.message.toLowerCase().includes(lowerCaseSearch))
-    },
-  },
-
-  methods: {
-    changeMessage (message) {
-      Object.assign(message, generateMessage())
-    },
-  },
-}
-</script>
 
 <style scoped>
 .dynamic-scroller-demo {

@@ -1,3 +1,16 @@
+<script>
+export default {
+  props: ['item', 'index'],
+
+  methods: {
+    edit() {
+      // eslint-disable-next-line vue/no-mutating-props
+      this.item.value.name += '#'
+    },
+  },
+}
+</script>
+
 <template>
   <div
     class="tr person"
@@ -18,27 +31,6 @@
     </div>
   </div>
 </template>
-
-<script>
-export default {
-  props: ['item', 'index'],
-
-  created () {
-    console.log('created')
-  },
-
-  unmounted () {
-    console.log('unmounted')
-  },
-
-  methods: {
-    edit () {
-      // eslint-disable-next-line vue/no-mutating-props
-      this.item.value.name += '#'
-    },
-  },
-}
-</script>
 
 <style scoped>
 .index {
