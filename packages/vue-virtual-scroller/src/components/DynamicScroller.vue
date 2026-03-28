@@ -42,13 +42,15 @@ const {
   onScrollerResize,
   onScrollerVisible,
 } = useDynamicScroller(
-  props,
-  scroller,
-  scrollerEl,
-  {
+  computed(() => ({
+    items: props.items,
+    keyField: props.keyField,
+    direction: props.direction,
+    minItemSize: props.minItemSize,
+    el: scrollerEl.value,
     onResize: () => emit('resize'),
     onVisible: () => emit('visible'),
-  },
+  })),
 )
 
 function getDefaultSlotBindings(itemWithSize: unknown, index: number, active: boolean) {

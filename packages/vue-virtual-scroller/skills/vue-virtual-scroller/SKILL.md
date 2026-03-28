@@ -1,11 +1,11 @@
 ---
 name: vue-virtual-scroller
-description: Use this skill for Vue 3 virtual scrolling with vue-virtual-scroller, including RecycleScroller, DynamicScroller, DynamicScrollerItem, and the useRecycleScroller headless composable for fixed-size lists, unknown-size rows, grids, chat feeds, and horizontal layouts.
+description: Use this skill for Vue 3 virtual scrolling with vue-virtual-scroller, including RecycleScroller, DynamicScroller, DynamicScrollerItem, useRecycleScroller, and headless useDynamicScroller for fixed-size lists, unknown-size rows, grids, chat feeds, tables, and horizontal layouts.
 ---
 
 # Vue Virtual Scroller
 
-Use this skill when a task involves large Vue lists, DOM reuse, windowed rendering, or choosing between `RecycleScroller`, `DynamicScroller`, and headless virtualization with `useRecycleScroller`.
+Use this skill when a task involves large Vue lists, DOM reuse, windowed rendering, or choosing between `RecycleScroller`, `DynamicScroller`, `useRecycleScroller`, and headless `useDynamicScroller`.
 
 ## Quick choice
 
@@ -13,7 +13,8 @@ Use this skill when a task involves large Vue lists, DOM reuse, windowed renderi
 |---|---|---|
 | `RecycleScroller` | Item size is fixed or precomputed, or items expose a numeric size field for variable-size mode. | You need automatic measurement of unknown item sizes. |
 | `DynamicScroller` | Item sizes are not known ahead of time and should be discovered during rendering. | You can provide a stable fixed size and want the lightest path. |
-| `DynamicScrollerItem` | You are rendering children inside `DynamicScroller` and need size measurement updates. | You are not inside `DynamicScroller`. |
+| `DynamicScrollerItem` | You are rendering children inside `DynamicScroller` and the wrapper component fits the markup. | You need wrapper-free markup such as semantic table rows. |
+| `useDynamicScroller` | You need unknown-size headless virtualization and may need to measure real DOM elements without rendering a wrapper component. | The slot-based `DynamicScroller` component or `DynamicScrollerItem` wrapper already fits the UI. |
 | `useRecycleScroller` | You need the virtualization engine but want custom markup, styling, or rendering control. | The slot-based component APIs already fit the UI. |
 
 ## Setup
@@ -102,11 +103,10 @@ This skill intentionally focuses on the documented public surfaces:
 - `DynamicScroller`
 - `DynamicScrollerItem`
 - `useRecycleScroller`
+- headless `useDynamicScroller`
 
 Do not infer undocumented behavior for these exported surfaces without updating docs first:
 
-- `useDynamicScroller`
-- `useDynamicScrollerItem`
 - `useIdState`
 - plugin install options beyond the documented setup path
 

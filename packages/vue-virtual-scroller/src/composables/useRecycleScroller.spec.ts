@@ -79,6 +79,7 @@ describe('useRecycleScroller', () => {
     vm.sortViews()
 
     expect(onUpdate).not.toHaveBeenCalled()
+    expect(vm.visiblePool.map((view: View) => view.nr.index)).toEqual([3, 4])
   })
 
   it('refreshes when sorting reveals a gap between visible views', async () => {

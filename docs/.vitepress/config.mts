@@ -35,10 +35,16 @@ export default defineConfig({
           ],
         },
         {
+          text: 'Headless Composables',
+          items: [
+            { text: 'useRecycleScroller', link: '/guide/use-recycle-scroller' },
+            { text: 'useDynamicScroller', link: '/guide/use-dynamic-scroller' },
+          ],
+        },
+        {
           text: 'Utilities',
           items: [
             { text: 'IdState', link: '/guide/id-state' },
-            { text: 'Headless (useRecycleScroller)', link: '/guide/use-recycle-scroller' },
           ],
         },
         { text: 'AI & Skills', link: '/guide/ai-skills' },
@@ -52,6 +58,7 @@ export default defineConfig({
             { text: 'DynamicScroller', link: '/demos/dynamic-scroller' },
             { text: 'Chat Stream', link: '/demos/chat' },
             { text: 'Simple List', link: '/demos/simple-list' },
+            { text: 'Headless Table', link: '/demos/headless-table' },
             { text: 'Horizontal', link: '/demos/horizontal' },
             { text: 'Grid', link: '/demos/grid' },
             { text: 'Test Chat', link: '/demos/test-chat' },

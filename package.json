@@ -11,15 +11,21 @@
     "release": "pnpm run lint && pnpm run build && sheep release -b main --force",
     "lint": "eslint --cache",
     "test": "pnpm run -r test",
+    "test:browser": "vitest run --config packages/vue-virtual-scroller/vite.browser.config.ts",
+    "test:e2e": "playwright test",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
+    "@playwright/test": "1.58.2",
+    "@vitest/browser-playwright": "4.0.16",
     "@akryum/sheep": "^0.5.2",
     "@antfu/eslint-config": "^7.7.0",
     "eslint": "^10.0.2",
+    "playwright": "1.58.2",
     "typescript": "^5.3.3",
-    "vitepress": "^1.6.4"
+    "vitepress": "^1.6.4",
+    "vue": "^3.2.41"
   }
 }

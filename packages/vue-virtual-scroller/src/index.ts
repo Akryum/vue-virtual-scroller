@@ -6,7 +6,7 @@ import RecycleScroller from './components/RecycleScroller.vue'
 import config from './config'
 
 export { useDynamicScroller } from './composables/useDynamicScroller'
-export type { UseDynamicScrollerOptions, UseDynamicScrollerReturn } from './composables/useDynamicScroller'
+export type { UseDynamicScrollerItemBindingOptions, UseDynamicScrollerOptions, UseDynamicScrollerReturn } from './composables/useDynamicScroller'
 export { useDynamicScrollerItem } from './composables/useDynamicScrollerItem'
 export type { UseDynamicScrollerItemOptions, UseDynamicScrollerItemReturn } from './composables/useDynamicScrollerItem'
 

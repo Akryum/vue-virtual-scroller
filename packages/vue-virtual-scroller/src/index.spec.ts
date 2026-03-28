@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import config from './config'
+import * as index from './index'
 import plugin, { DynamicScroller, DynamicScrollerItem, RecycleScroller } from './index'
 
 const initialConfig = { ...config }
@@ -59,5 +60,10 @@ describe('plugin', () => {
   it('exposes version', () => {
     expect(typeof plugin.version).toBe('string')
     expect(plugin.version.length).toBeGreaterThan(0)
+  })
+
+  it('keeps dynamic binding options on the useDynamicScroller surface only', () => {
+    expectTypeOf<import('./index').UseDynamicScrollerItemBindingOptions>().toBeObject()
+    expect('useDynamicScrollerItemBinder' in index).toBe(false)
   })
 })

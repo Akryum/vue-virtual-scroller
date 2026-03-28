@@ -1,9 +1,7 @@
 import { mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { defineComponent, h } from 'vue'
 import DynamicScroller from './DynamicScroller.vue'
-
-const scrollerScrollToItem = vi.fn()
 
 const RecycleScrollerStub = defineComponent({
   name: 'RecycleScroller',
@@ -36,9 +34,15 @@ const RecycleScrollerStub = defineComponent({
   emits: ['resize', 'visible'],
   setup(props, { slots, emit, expose }) {
     const el = document.createElement('div')
+    Object.defineProperty(el, 'clientHeight', {
+      configurable: true,
+      get() {
+        return 180
+      },
+    })
+    el.scrollTop = 0
     expose({
       el,
-      scrollToItem: scrollerScrollToItem,
     })
 
     return () => h('div', { class: 'recycle-scroller-stub' }, [
@@ -79,10 +83,6 @@ function mountDynamicScroller(props: any, slots?: any) {
 }
 
 describe('dynamicScroller', () => {
-  beforeEach(() => {
-    scrollerScrollToItem.mockReset()
-  })
-
   it('forwards slot bindings from itemWithSize', () => {
     const items = [
       { id: 'a', label: 'Alpha' },
@@ -147,18 +147,54 @@ describe('dynamicScroller', () => {
     expect(wrapper.emitted('visible')).toHaveLength(1)
   })
 
-  it('exposes scrollToItem and getItemSize', () => {
+  it('exposes scrollToItem and getItemSize', async () => {
     const items = [
       { id: 'a', label: 'Alpha' },
+      { id: 'b', label: 'Beta' },
+      { id: 'c', label: 'Gamma' },
     ]
     const wrapper = mountDynamicScroller({
       items,
       minItemSize: 20,
     })
     const vm = wrapper.vm as any
+    const scroller = wrapper.getComponent({ name: 'RecycleScroller' })
 
-    vm.scrollToItem(3)
-    expect(scrollerScrollToItem).toHaveBeenCalledWith(3)
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+
+    vm.scrollToItem(2)
+    expect((scroller.vm as any).$?.exposed?.el.scrollTop).toBe(40)
     expect(vm.getItemSize(items[0])).toBe(0)
+  })
+
+  it('keeps wrapped slot bindings aligned when the rendered items are replaced', async () => {
+    const wrapper = mountDynamicScroller(
+      {
+        items: [
+          { id: 'a', label: 'Alpha' },
+          { id: 'b', label: 'Beta' },
+        ],
+        minItemSize: 20,
+      },
+      {
+        default: ({ item, index, active, itemWithSize }: any) =>
+          h('div', { class: 'row' }, `${item.label}|${index}|${active ? 'active' : 'inactive'}|${itemWithSize.id}`),
+      },
+    )
+
+    await wrapper.setProps({
+      items: [
+        { id: 'c', label: 'Gamma' },
+        { id: 'd', label: 'Delta' },
+      ],
+    })
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+
+    const rows = wrapper.findAll('.row')
+    expect(rows).toHaveLength(2)
+    expect(rows[0].text()).toBe('Gamma|0|active|c')
+    expect(rows[1].text()).toBe('Delta|1|inactive|d')
   })
 })

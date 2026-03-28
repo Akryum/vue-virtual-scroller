@@ -24,6 +24,7 @@ export interface UseRecycleScrollerOptions {
 
 export interface UseRecycleScrollerReturn {
   pool: Ref<View[]>
+  visiblePool: ComputedRef<View[]>
   totalSize: Ref<number>
   ready: Ref<boolean>
   sizes: ComputedRef<Sizes | never[]>
@@ -38,7 +39,16 @@ export interface UseRecycleScrollerReturn {
   sortViews: () => void
 }
 
+type ViewWithStyleStamp = View & {
+  _vs_styleStamp: number
+}
+
 let uid = 0
+
+function touchView(view: View) {
+  const stampedView = view as ViewWithStyleStamp
+  stampedView._vs_styleStamp++
+}
 
 export function useRecycleScroller(
   options: MaybeRefOrGetter<UseRecycleScrollerOptions>,
@@ -103,6 +113,12 @@ export function useRecycleScroller(
     return []
   })
 
+  const visiblePool = computed(() =>
+    pool.value
+      .filter(view => view.nr.used)
+      .sort((a, b) => a.nr.index - b.nr.index),
+  )
+
   // Methods
   function getRecycledPool(type: unknown): View[] {
     let recycledPool = _recycledPools.get(type)
@@ -121,12 +137,13 @@ export function useRecycleScroller(
       key,
       type,
     })
-    const view: View = shallowReactive({
+    const view = shallowReactive({
       item,
       position: 0,
       offset: 0,
       nr,
-    })
+      _vs_styleStamp: 0,
+    }) as View
     viewPool.push(view)
     return view
   }
@@ -136,6 +153,7 @@ export function useRecycleScroller(
     if (recycledPool && recycledPool.length) {
       const view = recycledPool.pop()!
       view.nr.used = true
+      touchView(view)
       return view
     }
     return undefined
@@ -147,6 +165,7 @@ export function useRecycleScroller(
     recycledPool.push(view)
     view.nr.used = false
     view.position = -9999
+    touchView(view)
     _views.delete(view.nr.key)
   }
 
@@ -462,11 +481,15 @@ export function useRecycleScroller(
         view = getRecycledView(type)
 
         if (view) {
+          const viewStateChanged = view.nr.index !== i || view.nr.key !== key
           view.item = item
           view.nr.index = i
           view.nr.key = key
           if (view.nr.type !== type) {
             console.warn('Reused view\'s type does not match pool\'s type')
+          }
+          if (viewStateChanged) {
+            touchView(view)
           }
         }
         else {
@@ -634,6 +657,7 @@ export function useRecycleScroller(
 
   return {
     pool,
+    visiblePool,
     totalSize,
     ready,
     sizes,

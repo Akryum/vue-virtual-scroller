@@ -2,6 +2,8 @@
 
 Scope: the per-item measurement wrapper used inside `DynamicScroller`.
 
+When wrapper-free markup is required, prefer the headless `vDynamicScrollerItem` directive returned by `useDynamicScroller` instead of this component wrapper.
+
 ## Provenance
 
 Generated from the package's public dynamic-item documentation and shipped demo patterns at skill generation time.

@@ -21,6 +21,15 @@ export interface MessageRow {
   timestamp: string
 }
 
+export interface TableRow {
+  id: number
+  name: string
+  email: string
+  region: string
+  status: 'Active' | 'Review' | 'Paused'
+  summary: string
+}
+
 const FIRST_NAMES = [
   'Avery',
   'Riley',
@@ -100,6 +109,28 @@ const WORDS = [
   'slot',
 ]
 
+const REGIONS = [
+  'North America',
+  'Europe',
+  'Asia Pacific',
+  'Latin America',
+  'Middle East',
+]
+
+const STATUSES: TableRow['status'][] = [
+  'Active',
+  'Review',
+  'Paused',
+]
+
+const EMAIL_DOMAINS = [
+  'northstar.app',
+  'harborcloud.dev',
+  'latticeops.io',
+  'summitgrid.co',
+  'cinderlane.net',
+]
+
 function createRng(seed = 1) {
   let value = seed >>> 0
   return () => {
@@ -114,6 +145,10 @@ function pick<T>(rng: () => number, values: T[]) {
 
 function capitalize(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+function slugify(text: string) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
 function sentence(rng: () => number, minWords = 8, maxWords = 20) {
@@ -226,6 +261,31 @@ export function createSimpleStrings(count: number, seed = 7) {
   for (let i = 0; i < count; i++) {
     list.push(`${sentence(rng, 5, 14)} ${rng() > 0.6 ? sentence(rng, 4, 10) : ''}`.trim())
   }
+  return list
+}
+
+export function createTableRows(count: number, seed = 314) {
+  const rng = createRng(seed)
+  const list: TableRow[] = []
+
+  for (let i = 0; i < count; i++) {
+    const firstName = pick(rng, FIRST_NAMES)
+    const lastName = pick(rng, LAST_NAMES)
+    const region = pick(rng, REGIONS)
+    const status = pick(rng, STATUSES)
+    const domain = pick(rng, EMAIL_DOMAINS)
+    const summary = sentence(rng, 5, 18)
+
+    list.push({
+      id: i + 1,
+      name: `${firstName} ${lastName}`,
+      email: `${slugify(firstName)}.${slugify(lastName)}${(i % 17) + 1}@${domain}`,
+      region,
+      status,
+      summary,
+    })
+  }
+
   return list
 }
 

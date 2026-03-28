@@ -13,4 +13,4 @@ Focused reference map for the documented public surfaces covered by this skill.
 ## Coverage notes
 
 - `IdState` is documented in the guide, but the package currently exports `useIdState`, so it is intentionally not shipped as a reference here until docs and exports are reconciled.
-- `useDynamicScroller` and `useDynamicScrollerItem` are exported but do not currently have dedicated guide pages, so they are omitted from this initial skill.
+- `useDynamicScroller` now owns the documented headless dynamic path, including the local `vDynamicScrollerItem` directive for wrapper-free measurement.

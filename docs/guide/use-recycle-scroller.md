@@ -4,7 +4,7 @@
 
 Use it when you want full control over markup, styling, and rendering logic while keeping the same virtualization engine.
 
-## When to use this
+## Pick This API When
 
 - You need a custom DOM structure that does not fit the component slot API.
 - You want to integrate virtualization into an existing design system component.
@@ -12,7 +12,66 @@ Use it when you want full control over markup, styling, and rendering logic whil
 
 If you just need virtual scrolling with standard markup, prefer [`RecycleScroller`](./recycle-scroller).
 
-## Minimal fixed-size example
+If item size must be measured from the DOM after render, use [`useDynamicScroller`](./use-dynamic-scroller) instead.
+
+## Mental Model
+
+- `useRecycleScroller` is fully headless: it gives you virtualization state, but you still own the wrapper markup, per-item markup, and positioning styles.
+- The scroll container is your element ref (`scrollerEl`). It must have a real scrollable size such as a fixed `height` plus `overflow`.
+- `totalSize` is the virtual extent of the full list. Apply it to an inner wrapper, usually with `minHeight` or `minWidth`.
+- Render from `pool`, not `visiblePool`, when you want the same recycling behavior as `RecycleScroller`.
+- Inactive pooled views stay mounted and should be hidden with `visibility: hidden` and `pointer-events: none` rather than removed from the DOM.
+
+## Required options
+
+`useRecycleScroller` expects the same core options used internally by `RecycleScroller`:
+
+- `items`
+- `keyField`
+- `direction`
+- `itemSize`
+- `minItemSize`
+- `sizeField`
+- `typeField`
+- `buffer`
+- `pageMode`
+- `prerender`
+- `emitUpdate`
+- `updateInterval`
+
+Optional grid options:
+
+- `gridItems`
+- `itemSecondarySize`
+
+## Return Values You Will Use Most
+
+- `pool`: the render-ready set of pooled views. Use this for headless rendering when you want the smoothest recycling behavior.
+- `visiblePool`: `pool` filtered to active views and sorted by visible index order. Useful for readouts, debugging, or simple derived UIs.
+- `totalSize`: full virtual size (wrapper min-height/min-width).
+- `handleScroll`: call this on scroll events.
+- `scrollToItem(index)`: programmatic navigation.
+- `scrollToPosition(px)`: absolute scroll positioning.
+- `getScroll()`: current viewport range in pixels.
+- `updateVisibleItems(itemsChanged, checkPositionDiff?)`: force recalculation.
+
+## Render Checklist
+
+- Give the outer scroller a fixed size and overflow behavior.
+- Add an inner wrapper with `position: relative` and `minHeight`/`minWidth` from `totalSize`.
+- Render every entry in `pool`.
+- Absolutely position each rendered view yourself.
+- Hide inactive views instead of filtering them out.
+
+## Common Pitfalls
+
+- You must provide scrollable sizing styles yourself (`height` or `width` + overflow).
+- Use a stable key field for object items (default: `id`).
+- The composable manages pooling and index mapping, but does not provide built-in markup or CSS.
+- Render from `pool` and hide inactive views instead of filtering them out if you want to preserve DOM reuse like `RecycleScroller`.
+- If you need automatic unknown-size measurement, use `DynamicScroller`/`DynamicScrollerItem` or the headless [`useDynamicScroller`](./use-dynamic-scroller) path with its `vDynamicScrollerItem` directive.
+
+## Full example
 
 ```vue
 <script setup lang="ts">
@@ -71,8 +130,14 @@ const {
         v-for="view in pool"
         :key="view.nr.id"
         class="my-scroller__item"
-        :style="{ transform: `translateY(${view.position}px)` }"
+        <!-- In the headless fixed-size path, you apply recycled-view styles yourself. --
       >
+        :style="{
+        transform: `translateY(${view.position}px)`,
+        visibility: view.nr.used ? 'visible' : 'hidden',
+        pointerEvents: view.nr.used ? undefined : 'none',
+        }"
+        >
         <strong>#{{ view.nr.index }}</strong> {{ (view.item as User).name }}
       </div>
     </div>
@@ -107,57 +172,3 @@ const {
 }
 </style>
 ```
-
-## Required options
-
-`useRecycleScroller` expects the same core options used internally by `RecycleScroller`:
-
-- `items`
-- `keyField`
-- `direction`
-- `itemSize`
-- `minItemSize`
-- `sizeField`
-- `typeField`
-- `buffer`
-- `pageMode`
-- `prerender`
-- `emitUpdate`
-- `updateInterval`
-
-Optional grid options:
-
-- `gridItems`
-- `itemSecondarySize`
-
-## Return values you will use most
-
-- `pool`: visible/recycled views to render.
-- `totalSize`: full virtual size (wrapper min-height/min-width).
-- `handleScroll`: call this on scroll events.
-- `scrollToItem(index)`: programmatic navigation.
-- `scrollToPosition(px)`: absolute scroll positioning.
-- `getScroll()`: current viewport range in pixels.
-- `updateVisibleItems(itemsChanged, checkPositionDiff?)`: force recalculation.
-
-## Variable-size mode
-
-Set `itemSize: null` and provide a numeric field on each item (default `sizeField: 'size'`):
-
-```ts
-const options = computed(() => ({
-  // ...
-  itemSize: null,
-  minItemSize: 40,
-  sizeField: 'size',
-}))
-```
-
-In this mode, item objects must expose the size field (`item.size` by default).
-
-## Important notes
-
-- You must provide scrollable sizing styles yourself (`height` or `width` + overflow).
-- Use a stable key field for object items (default: `id`).
-- The composable manages pooling and index mapping, but does not provide built-in markup or CSS.
-- If you need automatic unknown-size measurement, use `DynamicScroller`/`DynamicScrollerItem` (or the `useDynamicScroller` + `useDynamicScrollerItem` composables).

@@ -70,6 +70,16 @@ There are several components provided by `vue-virtual-scroller`:
 
 - [**useRecycleScroller (headless)**](./use-recycle-scroller) — low-level composable API to build your own virtual scroller UI without using bundled components.
 
+- [**useDynamicScroller (headless dynamic items)**](./use-dynamic-scroller) — headless composable API for unknown-size lists, including wrapper-free measurement and automatic recycled-view styles through `vDynamicScrollerItem`.
+
+## Headless APIs
+
+Use the headless APIs when you want the virtualization engine without the bundled component markup.
+
+- Start with [**useRecycleScroller**](./use-recycle-scroller) when item size is fixed or already known on each item.
+- Move to [**useDynamicScroller**](./use-dynamic-scroller) when size must be measured from the DOM after render.
+- Prefer the bundled components when their markup already fits your UI; the headless path gives you more control, but it also makes you responsible for the outer structure and scroll-container sizing.
+
 <style scoped>
 .badges p {
   display: flex;
