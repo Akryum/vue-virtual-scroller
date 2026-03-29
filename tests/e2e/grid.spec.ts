@@ -1,0 +1,39 @@
+import { expect, test } from '@playwright/test'
+import {
+  control,
+  expectDemoSmoke,
+  getVisibleItems,
+  metric,
+  readMetricNumbers,
+  setControlValue,
+  waitForSettle,
+} from './support/demo'
+
+test('grid demo smoke', async ({ page }) => {
+  await expectDemoSmoke(page, {
+    slug: 'grid',
+    itemSelector: '[data-testid="demo:card"]',
+  })
+})
+
+test('grid demo reflows and jumps to the requested region', async ({ browserName, page }) => {
+  test.skip(browserName !== 'chromium')
+
+  await page.goto('/demos/grid')
+
+  expect((await readMetricNumbers(metric(page, 'cards')))[0] ?? 0).toBeGreaterThan(1000)
+
+  const beforeCards = await getVisibleItems(page, '[data-testid="demo:card"]')
+  await setControlValue(control(page, 'grid-items'), 2)
+  await waitForSettle(page)
+
+  const afterCards = await getVisibleItems(page, '[data-testid="demo:card"]')
+  expect(afterCards.length).toBeLessThan(beforeCards.length)
+
+  await setControlValue(control(page, 'scroll-to'), 320)
+  await control(page, 'jump').click()
+  await waitForSettle(page)
+
+  const jumpedCards = await getVisibleItems(page, '[data-testid="demo:card"]')
+  expect(Number(jumpedCards[0]?.key ?? 0)).toBeGreaterThan(250)
+})

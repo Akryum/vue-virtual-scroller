@@ -16,8 +16,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build
-        run: pnpm build
-
-      - name: ESLint
+      - name: Run lint
         run: pnpm lint
+
+      - name: Run Unit Tests
+        run: pnpm test:unit
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Validate release gate
+        env:
+          PLAYWRIGHT_ENABLE_WEBKIT: '1'
+        run: pnpm test:ci

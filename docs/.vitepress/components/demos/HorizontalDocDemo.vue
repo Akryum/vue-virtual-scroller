@@ -22,6 +22,7 @@ function cardWidth(message: string) {
 
 <template>
   <DemoShell
+    demo-id="horizontal"
     title="Horizontal dynamic"
     description="Measures unknown card widths dynamically while virtualizing horizontal scrolling."
   >
@@ -30,17 +31,22 @@ function cardWidth(message: string) {
         Filter
         <input
           v-model="search"
+          data-testid="demo:control:filter"
           type="text"
           placeholder="Search text"
         >
       </label>
 
-      <span class="demo-chip">Cards: {{ filteredRows.length }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:cards"
+      >Cards: {{ filteredRows.length }}</span>
       <span class="demo-chip">Tip: Shift + wheel for horizontal scroll</span>
     </template>
 
     <DynamicScroller
       class="demo-viewport demo-horizontal-track"
+      data-testid="demo:viewport"
       :items="filteredRows"
       :min-item-size="180"
       direction="horizontal"
@@ -52,6 +58,8 @@ function cardWidth(message: string) {
           :size-dependencies="[item.message]"
           :style="{ width: `${cardWidth(item.message)}px` }"
           class="demo-horizontal-card"
+          data-testid="demo:card"
+          :data-card-id="String(item.id)"
         >
           <div class="demo-avatar" :style="avatarStyle(item.hue)">
             {{ item.initials }}

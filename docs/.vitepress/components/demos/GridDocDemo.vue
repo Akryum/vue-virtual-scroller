@@ -35,6 +35,7 @@ function jump() {
 
 <template>
   <DemoShell
+    demo-id="grid"
     title="Grid mode"
     description="Renders large fixed-size card grids efficiently in multi-column rows."
   >
@@ -43,6 +44,7 @@ function jump() {
         Items / row
         <input
           v-model.number="gridItems"
+          data-testid="demo:control:grid-items"
           type="range"
           min="2"
           max="10"
@@ -54,6 +56,7 @@ function jump() {
         Scroll to
         <input
           v-model.number="scrollTo"
+          data-testid="demo:control:scroll-to"
           type="number"
           min="0"
           :max="cards.length"
@@ -62,24 +65,34 @@ function jump() {
 
       <button
         class="demo-button"
+        data-testid="demo:control:jump"
         @click="jump"
       >
         Jump
       </button>
 
-      <span class="demo-chip">Cards: {{ cards.length }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:cards"
+      >Cards: {{ cards.length }}</span>
     </template>
 
     <RecycleScroller
       ref="scroller"
       class="demo-viewport"
+      data-testid="demo:viewport"
       :items="cards"
       :item-size="166"
       :grid-items="gridItems"
       :item-secondary-size="176"
     >
       <template #default="{ item, index }">
-        <article class="demo-grid-card" :style="{ background: gradientAt(index) }">
+        <article
+          class="demo-grid-card"
+          data-testid="demo:card"
+          :data-card-id="String(item.id)"
+          :style="{ background: gradientAt(index) }"
+        >
           <small>#{{ index }}</small>
           <strong>{{ item.initials }}</strong>
           <span>{{ item.name }}</span>

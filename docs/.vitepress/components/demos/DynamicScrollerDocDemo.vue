@@ -34,6 +34,7 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
 
 <template>
   <DemoShell
+    demo-id="dynamic-scroller"
     title="DynamicScroller: unknown heights"
     description="Measures unknown row heights and recalculates them as content changes."
   >
@@ -42,6 +43,7 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
         Filter
         <input
           v-model="search"
+          data-testid="demo:control:filter"
           type="text"
           placeholder="Type keyword"
         >
@@ -51,6 +53,7 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
         Min row size
         <input
           v-model.number="minItemSize"
+          data-testid="demo:control:min-row-size"
           type="range"
           min="40"
           max="120"
@@ -59,12 +62,19 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
         {{ minItemSize }}px
       </label>
 
-      <span class="demo-chip">Matches: {{ filteredMessages.length }}</span>
-      <span class="demo-chip">Visible: {{ visibleStart }}-{{ visibleEnd }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:matches"
+      >Matches: {{ filteredMessages.length }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:visible-range"
+      >Visible: {{ visibleStart }}-{{ visibleEnd }}</span>
     </template>
 
     <DynamicScroller
       class="demo-viewport"
+      data-testid="demo:viewport"
       :items="filteredMessages"
       :min-item-size="minItemSize"
       :emit-update="true"
@@ -76,6 +86,8 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
           :active="active"
           :size-dependencies="[item.message]"
           class="demo-message-row"
+          data-testid="demo:row"
+          :data-row-id="String(item.id)"
           @click="randomizeMessage(index)"
         >
           <div

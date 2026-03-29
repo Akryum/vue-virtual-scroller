@@ -85,6 +85,7 @@ function jump() {
 
 <template>
   <DemoShell
+    demo-id="headless-table"
     title="Headless table"
     description="A semantic table powered by useDynamicScroller. Each real <tr> is measured without a wrapper component while the composable manages pooling and scrolling."
   >
@@ -93,6 +94,7 @@ function jump() {
         Rows
         <input
           v-model.number="count"
+          data-testid="demo:control:rows"
           type="number"
           min="50"
           max="50000"
@@ -103,6 +105,7 @@ function jump() {
         Filter
         <input
           v-model="filter"
+          data-testid="demo:control:filter"
           type="text"
           placeholder="Name, region, status"
         >
@@ -112,6 +115,7 @@ function jump() {
         Buffer
         <input
           v-model.number="buffer"
+          data-testid="demo:control:buffer"
           type="range"
           min="100"
           max="1800"
@@ -124,6 +128,7 @@ function jump() {
         Scroll to
         <input
           v-model.number="scrollTo"
+          data-testid="demo:control:scroll-to"
           type="number"
           min="0"
           :max="Math.max(filteredRows.length - 1, 0)"
@@ -132,18 +137,26 @@ function jump() {
 
       <button
         class="demo-button"
+        data-testid="demo:control:jump"
         @click="jump"
       >
         Jump
       </button>
 
-      <span class="demo-chip">Rows: {{ filteredRows.length }}</span>
-      <span class="demo-chip">Visible: {{ visibleStart }}-{{ visibleEnd }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:rows"
+      >Rows: {{ filteredRows.length }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:visible-range"
+      >Visible: {{ visibleStart }}-{{ visibleEnd }}</span>
     </template>
 
     <div
       ref="scrollerEl"
       class="demo-viewport demo-table-viewport"
+      data-testid="demo:viewport"
       @scroll.passive="handleScroll"
     >
       <table class="demo-headless-table">
@@ -169,6 +182,8 @@ function jump() {
               sizeDependencies: sizeDependencies(view),
             }"
             class="demo-headless-table__row"
+            data-testid="demo:row"
+            :data-row-id="String(rowOf(view).id)"
           >
             <td>#{{ rowOf(view).id }}</td>
             <td>

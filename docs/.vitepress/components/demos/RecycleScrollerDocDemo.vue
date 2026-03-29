@@ -51,6 +51,7 @@ onMounted(regenerate)
 
 <template>
   <DemoShell
+    demo-id="recycle-scroller"
     title="RecycleScroller: Large list, variable height"
     description="Handles large lists with known or data-driven row sizes and fast programmatic navigation."
   >
@@ -59,6 +60,7 @@ onMounted(regenerate)
         Items
         <input
           v-model.number="count"
+          data-testid="demo:control:items"
           type="number"
           min="50"
           max="50000"
@@ -69,6 +71,7 @@ onMounted(regenerate)
         Variable height
         <input
           v-model="withLetters"
+          data-testid="demo:control:variable-height"
           type="checkbox"
         >
       </label>
@@ -77,6 +80,7 @@ onMounted(regenerate)
         Buffer
         <input
           v-model.number="buffer"
+          data-testid="demo:control:buffer"
           type="range"
           min="100"
           max="1800"
@@ -89,6 +93,7 @@ onMounted(regenerate)
         Scroll to
         <input
           v-model.number="scrollTo"
+          data-testid="demo:control:scroll-to"
           type="number"
           min="0"
           :max="rows.length"
@@ -97,6 +102,7 @@ onMounted(regenerate)
 
       <button
         class="demo-button secondary"
+        data-testid="demo:control:add-500"
         @click="addPeople(500)"
       >
         +500
@@ -104,17 +110,22 @@ onMounted(regenerate)
 
       <button
         class="demo-button"
+        data-testid="demo:control:jump"
         @click="jump"
       >
         Jump
       </button>
 
-      <span class="demo-chip">Visible: {{ visibleStart }}-{{ visibleEnd }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:visible-range"
+      >Visible: {{ visibleStart }}-{{ visibleEnd }}</span>
     </template>
 
     <RecycleScroller
       ref="scroller"
       class="demo-viewport"
+      data-testid="demo:viewport"
       :items="rows"
       :item-size="itemSize"
       :buffer="buffer"
@@ -127,6 +138,9 @@ onMounted(regenerate)
         <div
           v-if="item.type === 'letter'"
           class="demo-letter-row"
+          data-testid="demo:row"
+          data-row-type="letter"
+          :data-row-id="String(item.id)"
           :style="{ height: `${item.height}px` }"
           @click="toggleLetterSize(item)"
         >
@@ -137,6 +151,9 @@ onMounted(regenerate)
         <div
           v-else
           class="demo-person-row"
+          data-testid="demo:row"
+          data-row-type="person"
+          :data-row-id="String(item.id)"
           :style="{ height: `${item.height}px` }"
         >
           <div

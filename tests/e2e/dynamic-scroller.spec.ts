@@ -1,0 +1,53 @@
+import { expect, test } from '@playwright/test'
+import {
+  control,
+  expectDemoSmoke,
+  getVisibleItems,
+  metric,
+  readMetricNumbers,
+  scrollViewportBy,
+  waitForSettle,
+} from './support/demo'
+
+test('dynamic scroller demo smoke', async ({ page }) => {
+  await expectDemoSmoke(page, {
+    slug: 'dynamic-scroller',
+    itemSelector: '[data-testid="demo:row"]',
+  })
+})
+
+test('dynamic scroller demo filters, remeasures, and updates the visible range', async ({ browserName, page }) => {
+  test.skip(browserName !== 'chromium')
+
+  await page.goto('/demos/dynamic-scroller')
+
+  const matchesMetric = metric(page, 'matches')
+  const visibleMetric = metric(page, 'visible-range')
+  const initialMatches = (await readMetricNumbers(matchesMetric))[0] ?? 0
+  const row = page.locator('[data-testid="demo:row"]:visible').first()
+  const initialText = await row.locator('.demo-message-meta').first().textContent()
+  const filterTerm = initialText?.split(' ').find(Boolean) ?? 'Avery'
+
+  await control(page, 'filter').fill(filterTerm)
+  await waitForSettle(page)
+  expect((await readMetricNumbers(matchesMetric))[0] ?? 0).toBeLessThan(initialMatches)
+
+  const beforeMutation = (await row.textContent()) ?? ''
+  await row.click()
+  await waitForSettle(page)
+  expect(await row.textContent()).not.toBe(beforeMutation)
+
+  await control(page, 'filter').fill('')
+  await waitForSettle(page)
+  const visibleBefore = await readMetricNumbers(visibleMetric)
+  const rowsBefore = await getVisibleItems(page, '[data-testid="demo:row"]')
+
+  await scrollViewportBy(page, 1800)
+  await waitForSettle(page)
+
+  const visibleAfter = await readMetricNumbers(visibleMetric)
+  const rowsAfter = await getVisibleItems(page, '[data-testid="demo:row"]')
+
+  expect(visibleAfter).not.toEqual(visibleBefore)
+  expect(rowsAfter.map(rowItem => rowItem.key)).not.toEqual(rowsBefore.map(rowItem => rowItem.key))
+})

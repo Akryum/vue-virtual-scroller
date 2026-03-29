@@ -1,4 +1,14 @@
 import { expect, test } from '@playwright/test'
+import {
+  control,
+  expectDemoSmoke,
+  metric,
+  readMetricNumbers,
+  scrollViewportBy,
+  setControlValue,
+  viewport,
+  waitForSettle,
+} from './support/demo'
 
 interface VisibleRowMetric {
   bottom: number
@@ -6,18 +16,9 @@ interface VisibleRowMetric {
   top: number
 }
 
-async function waitForSettle(page: Parameters<typeof test>[0]['page']) {
-  await page.waitForTimeout(50)
-  await page.evaluate(async () => {
-    for (let index = 0; index < 8; index++) {
-      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
-    }
-  })
-}
-
 async function getVisibleRows(page: Parameters<typeof test>[0]['page']) {
-  return page.locator('.demo-headless-table__body > .demo-headless-table__row').evaluateAll((elements) => {
-    const scroller = document.querySelector<HTMLElement>('.demo-table-viewport')
+  return page.locator('[data-testid="demo:row"]').evaluateAll((elements) => {
+    const scroller = document.querySelector<HTMLElement>('[data-testid="demo:viewport"]')
     if (!scroller) {
       return []
     }
@@ -32,9 +33,8 @@ async function getVisibleRows(page: Parameters<typeof test>[0]['page']) {
           return null
         }
 
-        const idText = element.querySelector('td')?.textContent?.replace('#', '').trim() ?? ''
         return {
-          id: Number(idText),
+          id: Number(element.dataset.rowId),
           top: rect.top - scrollerRect.top,
           bottom: rect.bottom - scrollerRect.top,
         }
@@ -58,19 +58,39 @@ function expectContiguousRows(rows: VisibleRowMetric[]) {
   }
 }
 
-test('headless table stays contiguous after fast scrolling', async ({ page }) => {
+test('headless table demo smoke', async ({ page }) => {
+  await expectDemoSmoke(page, {
+    slug: 'headless-table',
+    itemSelector: '[data-testid="demo:row"]',
+  })
+})
+
+test('headless table keeps rows contiguous and supports filter/jump', async ({ browserName, page }) => {
+  test.skip(browserName !== 'chromium')
+
   await page.goto('/demos/headless-table')
 
-  const scroller = page.locator('.demo-table-viewport')
-  await scroller.waitFor()
+  const rowsMetric = metric(page, 'rows')
+  const initialRows = (await readMetricNumbers(rowsMetric))[0] ?? 0
 
-  for (const target of [0, 5000, 11800, 2600, 18000]) {
-    await scroller.evaluate((element, value) => {
-      const viewport = element as HTMLElement
-      viewport.scrollTop = value
-      viewport.dispatchEvent(new Event('scroll'))
-    }, target)
+  await control(page, 'filter').fill('Europe')
+  await waitForSettle(page)
+  expect((await readMetricNumbers(rowsMetric))[0] ?? 0).toBeLessThan(initialRows)
 
+  await control(page, 'filter').fill('')
+  await setControlValue(control(page, 'scroll-to'), 240)
+  await control(page, 'jump').click()
+  await waitForSettle(page)
+  expect((await readMetricNumbers(metric(page, 'visible-range')))[0] ?? 0).toBeGreaterThan(150)
+
+  await expect(viewport(page)).toBeVisible()
+
+  const currentScrollTop = await viewport(page).evaluate(el => (el as HTMLElement).scrollTop)
+  await scrollViewportBy(page, -currentScrollTop)
+  await waitForSettle(page)
+
+  for (const delta of [5000, 6800, -9200, 15400]) {
+    await scrollViewportBy(page, delta)
     await waitForSettle(page)
     expectContiguousRows(await getVisibleRows(page))
   }

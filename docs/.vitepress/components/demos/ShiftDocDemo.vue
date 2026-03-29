@@ -63,6 +63,7 @@ onMounted(() => {
 
 <template>
   <DemoShell
+    demo-id="shift"
     title="Shift prepend anchoring"
     description="Loads older rows above the viewport. With shift enabled, the visible content stays anchored instead of jumping."
   >
@@ -70,31 +71,55 @@ onMounted(() => {
       <label class="demo-chip">
         <input
           v-model="shiftEnabled"
+          data-testid="demo:control:shift"
           type="checkbox"
         >
         Shift
       </label>
 
-      <button class="demo-button" @click="prepend(1)">
+      <button
+        class="demo-button"
+        data-testid="demo:control:prepend-1"
+        @click="prepend(1)"
+      >
         Prepend 1
       </button>
-      <button class="demo-button" @click="prepend(10)">
+      <button
+        class="demo-button"
+        data-testid="demo:control:prepend-10"
+        @click="prepend(10)"
+      >
         Prepend 10
       </button>
-      <button class="demo-button secondary" @click="jumpToMiddle">
+      <button
+        class="demo-button secondary"
+        data-testid="demo:control:jump-middle"
+        @click="jumpToMiddle"
+      >
         Jump to middle
       </button>
-      <button class="demo-button secondary" @click="reset">
+      <button
+        class="demo-button secondary"
+        data-testid="demo:control:reset"
+        @click="reset"
+      >
         Reset
       </button>
 
-      <span class="demo-chip">Rows: {{ rows.length }}</span>
-      <span class="demo-chip">Top row: {{ topRow ? `#${topRow.id}` : '—' }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:rows"
+      >Rows: {{ rows.length }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:top-row"
+      >Top row: {{ topRow ? `#${topRow.id}` : '—' }}</span>
     </template>
 
     <DynamicScroller
       ref="scroller"
       class="demo-viewport"
+      data-testid="demo:viewport"
       :items="rows"
       :min-item-size="62"
       :shift="shiftEnabled"
@@ -107,6 +132,8 @@ onMounted(() => {
           :active="active"
           :size-dependencies="[item.message]"
           class="demo-message-row"
+          data-testid="demo:row"
+          :data-row-id="String(item.id)"
         >
           <div
             class="demo-avatar"

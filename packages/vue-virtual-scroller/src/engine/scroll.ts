@@ -1,5 +1,9 @@
 import type { ScrollDirection, ScrollToOptions } from '../types'
 
+function isWindowTarget(target: HTMLElement | Window | null | undefined): target is Window {
+  return typeof window !== 'undefined' && target === window
+}
+
 const rtlOffsetType = (() => {
   if (typeof document === 'undefined') {
     return 'negative'
@@ -30,7 +34,7 @@ export function normalizeOffset(
   direction: ScrollDirection,
   target: HTMLElement | Window | null | undefined,
 ): number {
-  if (direction !== 'horizontal' || !target || target instanceof Window) {
+  if (direction !== 'horizontal' || !target || isWindowTarget(target)) {
     return offset
   }
 
@@ -58,7 +62,7 @@ export function scrollElementTo(
   const normalized = denormalizeOffset(position, direction, target)
   const smooth = !!options?.smooth
 
-  if (target instanceof Window) {
+  if (isWindowTarget(target)) {
     if (direction === 'vertical') {
       target.scrollTo({
         top: normalized,

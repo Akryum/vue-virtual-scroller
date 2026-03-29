@@ -57,6 +57,7 @@ onBeforeUnmount(stopStream)
 
 <template>
   <DemoShell
+    demo-id="chat"
     title="Chat stream"
     description="Continuously appends new rows while keeping the view pinned to the latest messages."
   >
@@ -64,6 +65,7 @@ onBeforeUnmount(stopStream)
       <button
         v-if="!streaming"
         class="demo-button"
+        data-testid="demo:control:start-stream"
         @click="startStream"
       >
         Start stream
@@ -71,6 +73,7 @@ onBeforeUnmount(stopStream)
       <button
         v-else
         class="demo-button secondary"
+        data-testid="demo:control:stop-stream"
         @click="stopStream"
       >
         Stop stream
@@ -78,6 +81,7 @@ onBeforeUnmount(stopStream)
 
       <button
         class="demo-button secondary"
+        data-testid="demo:control:append-20"
         @click="appendBatch(20)"
       >
         +20 messages
@@ -87,17 +91,22 @@ onBeforeUnmount(stopStream)
         Filter
         <input
           v-model="search"
+          data-testid="demo:control:filter"
           type="text"
           placeholder="Search"
         >
       </label>
 
-      <span class="demo-chip">Rows: {{ filteredItems.length }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:rows"
+      >Rows: {{ filteredItems.length }}</span>
     </template>
 
     <DynamicScroller
       ref="scroller"
       class="demo-viewport"
+      data-testid="demo:viewport"
       :items="filteredItems"
       :min-item-size="62"
     >
@@ -107,6 +116,8 @@ onBeforeUnmount(stopStream)
           :active="active"
           :size-dependencies="[item.message]"
           class="demo-message-row"
+          data-testid="demo:row"
+          :data-row-id="String(item.id)"
         >
           <div
             class="demo-avatar"
@@ -122,7 +133,10 @@ onBeforeUnmount(stopStream)
             </div>
           </div>
 
-          <small class="demo-message-meta">#{{ index }} · {{ item.timestamp }}</small>
+          <small
+            class="demo-message-meta"
+            data-testid="demo:row-meta"
+          >#{{ index }} · {{ item.timestamp }}</small>
         </DynamicScrollerItem>
       </template>
     </DynamicScroller>

@@ -50,6 +50,7 @@ export function createDynamicScrollerItemController(
   let _pendingVScrollUpdate: string | number | null = null
   let _sizeObserved = false
   let _watchDataStop: (() => void) | null = null
+  const _cleanupStops: Array<() => void> = []
   const unsubscribeVscrollUpdate = context.resizeObserver
     ? () => {}
     : context.onVscrollUpdate(onVscrollUpdate)
@@ -206,19 +207,19 @@ export function createDynamicScrollerItemController(
     }
   }
 
-  watch(() => toValue(options).watchData, () => {
+  _cleanupStops.push(watch(() => toValue(options).watchData, () => {
     updateWatchData()
-  })
+  }))
 
   if (!context.resizeObserver) {
-    watch(() => toValue(options).sizeDependencies, () => {
+    _cleanupStops.push(watch(() => toValue(options).sizeDependencies, () => {
       onDataUpdate()
     }, {
       deep: true,
-    })
+    }))
   }
 
-  watch(id, (value, oldValue) => {
+  _cleanupStops.push(watch(id, (value, oldValue) => {
     const elValue = toValue(el)
     if (elValue) {
       ;(elValue as any).$_vs_id = value
@@ -239,9 +240,9 @@ export function createDynamicScrollerItemController(
     if (_sizeObserved) {
       context.vscrollData.sizes[value] = newSize
     }
-  })
+  }))
 
-  watch(finalActive, (value) => {
+  _cleanupStops.push(watch(finalActive, (value) => {
     syncUndefinedState(id.value, value)
 
     if (context.resizeObserver) {
@@ -255,7 +256,7 @@ export function createDynamicScrollerItemController(
     else if (value && _pendingVScrollUpdate === id.value) {
       updateSize()
     }
-  })
+  }))
 
   updateWatchData()
 
@@ -279,6 +280,10 @@ export function createDynamicScrollerItemController(
       _watchDataStop()
       _watchDataStop = null
     }
+    for (const stop of _cleanupStops) {
+      stop()
+    }
+    _cleanupStops.length = 0
   }
 
   return {

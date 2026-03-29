@@ -20,6 +20,7 @@ const filteredRows = computed(() => {
 
 <template>
   <DemoShell
+    demo-id="simple-list"
     title="Simple list"
     description="Switches between dynamic and fixed-size virtualization on the same dataset."
   >
@@ -28,6 +29,7 @@ const filteredRows = computed(() => {
         Filter
         <input
           v-model="search"
+          data-testid="demo:control:filter"
           type="text"
           placeholder="Find sentence"
         >
@@ -37,16 +39,21 @@ const filteredRows = computed(() => {
         Dynamic mode
         <input
           v-model="useDynamic"
+          data-testid="demo:control:dynamic-mode"
           type="checkbox"
         >
       </label>
 
-      <span class="demo-chip">Rows: {{ filteredRows.length }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:rows"
+      >Rows: {{ filteredRows.length }}</span>
     </template>
 
     <DynamicScroller
       v-if="useDynamic"
       class="demo-viewport"
+      data-testid="demo:viewport"
       :items="filteredRows"
       :min-item-size="58"
     >
@@ -57,6 +64,8 @@ const filteredRows = computed(() => {
           :index="index"
           :size-dependencies="[item]"
           class="demo-message-row"
+          data-testid="demo:row"
+          :data-row-id="item"
         >
           <div class="demo-avatar" :style="{ background: 'linear-gradient(145deg, #4a7c59, #234f35)' }">
             {{ String(index + 1).slice(-2).padStart(2, '0') }}
@@ -72,11 +81,16 @@ const filteredRows = computed(() => {
     <RecycleScroller
       v-else
       class="demo-viewport"
+      data-testid="demo:viewport"
       :items="filteredRows"
       :item-size="58"
     >
       <template #default="{ item, index }">
-        <div class="demo-message-row">
+        <div
+          class="demo-message-row"
+          data-testid="demo:row"
+          :data-row-id="item"
+        >
           <div class="demo-avatar" :style="{ background: 'linear-gradient(145deg, #7b2cbf, #3c096c)' }">
             {{ String(index + 1).slice(-2).padStart(2, '0') }}
           </div>

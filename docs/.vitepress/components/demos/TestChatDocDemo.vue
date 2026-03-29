@@ -25,28 +25,49 @@ function addItems(count = 1) {
 
 <template>
   <DemoShell
+    demo-id="test-chat"
     title="Test chat append"
     description="Stress-tests append-heavy timelines while keeping the viewport pinned to the latest messages."
   >
     <template #toolbar>
-      <button class="demo-button" @click="addItems(1)">
+      <button
+        class="demo-button"
+        data-testid="demo:control:add-1"
+        @click="addItems(1)"
+      >
         +1
       </button>
-      <button class="demo-button" @click="addItems(5)">
+      <button
+        class="demo-button"
+        data-testid="demo:control:add-5"
+        @click="addItems(5)"
+      >
         +5
       </button>
-      <button class="demo-button" @click="addItems(20)">
+      <button
+        class="demo-button"
+        data-testid="demo:control:add-20"
+        @click="addItems(20)"
+      >
         +20
       </button>
-      <button class="demo-button" @click="addItems(80)">
+      <button
+        class="demo-button"
+        data-testid="demo:control:add-80"
+        @click="addItems(80)"
+      >
         +80
       </button>
-      <span class="demo-chip">Messages: {{ rows.length }}</span>
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:messages"
+      >Messages: {{ rows.length }}</span>
     </template>
 
     <DynamicScroller
       ref="scroller"
       class="demo-viewport"
+      data-testid="demo:viewport"
       :items="rows"
       :min-item-size="48"
       @resize="scroller?.scrollToBottom()"
@@ -57,6 +78,8 @@ function addItems(count = 1) {
           :active="active"
           :size-dependencies="[item.text]"
           class="demo-message-row"
+          data-testid="demo:row"
+          :data-row-id="String(item.id)"
         >
           <div class="demo-avatar" :style="{ background: 'linear-gradient(145deg, #2f7a52, #14532d)' }">
             {{ String((index % 99) + 1).padStart(2, '0') }}
