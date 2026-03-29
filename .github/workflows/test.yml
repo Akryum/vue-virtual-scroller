@@ -19,13 +19,22 @@ jobs:
       - name: Run lint
         run: pnpm lint
 
+      - name: Run typecheck
+        run: pnpm typecheck
+
       - name: Run Unit Tests
         run: pnpm test:unit
+
+      - name: Run Browser Tests
+        run: pnpm test:browser
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 
-      - name: Validate release gate
+      - name: Run E2E Tests
         env:
           PLAYWRIGHT_ENABLE_WEBKIT: '1'
+        run: pnpm test:e2e
+
+      - name: Validate release build
         run: pnpm test:ci

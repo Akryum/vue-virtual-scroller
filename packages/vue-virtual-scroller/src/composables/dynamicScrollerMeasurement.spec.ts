@@ -1,8 +1,15 @@
+import type { ComputedRef } from 'vue'
+import type { DynamicScrollerMeasurementContext, DynamicScrollerUpdatePayload } from './dynamicScrollerMeasurement'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref } from 'vue'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
 
-function createElement(width = 80, height = 40) {
+type TestElement = HTMLElement & {
+  offsetWidth: number
+  offsetHeight: number
+}
+
+function createElement(width = 80, height = 40): TestElement {
   const el = document.createElement('div')
   Object.defineProperty(el, 'offsetWidth', {
     configurable: true,
@@ -18,12 +25,12 @@ function createElement(width = 80, height = 40) {
       height = value as number
     },
   })
-  return el
+  return el as TestElement
 }
 
-function createContext(overrides: Partial<Parameters<typeof createDynamicScrollerItemController>[2]> = {}) {
-  const listeners = new Set<(payload: { force: boolean }) => void>()
-  const context = {
+function createContext(overrides: Partial<DynamicScrollerMeasurementContext> = {}) {
+  const listeners = new Set<(payload: DynamicScrollerUpdatePayload) => void>()
+  const context: DynamicScrollerMeasurementContext = {
     vscrollData: {
       active: true,
       keyField: 'id',
@@ -31,10 +38,10 @@ function createContext(overrides: Partial<Parameters<typeof createDynamicScrolle
       sizes: {},
     },
     resizeObserver: undefined,
-    direction: ref<'vertical' | 'horizontal'>('vertical'),
+    direction: computed(() => 'vertical') as ComputedRef<'vertical'>,
     undefinedMap: {},
     undefinedSizeCount: { value: 0 },
-    onVscrollUpdate(callback: (payload: { force: boolean }) => void) {
+    onVscrollUpdate(callback) {
       listeners.add(callback)
       return () => {
         listeners.delete(callback)
@@ -45,7 +52,7 @@ function createContext(overrides: Partial<Parameters<typeof createDynamicScrolle
 
   return {
     context,
-    emit(payload: { force: boolean }) {
+    emit(payload: DynamicScrollerUpdatePayload) {
       for (const listener of listeners) {
         listener(payload)
       }

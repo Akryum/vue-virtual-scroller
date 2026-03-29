@@ -1,3 +1,4 @@
+import type { DirectiveBinding, ObjectDirective, VNode } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ObserveVisibility } from './observeVisibility'
 
@@ -17,8 +18,12 @@ function binding(value: unknown, oldValue?: unknown) {
   return {
     value,
     oldValue,
-  } as any
+  } as DirectiveBinding<unknown>
 }
+
+const observeVisibility = ObserveVisibility as ObjectDirective<Element, unknown>
+const vnode = {} as VNode<any, Element>
+const previousVnode = {} as VNode<any, Element>
 
 describe('observeVisibility', () => {
   beforeEach(() => {
@@ -36,7 +41,7 @@ describe('observeVisibility', () => {
     })
 
     vi.stubGlobal('IntersectionObserver', undefined)
-    ObserveVisibility.mounted?.(el, binding(callback))
+    observeVisibility.mounted?.(el, binding(callback), vnode, null)
 
     expect(callback).toHaveBeenCalledWith(true, expect.objectContaining({
       boundingClientRect: expect.objectContaining({ top: 0, bottom: 10 }),
@@ -48,7 +53,7 @@ describe('observeVisibility', () => {
     const callback = vi.fn()
     vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver as unknown as typeof IntersectionObserver)
 
-    ObserveVisibility.mounted?.(el, binding(callback))
+    observeVisibility.mounted?.(el, binding(callback), vnode, null)
 
     const observer = FakeIntersectionObserver.instances[0]
     expect(observer.observe).toHaveBeenCalledWith(el)
@@ -61,7 +66,7 @@ describe('observeVisibility', () => {
     expect(callback).toHaveBeenNthCalledWith(1, true, expect.objectContaining({ isIntersecting: true }))
     expect(callback).toHaveBeenNthCalledWith(2, false, expect.objectContaining({ isIntersecting: false }))
 
-    ObserveVisibility.unmounted?.(el)
+    observeVisibility.unmounted?.(el, binding(callback), vnode, null)
     expect(observer.disconnect).toHaveBeenCalledTimes(1)
   })
 
@@ -71,14 +76,14 @@ describe('observeVisibility', () => {
     const second = vi.fn()
     vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver as unknown as typeof IntersectionObserver)
 
-    ObserveVisibility.mounted?.(el, binding({
+    observeVisibility.mounted?.(el, binding({
       callback: first,
       intersection: { rootMargin: '10px' },
-    }))
+    }), vnode, null)
 
     const initialObserver = FakeIntersectionObserver.instances[0]
 
-    ObserveVisibility.updated?.(el, binding({ callback: second }, { callback: first }))
+    observeVisibility.updated?.(el, binding({ callback: second }, { callback: first }), vnode, previousVnode)
 
     const nextObserver = FakeIntersectionObserver.instances[1]
     expect(initialObserver.disconnect).toHaveBeenCalledTimes(1)

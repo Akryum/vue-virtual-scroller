@@ -41,7 +41,8 @@
     "dev": "vite build --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "pnpm run lint && pnpm run build",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "prepublishOnly": "pnpm run lint && pnpm run typecheck && pnpm run build",
     "lint": "cd ../../ && pnpm run lint"
   },
   "peerDependencies": {
