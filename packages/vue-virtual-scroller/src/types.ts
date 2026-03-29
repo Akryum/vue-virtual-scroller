@@ -1,5 +1,13 @@
 export type ScrollDirection = 'vertical' | 'horizontal'
 
+export type ScrollAlign = 'start' | 'center' | 'end' | 'nearest'
+
+export interface ScrollToOptions {
+  align?: ScrollAlign
+  smooth?: boolean
+  offset?: number
+}
+
 export interface ScrollState {
   start: number
   end: number
@@ -18,6 +26,11 @@ export interface View {
   position: number
   offset: number
   nr: ViewNonReactive
+}
+
+export interface CacheSnapshot {
+  keys: Array<string | number>
+  sizes: Array<number | null>
 }
 
 export interface SizeEntry {

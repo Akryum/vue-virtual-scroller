@@ -36,7 +36,7 @@ function jump() {
 <template>
   <DemoShell
     title="Grid mode"
-    description="Ported from the grid demo. RecycleScroller composes fixed-size cards in rows for large image-like layouts."
+    description="Renders large fixed-size card grids efficiently in multi-column rows."
   >
     <template #toolbar>
       <label class="demo-chip">

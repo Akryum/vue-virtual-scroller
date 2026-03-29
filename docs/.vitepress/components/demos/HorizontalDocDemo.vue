@@ -23,7 +23,7 @@ function cardWidth(message: string) {
 <template>
   <DemoShell
     title="Horizontal dynamic"
-    description="Ported from the horizontal demo. Unknown widths are measured dynamically while scrolling on the x-axis."
+    description="Measures unknown card widths dynamically while virtualizing horizontal scrolling."
   >
     <template #toolbar>
       <label class="demo-chip">
@@ -45,12 +45,6 @@ function cardWidth(message: string) {
       :min-item-size="180"
       direction="horizontal"
     >
-      <template #before>
-        <div class="demo-notice">
-          Width is content-driven and recalculated per card.
-        </div>
-      </template>
-
       <template #default="{ item, index, active }">
         <DynamicScrollerItem
           :item="item"

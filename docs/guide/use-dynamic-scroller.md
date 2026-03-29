@@ -53,9 +53,13 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 - `visiblePool`: active views in visible index order. Useful for readouts, debugging, or derived UI state.
 - `totalSize`: virtual size for the inner wrapper.
 - `handleScroll`: call this on the scroll container.
-- `scrollToItem(index)`: jump to a logical item index.
-- `scrollToPosition(px)`: scroll to an absolute pixel offset.
+- `scrollToItem(index, options?)`: jump to a logical item index with `align`, `smooth`, and `offset`.
+- `scrollToPosition(px, options?)`: scroll to an absolute pixel offset.
+- `findItemIndex(offset)`: resolve a pixel offset back to an item index.
+- `getItemOffset(index)`: read the known starting offset for an item.
 - `getItemSize(item, index?)`: read the measured size for an item.
+- `cacheSnapshot`: current serializable size snapshot.
+- `restoreCache(snapshot)`: restore previously known sizes when the item sequence matches.
 - `forceUpdate(clear?)`: trigger a recalculation, optionally clearing known sizes.
 
 ## Render Checklist
@@ -73,6 +77,7 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 - Forgetting `sizeDependencies` means content changes may not trigger remeasurement.
 - Reading `view.item` as if it were the original item can be confusing in headless mode. The original row lives at `view.item.item`.
 - `watchData` works, but it is heavier than targeted `sizeDependencies`.
+- If you prepend into chat-style data, enable `shift` in the composable options so the viewport stays anchored.
 
 ## Full Example
 
@@ -130,4 +135,5 @@ const {
 - [`useRecycleScroller`](./use-recycle-scroller) for fixed-size or pre-sized headless lists
 - [`DynamicScroller`](./dynamic-scroller) for the bundled component version
 - [`DynamicScrollerItem`](./dynamic-scroller-item) for the bundled per-item measurement wrapper
+- [`WindowScroller`](./window-scroller) for the dedicated window-scrolling component/composable
 - [Headless table demo](../demos/headless-table) for a semantic table example

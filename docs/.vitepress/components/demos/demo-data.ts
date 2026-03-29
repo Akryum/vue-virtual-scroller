@@ -131,6 +131,9 @@ const EMAIL_DOMAINS = [
   'cinderlane.net',
 ]
 
+const SLUG_SEPARATOR_RE = /[^a-z0-9]+/g
+const SLUG_TRIM_RE = /^-|-$/g
+
 function createRng(seed = 1) {
   let value = seed >>> 0
   return () => {
@@ -148,7 +151,7 @@ function capitalize(text: string) {
 }
 
 function slugify(text: string) {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  return text.toLowerCase().replace(SLUG_SEPARATOR_RE, '-').replace(SLUG_TRIM_RE, '')
 }
 
 function sentence(rng: () => number, minWords = 8, maxWords = 20) {

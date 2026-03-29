@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import config from './config'
 import * as index from './index'
-import plugin, { DynamicScroller, DynamicScrollerItem, RecycleScroller } from './index'
+import plugin, { DynamicScroller, DynamicScrollerItem, RecycleScroller, WindowScroller } from './index'
 
 const initialConfig = { ...config }
 
@@ -23,6 +23,8 @@ describe('plugin', () => {
     expect(app.component).toHaveBeenCalledWith('DynamicScroller', DynamicScroller)
     expect(app.component).toHaveBeenCalledWith('dynamic-scroller-item', DynamicScrollerItem)
     expect(app.component).toHaveBeenCalledWith('DynamicScrollerItem', DynamicScrollerItem)
+    expect(app.component).toHaveBeenCalledWith('window-scroller', WindowScroller)
+    expect(app.component).toHaveBeenCalledWith('WindowScroller', WindowScroller)
   })
 
   it('supports custom component prefixes', () => {
@@ -40,6 +42,8 @@ describe('plugin', () => {
     expect(app.component).toHaveBeenCalledWith('VDynamicScroller', DynamicScroller)
     expect(app.component).toHaveBeenCalledWith('Vdynamic-scroller-item', DynamicScrollerItem)
     expect(app.component).toHaveBeenCalledWith('VDynamicScrollerItem', DynamicScrollerItem)
+    expect(app.component).toHaveBeenCalledWith('Vwindow-scroller', WindowScroller)
+    expect(app.component).toHaveBeenCalledWith('VWindowScroller', WindowScroller)
   })
 
   it('does not register components when installComponents is false', () => {
@@ -65,5 +69,10 @@ describe('plugin', () => {
   it('keeps dynamic binding options on the useDynamicScroller surface only', () => {
     expectTypeOf<import('./index').UseDynamicScrollerItemBindingOptions>().toBeObject()
     expect('useDynamicScrollerItemBinder' in index).toBe(false)
+  })
+
+  it('exports the dedicated window-scrolling surface', () => {
+    expect(index.WindowScroller).toBe(WindowScroller)
+    expect(typeof index.useWindowScroller).toBe('function')
   })
 })

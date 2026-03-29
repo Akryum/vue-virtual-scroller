@@ -31,6 +31,7 @@ export default defineConfig({
           items: [
             { text: 'RecycleScroller', link: '/guide/recycle-scroller' },
             { text: 'DynamicScroller', link: '/guide/dynamic-scroller' },
+            { text: 'WindowScroller', link: '/guide/window-scroller' },
             { text: 'DynamicScrollerItem', link: '/guide/dynamic-scroller-item' },
           ],
         },
@@ -57,6 +58,7 @@ export default defineConfig({
             { text: 'RecycleScroller', link: '/demos/recycle-scroller' },
             { text: 'DynamicScroller', link: '/demos/dynamic-scroller' },
             { text: 'Chat Stream', link: '/demos/chat' },
+            { text: 'Shift', link: '/demos/shift' },
             { text: 'Simple List', link: '/demos/simple-list' },
             { text: 'Headless Table', link: '/demos/headless-table' },
             { text: 'Horizontal', link: '/demos/horizontal' },

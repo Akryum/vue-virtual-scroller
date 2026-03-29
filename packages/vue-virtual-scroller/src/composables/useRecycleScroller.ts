@@ -1,7 +1,9 @@
 import type { ComputedRef, MaybeRef, MaybeRefOrGetter, Ref } from 'vue'
-import type { ScrollDirection, ScrollState, Sizes, View, ViewNonReactive } from '../types'
+import type { CacheSnapshot, ScrollDirection, ScrollState, ScrollToOptions, Sizes, View, ViewNonReactive } from '../types'
 import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
 import config from '../config'
+import { buildCacheSnapshot, findPrependOffset, getAlignedScrollOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
+import { getViewportSize, normalizeOffset, scrollElementTo } from '../engine/scroll'
 import { getScrollParent } from '../scrollparent'
 import { supportsPassive } from '../utils'
 
@@ -17,6 +19,8 @@ export interface UseRecycleScrollerOptions {
   typeField: string
   buffer: number
   pageMode: boolean
+  shift?: boolean
+  cache?: CacheSnapshot
   prerender: number
   emitUpdate: boolean
   updateInterval: number
@@ -29,9 +33,14 @@ export interface UseRecycleScrollerReturn {
   ready: Ref<boolean>
   sizes: ComputedRef<Sizes | never[]>
   simpleArray: ComputedRef<boolean>
-  scrollToItem: (index: number) => void
-  scrollToPosition: (position: number) => void
+  scrollToItem: (index: number, options?: ScrollToOptions) => void
+  scrollToPosition: (position: number, options?: ScrollToOptions) => void
   getScroll: () => ScrollState
+  findItemIndex: (offset: number) => number
+  getItemOffset: (index: number) => number
+  getItemSize: (index: number) => number
+  cacheSnapshot: ComputedRef<CacheSnapshot>
+  restoreCache: (snapshot: CacheSnapshot | null | undefined) => boolean
   updateVisibleItems: (itemsChanged: boolean, checkPositionDiff?: boolean) => { continuous: boolean }
   handleScroll: () => void
   handleResize: () => void
@@ -48,6 +57,14 @@ let uid = 0
 function touchView(view: View) {
   const stampedView = view as ViewWithStyleStamp
   stampedView._vs_styleStamp++
+}
+
+function getItemKeyValue(item: unknown, index: number, keyField: string): string | number {
+  const key = (item as any)?.[keyField]
+  if (key == null) {
+    throw new Error(`Key is ${key} on item (keyField is '${keyField}')`)
+  }
+  return key
 }
 
 export function useRecycleScroller(
@@ -80,6 +97,11 @@ export function useRecycleScroller(
   let _sortTimer: ReturnType<typeof setTimeout> | null = null
   let _computedMinItemSize = 0
   let _listenerTarget: (Window | Element) | null = null
+  let _previousKeys: Array<string | number> = []
+  let _shiftAnchor: { key: string | number, offset: number } | null = null
+  let _shiftAnchorClearTimer: ReturnType<typeof setTimeout> | null = null
+  let _applyingShiftAnchor = false
+  const _restoredSizes = ref<Record<string | number, number>>({})
 
   // Computed
   const simpleArray = computed(() => {
@@ -96,11 +118,13 @@ export function useRecycleScroller(
       const items = opts.items
       const field = opts.sizeField
       const minItemSize = opts.minItemSize as number
+      const restoredSizes = _restoredSizes.value
       let computedMinSize = 10000
       let accumulator = 0
       let current: number
       for (let i = 0, l = items.length; i < l; i++) {
-        current = (items[i] as any)[field] || minItemSize
+        const key = simpleArray.value ? i : getItemKeyValue(items[i], i, opts.keyField)
+        current = restoredSizes[key] || (items[i] as any)[field] || minItemSize
         if (current < computedMinSize) {
           computedMinSize = current
         }
@@ -119,7 +143,25 @@ export function useRecycleScroller(
       .sort((a, b) => a.nr.index - b.nr.index),
   )
 
+  const cacheSnapshot = computed<CacheSnapshot>(() => {
+    const opts = toValue(options)
+    const keyField = simpleArray.value ? null : opts.keyField
+    return buildCacheSnapshot(opts.items, keyField, (item, index, key) => {
+      if (opts.itemSize != null) {
+        return opts.itemSize
+      }
+
+      return _restoredSizes.value[key] || (item as any)?.[opts.sizeField] || undefined
+    })
+  })
+
   // Methods
+  function restoreCache(snapshot: CacheSnapshot | null | undefined): boolean {
+    const opts = toValue(options)
+    _restoredSizes.value = restoreCacheMap(snapshot, opts.items, simpleArray.value ? null : opts.keyField)
+    return Object.keys(_restoredSizes.value).length > 0
+  }
+
   function getRecycledPool(type: unknown): View[] {
     let recycledPool = _recycledPools.get(type)
     if (!recycledPool) {
@@ -184,6 +226,10 @@ export function useRecycleScroller(
   }
 
   function handleScroll() {
+    if (_shiftAnchor && !_applyingShiftAnchor) {
+      clearShiftAnchor()
+    }
+
     const opts = toValue(options)
     if (!_scrollDirty) {
       _scrollDirty = true
@@ -239,6 +285,18 @@ export function useRecycleScroller(
     return target || window
   }
 
+  function getLeadingSlotSize(): number {
+    const beforeEl = toValue(before)
+    if (!beforeEl) {
+      return 0
+    }
+
+    const opts = toValue(options)
+    return opts.direction === 'vertical'
+      ? beforeEl.scrollHeight
+      : beforeEl.scrollWidth
+  }
+
   function getScroll(): ScrollState {
     const elValue = toValue(el)!
     const opts = toValue(options)
@@ -270,12 +328,143 @@ export function useRecycleScroller(
     }
     else {
       scrollState = {
-        start: elValue.scrollLeft,
-        end: elValue.scrollLeft + elValue.clientWidth,
+        start: normalizeOffset(elValue.scrollLeft, opts.direction, elValue),
+        end: normalizeOffset(elValue.scrollLeft, opts.direction, elValue) + elValue.clientWidth,
       }
     }
 
     return scrollState
+  }
+
+  function getItemSize(index: number): number {
+    const opts = toValue(options)
+    if (opts.itemSize != null) {
+      return opts.itemSize
+    }
+
+    const sizeEntry = (sizes.value as Sizes)[index]
+    return sizeEntry?.size || Number(opts.minItemSize) || 0
+  }
+
+  function getItemOffset(index: number): number {
+    const opts = toValue(options)
+    const gridItems = opts.gridItems || 1
+    if (index <= 0) {
+      return 0
+    }
+
+    if (opts.itemSize != null) {
+      return Math.floor(index / gridItems) * opts.itemSize
+    }
+
+    return ((sizes.value as Sizes)[index - 1]?.accumulator) || 0
+  }
+
+  function findItemIndex(offset: number): number {
+    const opts = toValue(options)
+    const count = opts.items.length
+    const gridItems = opts.gridItems || 1
+
+    if (!count) {
+      return 0
+    }
+
+    if (opts.itemSize != null) {
+      const index = Math.floor(offset / opts.itemSize) * gridItems
+      return Math.min(Math.max(index, 0), count - 1)
+    }
+
+    let low = 0
+    let high = count - 1
+    let found = 0
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2)
+      const midOffset = getItemOffset(mid)
+      if (midOffset <= offset) {
+        found = mid
+        low = mid + 1
+      }
+      else {
+        high = mid - 1
+      }
+    }
+
+    return found
+  }
+
+  function clearShiftAnchor() {
+    if (_shiftAnchorClearTimer) {
+      clearTimeout(_shiftAnchorClearTimer)
+      _shiftAnchorClearTimer = null
+    }
+    _shiftAnchor = null
+  }
+
+  function scheduleShiftAnchorClear() {
+    if (_shiftAnchorClearTimer) {
+      clearTimeout(_shiftAnchorClearTimer)
+    }
+    _shiftAnchorClearTimer = setTimeout(() => {
+      _shiftAnchor = null
+      _shiftAnchorClearTimer = null
+    }, 150)
+  }
+
+  function captureShiftAnchor(previousItems: unknown[], keyField: string | null) {
+    if (!previousItems.length) {
+      clearShiftAnchor()
+      return
+    }
+
+    const scrollStart = Math.max(getScroll().start - getLeadingSlotSize(), 0)
+    const anchorIndex = Math.min(findItemIndex(scrollStart), previousItems.length - 1)
+    const anchorItem = previousItems[anchorIndex]
+    const anchorKey = keyField
+      ? (anchorItem as any)?.[keyField]
+      : anchorIndex
+
+    if (anchorKey == null) {
+      clearShiftAnchor()
+      return
+    }
+
+    const anchorStart = getLeadingSlotSize() + getItemOffset(anchorIndex)
+    _shiftAnchor = {
+      key: anchorKey,
+      offset: getScroll().start - anchorStart,
+    }
+  }
+
+  function applyShiftAnchor(nextItems?: unknown[]): boolean {
+    if (!_shiftAnchor) {
+      return false
+    }
+
+    const opts = toValue(options)
+    const items = nextItems ?? opts.items
+    const keyField = simpleArray.value ? null : opts.keyField
+    const keys = getItemKeys(items, keyField)
+    const anchorIndex = keys.indexOf(_shiftAnchor.key)
+
+    if (anchorIndex === -1) {
+      clearShiftAnchor()
+      return false
+    }
+
+    const target = getLeadingSlotSize() + getItemOffset(anchorIndex) + _shiftAnchor.offset
+    const current = getScroll().start
+
+    if (Math.abs(target - current) < 0.5) {
+      return false
+    }
+
+    _applyingShiftAnchor = true
+    scrollToPosition(target)
+    requestAnimationFrame(() => {
+      _applyingShiftAnchor = false
+    })
+    return true
   }
 
   function applyPageMode() {
@@ -509,7 +698,7 @@ export function useRecycleScroller(
 
       // Update position
       if (itemSize === null) {
-        view.position = sizesValue[i - 1].accumulator
+        view.position = sizesValue[i - 1]?.accumulator || 0
         view.offset = 0
       }
       else {
@@ -520,7 +709,6 @@ export function useRecycleScroller(
 
     _startIndex = startIndex
     _endIndex = endIndex
-
     if (opts.emitUpdate)
       callbacks?.onUpdate?.(startIndex, endIndex, visibleStartIndex, visibleEndIndex)
 
@@ -563,44 +751,61 @@ export function useRecycleScroller(
     }
   }
 
-  function scrollToItem(index: number) {
+  function scrollToItem(index: number, scrollOptions?: ScrollToOptions) {
     const opts = toValue(options)
-    let scroll: number
-    const gridItems = opts.gridItems || 1
-    if (opts.itemSize === null) {
-      scroll = index > 0 ? (sizes.value as Sizes)[index - 1].accumulator : 0
+    const targetIndex = Math.max(0, Math.min(index, opts.items.length - 1))
+    const viewportStart = getScroll().start
+    const viewportSize = getViewportSize(toValue(el)!, opts.direction, opts.pageMode)
+    const itemStart = getItemOffset(targetIndex)
+    const itemSize = getItemSize(targetIndex)
+    const target = getAlignedScrollOffset(
+      itemStart,
+      itemSize,
+      viewportStart,
+      viewportSize,
+      scrollOptions?.align,
+      scrollOptions?.offset ?? 0,
+    )
+
+    if (target == null) {
+      return
     }
-    else {
-      scroll = Math.floor(index / gridItems) * opts.itemSize
-    }
-    scrollToPosition(scroll)
+
+    scrollToPosition(target, scrollOptions)
   }
 
-  function scrollToPosition(position: number) {
+  function scrollToPosition(position: number, scrollOptions?: ScrollToOptions) {
     const opts = toValue(options)
     const elValue = toValue(el)!
-    const direction = opts.direction === 'vertical'
-      ? { scroll: 'scrollTop' as const, start: 'top' as const }
-      : { scroll: 'scrollLeft' as const, start: 'left' as const }
 
     if (opts.pageMode) {
       const viewportEl = getScrollParent(elValue) as HTMLElement
-      // HTML doesn't overflow like other elements
-      const scrollTop = viewportEl.tagName === 'HTML' ? 0 : (viewportEl as any)[direction.scroll]
       const bounds = viewportEl.getBoundingClientRect()
-
       const scroller = elValue.getBoundingClientRect()
-      const scrollerPosition = scroller[direction.start] - bounds[direction.start]
-
-      ;(viewportEl as any)[direction.scroll] = position + scrollTop + scrollerPosition
+      const startProp = opts.direction === 'vertical' ? 'top' : 'left'
+      const currentScroll = getScrollParent(elValue) === document.documentElement || getScrollParent(elValue) === document.body
+        ? (opts.direction === 'vertical' ? window.scrollY : window.scrollX)
+        : normalizeOffset(
+            opts.direction === 'vertical'
+              ? (viewportEl as any).scrollTop
+              : (viewportEl as any).scrollLeft,
+            opts.direction,
+            viewportEl,
+          )
+      const scrollerPosition = (scroller as any)[startProp] - (bounds as any)[startProp]
+      scrollElementTo(viewportEl.tagName === 'HTML' ? window : viewportEl, opts.direction, position + currentScroll + scrollerPosition, scrollOptions)
     }
     else {
-      ;(elValue as any)[direction.scroll] = position
+      scrollElementTo(elValue, opts.direction, position, scrollOptions)
     }
   }
 
   // In SSR mode, we also prerender the same number of item for the first render
   const initialOpts = toValue(options)
+  _previousKeys = getItemKeys(initialOpts.items, initialOpts.items.length > 0 && typeof initialOpts.items[0] !== 'object' ? null : initialOpts.keyField)
+  if (initialOpts.cache) {
+    restoreCache(initialOpts.cache)
+  }
   if (initialOpts.prerender) {
     _prerender = true
     updateVisibleItems(false)
@@ -634,7 +839,32 @@ export function useRecycleScroller(
   })
 
   // Watchers
-  watch(() => toValue(options).items, () => {
+  watch(() => toValue(options).cache, (snapshot) => {
+    restoreCache(snapshot)
+    updateVisibleItems(true)
+  })
+
+  watch(() => toValue(options).items, (nextItems, previousItems) => {
+    const opts = toValue(options)
+    const keyField = simpleArray.value ? null : opts.keyField
+    const nextKeys = getItemKeys(nextItems, keyField)
+
+    if (opts.shift) {
+      const previousKeys = previousItems ? getItemKeys(previousItems, keyField) : _previousKeys
+      const prependOffset = findPrependOffset(previousKeys, nextKeys)
+      if (prependOffset > 0) {
+        captureShiftAnchor(previousItems ?? [], keyField)
+      }
+      else {
+        clearShiftAnchor()
+      }
+    }
+    else {
+      clearShiftAnchor()
+    }
+
+    _previousKeys = nextKeys
+    applyShiftAnchor(nextItems)
     updateVisibleItems(true)
   })
 
@@ -644,6 +874,9 @@ export function useRecycleScroller(
   })
 
   watch(sizes, () => {
+    if (applyShiftAnchor()) {
+      scheduleShiftAnchorClear()
+    }
     updateVisibleItems(false)
   }, { deep: true })
 
@@ -665,6 +898,11 @@ export function useRecycleScroller(
     scrollToItem,
     scrollToPosition,
     getScroll,
+    findItemIndex,
+    getItemOffset,
+    getItemSize,
+    cacheSnapshot,
+    restoreCache,
     updateVisibleItems,
     handleScroll,
     handleResize,

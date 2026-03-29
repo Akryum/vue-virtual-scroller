@@ -44,15 +44,25 @@ Optional grid options:
 - `gridItems`
 - `itemSecondarySize`
 
+Additional scroll-system options:
+
+- `shift`
+- `cache`
+
 ## Return Values You Will Use Most
 
 - `pool`: the render-ready set of pooled views. Use this for headless rendering when you want the smoothest recycling behavior.
 - `visiblePool`: `pool` filtered to active views and sorted by visible index order. Useful for readouts, debugging, or simple derived UIs.
 - `totalSize`: full virtual size (wrapper min-height/min-width).
 - `handleScroll`: call this on scroll events.
-- `scrollToItem(index)`: programmatic navigation.
-- `scrollToPosition(px)`: absolute scroll positioning.
+- `scrollToItem(index, options?)`: programmatic navigation with `align`, `smooth`, and `offset`.
+- `scrollToPosition(px, options?)`: absolute scroll positioning.
 - `getScroll()`: current viewport range in pixels.
+- `findItemIndex(offset)`: resolve a pixel offset back to an item index.
+- `getItemOffset(index)`: read the starting pixel offset for an item.
+- `getItemSize(index)`: read the known size for an item.
+- `cacheSnapshot`: current serializable size snapshot.
+- `restoreCache(snapshot)`: restore a previous snapshot when the item sequence matches.
 - `updateVisibleItems(itemsChanged, checkPositionDiff?)`: force recalculation.
 
 ## Render Checklist
@@ -70,6 +80,7 @@ Optional grid options:
 - The composable manages pooling and index mapping, but does not provide built-in markup or CSS.
 - Render from `pool` and hide inactive views instead of filtering them out if you want to preserve DOM reuse like `RecycleScroller`.
 - If you need automatic unknown-size measurement, use `DynamicScroller`/`DynamicScrollerItem` or the headless [`useDynamicScroller`](./use-dynamic-scroller) path with its `vDynamicScrollerItem` directive.
+- If the outer scroll container is the browser window, prefer [`WindowScroller`](./window-scroller) or `useWindowScroller` instead of manually reproducing page-mode behavior.
 
 ## Full example
 
@@ -126,18 +137,17 @@ const {
       class="my-scroller__inner"
       :style="{ minHeight: `${totalSize}px` }"
     >
+      <!-- In the headless fixed-size path, you apply recycled-view styles yourself. -->
       <div
         v-for="view in pool"
         :key="view.nr.id"
         class="my-scroller__item"
-        <!-- In the headless fixed-size path, you apply recycled-view styles yourself. --
-      >
         :style="{
-        transform: `translateY(${view.position}px)`,
-        visibility: view.nr.used ? 'visible' : 'hidden',
-        pointerEvents: view.nr.used ? undefined : 'none',
+          transform: `translateY(${view.position}px)`,
+          visibility: view.nr.used ? 'visible' : 'hidden',
+          pointerEvents: view.nr.used ? undefined : 'none',
         }"
-        >
+      >
         <strong>#{{ view.nr.index }}</strong> {{ (view.item as User).name }}
       </div>
     </div>

@@ -111,9 +111,11 @@ function mountHarness(
   {
     beforeEl,
     afterEl,
+    shift = false,
   }: {
     beforeEl?: HTMLElement
     afterEl?: HTMLElement
+    shift?: boolean
   } = {},
 ) {
   const onResize = vi.fn()
@@ -129,6 +131,7 @@ function mountHarness(
     buffer: 200,
     emitUpdate: true,
     pageMode: false,
+    shift,
     prerender: 0,
     updateInterval: 0,
   })
@@ -150,6 +153,7 @@ function mountHarness(
         buffer: options.buffer,
         emitUpdate: options.emitUpdate,
         pageMode: options.pageMode,
+        shift: options.shift,
         prerender: options.prerender,
         updateInterval: options.updateInterval,
         onResize,
@@ -303,6 +307,47 @@ describe('useDynamicScroller', () => {
     await nextTick()
 
     expect(el.value.scrollTop).toBe(45)
+  })
+
+  it('keeps the same anchor row in place while prepended items are measured with shift enabled', async () => {
+    const initialItems = [
+      { id: 'a', label: 'Alpha' },
+      { id: 'b', label: 'Beta' },
+      { id: 'c', label: 'Gamma' },
+      { id: 'd', label: 'Delta' },
+      { id: 'e', label: 'Epsilon' },
+    ]
+    const { vm, el, options } = mountHarness(initialItems, {
+      shift: true,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    el.value.scrollTop = 25
+    vm.updateVisibleItems(false)
+    const initialAnchorIndex = vm.findItemIndex(el.value.scrollTop)
+    const initialAnchorId = vm.itemsWithSize[initialAnchorIndex].id
+    const initialAnchorOffset = el.value.scrollTop - vm.getItemOffset(initialAnchorIndex)
+
+    options.items = [
+      { id: 'x', label: 'Prepended X' },
+      { id: 'y', label: 'Prepended Y' },
+      ...initialItems,
+    ]
+    await nextTick()
+
+    expect(el.value.scrollTop).toBe(65)
+    expect(vm.itemsWithSize[vm.findItemIndex(el.value.scrollTop)].id).toBe(initialAnchorId)
+    expect(el.value.scrollTop - vm.getItemOffset(vm.findItemIndex(el.value.scrollTop))).toBe(initialAnchorOffset)
+
+    vm.vscrollData.sizes.x = 35
+    vm.vscrollData.sizes.y = 30
+    await nextTick()
+
+    expect(el.value.scrollTop).toBe(90)
+    expect(vm.itemsWithSize[vm.findItemIndex(el.value.scrollTop)].id).toBe(initialAnchorId)
+    expect(el.value.scrollTop - vm.getItemOffset(vm.findItemIndex(el.value.scrollTop))).toBe(initialAnchorOffset)
   })
 
   it('handles simple-array mode and clears sizes on direction change', async () => {
@@ -698,7 +743,7 @@ describe('useDynamicScroller', () => {
         width: 240,
         height: 64,
       },
-    } as ResizeObserverEntry], vm.resizeObserver as ResizeObserver)
+    } as unknown as ResizeObserverEntry], vm.resizeObserver as ResizeObserver)
 
     expect(vm.vscrollData.sizes['row-1']).toBe(64)
 

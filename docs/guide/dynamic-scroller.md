@@ -56,6 +56,7 @@ export default {
 - `minItemSize` is required for the initial render of items.
 - `DynamicScroller` won't detect size changes on its own, but you can put values that affect item size on [DynamicScrollerItem](./dynamic-scroller-item) or on the headless `vDynamicScrollerItem` directive returned by `useDynamicScroller`.
 - You don't need to have a `size` field on the items.
+- `shift` and `cache` are available here too because `DynamicScroller` extends `RecycleScroller`.
 - If you need headless rendering with unknown-size items, see the dedicated [`useDynamicScroller` guide](./use-dynamic-scroller).
 
 ## Headless usage
@@ -126,6 +127,11 @@ Extends all the [RecycleScroller props](./recycle-scroller#props).
 It's not recommended to change the `sizeField` prop since all the size management is done internally.
 :::
 
+Common additions on the dynamic path:
+
+- `shift`: keep the viewport anchored during prepends
+- `cache`: restore previously known measured sizes
+
 ## Events
 
 Extends all the [RecycleScroller events](./recycle-scroller#events).
@@ -137,3 +143,20 @@ Extends all the [RecycleScroller scoped slot props](./recycle-scroller#default-s
 ## Other slots
 
 Extends all the [RecycleScroller other slots](./recycle-scroller#other-slots).
+
+## Exposed methods
+
+`DynamicScroller` exposes the same scrolling helpers as `RecycleScroller`:
+
+- `scrollToItem(index, options?)`
+- `scrollToPosition(position, options?)`
+- `findItemIndex(offset)`
+- `getItemOffset(index)`
+- `cacheSnapshot`
+- `restoreCache(snapshot)`
+
+It also exposes dynamic-specific helpers:
+
+- `getItemSize(item, index?)`
+- `scrollToBottom()`
+- `forceUpdate(clear?)`

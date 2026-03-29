@@ -1,3 +1,4 @@
+import type { CacheSnapshot } from '../types'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, defineComponent, h, nextTick, ref } from 'vue'
@@ -9,6 +10,10 @@ const mocks = vi.hoisted(() => {
     scrollToItem: vi.fn(),
     scrollToPosition: vi.fn(),
     getScroll: vi.fn(),
+    findItemIndex: vi.fn(),
+    getItemOffset: vi.fn(),
+    getItemSize: vi.fn(),
+    restoreCache: vi.fn(),
     updateVisibleItems: vi.fn(),
     handleScroll: vi.fn(),
     handleResize: vi.fn(),
@@ -40,13 +45,26 @@ describe('recycleScroller', () => {
     mocks.scrollToItem.mockReset()
     mocks.scrollToPosition.mockReset()
     mocks.getScroll.mockReset()
+    mocks.findItemIndex.mockReset()
+    mocks.getItemOffset.mockReset()
+    mocks.getItemSize.mockReset()
+    mocks.restoreCache.mockReset()
     mocks.updateVisibleItems.mockReset()
     mocks.handleScroll.mockReset()
     mocks.handleResize.mockReset()
     mocks.handleVisibilityChange.mockReset()
 
     mocks.getScroll.mockReturnValue({ start: 0, end: 80 })
+    mocks.findItemIndex.mockReturnValue(2)
+    mocks.getItemOffset.mockReturnValue(120)
+    mocks.getItemSize.mockReturnValue(30)
+    mocks.restoreCache.mockReturnValue(true)
     mocks.updateVisibleItems.mockReturnValue({ continuous: true })
+
+    const cacheSnapshot: CacheSnapshot = {
+      keys: ['a'],
+      sizes: [20],
+    }
 
     mocks.useRecycleScroller.mockImplementation((_options, _el, _before, _after, callbacks) => {
       return {
@@ -66,9 +84,14 @@ describe('recycleScroller', () => {
         ready: ref(true),
         sizes: computed(() => []),
         simpleArray: computed(() => false),
-        scrollToItem: (index: number) => mocks.scrollToItem(index),
-        scrollToPosition: (position: number) => mocks.scrollToPosition(position),
+        scrollToItem: (index: number, scrollOptions?: unknown) => mocks.scrollToItem(index, scrollOptions),
+        scrollToPosition: (position: number, scrollOptions?: unknown) => mocks.scrollToPosition(position, scrollOptions),
         getScroll: () => mocks.getScroll(),
+        findItemIndex: (offset: number) => mocks.findItemIndex(offset),
+        getItemOffset: (index: number) => mocks.getItemOffset(index),
+        getItemSize: (index: number) => mocks.getItemSize(index),
+        cacheSnapshot: computed(() => cacheSnapshot),
+        restoreCache: (snapshot: CacheSnapshot | null | undefined) => mocks.restoreCache(snapshot),
         updateVisibleItems: (itemsChanged: boolean, checkPositionDiff?: boolean) =>
           mocks.updateVisibleItems(itemsChanged, checkPositionDiff),
         handleScroll: () => mocks.handleScroll(),
@@ -161,15 +184,27 @@ describe('recycleScroller', () => {
     expect(mocks.handleResize).toHaveBeenCalledTimes(1)
     expect(wrapper.emitted('resize')).toHaveLength(1)
 
-    vm.scrollToItem(5)
-    vm.scrollToPosition(180)
+    vm.scrollToItem(5, { align: 'center' })
+    vm.scrollToPosition(180, { smooth: true })
 
-    expect(mocks.scrollToItem).toHaveBeenCalledWith(5)
-    expect(mocks.scrollToPosition).toHaveBeenCalledWith(180)
+    expect(mocks.scrollToItem).toHaveBeenCalledWith(5, { align: 'center' })
+    expect(mocks.scrollToPosition).toHaveBeenCalledWith(180, { smooth: true })
     expect(vm.getScroll()).toEqual({ start: 0, end: 80 })
+    expect(vm.findItemIndex(25)).toBe(2)
+    expect(vm.getItemOffset(4)).toBe(120)
+    expect(vm.getItemSize(4)).toBe(30)
+    expect(vm.cacheSnapshot).toEqual({
+      keys: ['a'],
+      sizes: [20],
+    })
+    expect(vm.restoreCache(vm.cacheSnapshot)).toBe(true)
   })
 
   it('passes options to useRecycleScroller', () => {
+    const cache = {
+      keys: ['a'],
+      sizes: [24],
+    }
     mount(RecycleScroller, {
       props: {
         items: [{ id: 'a' }],
@@ -179,6 +214,8 @@ describe('recycleScroller', () => {
         itemTag: 'li',
         itemSize: 30,
         buffer: 150,
+        shift: true,
+        cache,
       },
       global: {
         stubs: {
@@ -194,5 +231,7 @@ describe('recycleScroller', () => {
     expect(optionsArg.itemTag).toBe('li')
     expect(optionsArg.itemSize).toBe(30)
     expect(optionsArg.buffer).toBe(150)
+    expect(optionsArg.shift).toBe(true)
+    expect(optionsArg.cache).toStrictEqual(cache)
   })
 })

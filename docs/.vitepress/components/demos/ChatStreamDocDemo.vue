@@ -58,7 +58,7 @@ onBeforeUnmount(stopStream)
 <template>
   <DemoShell
     title="Chat stream"
-    description="Ported from the streaming chat demo. New rows are pushed continuously and the view auto-scrolls to bottom."
+    description="Continuously appends new rows while keeping the view pinned to the latest messages."
   >
     <template #toolbar>
       <button
@@ -101,12 +101,6 @@ onBeforeUnmount(stopStream)
       :items="filteredItems"
       :min-item-size="62"
     >
-      <template #before>
-        <div class="demo-notice">
-          The Stream demo appends data in real time while preserving smooth scrolling.
-        </div>
-      </template>
-
       <template #default="{ item, index, active }">
         <DynamicScrollerItem
           :item="item"

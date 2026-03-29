@@ -106,6 +106,8 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 | `typeField` | `'type'` | Field used to differentiate different kinds of components in the list. For each distinct type, a pool of recycled items will be created. |
 | `keyField` | `'id'` | Field used to identify items and optimize managing rendered views. |
 | `pageMode` | `false` | Enable [Page mode](#page-mode). |
+| `shift` | `false` | Keep the viewport anchored when items are prepended at the start of the list. Useful for chat-style feeds and reverse timelines. |
+| `cache` | — | Optional cache snapshot returned by `cacheSnapshot` to restore known item sizes after remounting. |
 | `prerender` | `0` | Render a fixed number of items for Server-Side Rendering (SSR). |
 | `buffer` | `200` | Amount of pixels to add to edges of the scrolling visible area to start rendering items further away. |
 | `emitUpdate` | `false` | Emit an `'update'` event each time the virtual scroller content is updated (can impact performance). |
@@ -169,6 +171,27 @@ Example:
 </RecycleScroller>
 ```
 
+## Exposed methods
+
+When you hold a template ref to `RecycleScroller`, the component exposes these helpers:
+
+- `scrollToItem(index, options?)`
+- `scrollToPosition(position, options?)`
+- `findItemIndex(offset)`
+- `getItemOffset(index)`
+- `getItemSize(index)`
+- `cacheSnapshot`
+- `restoreCache(snapshot)`
+- `updateVisibleItems(itemsChanged, checkPositionDiff?)`
+
+The optional `options` object for scrolling accepts:
+
+- `align`: `'start' | 'center' | 'end' | 'nearest'`
+- `smooth`: use native smooth scrolling when available
+- `offset`: add or subtract a fixed pixel offset from the computed target
+
+`align: 'nearest'` only scrolls when the target item is outside the current viewport.
+
 ## Page mode
 
 The page mode expands the virtual-scroller and uses the page viewport to compute which items are visible. That way, you can use it in a big page with HTML elements before or after (like a header and a footer). Set the `page-mode` prop to `true`:
@@ -186,6 +209,16 @@ The page mode expands the virtual-scroller and uses the page viewport to compute
   Copyright 2017 - Cat
 </footer>
 ```
+
+If the list should always use the window scroll position, prefer [`WindowScroller`](./window-scroller). `pageMode` remains the lightweight compatibility path on `RecycleScroller`.
+
+## Prepend anchoring and cache restore
+
+Use `shift` when new items are inserted at the beginning of the list and you want the current content to stay visually anchored.
+
+Use `cacheSnapshot` together with the `cache` prop or `restoreCache(snapshot)` when the same list is remounted and you want to reuse previously known item sizes instead of recalculating from scratch.
+
+See the dedicated [Shift demo](../demos/shift) for a prepend-history example.
 
 ## Variable size mode
 

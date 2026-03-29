@@ -21,7 +21,7 @@ const filteredRows = computed(() => {
 <template>
   <DemoShell
     title="Simple list"
-    description="Ported from the simple-list demo. Switch between DynamicScroller and RecycleScroller with a single control."
+    description="Switches between dynamic and fixed-size virtualization on the same dataset."
   >
     <template #toolbar>
       <label class="demo-chip">
@@ -50,11 +50,6 @@ const filteredRows = computed(() => {
       :items="filteredRows"
       :min-item-size="58"
     >
-      <template #before>
-        <div class="demo-notice">
-          Dynamic mode handles variable sentence height.
-        </div>
-      </template>
       <template #default="{ item, index, active }">
         <DynamicScrollerItem
           :item="item"

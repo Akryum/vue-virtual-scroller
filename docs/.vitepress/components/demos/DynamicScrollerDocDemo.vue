@@ -35,7 +35,7 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
 <template>
   <DemoShell
     title="DynamicScroller: unknown heights"
-    description="Ported from the dynamic messages demo. Each row recalculates as content changes."
+    description="Measures unknown row heights and recalculates them as content changes."
   >
     <template #toolbar>
       <label class="demo-chip">
@@ -70,12 +70,6 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
       :emit-update="true"
       @update="onUpdate"
     >
-      <template #before>
-        <div class="demo-notice">
-          Click any message to mutate text and trigger a dynamic size recalculation.
-        </div>
-      </template>
-
       <template #default="{ item, index, active }">
         <DynamicScrollerItem
           :item="item"
@@ -100,12 +94,6 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
 
           <small class="demo-message-meta">{{ item.timestamp }}</small>
         </DynamicScrollerItem>
-      </template>
-
-      <template #after>
-        <div class="demo-notice">
-          End of list.
-        </div>
       </template>
     </DynamicScroller>
   </DemoShell>

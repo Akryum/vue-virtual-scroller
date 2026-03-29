@@ -52,7 +52,7 @@ onMounted(regenerate)
 <template>
   <DemoShell
     title="RecycleScroller: Large list, variable height"
-    description="Ported from the classic RecycleScroller demo with modern controls and cleaner visual feedback."
+    description="Handles large lists with known or data-driven row sizes and fast programmatic navigation."
   >
     <template #toolbar>
       <label class="demo-chip">

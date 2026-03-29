@@ -5,3 +5,4 @@ dist/
 .eslintcache
 docs/.vitepress/cache
 docs/.vitepress/dist
+tests-results/

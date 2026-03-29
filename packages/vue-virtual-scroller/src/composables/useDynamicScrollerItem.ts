@@ -1,13 +1,16 @@
 import type { MaybeRef, MaybeRefOrGetter } from 'vue'
 import type { DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext } from './dynamicScrollerMeasurement'
-import { inject, onBeforeUnmount, onMounted } from 'vue'
+import { inject, onBeforeUnmount, onMounted, toValue, watch } from 'vue'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
 
 export interface UseDynamicScrollerItemOptions extends DynamicScrollerItemControllerOptions {}
 
-export type UseDynamicScrollerItemReturn = ReturnType<typeof createDynamicScrollerItemController> extends infer T
-  ? Pick<T & object, 'id' | 'size' | 'finalActive' | 'updateSize'>
-  : never
+export interface UseDynamicScrollerItemReturn {
+  id: ReturnType<typeof createDynamicScrollerItemController>['id']
+  size: ReturnType<typeof createDynamicScrollerItemController>['size']
+  finalActive: ReturnType<typeof createDynamicScrollerItemController>['finalActive']
+  updateSize: ReturnType<typeof createDynamicScrollerItemController>['updateSize']
+}
 
 export function useDynamicScrollerItem(
   options: MaybeRefOrGetter<UseDynamicScrollerItemOptions>,
@@ -17,6 +20,10 @@ export function useDynamicScrollerItem(
   },
 ): UseDynamicScrollerItemReturn {
   const measurementContext = inject<DynamicScrollerMeasurementContext>('vscrollMeasurementContext')!
+  const anchorRegistry = inject<{
+    delete: (el: HTMLElement) => void
+    set: (el: HTMLElement, value: { active: boolean, id: string | number }) => void
+  } | null>('vscrollAnchorRegistry', null)
   const controller = createDynamicScrollerItemController(
     options,
     el,
@@ -28,7 +35,32 @@ export function useDynamicScrollerItem(
     controller.mount()
   })
 
+  if (anchorRegistry) {
+    watch(
+      [controller.id, controller.finalActive, () => toValue(el)],
+      ([id, active, elValue], [_oldId, _oldActive, oldElValue]) => {
+        if (oldElValue && oldElValue !== elValue) {
+          anchorRegistry.delete(oldElValue as HTMLElement)
+        }
+
+        if (elValue) {
+          anchorRegistry.set(elValue as HTMLElement, {
+            active,
+            id,
+          })
+        }
+      },
+      {
+        immediate: true,
+      },
+    )
+  }
+
   onBeforeUnmount(() => {
+    const elValue = toValue(el)
+    if (anchorRegistry && elValue) {
+      anchorRegistry.delete(elValue as HTMLElement)
+    }
     controller.unmount()
   })
 

@@ -1,9 +1,10 @@
 import type { ComputedRef, Directive, MaybeRef, MaybeRefOrGetter } from 'vue'
-import type { ItemWithSize, ScrollDirection, VScrollData, View } from '../types'
+import type { CacheSnapshot, ItemWithSize, ScrollDirection, View, VScrollData } from '../types'
 import type { DynamicScrollerItemControllerCallbacks, DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext, DynamicScrollerUpdatePayload } from './dynamicScrollerMeasurement'
 import type { UseRecycleScrollerReturn } from './useRecycleScroller'
 import mitt from 'mitt'
 import { computed, effectScope, nextTick, onActivated, onDeactivated, onUnmounted, provide, reactive, shallowRef, toValue, watch } from 'vue'
+import { findPrependOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
 import { useRecycleScroller } from './useRecycleScroller'
 
@@ -21,9 +22,9 @@ interface UseDynamicScrollerItemLegacyBindingOptions extends Omit<DynamicScrolle
   onResize?: DynamicScrollerItemControllerCallbacks['onResize']
 }
 
-export type UseDynamicScrollerItemBindingOptions =
-  | UseDynamicScrollerItemViewBindingOptions
-  | UseDynamicScrollerItemLegacyBindingOptions
+export type UseDynamicScrollerItemBindingOptions
+  = | UseDynamicScrollerItemViewBindingOptions
+    | UseDynamicScrollerItemLegacyBindingOptions
 
 export interface UseDynamicScrollerOptions {
   items: unknown[]
@@ -35,6 +36,8 @@ export interface UseDynamicScrollerOptions {
   after?: MaybeRef<HTMLElement | undefined>
   buffer?: number
   pageMode?: boolean
+  shift?: boolean
+  cache?: CacheSnapshot
   prerender?: number
   emitUpdate?: boolean
   updateInterval?: number
@@ -52,10 +55,15 @@ type UseDynamicScrollerHandleResize = UseRecycleScrollerReturn['handleResize']
 type UseDynamicScrollerHandleVisibilityChange = UseRecycleScrollerReturn['handleVisibilityChange']
 type UseDynamicScrollerHandleScroll = UseRecycleScrollerReturn['handleScroll']
 type UseDynamicScrollerGetScroll = UseRecycleScrollerReturn['getScroll']
+type UseDynamicScrollerFindItemIndex = UseRecycleScrollerReturn['findItemIndex']
+type UseDynamicScrollerGetItemOffset = UseRecycleScrollerReturn['getItemOffset']
+type UseDynamicScrollerScrollToItem = UseRecycleScrollerReturn['scrollToItem']
 type UseDynamicScrollerScrollToPosition = UseRecycleScrollerReturn['scrollToPosition']
 type UseDynamicScrollerSortViews = UseRecycleScrollerReturn['sortViews']
 type UseDynamicScrollerTotalSize = UseRecycleScrollerReturn['totalSize']
 type UseDynamicScrollerUpdateVisibleItems = UseRecycleScrollerReturn['updateVisibleItems']
+type UseDynamicScrollerCacheSnapshot = UseRecycleScrollerReturn['cacheSnapshot']
+type UseDynamicScrollerRestoreCache = UseRecycleScrollerReturn['restoreCache']
 
 export interface UseDynamicScrollerReturn {
   vscrollData: VScrollData
@@ -70,14 +78,18 @@ export interface UseDynamicScrollerReturn {
   ready: UseDynamicScrollerReady
   sizes: UseDynamicScrollerSizes
   forceUpdate: (clear?: boolean) => void
-  scrollToItem: (index: number) => void
+  scrollToItem: UseDynamicScrollerScrollToItem
   scrollToPosition: UseDynamicScrollerScrollToPosition
   getScroll: UseDynamicScrollerGetScroll
+  findItemIndex: UseDynamicScrollerFindItemIndex
+  getItemOffset: UseDynamicScrollerGetItemOffset
   updateVisibleItems: UseDynamicScrollerUpdateVisibleItems
   handleScroll: UseDynamicScrollerHandleScroll
   handleResize: UseDynamicScrollerHandleResize
   handleVisibilityChange: UseDynamicScrollerHandleVisibilityChange
   sortViews: UseDynamicScrollerSortViews
+  cacheSnapshot: UseDynamicScrollerCacheSnapshot
+  restoreCache: UseDynamicScrollerRestoreCache
   getItemSize: (item: unknown, index?: number) => number
   scrollToBottom: () => void
   onScrollerResize: () => void
@@ -96,6 +108,22 @@ interface DynamicScrollerItemBindingRecord {
   el: ReturnType<typeof shallowRef<HTMLElement | undefined>>
   controller: ReturnType<typeof createDynamicScrollerItemController>
   restoreStyles: Record<string, string>
+}
+
+type VScrollUpdateHandler = (payload?: unknown) => void
+
+interface DynamicScrollerAnchorRecord {
+  active: boolean
+  id: string | number
+}
+
+interface DynamicScrollerShiftAnchor {
+  logicalKey: string | number
+  logicalOffset: number
+  pendingKeys: Set<string | number>
+  stableFrames: number
+  visualKey: string | number | null
+  visualOffset: number
 }
 
 function viewItemWithSize(view: View) {
@@ -178,15 +206,35 @@ function normalizeBindingOptions(options: UseDynamicScrollerItemBindingOptions):
   }
 }
 
+function getDynamicItemId(
+  item: unknown,
+  keyField: string,
+  simpleArray: boolean,
+  index?: number,
+) {
+  if (simpleArray) {
+    if (index == null) {
+      return null
+    }
+    return index
+  }
+
+  return (item as any)?.[keyField] ?? null
+}
+
 export function useDynamicScroller(
   options: MaybeRefOrGetter<UseDynamicScrollerOptions>,
 ): UseDynamicScrollerReturn {
   // Internal state (non-reactive)
   let _undefinedSizes = 0
   let _undefinedMap: Record<string | number, boolean | undefined> = {}
-  const _events = mitt<Record<'vscroll:update', DynamicScrollerUpdatePayload>>()
+  const _events = mitt()
   let _scrollingToBottom = false
   let _resizeObserver: ResizeObserver | undefined
+  let _applyingShiftAnchor = false
+  let _previousKeys: Array<string | number> = []
+  let _shiftAnchor: DynamicScrollerShiftAnchor | null = null
+  let _shiftAnchorRaf: number | null = null
 
   // Reactive state
   const vscrollData = reactive<VScrollData>({
@@ -200,6 +248,7 @@ export function useDynamicScroller(
   const el = computed(() => toValue(toValue(options).el))
   const before = computed(() => toValue(toValue(options).before))
   const after = computed(() => toValue(toValue(options).after))
+  const anchorRegistry = new Map<HTMLElement, DynamicScrollerAnchorRecord>()
 
   // ResizeObserver setup
   if (typeof ResizeObserver !== 'undefined') {
@@ -237,8 +286,11 @@ export function useDynamicScroller(
       set value(value: number) { _undefinedSizes = value },
     },
     onVscrollUpdate(callback) {
-      _events.on('vscroll:update', callback)
-      return () => _events.off('vscroll:update', callback)
+      const handler: VScrollUpdateHandler = (payload) => {
+        callback(payload as DynamicScrollerUpdatePayload)
+      }
+      _events.on('vscroll:update', handler)
+      return () => _events.off('vscroll:update', handler)
     },
   }
 
@@ -254,6 +306,14 @@ export function useDynamicScroller(
   })
   provide('vscrollResizeObserver', _resizeObserver)
   provide('vscrollMeasurementContext', measurementContext)
+  provide('vscrollAnchorRegistry', {
+    delete(elValue: HTMLElement) {
+      anchorRegistry.delete(elValue)
+    },
+    set(elValue: HTMLElement, value: DynamicScrollerAnchorRecord) {
+      anchorRegistry.set(elValue, value)
+    },
+  })
 
   // Computed
   const simpleArray = computed(() => {
@@ -284,6 +344,12 @@ export function useDynamicScroller(
     return result
   })
 
+  const initialOpts = toValue(options)
+  _previousKeys = getItemKeys(initialOpts.items, simpleArray.value ? null : initialOpts.keyField)
+  if (initialOpts.cache) {
+    vscrollData.sizes = restoreCacheMap(initialOpts.cache, initialOpts.items, simpleArray.value ? null : initialOpts.keyField)
+  }
+
   const recycleOptions = computed(() => {
     const opts = toValue(options)
     return {
@@ -298,6 +364,8 @@ export function useDynamicScroller(
       typeField: 'type',
       buffer: opts.buffer ?? 200,
       pageMode: opts.pageMode ?? false,
+      shift: false,
+      cache: opts.cache,
       prerender: opts.prerender ?? 0,
       emitUpdate: opts.emitUpdate ?? false,
       updateInterval: opts.updateInterval ?? 0,
@@ -330,6 +398,153 @@ export function useDynamicScroller(
 
   const bindings = new WeakMap<HTMLElement, DynamicScrollerItemBindingRecord>()
 
+  function cancelShiftAnchorFrame() {
+    if (_shiftAnchorRaf != null) {
+      cancelAnimationFrame(_shiftAnchorRaf)
+      _shiftAnchorRaf = null
+    }
+  }
+
+  function clearShiftAnchor() {
+    cancelShiftAnchorFrame()
+    _shiftAnchor = null
+  }
+
+  function scheduleShiftAnchorAlignment() {
+    if (_shiftAnchor == null || _shiftAnchorRaf != null) {
+      return
+    }
+
+    _shiftAnchorRaf = requestAnimationFrame(() => {
+      _shiftAnchorRaf = null
+      alignShiftAnchor()
+    })
+  }
+
+  function findVisualAnchor() {
+    const scrollerEl = el.value
+    if (!scrollerEl) {
+      return null
+    }
+
+    const viewportRect = scrollerEl.getBoundingClientRect()
+    let best: { key: string | number, offset: number, score: number } | null = null
+
+    for (const [rowEl, record] of anchorRegistry.entries()) {
+      if (!record.active || getComputedStyle(rowEl).visibility === 'hidden') {
+        continue
+      }
+
+      const rect = rowEl.getBoundingClientRect()
+      if (rect.bottom <= viewportRect.top || rect.top >= viewportRect.bottom) {
+        continue
+      }
+
+      const score = Math.max(rect.top, viewportRect.top) - viewportRect.top
+      if (!best || score < best.score) {
+        best = {
+          key: record.id,
+          offset: rect.top - viewportRect.top,
+          score,
+        }
+      }
+    }
+
+    return best
+  }
+
+  function captureShiftAnchor(previousKeys: Array<string | number>) {
+    const scrollerEl = el.value
+    if (!scrollerEl) {
+      clearShiftAnchor()
+      return
+    }
+
+    const scrollTop = scrollerEl.scrollTop
+    const anchorIndex = Math.min(recycleScroller.findItemIndex(scrollTop), previousKeys.length - 1)
+    const logicalKey = previousKeys[anchorIndex]
+    if (logicalKey == null) {
+      clearShiftAnchor()
+      return
+    }
+
+    const visualAnchor = findVisualAnchor()
+    _shiftAnchor = {
+      logicalKey,
+      logicalOffset: scrollTop - recycleScroller.getItemOffset(anchorIndex),
+      pendingKeys: new Set<string | number>(),
+      stableFrames: 0,
+      visualKey: visualAnchor?.key ?? null,
+      visualOffset: visualAnchor?.offset ?? 0,
+    }
+  }
+
+  function setScrollTop(target: number) {
+    const scrollerEl = el.value
+    if (!scrollerEl || Math.abs(scrollerEl.scrollTop - target) < 0.5) {
+      return false
+    }
+
+    _applyingShiftAnchor = true
+    scrollerEl.scrollTop = target
+    scrollerEl.dispatchEvent(new Event('scroll'))
+    requestAnimationFrame(() => {
+      _applyingShiftAnchor = false
+    })
+    return true
+  }
+
+  function alignShiftAnchor() {
+    const shiftAnchor = _shiftAnchor
+    const scrollerEl = el.value
+    if (!shiftAnchor || !scrollerEl) {
+      return
+    }
+
+    const anchorIndex = itemsWithSize.value.findIndex(item => item.id === shiftAnchor.logicalKey)
+    if (anchorIndex === -1) {
+      clearShiftAnchor()
+      return
+    }
+
+    let moved = false
+    const target = recycleScroller.getItemOffset(anchorIndex) + shiftAnchor.logicalOffset
+    moved = setScrollTop(target) || moved
+
+    if (shiftAnchor.visualKey != null) {
+      for (const [rowEl, record] of anchorRegistry.entries()) {
+        if (!record.active || record.id !== shiftAnchor.visualKey || getComputedStyle(rowEl).visibility === 'hidden') {
+          continue
+        }
+
+        const delta = rowEl.getBoundingClientRect().top - scrollerEl.getBoundingClientRect().top - shiftAnchor.visualOffset
+        moved = setScrollTop(scrollerEl.scrollTop + delta) || moved
+        break
+      }
+    }
+
+    let allMeasured = true
+    for (const key of shiftAnchor.pendingKeys) {
+      if (!(typeof vscrollData.sizes[key] === 'number' && vscrollData.sizes[key] > 0)) {
+        allMeasured = false
+        break
+      }
+    }
+
+    if (!moved && allMeasured) {
+      shiftAnchor.stableFrames++
+      if (shiftAnchor.stableFrames >= 2) {
+        clearShiftAnchor()
+        return
+      }
+    }
+    else {
+      shiftAnchor.stableFrames = 0
+    }
+
+    scheduleShiftAnchorAlignment()
+  }
+
   function mountBinding(
     elValue: HTMLElement,
     bindingValue: UseDynamicScrollerItemBindingOptions,
@@ -348,14 +563,23 @@ export function useDynamicScroller(
         const currentBinding = binding.value
         if (!('view' in currentBinding)) {
           return {
+            active: bindingOptions.value.active,
             direction: direction.value,
+            id: getDynamicItemId(
+              bindingOptions.value.item,
+              vscrollData.keyField,
+              vscrollData.simpleArray,
+              bindingOptions.value.index,
+            ),
             legacy: true,
           }
         }
 
         const { view } = currentBinding
         return {
+          active: view.nr.used,
           direction: direction.value,
+          id: viewItemWithSize(view).id,
           legacy: false,
           position: view.position,
           offset: view.offset,
@@ -364,6 +588,21 @@ export function useDynamicScroller(
       }, () => {
         const currentEl = elRef.value
         if (currentEl) {
+          const currentBinding = binding.value
+          const currentId = 'view' in currentBinding
+            ? viewItemWithSize(currentBinding.view).id
+            : getDynamicItemId(
+                bindingOptions.value.item,
+                vscrollData.keyField,
+                vscrollData.simpleArray,
+                bindingOptions.value.index,
+              )
+          if (currentId != null) {
+            anchorRegistry.set(currentEl, {
+              active: bindingOptions.value.active && vscrollData.active,
+              id: currentId,
+            })
+          }
           applyViewStyles(currentEl, binding.value, direction.value, restoreStyles)
         }
       }, {
@@ -422,6 +661,7 @@ export function useDynamicScroller(
       record.controller.unmount()
       record.scope.stop()
       restoreManagedStyles(elValue, record.restoreStyles)
+      anchorRegistry.delete(elValue)
       bindings.delete(elValue)
     },
   }
@@ -434,8 +674,14 @@ export function useDynamicScroller(
     _events.emit('vscroll:update', { force: true })
   }
 
-  function scrollToItem(index: number) {
-    recycleScroller.scrollToItem(index)
+  function scrollToItem(index: number, scrollOptions?: Parameters<UseRecycleScrollerReturn['scrollToItem']>[1]) {
+    recycleScroller.scrollToItem(index, scrollOptions)
+  }
+
+  function restoreCache(snapshot: CacheSnapshot | null | undefined) {
+    const opts = toValue(options)
+    vscrollData.sizes = restoreCacheMap(snapshot, opts.items, simpleArray.value ? null : opts.keyField)
+    return recycleScroller.restoreCache(snapshot)
   }
 
   function getItemSize(item: unknown, index?: number): number {
@@ -469,9 +715,49 @@ export function useDynamicScroller(
     })
   }
 
+  function onNativeScroll() {
+    if (_shiftAnchor && !_applyingShiftAnchor) {
+      clearShiftAnchor()
+    }
+  }
+
   // Watchers
-  watch(() => toValue(options).items, () => {
+  watch(() => toValue(options).items, (nextItems, previousItems) => {
+    const opts = toValue(options)
+    const keyField = simpleArray.value ? null : opts.keyField
+    const nextKeys = getItemKeys(nextItems, keyField)
+
+    if (opts.shift) {
+      const previousKeys = previousItems ? getItemKeys(previousItems, keyField) : _previousKeys
+      const prependCount = findPrependOffset(previousKeys, nextKeys)
+      if (prependCount > 0) {
+        captureShiftAnchor(previousKeys)
+        if (_shiftAnchor) {
+          _shiftAnchor.pendingKeys = new Set(nextKeys.slice(0, prependCount))
+          _shiftAnchor.stableFrames = 0
+          nextTick(() => {
+            if (_shiftAnchor) {
+              alignShiftAnchor()
+            }
+          })
+        }
+      }
+      else {
+        clearShiftAnchor()
+      }
+    }
+    else {
+      clearShiftAnchor()
+    }
+
+    _previousKeys = nextKeys
     forceUpdate()
+  }, { flush: 'sync' })
+
+  watch(() => toValue(options).cache, (snapshot) => {
+    if (snapshot) {
+      restoreCache(snapshot)
+    }
   })
 
   watch(simpleArray, (value) => {
@@ -479,13 +765,27 @@ export function useDynamicScroller(
   }, { immediate: true })
 
   watch(() => toValue(options).direction, () => {
+    clearShiftAnchor()
     forceUpdate(true)
+  })
+
+  watch(el, (nextEl, previousEl) => {
+    previousEl?.removeEventListener('scroll', onNativeScroll)
+    nextEl?.addEventListener('scroll', onNativeScroll)
+  }, {
+    immediate: true,
   })
 
   watch(itemsWithSize, (next, prev) => {
     const elValue = el.value
     if (!elValue)
       return
+
+    if (_shiftAnchor) {
+      alignShiftAnchor()
+      return
+    }
+
     const scrollTop = elValue.scrollTop
 
     // Calculate total diff between prev and next sizes
@@ -509,7 +809,7 @@ export function useDynamicScroller(
     }
 
     elValue.scrollTop += offset
-  })
+  }, { flush: 'post' })
 
   // Lifecycle
   onActivated(() => {
@@ -521,6 +821,8 @@ export function useDynamicScroller(
   })
 
   onUnmounted(() => {
+    cancelShiftAnchorFrame()
+    el.value?.removeEventListener('scroll', onNativeScroll)
     _events.all.clear()
   })
 
@@ -534,6 +836,7 @@ export function useDynamicScroller(
     simpleArray,
     forceUpdate,
     scrollToItem,
+    restoreCache,
     getItemSize,
     scrollToBottom,
     onScrollerResize,

@@ -18,10 +18,10 @@
     "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
-    "@playwright/test": "1.58.2",
-    "@vitest/browser-playwright": "4.0.16",
     "@akryum/sheep": "^0.5.2",
     "@antfu/eslint-config": "^7.7.0",
+    "@playwright/test": "1.58.2",
+    "@vitest/browser-playwright": "4.0.16",
     "eslint": "^10.0.2",
     "playwright": "1.58.2",
     "typescript": "^5.3.3",

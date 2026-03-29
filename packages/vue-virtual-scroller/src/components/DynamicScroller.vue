@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ItemWithSize, ScrollDirection } from '../types'
+import type { CacheSnapshot, ItemWithSize, ScrollDirection } from '../types'
 import { computed, ref } from 'vue'
 import { useDynamicScroller } from '../composables/useDynamicScroller'
 import RecycleScroller from './RecycleScroller.vue'
@@ -15,11 +15,15 @@ const props = withDefaults(defineProps<{
   listTag?: string
   itemTag?: string
   minItemSize: number | string
+  shift?: boolean
+  cache?: CacheSnapshot
 }>(), {
   keyField: 'id',
   direction: 'vertical',
   listTag: 'div',
   itemTag: 'div',
+  shift: false,
+  cache: undefined,
 })
 
 const emit = defineEmits<{
@@ -37,7 +41,12 @@ const {
   itemsWithSize,
   forceUpdate,
   scrollToItem,
+  scrollToPosition,
+  findItemIndex,
+  getItemOffset,
   getItemSize,
+  cacheSnapshot,
+  restoreCache,
   scrollToBottom,
   onScrollerResize,
   onScrollerVisible,
@@ -47,6 +56,8 @@ const {
     keyField: props.keyField,
     direction: props.direction,
     minItemSize: props.minItemSize,
+    shift: props.shift,
+    cache: props.cache,
     el: scrollerEl.value,
     onResize: () => emit('resize'),
     onVisible: () => emit('visible'),
@@ -66,8 +77,13 @@ function getDefaultSlotBindings(itemWithSize: unknown, index: number, active: bo
 // Expose
 defineExpose({
   scrollToItem,
+  scrollToPosition,
+  findItemIndex,
+  getItemOffset,
   scrollToBottom,
   getItemSize,
+  cacheSnapshot,
+  restoreCache,
   forceUpdate,
 })
 </script>
@@ -78,6 +94,7 @@ defineExpose({
     :items="itemsWithSize"
     :min-item-size="props.minItemSize"
     :direction="props.direction"
+    :cache="props.cache"
     key-field="id"
     :list-tag="props.listTag"
     :item-tag="props.itemTag"

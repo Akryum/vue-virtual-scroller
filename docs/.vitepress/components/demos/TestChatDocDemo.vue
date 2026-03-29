@@ -26,7 +26,7 @@ function addItems(count = 1) {
 <template>
   <DemoShell
     title="Test chat append"
-    description="Ported from test-chat. This stress test appends many rows and keeps the viewport pinned to the latest messages."
+    description="Stress-tests append-heavy timelines while keeping the viewport pinned to the latest messages."
   >
     <template #toolbar>
       <button class="demo-button" @click="addItems(1)">
