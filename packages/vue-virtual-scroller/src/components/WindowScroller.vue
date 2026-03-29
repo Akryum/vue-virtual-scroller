@@ -166,3 +166,5 @@ defineExpose({
     <ResizeObserver @notify="handleResize" />
   </div>
 </template>
+
+<style src="./scroller.css"></style>

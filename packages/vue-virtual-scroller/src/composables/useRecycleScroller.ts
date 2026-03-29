@@ -818,7 +818,7 @@ export function useRecycleScroller(
   onMounted(() => {
     applyPageMode()
     nextTick(() => {
-      // In SSR mode, render the real number of visible items
+      // In SSR mode, render the number of visible items
       _prerender = false
       updateVisibleItems(true)
       ready.value = true
