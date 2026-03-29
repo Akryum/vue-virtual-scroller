@@ -9,11 +9,64 @@ import {
   waitForSettle,
 } from './support/demo'
 
+interface VisibleRowMetric {
+  end: number
+  id: number
+  start: number
+}
+
+function normalizeVisibleRows(rows: Awaited<ReturnType<typeof getVisibleItems>>): VisibleRowMetric[] {
+  return rows
+    .map((row) => {
+      const id = Number(row.key)
+      if (!Number.isFinite(id)) {
+        return null
+      }
+
+      return {
+        id,
+        start: row.start,
+        end: row.end,
+      }
+    })
+    .filter((row): row is VisibleRowMetric => row != null)
+}
+
+function expectContiguousVisibleRows(rows: VisibleRowMetric[]) {
+  expect(rows.length).toBeGreaterThan(3)
+
+  for (let index = 1; index < rows.length; index++) {
+    const previous = rows[index - 1]
+    const current = rows[index]
+    const gap = current.start - previous.end
+
+    expect(current.id).toBe(previous.id + 1)
+    expect(current.start).toBeGreaterThanOrEqual(previous.start - 1)
+    expect(Math.abs(gap)).toBeLessThanOrEqual(8)
+    expect(current.end - current.start).toBeGreaterThan(0)
+  }
+}
+
 test('dynamic scroller demo smoke', async ({ page }) => {
   await expectDemoSmoke(page, {
     slug: 'dynamic-scroller',
     itemSelector: '[data-testid="demo:row"]',
   })
+})
+
+test('dynamic scroller demo keeps visible rows contiguous after fast scrolling', async ({ browserName, page }) => {
+  test.skip(browserName !== 'chromium')
+
+  await page.goto('/demos/dynamic-scroller')
+  await waitForSettle(page)
+
+  for (const distance of [0, 1800, 4200, -2600, 5600]) {
+    await scrollViewportBy(page, distance)
+    await waitForSettle(page)
+
+    const visibleRows = normalizeVisibleRows(await getVisibleItems(page, '[data-testid="demo:row"]'))
+    expectContiguousVisibleRows(visibleRows)
+  }
 })
 
 test('dynamic scroller demo filters, remeasures, and updates the visible range', async ({ browserName, page }) => {
