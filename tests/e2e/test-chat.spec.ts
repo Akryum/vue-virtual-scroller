@@ -16,7 +16,7 @@ test('test chat demo smoke', async ({ page }) => {
 
   expect((await readMetricNumbers(metric(page, 'messages')))[0] ?? 0).toBe(80)
   await expect(viewport(page)).toBeVisible()
-  await expect(page.getByTestId('demo:row').first()).toBeVisible()
+  await expect(page.locator('[data-testid="demo:row"]:visible').first()).toBeVisible()
 })
 
 test('test chat demo handles repeated append bursts while staying pinned to the end', async ({ browserName, page }) => {
