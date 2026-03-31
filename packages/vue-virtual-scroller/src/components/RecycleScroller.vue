@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { CacheSnapshot, ScrollDirection } from '../types'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRecycleScroller } from '../composables/useRecycleScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
 import ItemView from './ItemView.vue'
@@ -74,6 +74,7 @@ const hoverKey = ref<string | number | null>(null)
 
 const {
   pool,
+  visiblePool,
   totalSize,
   ready,
   scrollToItem,
@@ -109,9 +110,23 @@ const {
   },
 )
 
+const itemWrapperStyle = computed(() => {
+  const listStyle: Record<string, string> = {
+    [props.direction === 'vertical' ? 'minHeight' : 'minWidth']: `${totalSize.value}px`,
+  }
+
+  if (props.gridItems && props.itemSize != null) {
+    const crossAxisSize = (props.itemSecondarySize || props.itemSize) * props.gridItems
+    listStyle[props.direction === 'vertical' ? 'minWidth' : 'minHeight'] = `${crossAxisSize}px`
+  }
+
+  return listStyle
+})
+
 // Expose public methods and el ref
 defineExpose({
   el,
+  visiblePool,
   scrollToItem,
   scrollToPosition,
   getScroll,
@@ -130,6 +145,7 @@ defineExpose({
     v-observe-visibility="handleVisibilityChange"
     class="vue-recycle-scroller"
     :class="{
+      'grid-mode': props.gridItems,
       ready,
       'page-mode': props.pageMode,
       [`direction-${props.direction}`]: true,
@@ -148,7 +164,7 @@ defineExpose({
 
     <component
       :is="props.listTag"
-      :style="{ [props.direction === 'vertical' ? 'minHeight' : 'minWidth']: `${totalSize}px` }"
+      :style="itemWrapperStyle"
       class="vue-recycle-scroller__item-wrapper"
       :class="props.listClass"
     >

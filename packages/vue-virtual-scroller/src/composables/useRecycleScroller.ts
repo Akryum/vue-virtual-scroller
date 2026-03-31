@@ -67,6 +67,15 @@ function getItemKeyValue(item: unknown, index: number, keyField: string): string
   return key
 }
 
+interface GridRenderWindow {
+  renderedIndices: number[]
+  startIndex: number
+  endIndex: number
+  visibleStartIndex: number
+  visibleEndIndex: number
+  totalSize: number
+}
+
 export function useRecycleScroller(
   options: MaybeRefOrGetter<UseRecycleScrollerOptions>,
   el: MaybeRef<HTMLElement | undefined>,
@@ -91,6 +100,7 @@ export function useRecycleScroller(
   const _recycledPools = new Map<unknown, View[]>()
   let _scrollDirty = false
   let _lastUpdateScrollPosition = 0
+  let _lastUpdateSecondaryScrollPosition = 0
   let _prerender = false
   let _updateTimeout: ReturnType<typeof setTimeout> | null = null
   let _refreshTimout: ReturnType<typeof setTimeout> | null = null
@@ -336,6 +346,24 @@ export function useRecycleScroller(
     return scrollState
   }
 
+  function getSecondaryScroll(): ScrollState {
+    const elValue = toValue(el)!
+    const opts = toValue(options)
+
+    if (opts.direction === 'vertical') {
+      const start = normalizeOffset(elValue.scrollLeft, 'horizontal', elValue)
+      return {
+        start,
+        end: start + elValue.clientWidth,
+      }
+    }
+
+    return {
+      start: elValue.scrollTop,
+      end: elValue.scrollTop + elValue.clientHeight,
+    }
+  }
+
   function getItemSize(index: number): number {
     const opts = toValue(options)
     if (opts.itemSize != null) {
@@ -496,6 +524,65 @@ export function useRecycleScroller(
     _listenerTarget = null
   }
 
+  function getGridRenderWindow(
+    count: number,
+    gridItems: number,
+    itemSize: number,
+    itemSecondarySize: number,
+    primaryScroll: ScrollState,
+    secondaryScroll: ScrollState,
+  ): GridRenderWindow {
+    const totalSize = Math.ceil(count / gridItems) * itemSize
+    const primaryStart = Math.max(0, Math.floor(primaryScroll.start / itemSize))
+    const primaryEnd = Math.min(Math.ceil(primaryScroll.end / itemSize), Math.ceil(count / gridItems))
+    const secondaryStart = Math.max(0, Math.floor(secondaryScroll.start / itemSecondarySize))
+    const secondaryEnd = Math.min(Math.ceil(secondaryScroll.end / itemSecondarySize), gridItems)
+
+    const renderedIndices: number[] = []
+
+    for (let primary = primaryStart; primary < primaryEnd; primary++) {
+      const groupStart = primary * gridItems
+      for (let secondary = secondaryStart; secondary < secondaryEnd; secondary++) {
+        const index = groupStart + secondary
+        if (index >= count) {
+          break
+        }
+        renderedIndices.push(index)
+      }
+    }
+
+    const firstIndex = renderedIndices[0] ?? 0
+    const lastIndex = renderedIndices.at(-1) ?? -1
+
+    return {
+      renderedIndices,
+      startIndex: firstIndex,
+      endIndex: lastIndex + 1,
+      visibleStartIndex: firstIndex,
+      visibleEndIndex: lastIndex,
+      totalSize,
+    }
+  }
+
+  function supportsGridSecondaryVirtualization() {
+    const opts = toValue(options)
+    if (!opts.gridItems || opts.itemSize == null) {
+      return false
+    }
+
+    const elValue = toValue(el)
+    if (!elValue) {
+      return false
+    }
+
+    const itemSecondarySize = opts.itemSecondarySize || opts.itemSize
+    const secondaryViewportSize = opts.direction === 'vertical'
+      ? elValue.clientWidth
+      : elValue.clientHeight
+
+    return itemSecondarySize * opts.gridItems > secondaryViewportSize
+  }
+
   function updateVisibleItems(itemsChanged: boolean, checkPositionDiff = false): { continuous: boolean } {
     const opts = toValue(options)
     const itemSize = opts.itemSize
@@ -509,6 +596,8 @@ export function useRecycleScroller(
     const sizesValue = sizes.value as Sizes
     const views = _views
     const poolValue = pool.value
+    let renderedIndices: number[] | null = null
+    let renderedIndexSet: Set<number> | null = null
     let startIndex: number, endIndex: number
     let totalSizeValue: number
     let visibleStartIndex: number, visibleEndIndex: number
@@ -523,23 +612,38 @@ export function useRecycleScroller(
     }
     else {
       const scroll = getScroll()
+      const secondaryScroll = getSecondaryScroll()
 
       // Skip update if user hasn't scrolled enough
       if (checkPositionDiff) {
         let positionDiff = scroll.start - _lastUpdateScrollPosition
         if (positionDiff < 0)
           positionDiff = -positionDiff
-        if ((itemSize === null && positionDiff < minItemSize) || (itemSize !== null && positionDiff < itemSize)) {
+
+        let secondaryPositionDiff = secondaryScroll.start - _lastUpdateSecondaryScrollPosition
+        if (secondaryPositionDiff < 0)
+          secondaryPositionDiff = -secondaryPositionDiff
+
+        const primaryThresholdMet = (itemSize === null && positionDiff >= minItemSize)
+          || (itemSize !== null && positionDiff >= itemSize)
+        const secondaryThresholdMet = gridItems > 1
+          && itemSize != null
+          && secondaryPositionDiff >= itemSecondarySize
+
+        if (!primaryThresholdMet && !secondaryThresholdMet) {
           return {
             continuous: true,
           }
         }
       }
       _lastUpdateScrollPosition = scroll.start
+      _lastUpdateSecondaryScrollPosition = secondaryScroll.start
 
       const buffer = opts.buffer
       scroll.start -= buffer
       scroll.end += buffer
+      secondaryScroll.start -= buffer
+      secondaryScroll.end += buffer
 
       // account for leading slot
       let beforeSize = 0
@@ -603,24 +707,44 @@ export function useRecycleScroller(
       }
       else {
         // Fixed size mode
-        startIndex = ~~(scroll.start / itemSize * gridItems)
-        const remainer = startIndex % gridItems
-        startIndex -= remainer
-        endIndex = Math.ceil(scroll.end / itemSize * gridItems)
-        visibleStartIndex = Math.max(0, Math.floor((scroll.start - beforeSize) / itemSize * gridItems))
-        visibleEndIndex = Math.floor((scroll.end - beforeSize) / itemSize * gridItems)
+        if (gridItems > 1) {
+          const gridWindow = getGridRenderWindow(
+            count,
+            gridItems,
+            itemSize,
+            itemSecondarySize,
+            scroll,
+            secondaryScroll,
+          )
 
-        // Bounds
-        if (startIndex < 0)
-          startIndex = 0
-        if (endIndex > count)
-          endIndex = count
-        if (visibleStartIndex < 0)
-          visibleStartIndex = 0
-        if (visibleEndIndex > count)
-          visibleEndIndex = count
+          renderedIndices = gridWindow.renderedIndices
+          renderedIndexSet = new Set(renderedIndices)
+          startIndex = gridWindow.startIndex
+          endIndex = gridWindow.endIndex
+          visibleStartIndex = gridWindow.visibleStartIndex
+          visibleEndIndex = gridWindow.visibleEndIndex
+          totalSizeValue = gridWindow.totalSize
+        }
+        else {
+          startIndex = ~~(scroll.start / itemSize * gridItems)
+          const remainer = startIndex % gridItems
+          startIndex -= remainer
+          endIndex = Math.ceil(scroll.end / itemSize * gridItems)
+          visibleStartIndex = Math.max(0, Math.floor((scroll.start - beforeSize) / itemSize * gridItems))
+          visibleEndIndex = Math.floor((scroll.end - beforeSize) / itemSize * gridItems)
 
-        totalSizeValue = Math.ceil(count / gridItems) * itemSize
+          // Bounds
+          if (startIndex < 0)
+            startIndex = 0
+          if (endIndex > count)
+            endIndex = count
+          if (visibleStartIndex < 0)
+            visibleStartIndex = 0
+          if (visibleEndIndex > count)
+            visibleEndIndex = count
+
+          totalSizeValue = Math.ceil(count / gridItems) * itemSize
+        }
       }
     }
 
@@ -642,8 +766,10 @@ export function useRecycleScroller(
       for (let i = 0, l = poolValue.length; i < l; i++) {
         view = poolValue[i]
         if (view.nr.used) {
-          const viewVisible = view.nr.index >= startIndex && view.nr.index < endIndex
-          const viewSize = itemSize || (sizesValue[i] && sizesValue[i].size)
+          const viewVisible = renderedIndexSet
+            ? renderedIndexSet.has(view.nr.index)
+            : (view.nr.index >= startIndex && view.nr.index < endIndex)
+          const viewSize = itemSize || (sizesValue[view.nr.index] && sizesValue[view.nr.index].size)
           if (!viewVisible || !viewSize) {
             removeAndRecycleView(view)
           }
@@ -653,7 +779,8 @@ export function useRecycleScroller(
 
     // Step 2: Assign a view and update props for every view that became visible
     let item: unknown, type: unknown
-    for (let i = startIndex; i < endIndex; i++) {
+    const indices = renderedIndices ?? Array.from({ length: Math.max(0, endIndex - startIndex) }, (_, index) => startIndex + index)
+    for (const i of indices) {
       const elementSize = itemSize || (sizesValue[i] && sizesValue[i].size)
       if (!elementSize)
         continue
@@ -732,6 +859,10 @@ export function useRecycleScroller(
   }
 
   function hasVisibleViewGap(): boolean {
+    if (supportsGridSecondaryVirtualization()) {
+      return false
+    }
+
     const visibleViews = pool.value.filter(({ nr }) => nr.used)
     for (let i = 1; i < visibleViews.length; i++) {
       if (visibleViews[i].nr.index !== visibleViews[i - 1].nr.index + 1) {
@@ -772,6 +903,33 @@ export function useRecycleScroller(
     }
 
     scrollToPosition(target, scrollOptions)
+
+    if (opts.gridItems && opts.itemSize != null) {
+      const elValue = toValue(el)!
+      const gridItems = opts.gridItems
+      const itemSecondarySize = opts.itemSecondarySize || opts.itemSize
+      const secondaryIndex = targetIndex % gridItems
+      const secondaryItemStart = secondaryIndex * itemSecondarySize
+      const secondaryDirection = opts.direction === 'vertical' ? 'horizontal' : 'vertical'
+      const secondaryViewportStart = secondaryDirection === 'horizontal'
+        ? normalizeOffset(elValue.scrollLeft, 'horizontal', elValue)
+        : elValue.scrollTop
+      const secondaryViewportSize = secondaryDirection === 'horizontal'
+        ? elValue.clientWidth
+        : elValue.clientHeight
+      const secondaryTarget = getAlignedScrollOffset(
+        secondaryItemStart,
+        itemSecondarySize,
+        secondaryViewportStart,
+        secondaryViewportSize,
+        scrollOptions?.align,
+        scrollOptions?.offset ?? 0,
+      )
+
+      if (secondaryTarget != null) {
+        scrollElementTo(elValue, secondaryDirection, secondaryTarget, scrollOptions)
+      }
+    }
   }
 
   function scrollToPosition(position: number, scrollOptions?: ScrollToOptions) {

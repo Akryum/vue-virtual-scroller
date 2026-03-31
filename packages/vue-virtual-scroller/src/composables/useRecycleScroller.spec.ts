@@ -22,12 +22,18 @@ function createView(index: number, used = true): View {
 function mountHarness(overrides: Partial<{
   items: Array<Record<string, unknown>>
   itemSize: number | null
+  gridItems: number | undefined
+  itemSecondarySize: number | undefined
   minItemSize: number | null
   sizeField: string
   shift: boolean
   cache: any
+  clientHeight: number
+  clientWidth: number
 }> = {}) {
   const onUpdate = vi.fn()
+  const clientHeight = overrides.clientHeight ?? 100
+  const clientWidth = overrides.clientWidth ?? 100
   const options = reactive({
     items: Array.from({ length: 6 }, (_, id) => ({ id })),
     keyField: 'id',
@@ -67,11 +73,11 @@ function mountHarness(overrides: Partial<{
   const el = (wrapper.vm as any).el as HTMLElement
   Object.defineProperty(el, 'clientHeight', {
     configurable: true,
-    get: () => 100,
+    get: () => clientHeight,
   })
   Object.defineProperty(el, 'clientWidth', {
     configurable: true,
-    get: () => 100,
+    get: () => clientWidth,
   })
   el.scrollTo = vi.fn(({ top, left }: ScrollToOptions & { top?: number, left?: number }) => {
     if (typeof top === 'number') {
@@ -145,6 +151,46 @@ describe('useRecycleScroller', () => {
     vm.el.scrollTop = 20
     vm.scrollToItem(2, { align: 'nearest' })
     expect(vm.el.scrollTop).toBe(20)
+  })
+
+  it('virtualizes grid items across the secondary axis and updates on horizontal scroll', async () => {
+    const { vm } = mountHarness({
+      items: Array.from({ length: 16 }, (_, id) => ({ id })),
+      itemSize: 10,
+      gridItems: 4,
+      itemSecondarySize: 20,
+      clientHeight: 25,
+      clientWidth: 35,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => view.nr.index).sort((a: number, b: number) => a - b)).toEqual([0, 1, 4, 5, 8, 9])
+
+    vm.el.scrollLeft = 20
+    vm.updateVisibleItems(false)
+
+    expect(vm.visiblePool.map((view: View) => view.nr.index).sort((a: number, b: number) => a - b)).toEqual([1, 2, 5, 6, 9, 10])
+  })
+
+  it('scrolls grid items into view on both axes', async () => {
+    const { vm } = mountHarness({
+      items: Array.from({ length: 16 }, (_, id) => ({ id })),
+      itemSize: 10,
+      gridItems: 4,
+      itemSecondarySize: 20,
+      clientHeight: 10,
+      clientWidth: 35,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    vm.scrollToItem(6, { align: 'start' })
+
+    expect(vm.el.scrollTop).toBe(10)
+    expect(vm.el.scrollLeft).toBe(40)
   })
 
   it('keeps the viewport anchored when prepending items with shift enabled', async () => {

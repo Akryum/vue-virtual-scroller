@@ -4,18 +4,18 @@ import GridDocDemo from '../.vitepress/components/demos/GridDocDemo.vue'
 
 # Grid Demo
 
-Use this demo for card galleries and catalog layouts.
+This demo shows how `RecycleScroller` can power a grid layout when every card uses a fixed size. It is a good fit for galleries, catalogs, and card-based dashboards.
 
-What to try:
+## Try it yourself
 
-- Change `Items / row` to test responsiveness.
-- Jump to deep indexes with `Scroll to`.
-- Validate performance with thousands of cards.
+- Change the number of items per row to see how the layout adapts.
+- Jump to a deeper item index to test programmatic navigation.
+- Scroll through the list and confirm that the grid still feels smooth with thousands of cards.
 
 <GridDocDemo />
 
 
-## Relevant source code
+## Source code
 
 ```vue
 <script setup lang="ts">
@@ -28,7 +28,11 @@ interface GridCard extends Person {
   id: number
 }
 
-const scroller = ref<InstanceType<typeof RecycleScroller>>()
+type RecycleScrollerExposed = InstanceType<typeof RecycleScroller> & {
+  visiblePool?: Array<{ nr: { index: number } }>
+}
+
+const scroller = ref<RecycleScrollerExposed>()
 const gridItems = ref(5)
 const scrollTo = ref(300)
 
@@ -44,6 +48,12 @@ const cards = computed<GridCard[]>(() =>
         ...person,
       }
     }),
+)
+
+const renderedCardIndexes = computed(() =>
+  (scroller.value?.visiblePool ?? [])
+    .map(view => view.nr.index)
+    .sort((a, b) => a - b),
 )
 
 function jump() {
@@ -67,5 +77,7 @@ function jump() {
       </article>
     </template>
   </RecycleScroller>
+
+  <p>Rendered cards: {{ renderedCardIndexes.map(index => `#${index}`).join(', ') }}</p>
 </template>
 ```

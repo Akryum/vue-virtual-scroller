@@ -9,7 +9,11 @@ interface GridCard extends Person {
   id: number
 }
 
-const scroller = ref<InstanceType<typeof RecycleScroller>>()
+type RecycleScrollerExposed = InstanceType<typeof RecycleScroller> & {
+  visiblePool?: Array<{ nr: { index: number } }>
+}
+
+const scroller = ref<RecycleScrollerExposed>()
 const gridItems = ref(5)
 const scrollTo = ref(300)
 
@@ -27,6 +31,27 @@ const cards = computed<GridCard[]>(() =>
     }),
 )
 
+const renderedCardIndexes = computed(() =>
+  (scroller.value?.visiblePool ?? [])
+    .map(view => view.nr.index)
+    .sort((a, b) => a - b),
+)
+
+const renderedCardSummary = computed(() => {
+  const indexes = renderedCardIndexes.value
+  if (!indexes.length)
+    return 'none'
+
+  if (indexes.length <= 12)
+    return indexes.map(index => `#${index}`).join(', ')
+
+  return [
+    ...indexes.slice(0, 8).map(index => `#${index}`),
+    '...',
+    ...indexes.slice(-4).map(index => `#${index}`),
+  ].join(', ')
+})
+
 function jump() {
   const target = Math.min(Math.max(0, scrollTo.value), cards.value.length - 1)
   scroller.value?.scrollToItem(target)
@@ -36,12 +61,12 @@ function jump() {
 <template>
   <DemoShell
     demo-id="grid"
-    title="Grid mode"
-    description="Renders large fixed-size card grids efficiently in multi-column rows."
+    title="Grid layout"
+    description="Virtualizes large fixed-size card grids without changing the grid feel."
   >
     <template #toolbar>
       <label class="demo-chip">
-        Items / row
+        Items per row
         <input
           v-model.number="gridItems"
           data-testid="demo:control:grid-items"
@@ -53,7 +78,7 @@ function jump() {
       </label>
 
       <label class="demo-chip">
-        Scroll to
+        Go to item
         <input
           v-model.number="scrollTo"
           data-testid="demo:control:scroll-to"
@@ -68,13 +93,18 @@ function jump() {
         data-testid="demo:control:jump"
         @click="jump"
       >
-        Jump
+        Go
       </button>
 
       <span
         class="demo-chip"
         data-testid="demo:metric:cards"
-      >Cards: {{ cards.length }}</span>
+      >Total cards: {{ cards.length }}</span>
+
+      <span
+        class="demo-chip"
+        data-testid="demo:metric:rendered-cards"
+      >Rendered: {{ renderedCardIndexes.length }} ({{ renderedCardSummary }})</span>
     </template>
 
     <RecycleScroller

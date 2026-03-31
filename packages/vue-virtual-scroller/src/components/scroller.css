@@ -10,6 +10,10 @@
   overflow-x: auto;
 }
 
+.vue-recycle-scroller.grid-mode:not(.page-mode) {
+  overflow: auto;
+}
+
 .vue-recycle-scroller.direction-horizontal {
   display: flex;
 }
