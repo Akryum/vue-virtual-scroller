@@ -1,8 +1,8 @@
 # WindowScroller
 
-`WindowScroller` is the dedicated window-viewport version of `RecycleScroller`.
+`WindowScroller` is the window-based version of [`RecycleScroller`](./recycle-scroller).
 
-Use it when the browser window is the real scroll container and the list should live inside normal page flow with content above or below it.
+Use it when the browser window is the scroll container and the list should stay in normal page flow with content above or below it.
 
 ## When to use it
 
@@ -43,51 +43,73 @@ const rows = ref(
 </template>
 ```
 
-## Props and methods
+## How it behaves
 
-`WindowScroller` uses the same core props, events, slot props, and exposed methods as [`RecycleScroller`](./recycle-scroller), except it always uses the browser window as the scroll transport.
+- The list stays in normal page flow instead of owning its own fixed-height scrollbox.
+- Visibility is computed from the browser viewport, so surrounding page content can sit before or after the list naturally.
+- The component still uses pooled rendering, recycled views, `shift`, and cache restore exactly like `RecycleScroller`.
 
-That means it supports:
+## Props
 
+`WindowScroller` accepts the same core props as [`RecycleScroller`](./recycle-scroller#props), except it always uses window-based scrolling.
+
+The most commonly used props are:
+
+- `items`
+- `keyField`
+- `direction`
+- `itemSize`
+- `gridItems`
+- `itemSecondarySize`
+- `minItemSize`
+- `sizeField`
+- `typeField`
+- `buffer`
 - `shift`
 - `cache`
+- `prerender`
+- `emitUpdate`
+- `updateInterval`
+- `listTag`
+- `itemTag`
+- `listClass`
+- `itemClass`
+
+Use `itemSize: null` when each item already knows its size through `sizeField`. If the DOM needs to measure unknown item sizes after render, switch to [`DynamicScroller`](./dynamic-scroller).
+
+## Slots
+
+`WindowScroller` keeps the same slot structure as `RecycleScroller`:
+
+- Default slot props: `item`, `index`, `active`
+- `before`: content rendered before the pooled list
+- `after`: content rendered after the pooled list
+- `empty`: shown when `items` is empty
+
+The default slot is still the simplest choice when the bundled wrapper markup already fits your UI.
+
+## Events
+
+`WindowScroller` emits the same events as `RecycleScroller`:
+
+- `resize`
+- `visible`
+- `hidden`
+- `update(startIndex, endIndex, visibleStartIndex, visibleEndIndex)` when `emitUpdate` is enabled
+
+## Exposed methods
+
+With a template ref, `WindowScroller` exposes the same navigation helpers as the core scroller:
+
 - `scrollToItem(index, options?)`
 - `scrollToPosition(position, options?)`
+- `getScroll()`
 - `findItemIndex(offset)`
 - `getItemOffset(index)`
 - `getItemSize(index)`
 - `cacheSnapshot`
 - `restoreCache(snapshot)`
-
-## Headless usage
-
-Use `useWindowScroller` when you want the same behavior without the bundled component markup:
-
-```ts
-import { computed, ref } from 'vue'
-import { useWindowScroller } from 'vue-virtual-scroller'
-
-const el = ref<HTMLElement>()
-const rows = ref([
-  { id: 1, label: 'Alpha' },
-  { id: 2, label: 'Beta' },
-])
-
-const scroller = useWindowScroller(computed(() => ({
-  items: rows.value,
-  keyField: 'id',
-  direction: 'vertical' as const,
-  itemSize: 40,
-  minItemSize: null,
-  sizeField: 'size',
-  typeField: 'type',
-  buffer: 200,
-  shift: false,
-  prerender: 0,
-  emitUpdate: false,
-  updateInterval: 0,
-})), el)
-```
+- `updateVisibleItems(itemsChanged, checkPositionDiff?)`
 
 ## `WindowScroller` vs `pageMode`
 

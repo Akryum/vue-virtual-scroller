@@ -8,9 +8,11 @@
 
 </div>
 
-Blazing fast scrolling of any amount of data | [Demos](../demos/index.md) | [Video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k)
+`vue-virtual-scroller` helps you render large lists in Vue without paying the cost of mounting every item at once.
 
-For Vue 2 support, see [here](https://github.com/Akryum/vue-virtual-scroller/tree/v1/packages/vue-virtual-scroller).
+If you are new to the package, start here, then explore the [demos](../demos/index.md) or the [video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k) when you want to see the behavior in motion.
+
+If you need Vue 2 support, use the [v1 branch](https://github.com/Akryum/vue-virtual-scroller/tree/v1/packages/vue-virtual-scroller).
 
 ## Installation
 
@@ -32,7 +34,7 @@ pnpm add vue-virtual-scroller@next
 
 ### Plugin import
 
-Install all the components:
+Install all components:
 
 ```js
 import VueVirtualScroller from 'vue-virtual-scroller'
@@ -40,7 +42,7 @@ import VueVirtualScroller from 'vue-virtual-scroller'
 app.use(VueVirtualScroller)
 ```
 
-Use specific components:
+Or register only the components you need:
 
 ```js
 import { RecycleScroller } from 'vue-virtual-scroller'
@@ -49,7 +51,7 @@ app.component('RecycleScroller', RecycleScroller)
 ```
 
 ::: warning
-The CSS file must be imported when using the package:
+Make sure to import the package CSS:
 
 ```js
 import 'vue-virtual-scroller/index.css'
@@ -58,32 +60,23 @@ import 'vue-virtual-scroller/index.css'
 
 ## Components
 
-There are several components provided by `vue-virtual-scroller`:
+`vue-virtual-scroller` includes the following components:
 
-- [**RecycleScroller**](./recycle-scroller) — only renders the visible items in your list. It also re-uses components and DOM elements to be as efficient and performant as possible.
+- [**RecycleScroller**](./recycle-scroller) — the main component for lists with known item sizes or sizes already stored in your data.
 
-- [**DynamicScroller**](./dynamic-scroller) — wraps RecycleScroller and extends its features to include dynamic size management. The main use case is when you **do not know the size of the items** in advance. It automatically "discovers" item dimensions as it renders new items during scrolling.
+- [**DynamicScroller**](./dynamic-scroller) — builds on `RecycleScroller` and measures items as they render when size is not known in advance.
 
-- [**DynamicScrollerItem**](./dynamic-scroller-item) — must wrap each item in a DynamicScroller to handle size computations.
+- [**DynamicScrollerItem**](./dynamic-scroller-item) — the measurement wrapper used inside `DynamicScroller`.
 
-- [**WindowScroller**](./window-scroller) — dedicated window-viewport version of the virtual scroller API. Prefer this over `pageMode` when the browser window is the real scroll container.
-
-- [**IdState**](./id-state) — a mixin that eases local state management in reused components inside a RecycleScroller.
-
-- [**useRecycleScroller (headless)**](./use-recycle-scroller) — low-level composable API to build your own virtual scroller UI without using bundled components.
-
-- [**useDynamicScroller (headless dynamic items)**](./use-dynamic-scroller) — headless composable API for unknown-size lists, including wrapper-free measurement and automatic recycled-view styles through `vDynamicScrollerItem`.
-
-- `useWindowScroller` — headless window-scrolling composable used by `WindowScroller`.
+- [**WindowScroller**](./window-scroller) — a window-based version of the API for lists that should follow page scrolling instead of an inner container.
 
 ## Headless APIs
 
-Use the headless APIs when you want the virtualization engine without the bundled component markup.
+Use the headless APIs when you want the virtualization engine without the bundled component markup. This is ideal for `<table>` elements or highly custom layouts.
 
-- Start with [**useRecycleScroller**](./use-recycle-scroller) when item size is fixed or already known on each item.
-- Move to [**useDynamicScroller**](./use-dynamic-scroller) when size must be measured from the DOM after render.
-- Use [**WindowScroller**](./window-scroller) or `useWindowScroller` when the list should track the browser viewport itself.
-- Prefer the bundled components when their markup already fits your UI; the headless path gives you more control, but it also makes you responsible for the outer structure and scroll-container sizing.
+- Start with [**useRecycleScroller**](./use-recycle-scroller) when item size is fixed or already known.
+- Move to [**useDynamicScroller**](./use-dynamic-scroller) when the DOM needs to measure size after render.
+- Use [**useWindowScroller**](./use-window-scroller) when the page should still drive scrolling, but you need custom wrappers or semantics.
 
 <style scoped>
 .badges p {

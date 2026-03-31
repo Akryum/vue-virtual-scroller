@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'Vue Virtual Scroller',
-  description: 'Blazing fast scrolling of any amount of data',
+  description: 'Virtual scrolling for large Vue lists and dynamic layouts.',
 
   themeConfig: {
     nav: [
@@ -31,8 +31,8 @@ export default defineConfig({
           items: [
             { text: 'RecycleScroller', link: '/guide/recycle-scroller' },
             { text: 'DynamicScroller', link: '/guide/dynamic-scroller' },
-            { text: 'WindowScroller', link: '/guide/window-scroller' },
             { text: 'DynamicScrollerItem', link: '/guide/dynamic-scroller-item' },
+            { text: 'WindowScroller', link: '/guide/window-scroller' },
           ],
         },
         {
@@ -40,6 +40,7 @@ export default defineConfig({
           items: [
             { text: 'useRecycleScroller', link: '/guide/use-recycle-scroller' },
             { text: 'useDynamicScroller', link: '/guide/use-dynamic-scroller' },
+            { text: 'useWindowScroller', link: '/guide/use-window-scroller' },
           ],
         },
         {
@@ -57,6 +58,7 @@ export default defineConfig({
             { text: 'Overview', link: '/demos/' },
             { text: 'RecycleScroller', link: '/demos/recycle-scroller' },
             { text: 'DynamicScroller', link: '/demos/dynamic-scroller' },
+            { text: 'WindowScroller', link: '/demos/window-scroller' },
             { text: 'Chat Stream', link: '/demos/chat' },
             { text: 'Shift', link: '/demos/shift' },
             { text: 'Simple List', link: '/demos/simple-list' },

@@ -1,3 +1,5 @@
+/* eslint-disable e18e/prefer-static-regex */
+
 import { expect, test } from '@playwright/test'
 import {
   control,
