@@ -7,7 +7,7 @@ If you use AI coding agents, `vue-virtual-scroller` ships a package skill that d
 After installing `vue-virtual-scroller` in your project:
 
 ```bash
-pnpm add vue-virtual-scroller@next
+pnpm add vue-virtual-scroller
 npx skills-npm
 ```
 

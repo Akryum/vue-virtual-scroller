@@ -22,7 +22,7 @@ Use this skill when a task involves large Vue lists, DOM reuse, windowed renderi
 `vue-virtual-scroller` targets Vue 3 and ships ESM only. Use it with an ESM-aware toolchain such as Vite, Nuxt, Rollup, or webpack 5.
 
 ```sh
-pnpm add vue-virtual-scroller@next
+pnpm add vue-virtual-scroller
 ```
 
 Always import the package CSS:

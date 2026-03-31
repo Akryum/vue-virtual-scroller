@@ -17,15 +17,15 @@ If you need Vue 2 support, use the [v1 branch](https://github.com/Akryum/vue-vir
 ## Installation
 
 ```sh
-npm install vue-virtual-scroller@next
+npm install vue-virtual-scroller
 ```
 
 ```sh
-yarn add vue-virtual-scroller@next
+yarn add vue-virtual-scroller
 ```
 
 ```sh
-pnpm add vue-virtual-scroller@next
+pnpm add vue-virtual-scroller
 ```
 
 ## Setup
