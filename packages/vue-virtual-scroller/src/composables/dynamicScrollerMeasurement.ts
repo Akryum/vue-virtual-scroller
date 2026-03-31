@@ -1,5 +1,5 @@
 import type { ComputedRef, MaybeRefOrGetter } from 'vue'
-import type { ScrollDirection, VScrollData } from '../types'
+import type { KeyValue, ScrollDirection, VScrollData } from '../types'
 import { computed, nextTick, toValue, watch } from 'vue'
 
 export interface DynamicScrollerUpdatePayload {
@@ -17,8 +17,8 @@ export interface DynamicScrollerMeasurementContext {
   onVscrollUpdate: (callback: (payload: DynamicScrollerUpdatePayload) => void) => () => void
 }
 
-export interface DynamicScrollerItemControllerOptions {
-  item: unknown
+export interface DynamicScrollerItemControllerOptions<TItem = unknown> {
+  item: TItem
   watchData: boolean
   active: boolean
   index?: number
@@ -27,11 +27,11 @@ export interface DynamicScrollerItemControllerOptions {
 }
 
 export interface DynamicScrollerItemControllerCallbacks {
-  onResize?: (id: string | number) => void
+  onResize?: (id: KeyValue) => void
 }
 
 export interface DynamicScrollerItemController {
-  id: ComputedRef<string | number>
+  id: ComputedRef<KeyValue>
   size: ComputedRef<number>
   finalActive: ComputedRef<boolean>
   updateSize: () => void
@@ -40,14 +40,14 @@ export interface DynamicScrollerItemController {
 }
 
 export function createDynamicScrollerItemController(
-  options: MaybeRefOrGetter<DynamicScrollerItemControllerOptions>,
+  options: MaybeRefOrGetter<DynamicScrollerItemControllerOptions<any>>,
   el: MaybeRefOrGetter<HTMLElement | undefined>,
   context: DynamicScrollerMeasurementContext,
   callbacks?: MaybeRefOrGetter<DynamicScrollerItemControllerCallbacks | undefined>,
 ): DynamicScrollerItemController {
-  let _forceNextVScrollUpdate: string | number | null = null
-  let _pendingSizeUpdate: string | number | null = null
-  let _pendingVScrollUpdate: string | number | null = null
+  let _forceNextVScrollUpdate: KeyValue | null = null
+  let _pendingSizeUpdate: KeyValue | null = null
+  let _pendingVScrollUpdate: KeyValue | null = null
   let _sizeObserved = false
   let _watchDataStop: (() => void) | null = null
   const _cleanupStops: Array<() => void> = []
@@ -55,7 +55,7 @@ export function createDynamicScrollerItemController(
     ? () => {}
     : context.onVscrollUpdate(onVscrollUpdate)
 
-  const id = computed<string | number>(() => {
+  const id = computed<KeyValue>(() => {
     const opts = toValue(options)
     if (context.vscrollData.simpleArray) {
       if (opts.index == null) {
@@ -119,14 +119,14 @@ export function createDynamicScrollerItemController(
     updateSize()
   }
 
-  function clearUndefinedState(targetId: string | number) {
+  function clearUndefinedState(targetId: KeyValue) {
     if (context.undefinedMap[targetId]) {
       context.undefinedSizeCount.value--
     }
     context.undefinedMap[targetId] = undefined
   }
 
-  function syncUndefinedState(targetId: string | number, active: boolean) {
+  function syncUndefinedState(targetId: KeyValue, active: boolean) {
     if (context.vscrollData.sizes[targetId]) {
       clearUndefinedState(targetId)
       return
@@ -146,7 +146,7 @@ export function createDynamicScrollerItemController(
     }
   }
 
-  function computeSize(targetId: string | number) {
+  function computeSize(targetId: KeyValue) {
     nextTick(() => {
       if (id.value === targetId) {
         const elValue = toValue(el)
@@ -201,7 +201,7 @@ export function createDynamicScrollerItemController(
     _sizeObserved = false
   }
 
-  function onResize(targetId: string | number, width: number, height: number) {
+  function onResize(targetId: KeyValue, width: number, height: number) {
     if (id.value === targetId) {
       applyWidthHeight(width, height)
     }

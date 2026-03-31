@@ -1,5 +1,5 @@
 import type { ComputedRef, MaybeRef, MaybeRefOrGetter, Ref } from 'vue'
-import type { CacheSnapshot, ScrollDirection, ScrollState, ScrollToOptions, Sizes, View, ViewNonReactive } from '../types'
+import type { CacheSnapshot, ItemKey, ScrollDirection, ScrollState, ScrollToOptions, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
 import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
 import config from '../config'
 import { buildCacheSnapshot, findPrependOffset, getAlignedScrollOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
@@ -7,15 +7,15 @@ import { getViewportSize, normalizeOffset, scrollElementTo } from '../engine/scr
 import { getScrollParent } from '../scrollparent'
 import { supportsPassive } from '../utils'
 
-export interface UseRecycleScrollerOptions {
-  items: unknown[]
-  keyField: string
+export interface UseRecycleScrollerOptions<TItem = unknown, TKeyField extends string = 'id', TSizeField extends string = 'size'> {
+  items: TItem[]
+  keyField: ValidKeyField<TItem, TKeyField>
   direction: ScrollDirection
   itemSize: number | null
   gridItems?: number
   itemSecondarySize?: number
   minItemSize: number | string | null
-  sizeField: string
+  sizeField?: ValidSizeField<TItem, TSizeField>
   typeField: string
   buffer: number
   pageMode: boolean
@@ -26,9 +26,9 @@ export interface UseRecycleScrollerOptions {
   updateInterval: number
 }
 
-export interface UseRecycleScrollerReturn {
-  pool: Ref<View[]>
-  visiblePool: ComputedRef<View[]>
+export interface UseRecycleScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>> {
+  pool: Ref<Array<View<TItem, TKey>>>
+  visiblePool: ComputedRef<Array<View<TItem, TKey>>>
   totalSize: Ref<number>
   ready: Ref<boolean>
   sizes: ComputedRef<Sizes | never[]>
@@ -48,23 +48,27 @@ export interface UseRecycleScrollerReturn {
   sortViews: () => void
 }
 
-type ViewWithStyleStamp = View & {
+type ViewWithStyleStamp<TItem = unknown, TKey = ItemKey<TItem>> = View<TItem, TKey> & {
   _vs_styleStamp: number
 }
 
 let uid = 0
 
-function touchView(view: View) {
-  const stampedView = view as ViewWithStyleStamp
+function touchView<TItem, TKey>(view: View<TItem, TKey>) {
+  const stampedView = view as ViewWithStyleStamp<TItem, TKey>
   stampedView._vs_styleStamp++
 }
 
-function getItemKeyValue(item: unknown, index: number, keyField: string): string | number {
+function getItemKeyValue<TItem, TKeyField extends string>(
+  item: TItem,
+  index: number,
+  keyField: ValidKeyField<TItem, TKeyField>,
+): ItemKey<TItem, TKeyField> {
   const key = (item as any)?.[keyField]
   if (key == null) {
     throw new Error(`Key is ${key} on item (keyField is '${keyField}')`)
   }
-  return key
+  return key as ItemKey<TItem, TKeyField>
 }
 
 interface GridRenderWindow {
@@ -76,8 +80,8 @@ interface GridRenderWindow {
   totalSize: number
 }
 
-export function useRecycleScroller(
-  options: MaybeRefOrGetter<UseRecycleScrollerOptions>,
+export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSizeField extends string = 'size'>(
+  options: MaybeRefOrGetter<UseRecycleScrollerOptions<TItem, TKeyField, TSizeField>>,
   el: MaybeRef<HTMLElement | undefined>,
   before?: MaybeRef<HTMLElement | undefined>,
   after?: MaybeRef<HTMLElement | undefined>,
@@ -87,17 +91,17 @@ export function useRecycleScroller(
     onHidden?: () => void
     onUpdate?: (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => void
   },
-): UseRecycleScrollerReturn {
+): UseRecycleScrollerReturn<TItem, ItemKey<TItem, TKeyField>> {
   // Reactive state
-  const pool = ref<View[]>([])
+  const pool = ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>([]) as Ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>
   const totalSize = ref(0)
   const ready = ref(false)
 
   // Internal state (non-reactive)
   let _startIndex = 0
   let _endIndex = 0
-  const _views = new Map<string | number, View>()
-  const _recycledPools = new Map<unknown, View[]>()
+  const _views = new Map<ItemKey<TItem, TKeyField>, View<TItem, ItemKey<TItem, TKeyField>>>()
+  const _recycledPools = new Map<unknown, Array<View<TItem, ItemKey<TItem, TKeyField>>>>()
   let _scrollDirty = false
   let _lastUpdateScrollPosition = 0
   let _lastUpdateSecondaryScrollPosition = 0
@@ -107,11 +111,11 @@ export function useRecycleScroller(
   let _sortTimer: ReturnType<typeof setTimeout> | null = null
   let _computedMinItemSize = 0
   let _listenerTarget: (Window | Element) | null = null
-  let _previousKeys: Array<string | number> = []
-  let _shiftAnchor: { key: string | number, offset: number } | null = null
+  let _previousKeys: Array<ItemKey<TItem, TKeyField>> = []
+  let _shiftAnchor: { key: ItemKey<TItem, TKeyField>, offset: number } | null = null
   let _shiftAnchorClearTimer: ReturnType<typeof setTimeout> | null = null
   let _applyingShiftAnchor = false
-  const _restoredSizes = ref<Record<string | number, number>>({})
+  const _restoredSizes = ref<Record<ItemKey<TItem, TKeyField>, number>>({} as Record<ItemKey<TItem, TKeyField>, number>)
 
   // Computed
   const simpleArray = computed(() => {
@@ -126,7 +130,7 @@ export function useRecycleScroller(
         [-1]: { accumulator: 0 },
       }
       const items = opts.items
-      const field = opts.sizeField
+      const field = opts.sizeField ?? 'size'
       const minItemSize = opts.minItemSize as number
       const restoredSizes = _restoredSizes.value
       let computedMinSize = 10000
@@ -161,7 +165,7 @@ export function useRecycleScroller(
         return opts.itemSize
       }
 
-      return _restoredSizes.value[key] || (item as any)?.[opts.sizeField] || undefined
+      return _restoredSizes.value[key as ItemKey<TItem, TKeyField>] || (item as any)?.[opts.sizeField ?? 'size'] || undefined
     })
   })
 
@@ -172,7 +176,7 @@ export function useRecycleScroller(
     return Object.keys(_restoredSizes.value).length > 0
   }
 
-  function getRecycledPool(type: unknown): View[] {
+  function getRecycledPool(type: unknown): Array<View<TItem, ItemKey<TItem, TKeyField>>> {
     let recycledPool = _recycledPools.get(type)
     if (!recycledPool) {
       recycledPool = []
@@ -181,8 +185,14 @@ export function useRecycleScroller(
     return recycledPool
   }
 
-  function createView(viewPool: View[], index: number, item: unknown, key: string | number, type: unknown): View {
-    const nr: ViewNonReactive = markRaw({
+  function createView(
+    viewPool: Array<View<TItem, ItemKey<TItem, TKeyField>>>,
+    index: number,
+    item: TItem,
+    key: ItemKey<TItem, TKeyField>,
+    type: unknown,
+  ): View<TItem, ItemKey<TItem, TKeyField>> {
+    const nr: ViewNonReactive<ItemKey<TItem, TKeyField>> = markRaw({
       id: uid++,
       index,
       used: true,
@@ -195,12 +205,12 @@ export function useRecycleScroller(
       offset: 0,
       nr,
       _vs_styleStamp: 0,
-    }) as View
+    }) as View<TItem, ItemKey<TItem, TKeyField>>
     viewPool.push(view)
     return view
   }
 
-  function getRecycledView(type: unknown): View | undefined {
+  function getRecycledView(type: unknown): View<TItem, ItemKey<TItem, TKeyField>> | undefined {
     const recycledPool = getRecycledPool(type)
     if (recycledPool && recycledPool.length) {
       const view = recycledPool.pop()!
@@ -211,7 +221,7 @@ export function useRecycleScroller(
     return undefined
   }
 
-  function removeAndRecycleView(view: View) {
+  function removeAndRecycleView(view: View<TItem, ItemKey<TItem, TKeyField>>) {
     const type = view.nr.type
     const recycledPool = getRecycledPool(type)
     recycledPool.push(view)
@@ -225,7 +235,10 @@ export function useRecycleScroller(
     _views.clear()
     _recycledPools.clear()
     for (let i = 0, l = pool.value.length; i < l; i++) {
-      removeAndRecycleView(pool.value[i])
+      const view = pool.value[i]
+      if (view) {
+        removeAndRecycleView(view)
+      }
     }
   }
 
@@ -439,7 +452,7 @@ export function useRecycleScroller(
     }, 150)
   }
 
-  function captureShiftAnchor(previousItems: unknown[], keyField: string | null) {
+  function captureShiftAnchor(previousItems: TItem[], keyField: ValidKeyField<TItem, TKeyField> | null) {
     if (!previousItems.length) {
       clearShiftAnchor()
       return
@@ -464,7 +477,7 @@ export function useRecycleScroller(
     }
   }
 
-  function applyShiftAnchor(nextItems?: unknown[]): boolean {
+  function applyShiftAnchor(nextItems?: TItem[]): boolean {
     if (!_shiftAnchor) {
       return false
     }
@@ -754,7 +767,7 @@ export function useRecycleScroller(
 
     totalSize.value = totalSizeValue
 
-    let view: View | undefined
+    let view: View<TItem, ItemKey<TItem, TKeyField>> | undefined
 
     const continuous = startIndex <= _endIndex && endIndex >= _startIndex
 
@@ -764,7 +777,11 @@ export function useRecycleScroller(
     }
     else {
       for (let i = 0, l = poolValue.length; i < l; i++) {
-        view = poolValue[i]
+        const currentView = poolValue[i]
+        if (!currentView) {
+          continue
+        }
+        view = currentView
         if (view.nr.used) {
           const viewVisible = renderedIndexSet
             ? renderedIndexSet.has(view.nr.index)
@@ -778,14 +795,14 @@ export function useRecycleScroller(
     }
 
     // Step 2: Assign a view and update props for every view that became visible
-    let item: unknown, type: unknown
+    let item: TItem, type: unknown
     const indices = renderedIndices ?? Array.from({ length: Math.max(0, endIndex - startIndex) }, (_, index) => startIndex + index)
     for (const i of indices) {
       const elementSize = itemSize || (sizesValue[i] && sizesValue[i].size)
       if (!elementSize)
         continue
       item = items[i]
-      const key = keyField ? (item as any)[keyField] : i
+      const key = (keyField ? (item as any)[keyField] : i) as ItemKey<TItem, TKeyField>
       if (key == null) {
         throw new Error(`Key is ${key} on item (keyField is '${keyField}')`)
       }
@@ -960,7 +977,7 @@ export function useRecycleScroller(
 
   // In SSR mode, we also prerender the same number of item for the first render
   const initialOpts = toValue(options)
-  _previousKeys = getItemKeys(initialOpts.items, initialOpts.items.length > 0 && typeof initialOpts.items[0] !== 'object' ? null : initialOpts.keyField)
+  _previousKeys = getItemKeys(initialOpts.items, initialOpts.items.length > 0 && typeof initialOpts.items[0] !== 'object' ? null : initialOpts.keyField) as Array<ItemKey<TItem, TKeyField>>
   if (initialOpts.cache) {
     restoreCache(initialOpts.cache)
   }
@@ -1008,8 +1025,10 @@ export function useRecycleScroller(
     const nextKeys = getItemKeys(nextItems, keyField)
 
     if (opts.shift) {
-      const previousKeys = previousItems ? getItemKeys(previousItems, keyField) : _previousKeys
-      const prependOffset = findPrependOffset(previousKeys, nextKeys)
+      const previousKeys = previousItems
+        ? getItemKeys(previousItems, keyField) as Array<ItemKey<TItem, TKeyField>>
+        : _previousKeys
+      const prependOffset = findPrependOffset(previousKeys, nextKeys as Array<ItemKey<TItem, TKeyField>>)
       if (prependOffset > 0) {
         captureShiftAnchor(previousItems ?? [], keyField)
       }
@@ -1021,7 +1040,7 @@ export function useRecycleScroller(
       clearShiftAnchor()
     }
 
-    _previousKeys = nextKeys
+    _previousKeys = nextKeys as Array<ItemKey<TItem, TKeyField>>
     applyShiftAnchor(nextItems)
     updateVisibleItems(true)
   })

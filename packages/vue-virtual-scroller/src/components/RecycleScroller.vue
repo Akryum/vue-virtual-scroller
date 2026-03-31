@@ -1,5 +1,6 @@
-<script setup lang="ts">
-import type { CacheSnapshot, ScrollDirection } from '../types'
+<script setup lang="ts" generic="TItem">
+import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from '../composables/useRecycleScroller'
+import type { CacheSnapshot, ClassValue, KeyValue, RecycleScrollerExposed, RecycleScrollerSlotProps, ScrollDirection } from '../types'
 import { computed, ref } from 'vue'
 import { useRecycleScroller } from '../composables/useRecycleScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
@@ -7,7 +8,7 @@ import ItemView from './ItemView.vue'
 import ResizeObserver from './ResizeObserver.vue'
 
 const props = withDefaults(defineProps<{
-  items: unknown[]
+  items: TItem[]
   keyField?: string
   direction?: ScrollDirection
   listTag?: string
@@ -27,8 +28,8 @@ const props = withDefaults(defineProps<{
   disableTransform?: boolean
   updateInterval?: number
   skipHover?: boolean
-  listClass?: string | Record<string, boolean> | Array<string | Record<string, boolean>>
-  itemClass?: string | Record<string, boolean> | Array<string | Record<string, boolean>>
+  listClass?: ClassValue
+  itemClass?: ClassValue
 }>(), {
   keyField: 'id',
   direction: 'vertical',
@@ -62,6 +63,13 @@ const emit = defineEmits<{
   scrollEnd: []
 }>()
 
+defineSlots<{
+  default?: (props: RecycleScrollerSlotProps<TItem>) => unknown
+  before?: () => unknown
+  after?: () => unknown
+  empty?: () => unknown
+}>()
+
 const vObserveVisibility = ObserveVisibility
 
 // Template refs
@@ -70,7 +78,28 @@ const before = ref<HTMLElement>()
 const after = ref<HTMLElement>()
 
 // Hover state (UI-specific, not in composable)
-const hoverKey = ref<string | number | null>(null)
+const hoverKey = ref<KeyValue | null>(null)
+
+const recycleScroller = useRecycleScroller(
+  props as unknown as UseRecycleScrollerOptions<TItem, any, 'size'>,
+  el,
+  before,
+  after,
+  {
+    onResize: () => emit('resize'),
+    onVisible: () => emit('visible'),
+    onHidden: () => emit('hidden'),
+    onUpdate: (startIndex, endIndex, visibleStartIndex, visibleEndIndex) => {
+      emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex)
+      if (visibleStartIndex <= 0) {
+        emit('scrollStart')
+      }
+      if (visibleEndIndex >= props.items.length - 1) {
+        emit('scrollEnd')
+      }
+    },
+  },
+) as unknown as UseRecycleScrollerReturn<TItem, KeyValue>
 
 const {
   pool,
@@ -89,26 +118,15 @@ const {
   handleScroll,
   handleResize,
   handleVisibilityChange,
-} = useRecycleScroller(
-  props,
-  el,
-  before,
-  after,
-  {
-    onResize: () => emit('resize'),
-    onVisible: () => emit('visible'),
-    onHidden: () => emit('hidden'),
-    onUpdate: (startIndex, endIndex, visibleStartIndex, visibleEndIndex) => {
-      emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex)
-      if (visibleStartIndex <= 0) {
-        emit('scrollStart')
-      }
-      if (visibleEndIndex >= props.items.length - 1) {
-        emit('scrollEnd')
-      }
-    },
-  },
-)
+} = recycleScroller
+
+function setHoverKey(key: KeyValue) {
+  hoverKey.value = key
+}
+
+function clearHoverKey() {
+  hoverKey.value = null
+}
 
 const itemWrapperStyle = computed(() => {
   const listStyle: Record<string, string> = {
@@ -124,7 +142,7 @@ const itemWrapperStyle = computed(() => {
 })
 
 // Expose public methods and el ref
-defineExpose({
+const exposed: RecycleScrollerExposed<TItem, KeyValue> = {
   el,
   visiblePool,
   scrollToItem,
@@ -136,7 +154,9 @@ defineExpose({
   cacheSnapshot,
   restoreCache,
   updateVisibleItems,
-})
+}
+
+defineExpose(exposed)
 </script>
 
 <template>
@@ -193,8 +213,8 @@ defineExpose({
           },
         ]"
         v-on="props.skipHover ? {} : {
-          mouseenter: () => { hoverKey = view.nr.key },
-          mouseleave: () => { hoverKey = null },
+          mouseenter: () => { setHoverKey(view.nr.key) },
+          mouseleave: () => { clearHoverKey() },
         }"
       >
         <template #default="slotProps">

@@ -46,7 +46,7 @@
     "lint": "cd ../../ && pnpm run lint"
   },
   "peerDependencies": {
-    "vue": "^3.2.0"
+    "vue": "^3.3.0"
   },
   "dependencies": {
     "mitt": "^2.1.0"

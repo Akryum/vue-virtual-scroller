@@ -43,6 +43,33 @@ const rows = ref(
 </template>
 ```
 
+## TypeScript generics
+
+`WindowScroller` uses the same generic component typing as `RecycleScroller`. With Vue 3.3+, the `item` slot prop is inferred from `items` automatically:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+
+interface Row {
+  id: number
+  label: string
+}
+
+const rows = ref<Row[]>([])
+</script>
+
+<template>
+  <WindowScroller :items="rows" :item-size="40">
+    <template #default="{ item }">
+      {{ item.label }}
+    </template>
+  </WindowScroller>
+</template>
+```
+
+If you want the same item type to flow through the headless window-scrolling helpers, use [`useWindowScroller`](./use-window-scroller) with an explicit generic.
+
 ## How it behaves
 
 - The list stays in normal page flow instead of owning its own fixed-height scrollbox.

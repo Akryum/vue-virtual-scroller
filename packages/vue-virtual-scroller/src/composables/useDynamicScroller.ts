@@ -1,34 +1,34 @@
 import type { ComputedRef, Directive, MaybeRef, MaybeRefOrGetter } from 'vue'
-import type { CacheSnapshot, ItemWithSize, ScrollDirection, View, VScrollData } from '../types'
+import type { CacheSnapshot, ItemKey, ItemWithSize, KeyValue, ScrollDirection, ValidKeyField, View, VScrollData } from '../types'
 import type { DynamicScrollerItemControllerCallbacks, DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext, DynamicScrollerUpdatePayload } from './dynamicScrollerMeasurement'
-import type { UseRecycleScrollerReturn } from './useRecycleScroller'
+import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './useRecycleScroller'
 import mitt from 'mitt'
 import { computed, effectScope, nextTick, onActivated, onDeactivated, onUnmounted, provide, reactive, shallowRef, toValue, watch } from 'vue'
 import { findPrependOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
 import { useRecycleScroller } from './useRecycleScroller'
 
-export interface UseDynamicScrollerItemViewBindingOptions {
-  view: View
+export interface UseDynamicScrollerItemViewBindingOptions<TItem = unknown, TKey = KeyValue> {
+  view: View<ItemWithSize<TItem, TKey>, TKey>
   watchData?: boolean
   sizeDependencies?: Record<string, unknown> | unknown[] | null
   emitResize?: boolean
   onResize?: DynamicScrollerItemControllerCallbacks['onResize']
 }
 
-interface UseDynamicScrollerItemLegacyBindingOptions extends Omit<DynamicScrollerItemControllerOptions, 'watchData' | 'emitResize'> {
+interface UseDynamicScrollerItemLegacyBindingOptions<TItem = unknown> extends Omit<DynamicScrollerItemControllerOptions<TItem>, 'watchData' | 'emitResize'> {
   watchData?: boolean
   emitResize?: boolean
   onResize?: DynamicScrollerItemControllerCallbacks['onResize']
 }
 
-export type UseDynamicScrollerItemBindingOptions
-  = | UseDynamicScrollerItemViewBindingOptions
-    | UseDynamicScrollerItemLegacyBindingOptions
+export type UseDynamicScrollerItemBindingOptions<TItem = unknown, TKey = KeyValue>
+  = | UseDynamicScrollerItemViewBindingOptions<TItem, TKey>
+    | UseDynamicScrollerItemLegacyBindingOptions<TItem>
 
-export interface UseDynamicScrollerOptions {
-  items: unknown[]
-  keyField: string
+export interface UseDynamicScrollerOptions<TItem = unknown, TKeyField extends string = 'id'> {
+  items: TItem[]
+  keyField: ValidKeyField<TItem, TKeyField>
   direction: ScrollDirection
   minItemSize: number | string
   el: MaybeRef<HTMLElement | undefined>
@@ -47,63 +47,64 @@ export interface UseDynamicScrollerOptions {
   onUpdate?: (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => void
 }
 
-type UseDynamicScrollerSizes = UseRecycleScrollerReturn['sizes']
-type UseDynamicScrollerReady = UseRecycleScrollerReturn['ready']
-type UseDynamicScrollerPool = UseRecycleScrollerReturn['pool']
-type UseDynamicScrollerVisiblePool = UseRecycleScrollerReturn['visiblePool']
-type UseDynamicScrollerHandleResize = UseRecycleScrollerReturn['handleResize']
-type UseDynamicScrollerHandleVisibilityChange = UseRecycleScrollerReturn['handleVisibilityChange']
-type UseDynamicScrollerHandleScroll = UseRecycleScrollerReturn['handleScroll']
-type UseDynamicScrollerGetScroll = UseRecycleScrollerReturn['getScroll']
-type UseDynamicScrollerFindItemIndex = UseRecycleScrollerReturn['findItemIndex']
-type UseDynamicScrollerGetItemOffset = UseRecycleScrollerReturn['getItemOffset']
-type UseDynamicScrollerScrollToItem = UseRecycleScrollerReturn['scrollToItem']
-type UseDynamicScrollerScrollToPosition = UseRecycleScrollerReturn['scrollToPosition']
-type UseDynamicScrollerSortViews = UseRecycleScrollerReturn['sortViews']
-type UseDynamicScrollerTotalSize = UseRecycleScrollerReturn['totalSize']
-type UseDynamicScrollerUpdateVisibleItems = UseRecycleScrollerReturn['updateVisibleItems']
-type UseDynamicScrollerCacheSnapshot = UseRecycleScrollerReturn['cacheSnapshot']
-type UseDynamicScrollerRestoreCache = UseRecycleScrollerReturn['restoreCache']
+type UseDynamicScrollerRecycleReturn<TItem, TKey> = UseRecycleScrollerReturn<ItemWithSize<TItem, TKey>, TKey>
+type UseDynamicScrollerSizes<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['sizes']
+type UseDynamicScrollerReady<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['ready']
+type UseDynamicScrollerPool<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['pool']
+type UseDynamicScrollerVisiblePool<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['visiblePool']
+type UseDynamicScrollerHandleResize<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['handleResize']
+type UseDynamicScrollerHandleVisibilityChange<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['handleVisibilityChange']
+type UseDynamicScrollerHandleScroll<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['handleScroll']
+type UseDynamicScrollerGetScroll<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['getScroll']
+type UseDynamicScrollerFindItemIndex<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['findItemIndex']
+type UseDynamicScrollerGetItemOffset<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['getItemOffset']
+type UseDynamicScrollerScrollToItem<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['scrollToItem']
+type UseDynamicScrollerScrollToPosition<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['scrollToPosition']
+type UseDynamicScrollerSortViews<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['sortViews']
+type UseDynamicScrollerTotalSize<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['totalSize']
+type UseDynamicScrollerUpdateVisibleItems<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['updateVisibleItems']
+type UseDynamicScrollerCacheSnapshot<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['cacheSnapshot']
+type UseDynamicScrollerRestoreCache<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['restoreCache']
 
-export interface UseDynamicScrollerReturn {
+export interface UseDynamicScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>> {
   vscrollData: VScrollData
-  itemsWithSize: ComputedRef<ItemWithSize[]>
+  itemsWithSize: ComputedRef<Array<ItemWithSize<TItem, TKey>>>
   simpleArray: ComputedRef<boolean>
   resizeObserver: ResizeObserver | undefined
   measurementContext: DynamicScrollerMeasurementContext
-  vDynamicScrollerItem: Directive<HTMLElement, UseDynamicScrollerItemBindingOptions>
-  pool: UseDynamicScrollerPool
-  visiblePool: UseDynamicScrollerVisiblePool
-  totalSize: UseDynamicScrollerTotalSize
-  ready: UseDynamicScrollerReady
-  sizes: UseDynamicScrollerSizes
+  vDynamicScrollerItem: Directive<HTMLElement, UseDynamicScrollerItemBindingOptions<TItem, TKey>>
+  pool: UseDynamicScrollerPool<TItem, TKey>
+  visiblePool: UseDynamicScrollerVisiblePool<TItem, TKey>
+  totalSize: UseDynamicScrollerTotalSize<TItem, TKey>
+  ready: UseDynamicScrollerReady<TItem, TKey>
+  sizes: UseDynamicScrollerSizes<TItem, TKey>
   forceUpdate: (clear?: boolean) => void
-  scrollToItem: UseDynamicScrollerScrollToItem
-  scrollToPosition: UseDynamicScrollerScrollToPosition
-  getScroll: UseDynamicScrollerGetScroll
-  findItemIndex: UseDynamicScrollerFindItemIndex
-  getItemOffset: UseDynamicScrollerGetItemOffset
-  updateVisibleItems: UseDynamicScrollerUpdateVisibleItems
-  handleScroll: UseDynamicScrollerHandleScroll
-  handleResize: UseDynamicScrollerHandleResize
-  handleVisibilityChange: UseDynamicScrollerHandleVisibilityChange
-  sortViews: UseDynamicScrollerSortViews
-  cacheSnapshot: UseDynamicScrollerCacheSnapshot
-  restoreCache: UseDynamicScrollerRestoreCache
-  getItemSize: (item: unknown, index?: number) => number
+  scrollToItem: UseDynamicScrollerScrollToItem<TItem, TKey>
+  scrollToPosition: UseDynamicScrollerScrollToPosition<TItem, TKey>
+  getScroll: UseDynamicScrollerGetScroll<TItem, TKey>
+  findItemIndex: UseDynamicScrollerFindItemIndex<TItem, TKey>
+  getItemOffset: UseDynamicScrollerGetItemOffset<TItem, TKey>
+  updateVisibleItems: UseDynamicScrollerUpdateVisibleItems<TItem, TKey>
+  handleScroll: UseDynamicScrollerHandleScroll<TItem, TKey>
+  handleResize: UseDynamicScrollerHandleResize<TItem, TKey>
+  handleVisibilityChange: UseDynamicScrollerHandleVisibilityChange<TItem, TKey>
+  sortViews: UseDynamicScrollerSortViews<TItem, TKey>
+  cacheSnapshot: UseDynamicScrollerCacheSnapshot<TItem, TKey>
+  restoreCache: UseDynamicScrollerRestoreCache<TItem, TKey>
+  getItemSize: (item: TItem, index?: number) => number
   scrollToBottom: () => void
   onScrollerResize: () => void
   onScrollerVisible: () => void
 }
 
-interface BoundDynamicScrollerItemOptions extends DynamicScrollerItemControllerOptions {
+interface BoundDynamicScrollerItemOptions<TItem = unknown> extends DynamicScrollerItemControllerOptions<TItem> {
   onResize?: DynamicScrollerItemControllerCallbacks['onResize']
 }
 
-interface DynamicScrollerItemBindingRecord {
-  binding: ReturnType<typeof shallowRef<UseDynamicScrollerItemBindingOptions>>
+interface DynamicScrollerItemBindingRecord<TItem = unknown, TKey = KeyValue> {
+  binding: ReturnType<typeof shallowRef<UseDynamicScrollerItemBindingOptions<TItem, TKey>>>
   scope: ReturnType<typeof effectScope>
-  options: ReturnType<typeof shallowRef<BoundDynamicScrollerItemOptions>>
+  options: ReturnType<typeof shallowRef<BoundDynamicScrollerItemOptions<TItem>>>
   callbacks: ReturnType<typeof shallowRef<DynamicScrollerItemControllerCallbacks>>
   el: ReturnType<typeof shallowRef<HTMLElement | undefined>>
   controller: ReturnType<typeof createDynamicScrollerItemController>
@@ -114,24 +115,24 @@ type VScrollUpdateHandler = (payload?: unknown) => void
 
 interface DynamicScrollerAnchorRecord {
   active: boolean
-  id: string | number
+  id: KeyValue
 }
 
-interface DynamicScrollerShiftAnchor {
-  logicalKey: string | number
+interface DynamicScrollerShiftAnchor<TKey = KeyValue> {
+  logicalKey: TKey
   logicalOffset: number
-  pendingKeys: Set<string | number>
+  pendingKeys: Set<TKey>
   stableFrames: number
-  visualKey: string | number | null
+  visualKey: TKey | null
   visualOffset: number
 }
 
-function viewItemWithSize(view: View) {
-  return view.item as ItemWithSize
+function viewItemWithSize<TItem, TKey>(view: View<ItemWithSize<TItem, TKey>, TKey>) {
+  return view.item
 }
 
-function getViewStyleStamp(view: View) {
-  return ((view as View & { _vs_styleStamp?: number })._vs_styleStamp) ?? 0
+function getViewStyleStamp<TItem, TKey>(view: View<TItem, TKey>) {
+  return ((view as View<TItem, TKey> & { _vs_styleStamp?: number })._vs_styleStamp) ?? 0
 }
 
 const MANAGED_STYLE_PROPS = [
@@ -160,7 +161,7 @@ function restoreManagedStyles(elValue: HTMLElement, snapshot: Record<string, str
 
 function applyViewStyles(
   elValue: HTMLElement,
-  binding: UseDynamicScrollerItemBindingOptions,
+  binding: UseDynamicScrollerItemBindingOptions<any, any>,
   direction: ScrollDirection,
   snapshot: Record<string, string>,
 ) {
@@ -184,7 +185,7 @@ function applyViewStyles(
   elValue.style.pointerEvents = binding.view.nr.used ? '' : 'none'
 }
 
-function normalizeBindingOptions(options: UseDynamicScrollerItemBindingOptions): BoundDynamicScrollerItemOptions {
+function normalizeBindingOptions<TItem, TKey>(options: UseDynamicScrollerItemBindingOptions<TItem, TKey>): BoundDynamicScrollerItemOptions<TItem> {
   if ('view' in options) {
     const itemWithSize = viewItemWithSize(options.view)
     return {
@@ -206,34 +207,34 @@ function normalizeBindingOptions(options: UseDynamicScrollerItemBindingOptions):
   }
 }
 
-function getDynamicItemId(
-  item: unknown,
-  keyField: string,
+function getDynamicItemId<TItem, TKeyField extends string>(
+  item: TItem,
+  keyField: ValidKeyField<TItem, TKeyField>,
   simpleArray: boolean,
   index?: number,
-) {
+): ItemKey<TItem, TKeyField> | null {
   if (simpleArray) {
     if (index == null) {
       return null
     }
-    return index
+    return index as ItemKey<TItem, TKeyField>
   }
 
-  return (item as any)?.[keyField] ?? null
+  return ((item as any)?.[keyField] ?? null) as ItemKey<TItem, TKeyField> | null
 }
 
-export function useDynamicScroller(
-  options: MaybeRefOrGetter<UseDynamicScrollerOptions>,
-): UseDynamicScrollerReturn {
+export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
+  options: MaybeRefOrGetter<UseDynamicScrollerOptions<TItem, TKeyField>>,
+): UseDynamicScrollerReturn<TItem, ItemKey<TItem, TKeyField>> {
   // Internal state (non-reactive)
   let _undefinedSizes = 0
-  let _undefinedMap: Record<string | number, boolean | undefined> = {}
+  let _undefinedMap: Record<KeyValue, boolean | undefined> = {}
   const _events = mitt()
   let _scrollingToBottom = false
   let _resizeObserver: ResizeObserver | undefined
   let _applyingShiftAnchor = false
-  let _previousKeys: Array<string | number> = []
-  let _shiftAnchor: DynamicScrollerShiftAnchor | null = null
+  let _previousKeys: Array<ItemKey<TItem, TKeyField>> = []
+  let _shiftAnchor: DynamicScrollerShiftAnchor<ItemKey<TItem, TKeyField>> | null = null
   let _shiftAnchorRaf: number | null = null
 
   // Reactive state
@@ -300,7 +301,7 @@ export function useDynamicScroller(
     get $_undefinedSizes() { return _undefinedSizes },
     set $_undefinedSizes(v: number) { _undefinedSizes = v },
     get $_undefinedMap() { return _undefinedMap },
-    set $_undefinedMap(v: Record<string | number, boolean | undefined>) { _undefinedMap = v },
+    set $_undefinedMap(v: Record<KeyValue, boolean | undefined>) { _undefinedMap = v },
     $_events: _events,
     direction,
   })
@@ -321,8 +322,8 @@ export function useDynamicScroller(
     return opts.items.length > 0 && typeof opts.items[0] !== 'object'
   })
 
-  const itemsWithSize = computed<ItemWithSize[]>(() => {
-    const result: ItemWithSize[] = []
+  const itemsWithSize = computed<Array<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>>>(() => {
+    const result: Array<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>> = []
     const opts = toValue(options)
     const { items, keyField } = opts
     const simple = simpleArray.value
@@ -330,7 +331,7 @@ export function useDynamicScroller(
     const l = items.length
     for (let i = 0; i < l; i++) {
       const item = items[i]
-      const id = simple ? i : (item as any)[keyField]
+      const id = (simple ? i : (item as any)[keyField]) as ItemKey<TItem, TKeyField>
       let size: number | undefined = sizes[id]
       if (typeof size === 'undefined' && !_undefinedMap[id]) {
         size = 0
@@ -345,12 +346,12 @@ export function useDynamicScroller(
   })
 
   const initialOpts = toValue(options)
-  _previousKeys = getItemKeys(initialOpts.items, simpleArray.value ? null : initialOpts.keyField)
+  _previousKeys = getItemKeys(initialOpts.items, simpleArray.value ? null : initialOpts.keyField) as Array<ItemKey<TItem, TKeyField>>
   if (initialOpts.cache) {
     vscrollData.sizes = restoreCacheMap(initialOpts.cache, initialOpts.items, simpleArray.value ? null : initialOpts.keyField)
   }
 
-  const recycleOptions = computed(() => {
+  const recycleOptions = computed<UseRecycleScrollerOptions<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>, 'id', 'size'>>(() => {
     const opts = toValue(options)
     return {
       items: itemsWithSize.value,
@@ -382,7 +383,7 @@ export function useDynamicScroller(
     toValue(options).onVisible?.()
   }
 
-  const recycleScroller = useRecycleScroller(
+  const recycleScroller = useRecycleScroller<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>, 'id', 'size'>(
     recycleOptions,
     el,
     before,
@@ -396,7 +397,7 @@ export function useDynamicScroller(
     },
   )
 
-  const bindings = new WeakMap<HTMLElement, DynamicScrollerItemBindingRecord>()
+  const bindings = new WeakMap<HTMLElement, DynamicScrollerItemBindingRecord<TItem, ItemKey<TItem, TKeyField>>>()
 
   function cancelShiftAnchorFrame() {
     if (_shiftAnchorRaf != null) {
@@ -428,7 +429,7 @@ export function useDynamicScroller(
     }
 
     const viewportRect = scrollerEl.getBoundingClientRect()
-    let best: { key: string | number, offset: number, score: number } | null = null
+    let best: { key: ItemKey<TItem, TKeyField>, offset: number, score: number } | null = null
 
     for (const [rowEl, record] of anchorRegistry.entries()) {
       if (!record.active || getComputedStyle(rowEl).visibility === 'hidden') {
@@ -443,7 +444,7 @@ export function useDynamicScroller(
       const score = Math.max(rect.top, viewportRect.top) - viewportRect.top
       if (!best || score < best.score) {
         best = {
-          key: record.id,
+          key: record.id as ItemKey<TItem, TKeyField>,
           offset: rect.top - viewportRect.top,
           score,
         }
@@ -453,7 +454,7 @@ export function useDynamicScroller(
     return best
   }
 
-  function captureShiftAnchor(previousKeys: Array<string | number>) {
+  function captureShiftAnchor(previousKeys: Array<ItemKey<TItem, TKeyField>>) {
     const scrollerEl = el.value
     if (!scrollerEl) {
       clearShiftAnchor()
@@ -472,7 +473,7 @@ export function useDynamicScroller(
     _shiftAnchor = {
       logicalKey,
       logicalOffset: scrollTop - recycleScroller.getItemOffset(anchorIndex),
-      pendingKeys: new Set<string | number>(),
+      pendingKeys: new Set<ItemKey<TItem, TKeyField>>(),
       stableFrames: 0,
       visualKey: visualAnchor?.key ?? null,
       visualOffset: visualAnchor?.offset ?? 0,
@@ -547,8 +548,8 @@ export function useDynamicScroller(
 
   function mountBinding(
     elValue: HTMLElement,
-    bindingValue: UseDynamicScrollerItemBindingOptions,
-    value: BoundDynamicScrollerItemOptions,
+    bindingValue: UseDynamicScrollerItemBindingOptions<TItem, ItemKey<TItem, TKeyField>>,
+    value: BoundDynamicScrollerItemOptions<TItem>,
     restoreStyles: Record<string, string>,
   ) {
     const scope = effectScope()
@@ -567,7 +568,7 @@ export function useDynamicScroller(
             direction: direction.value,
             id: getDynamicItemId(
               bindingOptions.value.item,
-              vscrollData.keyField,
+              toValue(options).keyField,
               vscrollData.simpleArray,
               bindingOptions.value.index,
             ),
@@ -593,7 +594,7 @@ export function useDynamicScroller(
             ? viewItemWithSize(currentBinding.view).id
             : getDynamicItemId(
                 bindingOptions.value.item,
-                vscrollData.keyField,
+                toValue(options).keyField,
                 vscrollData.simpleArray,
                 bindingOptions.value.index,
               )
@@ -630,7 +631,7 @@ export function useDynamicScroller(
     })
   }
 
-  const vDynamicScrollerItem: Directive<HTMLElement, UseDynamicScrollerItemBindingOptions> = {
+  const vDynamicScrollerItem: Directive<HTMLElement, UseDynamicScrollerItemBindingOptions<TItem, ItemKey<TItem, TKeyField>>> = {
     mounted(elValue, binding) {
       const restoreStyles = captureManagedStyles(elValue)
       mountBinding(elValue, binding.value, normalizeBindingOptions(binding.value), restoreStyles)
@@ -684,7 +685,7 @@ export function useDynamicScroller(
     return recycleScroller.restoreCache(snapshot)
   }
 
-  function getItemSize(item: unknown, index?: number): number {
+  function getItemSize(item: TItem, index?: number): number {
     const opts = toValue(options)
     const id = simpleArray.value ? (index ?? opts.items.indexOf(item)) : (item as any)[opts.keyField]
     return vscrollData.sizes[id] || 0
@@ -728,12 +729,14 @@ export function useDynamicScroller(
     const nextKeys = getItemKeys(nextItems, keyField)
 
     if (opts.shift) {
-      const previousKeys = previousItems ? getItemKeys(previousItems, keyField) : _previousKeys
-      const prependCount = findPrependOffset(previousKeys, nextKeys)
+      const previousKeys = previousItems
+        ? getItemKeys(previousItems, keyField) as Array<ItemKey<TItem, TKeyField>>
+        : _previousKeys
+      const prependCount = findPrependOffset(previousKeys, nextKeys as Array<ItemKey<TItem, TKeyField>>)
       if (prependCount > 0) {
         captureShiftAnchor(previousKeys)
         if (_shiftAnchor) {
-          _shiftAnchor.pendingKeys = new Set(nextKeys.slice(0, prependCount))
+          _shiftAnchor.pendingKeys = new Set((nextKeys as Array<ItemKey<TItem, TKeyField>>).slice(0, prependCount))
           _shiftAnchor.stableFrames = 0
           nextTick(() => {
             if (_shiftAnchor) {
@@ -750,7 +753,7 @@ export function useDynamicScroller(
       clearShiftAnchor()
     }
 
-    _previousKeys = nextKeys
+    _previousKeys = nextKeys as Array<ItemKey<TItem, TKeyField>>
     forceUpdate()
   }, { flush: 'sync' })
 

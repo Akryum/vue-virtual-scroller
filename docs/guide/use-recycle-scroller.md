@@ -20,6 +20,31 @@ Use it when you want full control over markup, styling, and rendering logic whil
 - Render from `pool`, not `visiblePool`, when you want the same recycling behavior as `RecycleScroller`.
 - Inactive pooled views stay mounted. Hide them with `visibility: hidden` and `pointer-events: none` instead of removing them from the DOM.
 
+## TypeScript generics
+
+Pass the item type as the generic parameter when you want typed pool entries and compile-time validation for object-item fields:
+
+```ts
+const recycleScroller = useRecycleScroller<User>({
+  items: users.value,
+  keyField: 'id',
+  direction: 'vertical',
+  itemSize: null,
+  minItemSize: 32,
+  sizeField: 'size',
+  typeField: 'type',
+  buffer: 200,
+  pageMode: false,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+}, scrollerEl)
+
+recycleScroller.pool.value[0]?.item.name
+```
+
+When `TItem` is an object type, `keyField` must be a string key on that type, and `sizeField` must be a numeric field when `itemSize` is `null`.
+
 ## Required options
 
 `useRecycleScroller` expects the same core options used internally by `RecycleScroller`:

@@ -25,6 +25,25 @@ Use it when you need custom markup, but item size still has to be measured from 
   - applies recycled-view positioning and visibility styles automatically
   - uses `top` positioning for table rows and transforms for generic elements
 
+## TypeScript generics
+
+Pass the item type as the generic parameter when you want typed headless helpers and strict `item` inputs:
+
+```ts
+const dynamicScroller = useDynamicScroller<Message>({
+  items: messages.value,
+  keyField: 'id',
+  direction: 'vertical',
+  minItemSize: 48,
+  el: scrollerEl,
+})
+
+dynamicScroller.pool.value[0]?.item.item.text
+dynamicScroller.getItemSize(messages.value[0])
+```
+
+The same declared type also flows into `useDynamicScrollerItem<TItem>()` when you use the lower-level measurement helper directly.
+
 ## Directive contract
 
 Use the directive with the pooled `view`:

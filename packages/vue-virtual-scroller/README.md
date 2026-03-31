@@ -9,7 +9,7 @@ Blazing fast scrolling of any amount of data | [Live demo](https://vue-virtual-s
 
 For Vue 2 support, see [here](https://github.com/Akryum/vue-virtual-scroller/tree/v1/packages/vue-virtual-scroller)
 
-This package ships ESM only in the current Vue 3 line. Use it with an ESM-aware toolchain such as Vite, Nuxt, Rollup, or webpack 5.
+This package ships ESM only in the current Vue 3 line and requires Vue 3.3+ for the generic component typing surface. Use it with an ESM-aware toolchain such as Vite, Nuxt, Rollup, or webpack 5.
 
 [💚️ Become a Sponsor](https://github.com/sponsors/Akryum)
 

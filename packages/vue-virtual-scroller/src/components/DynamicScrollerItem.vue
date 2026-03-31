@@ -1,9 +1,10 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="TItem">
+import type { KeyValue } from '../types'
 import { ref } from 'vue'
 import { useDynamicScrollerItem } from '../composables/useDynamicScrollerItem'
 
 const props = withDefaults(defineProps<{
-  item: unknown
+  item: TItem
   watchData?: boolean
   active: boolean
   index?: number
@@ -19,14 +20,16 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  resize: [id: string | number]
+  resize: [id: KeyValue]
 }>()
 
-defineSlots()
+defineSlots<{
+  default?: () => unknown
+}>()
 
 const el = ref<HTMLElement>()
 
-useDynamicScrollerItem(
+useDynamicScrollerItem<TItem>(
   props,
   el,
   {

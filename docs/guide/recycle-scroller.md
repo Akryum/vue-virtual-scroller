@@ -43,6 +43,34 @@ export default {
 </style>
 ```
 
+## TypeScript generics
+
+With Vue 3.3+, `RecycleScroller` infers the item type from `items`, so the default slot stays item-aware in TypeScript:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+
+interface Message {
+  id: string
+  text: string
+  size: number
+}
+
+const messages = ref<Message[]>([])
+</script>
+
+<template>
+  <RecycleScroller :items="messages" :item-size="32">
+    <template #default="{ item }">
+      {{ item.text.toUpperCase() }}
+    </template>
+  </RecycleScroller>
+</template>
+```
+
+If you want compile-time validation for `keyField` or `sizeField`, use the headless [`useRecycleScroller`](./use-recycle-scroller) API with an explicit generic parameter.
+
 ## Important notes
 
 ::: warning

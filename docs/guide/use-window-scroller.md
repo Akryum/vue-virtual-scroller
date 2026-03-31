@@ -18,6 +18,30 @@ Use it when the browser viewport should drive virtualization, but you still need
 - `totalSize` still belongs on an inner wrapper so the virtual extent matches the whole list.
 - You can provide optional `before` and `after` refs when leading or trailing page content should be included in the virtual offset math.
 
+## TypeScript generics
+
+`useWindowScroller` accepts the same generic item parameter as `useRecycleScroller`, so the returned pool and helper methods stay item-aware:
+
+```ts
+const windowScroller = useWindowScroller<Row>({
+  items: rows.value,
+  keyField: 'id',
+  direction: 'vertical',
+  itemSize: 44,
+  minItemSize: null,
+  sizeField: 'size',
+  typeField: 'type',
+  buffer: 200,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+}, rootEl)
+
+windowScroller.pool.value[0]?.item.label
+```
+
+For object items, `keyField` and variable-size `sizeField` follow the same compile-time checks as `useRecycleScroller`.
+
 ## Required inputs
 
 `useWindowScroller(options, el, before?, after?)`

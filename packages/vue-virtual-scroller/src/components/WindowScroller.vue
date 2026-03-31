@@ -1,5 +1,6 @@
-<script setup lang="ts">
-import type { CacheSnapshot, ScrollDirection } from '../types'
+<script setup lang="ts" generic="TItem">
+import type { UseWindowScrollerOptions, UseWindowScrollerReturn } from '../composables/useWindowScroller'
+import type { CacheSnapshot, ClassValue, KeyValue, RecycleScrollerSlotProps, ScrollDirection, WindowScrollerExposed } from '../types'
 import { ref } from 'vue'
 import { useWindowScroller } from '../composables/useWindowScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
@@ -7,7 +8,7 @@ import ItemView from './ItemView.vue'
 import ResizeObserver from './ResizeObserver.vue'
 
 const props = withDefaults(defineProps<{
-  items: unknown[]
+  items: TItem[]
   keyField?: string
   direction?: ScrollDirection
   listTag?: string
@@ -25,8 +26,8 @@ const props = withDefaults(defineProps<{
   emitUpdate?: boolean
   disableTransform?: boolean
   updateInterval?: number
-  listClass?: string | Record<string, boolean> | Array<string | Record<string, boolean>>
-  itemClass?: string | Record<string, boolean> | Array<string | Record<string, boolean>>
+  listClass?: ClassValue
+  itemClass?: ClassValue
 }>(), {
   keyField: 'id',
   direction: 'vertical',
@@ -56,10 +57,31 @@ const emit = defineEmits<{
   update: [startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number]
 }>()
 
+defineSlots<{
+  default?: (props: RecycleScrollerSlotProps<TItem>) => unknown
+  before?: () => unknown
+  after?: () => unknown
+  empty?: () => unknown
+}>()
+
 const vObserveVisibility = ObserveVisibility
 const el = ref<HTMLElement>()
 const before = ref<HTMLElement>()
 const after = ref<HTMLElement>()
+
+const windowScroller = useWindowScroller(
+  props as unknown as UseWindowScrollerOptions<TItem, any, 'size'>,
+  el,
+  before,
+  after,
+  {
+    onResize: () => emit('resize'),
+    onVisible: () => emit('visible'),
+    onHidden: () => emit('hidden'),
+    onUpdate: (startIndex, endIndex, visibleStartIndex, visibleEndIndex) =>
+      emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex),
+  },
+) as unknown as UseWindowScrollerReturn<TItem, KeyValue>
 
 const {
   pool,
@@ -77,15 +99,9 @@ const {
   handleScroll,
   handleResize,
   handleVisibilityChange,
-} = useWindowScroller(props, el, before, after, {
-  onResize: () => emit('resize'),
-  onVisible: () => emit('visible'),
-  onHidden: () => emit('hidden'),
-  onUpdate: (startIndex, endIndex, visibleStartIndex, visibleEndIndex) =>
-    emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex),
-})
+} = windowScroller
 
-defineExpose({
+const exposed: WindowScrollerExposed<TItem, KeyValue> = {
   el,
   scrollToItem,
   scrollToPosition,
@@ -96,7 +112,9 @@ defineExpose({
   cacheSnapshot,
   restoreCache,
   updateVisibleItems,
-})
+}
+
+defineExpose(exposed)
 </script>
 
 <template>

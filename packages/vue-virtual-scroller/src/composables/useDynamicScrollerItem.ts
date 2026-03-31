@@ -1,9 +1,10 @@
 import type { MaybeRef, MaybeRefOrGetter } from 'vue'
+import type { KeyValue } from '../types'
 import type { DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext } from './dynamicScrollerMeasurement'
 import { inject, onBeforeUnmount, onMounted, toValue, watch } from 'vue'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
 
-export interface UseDynamicScrollerItemOptions extends DynamicScrollerItemControllerOptions {}
+export interface UseDynamicScrollerItemOptions<TItem = unknown> extends DynamicScrollerItemControllerOptions<TItem> {}
 
 export interface UseDynamicScrollerItemReturn {
   id: ReturnType<typeof createDynamicScrollerItemController>['id']
@@ -12,17 +13,17 @@ export interface UseDynamicScrollerItemReturn {
   updateSize: ReturnType<typeof createDynamicScrollerItemController>['updateSize']
 }
 
-export function useDynamicScrollerItem(
-  options: MaybeRefOrGetter<UseDynamicScrollerItemOptions>,
+export function useDynamicScrollerItem<TItem>(
+  options: MaybeRefOrGetter<UseDynamicScrollerItemOptions<TItem>>,
   el: MaybeRef<HTMLElement | undefined>,
   callbacks?: {
-    onResize?: (id: string | number) => void
+    onResize?: (id: KeyValue) => void
   },
 ): UseDynamicScrollerItemReturn {
   const measurementContext = inject<DynamicScrollerMeasurementContext>('vscrollMeasurementContext')!
   const anchorRegistry = inject<{
     delete: (el: HTMLElement) => void
-    set: (el: HTMLElement, value: { active: boolean, id: string | number }) => void
+    set: (el: HTMLElement, value: { active: boolean, id: KeyValue }) => void
   } | null>('vscrollAnchorRegistry', null)
   const controller = createDynamicScrollerItemController(
     options,

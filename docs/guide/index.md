@@ -30,7 +30,21 @@ pnpm add vue-virtual-scroller@next
 
 ## Setup
 
-`vue-virtual-scroller` ships ESM only. Use it from an ESM-aware toolchain such as Vite, Nuxt, Rollup, or webpack 5.
+`vue-virtual-scroller` ships ESM only and requires Vue 3.3+ for the generic component typing surface. Use it from an ESM-aware toolchain such as Vite, Nuxt, Rollup, or webpack 5.
+
+## TypeScript generics
+
+With Vue 3.3+, the component APIs infer the item type from the `items` prop, so scoped slot props such as `item` stay typed without extra annotations.
+
+The headless composables also expose explicit generics when you want stronger type checking for returned state and helpers:
+
+```ts
+const recycleScroller = useRecycleScroller<User>(options, scrollerEl)
+const dynamicScroller = useDynamicScroller<Message>(options)
+const windowScroller = useWindowScroller<Row>(options, rootEl)
+```
+
+For object items, the composables also validate fields such as `keyField` and variable-size `sizeField` against the declared item type.
 
 ### Plugin import
 

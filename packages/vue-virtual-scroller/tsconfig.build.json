@@ -3,6 +3,8 @@
   "exclude": [
     "node_modules",
     "dist",
-    "src/**/*.spec.ts"
+    "src/**/*.spec.ts",
+    "src/**/*.typecheck.ts",
+    "src/**/*.typecheck.vue"
   ]
 }

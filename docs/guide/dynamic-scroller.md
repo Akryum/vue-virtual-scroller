@@ -51,6 +51,34 @@ export default {
 </style>
 ```
 
+## TypeScript generics
+
+With Vue 3.3+, `DynamicScroller` infers the item type from `items`, so both `item` and `itemWithSize.item` stay typed in the default slot:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+
+interface Message {
+  id: string
+  text: string
+}
+
+const messages = ref<Message[]>([])
+</script>
+
+<template>
+  <DynamicScroller :items="messages" :min-item-size="48">
+    <template #default="{ item, itemWithSize }">
+      {{ item.text }}
+      {{ itemWithSize.item.text }}
+    </template>
+  </DynamicScroller>
+</template>
+```
+
+For typed `getItemSize(item)` calls and other headless helpers, use [`useDynamicScroller`](./use-dynamic-scroller) with an explicit generic.
+
 ## Important notes
 
 - `minItemSize` is required so the first render has a reasonable starting estimate.
