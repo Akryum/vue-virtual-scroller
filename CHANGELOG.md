@@ -1,3 +1,35 @@
+## v2.0.0
+
+[compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.10...v2.0.0)
+
+### 🚀 Enhancements
+
+- Enhance useRecycleScroller with visiblePool and style stamping ([411f4c1](https://github.com/Akryum/vue-virtual-scroller/commit/411f4c1))
+- WindowScroller, shift, cache restore, size handling improvements ([36bcd97](https://github.com/Akryum/vue-virtual-scroller/commit/36bcd97))
+- Virtualize grid scrolling across both axes ([f49d7ae](https://github.com/Akryum/vue-virtual-scroller/commit/f49d7ae))
+- Improved types with generics ([31b0ed0](https://github.com/Akryum/vue-virtual-scroller/commit/31b0ed0))
+
+### 🩹 Fixes
+
+- Window Scroller fixes ([d590a50](https://github.com/Akryum/vue-virtual-scroller/commit/d590a50))
+
+### 📖 Documentation
+
+- Add window scroller guide and demo ([fd596cc](https://github.com/Akryum/vue-virtual-scroller/commit/fd596cc))
+- Simplify demos and refresh guide copy ([cb8b028](https://github.com/Akryum/vue-virtual-scroller/commit/cb8b028))
+- Remove @next tag ([8ccbe1c](https://github.com/Akryum/vue-virtual-scroller/commit/8ccbe1c))
+
+### ✅ Tests
+
+- Added e2e tests ([673692b](https://github.com/Akryum/vue-virtual-scroller/commit/673692b))
+- Typecheck ([a67bc47](https://github.com/Akryum/vue-virtual-scroller/commit/a67bc47))
+- Move the vitest browser test to playwright tests ([be28e0d](https://github.com/Akryum/vue-virtual-scroller/commit/be28e0d))
+- Fix flaky ([531a597](https://github.com/Akryum/vue-virtual-scroller/commit/531a597))
+
+### ❤️ Contributors
+
+- Guillaume Chau ([@Akryum](http://github.com/Akryum))
+
 ## v2.0.0-beta.10
 
 [compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.9...v2.0.0-beta.10)
