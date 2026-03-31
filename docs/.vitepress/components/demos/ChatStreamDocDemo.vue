@@ -58,8 +58,8 @@ onBeforeUnmount(stopStream)
 <template>
   <DemoShell
     demo-id="chat"
-    title="Chat stream"
-    description="Continuously appends new rows while keeping the view pinned to the latest messages."
+    title="Live chat stream"
+    description="Appends incoming messages while keeping the latest content in view."
   >
     <template #toolbar>
       <button
@@ -68,7 +68,7 @@ onBeforeUnmount(stopStream)
         data-testid="demo:control:start-stream"
         @click="startStream"
       >
-        Start stream
+        Start streaming
       </button>
       <button
         v-else
@@ -76,7 +76,7 @@ onBeforeUnmount(stopStream)
         data-testid="demo:control:stop-stream"
         @click="stopStream"
       >
-        Stop stream
+        Stop streaming
       </button>
 
       <button
@@ -84,7 +84,7 @@ onBeforeUnmount(stopStream)
         data-testid="demo:control:append-20"
         @click="appendBatch(20)"
       >
-        +20 messages
+        Add 20 messages
       </button>
 
       <label class="demo-chip">
@@ -93,14 +93,14 @@ onBeforeUnmount(stopStream)
           v-model="search"
           data-testid="demo:control:filter"
           type="text"
-          placeholder="Search"
+          placeholder="Search messages"
         >
       </label>
 
       <span
         class="demo-chip"
         data-testid="demo:metric:rows"
-      >Rows: {{ filteredItems.length }}</span>
+      >Visible rows: {{ filteredItems.length }}</span>
     </template>
 
     <DynamicScroller

@@ -4,18 +4,18 @@ import HorizontalDocDemo from '../.vitepress/components/demos/HorizontalDocDemo.
 
 # Horizontal Demo
 
-Use this demo for horizontally scrolling lists with dynamic item width.
+This demo shows a horizontal list where card width is measured from the rendered content. It is useful when item width varies and the list still needs to stay virtualized.
 
-What to try:
+## Try it yourself
 
-- Scroll horizontally with trackpad or Shift + mouse wheel.
-- Filter cards and verify smooth reflow.
-- Inspect how variable-width content stays virtualized.
+- Scroll horizontally with a trackpad or with `Shift` plus the mouse wheel.
+- Filter the cards and check that the list reflows smoothly.
+- Compare short and long cards to see how variable widths are handled.
 
 <HorizontalDocDemo />
 
 
-## Relevant source code
+## Source code
 
 ```vue
 <script setup lang="ts">

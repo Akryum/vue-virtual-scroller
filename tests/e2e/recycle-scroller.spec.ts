@@ -16,7 +16,7 @@ test('recycle scroller demo smoke', async ({ page }) => {
   })
 })
 
-test('recycle scroller jumps and remains usable when variable height changes', async ({ browserName, page }) => {
+test('recycle scroller jumps and remains usable after adding items', async ({ browserName, page }) => {
   test.skip(browserName !== 'chromium')
 
   await page.goto('/demos/recycle-scroller')
@@ -27,11 +27,14 @@ test('recycle scroller jumps and remains usable when variable height changes', a
 
   expect((await readMetricNumbers(metric(page, 'visible-range')))[0] ?? 0).toBeGreaterThan(100)
 
-  const beforeToggle = await getVisibleItems(page, '[data-testid="demo:row"]')
-  await control(page, 'variable-height').click()
+  const beforeAdd = await getVisibleItems(page, '[data-testid="demo:row"]')
+  await control(page, 'add-500').click()
+  await setControlValue(control(page, 'scroll-to'), 680)
+  await control(page, 'jump').click()
   await waitForSettle(page)
 
-  const afterToggle = await getVisibleItems(page, '[data-testid="demo:row"]')
-  expect(afterToggle.length).toBeGreaterThan(2)
-  expect(afterToggle.map(row => row.key)).not.toEqual(beforeToggle.map(row => row.key))
+  const afterAdd = await getVisibleItems(page, '[data-testid="demo:row"]')
+  expect(afterAdd.length).toBeGreaterThan(2)
+  expect(afterAdd.map(row => row.key)).not.toEqual(beforeAdd.map(row => row.key))
+  expect((await readMetricNumbers(metric(page, 'visible-range')))[0] ?? 0).toBeGreaterThan(600)
 })

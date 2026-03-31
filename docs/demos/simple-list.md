@@ -4,18 +4,18 @@ import SimpleListDocDemo from '../.vitepress/components/demos/SimpleListDocDemo.
 
 # Simple List Demo
 
-Use this demo to compare dynamic and fixed-size strategies on the same dataset.
+This demo compares the two most common strategies on the same dataset: fixed-size virtualization with `RecycleScroller` and measured virtualization with `DynamicScroller`.
 
-What to try:
+## Try it yourself
 
-- Toggle `Dynamic mode` on/off to compare behavior.
-- Filter the list and compare how both modes respond.
-- Use this as a reference when deciding between `DynamicScroller` and `RecycleScroller`.
+- Toggle dynamic sizing on and off to compare both rendering modes directly.
+- Filter the list and compare how each mode responds.
+- Use it as a quick reference when deciding between `DynamicScroller` and `RecycleScroller`.
 
 <SimpleListDocDemo />
 
 
-## Relevant source code
+## Source code
 
 ```vue
 <script setup lang="ts">

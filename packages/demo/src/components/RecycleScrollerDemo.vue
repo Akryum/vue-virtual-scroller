@@ -16,7 +16,6 @@ export default {
     scopedSlots: false,
     buffer: 200,
     poolSize: 2000,
-    enableLetters: true,
     pageMode: false,
     pageModeFullPage: true,
     scrollTo: 100,
@@ -40,10 +39,6 @@ export default {
       },
     },
 
-    itemHeight() {
-      return this.enableLetters ? null : 50
-    },
-
     list() {
       return this.items.map(
         item => ({ ...{
@@ -57,9 +52,6 @@ export default {
     count() {
       this.generateItems()
     },
-    enableLetters() {
-      this.generateItems()
-    },
   },
 
   mounted() {
@@ -70,7 +62,7 @@ export default {
   methods: {
     generateItems() {
       this._dirty = true
-      this.items = getData(this.count, this.enableLetters)
+      this.items = getData(this.count, false)
     },
 
     addItem() {
@@ -105,12 +97,6 @@ export default {
         > items
         <button @click="addItem()">+1</button>
       </span>
-      <label>
-        <input
-          v-model="enableLetters"
-          type="checkbox"
-        > variable height
-      </label>
       <label>
         <input
           v-model="pageMode"
@@ -164,29 +150,15 @@ export default {
           ref="scroller"
           class="scroller"
           :items="list"
-          :item-size="itemHeight"
+          :item-size="50"
           :buffer="buffer"
           :page-mode="pageMode"
           key-field="id"
-          size-field="height"
           :emit-update="true"
           @update="onUpdate"
         >
           <template #default="props">
-            <div
-              v-if="props.item.type === 'letter'"
-              class="tr letter big"
-              @click="props.item.height = (props.item.height === 200 ? 300 : 200)"
-            >
-              <div class="td index">
-                {{ props.index }}
-              </div>
-              <div class="td value">
-                {{ props.item.value }} Scoped
-              </div>
-            </div>
             <Person
-              v-if="props.item.type === 'person'"
               :item="props.item"
               :index="props.index"
             />
@@ -244,24 +216,5 @@ export default {
   padding: 24px;
   font-size: 20px;
   color: #999;
-}
-
-.letter {
-  text-transform: uppercase;
-  color: grey;
-  font-weight: bold;
-}
-
-.letter .td {
-  padding: 12px;
-}
-
-.letter.big {
-  font-weight: normal;
-  height: 200px;
-}
-
-.letter.big .value {
-  font-size: 120px;
 }
 </style>

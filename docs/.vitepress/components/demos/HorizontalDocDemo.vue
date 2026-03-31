@@ -23,8 +23,8 @@ function cardWidth(message: string) {
 <template>
   <DemoShell
     demo-id="horizontal"
-    title="Horizontal dynamic"
-    description="Measures unknown card widths dynamically while virtualizing horizontal scrolling."
+    title="Horizontal list"
+    description="Measures card widths on demand while virtualizing a horizontal track."
   >
     <template #toolbar>
       <label class="demo-chip">
@@ -33,15 +33,15 @@ function cardWidth(message: string) {
           v-model="search"
           data-testid="demo:control:filter"
           type="text"
-          placeholder="Search text"
+          placeholder="Search cards"
         >
       </label>
 
       <span
         class="demo-chip"
         data-testid="demo:metric:cards"
-      >Cards: {{ filteredRows.length }}</span>
-      <span class="demo-chip">Tip: Shift + wheel for horizontal scroll</span>
+      >Visible cards: {{ filteredRows.length }}</span>
+      <span class="demo-chip">Tip: use Shift + wheel for horizontal scrolling</span>
     </template>
 
     <DynamicScroller

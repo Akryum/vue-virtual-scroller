@@ -39,7 +39,7 @@ test('shift demo keeps the viewport visually anchored after prepend', async ({ b
   const beforeScreenshot = await getViewportScreenshot(page)
 
   await control(page, 'prepend-10').click()
-  await expect(metric(page, 'rows')).toHaveText('Rows: 46')
+  await expect(metric(page, 'rows')).toHaveText('Loaded rows: 46')
 
   const immediateScreenshot = await getViewportScreenshot(page)
   const immediateDiffPixels = await countImageDiffPixels(page, beforeScreenshot, immediateScreenshot)
@@ -76,7 +76,7 @@ test('shift demo keeps anchoring after scrolling upward before prepend', async (
   const beforeScreenshot = await getViewportScreenshot(page)
 
   await control(page, 'prepend-10').click()
-  await expect(metric(page, 'rows')).toHaveText('Rows: 46')
+  await expect(metric(page, 'rows')).toHaveText('Loaded rows: 46')
 
   const immediateScreenshot = await getViewportScreenshot(page)
   const immediateDiffPixels = await countImageDiffPixels(page, beforeScreenshot, immediateScreenshot)

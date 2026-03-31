@@ -1,26 +1,24 @@
 # useRecycleScroller (Headless)
 
-`useRecycleScroller` is the low-level composable behind `RecycleScroller`.
+`useRecycleScroller` is the low-level composable for building fixed-size or pre-sized virtual lists with your own markup.
 
-Use it when you want full control over markup, styling, and rendering logic while keeping the same virtualization engine.
+Use it when you want full control over markup, styling, and rendering logic while keeping the virtualization engine separate from the rendered UI.
 
-## Pick This API When
+## When to use it
 
 - You need a custom DOM structure that does not fit the component slot API.
+- You need a custom DOM structure and direct control over the rendered output.
 - You want to integrate virtualization into an existing design system component.
 - You want to control rendering/pooling behavior directly (for example with custom item wrappers).
+- Item size is already known, fixed, or available in the data before render.
 
-If you just need virtual scrolling with standard markup, prefer [`RecycleScroller`](./recycle-scroller).
+## Mental model
 
-If item size must be measured from the DOM after render, use [`useDynamicScroller`](./use-dynamic-scroller) instead.
-
-## Mental Model
-
-- `useRecycleScroller` is fully headless: it gives you virtualization state, but you still own the wrapper markup, per-item markup, and positioning styles.
-- The scroll container is your element ref (`scrollerEl`). It must have a real scrollable size such as a fixed `height` plus `overflow`.
-- `totalSize` is the virtual extent of the full list. Apply it to an inner wrapper, usually with `minHeight` or `minWidth`.
+- `useRecycleScroller` is fully headless. It gives you virtualization state, but you still own the wrapper markup, item markup, and positioning styles.
+- The scroll container is your element ref (`scrollerEl`). It still needs real scrollable sizing such as a fixed `height` and `overflow`.
+- `totalSize` is the virtual size of the full list. Apply it to an inner wrapper, usually with `minHeight` or `minWidth`.
 - Render from `pool`, not `visiblePool`, when you want the same recycling behavior as `RecycleScroller`.
-- Inactive pooled views stay mounted and should be hidden with `visibility: hidden` and `pointer-events: none` rather than removed from the DOM.
+- Inactive pooled views stay mounted. Hide them with `visibility: hidden` and `pointer-events: none` instead of removing them from the DOM.
 
 ## Required options
 
@@ -49,10 +47,10 @@ Additional scroll-system options:
 - `shift`
 - `cache`
 
-## Return Values You Will Use Most
+## Return values you will use most
 
-- `pool`: the render-ready set of pooled views. Use this for headless rendering when you want the smoothest recycling behavior.
-- `visiblePool`: `pool` filtered to active views and sorted by visible index order. Useful for readouts, debugging, or simple derived UIs.
+- `pool`: the render-ready set of pooled views. This is the main render source when you want the smoothest recycling behavior.
+- `visiblePool`: `pool` filtered to active views and sorted by visible index order. Useful for readouts, debugging, or simple derived UI.
 - `totalSize`: full virtual size (wrapper min-height/min-width).
 - `handleScroll`: call this on scroll events.
 - `scrollToItem(index, options?)`: programmatic navigation with `align`, `smooth`, and `offset`.
@@ -65,7 +63,7 @@ Additional scroll-system options:
 - `restoreCache(snapshot)`: restore a previous snapshot when the item sequence matches.
 - `updateVisibleItems(itemsChanged, checkPositionDiff?)`: force recalculation.
 
-## Render Checklist
+## Render checklist
 
 - Give the outer scroller a fixed size and overflow behavior.
 - Add an inner wrapper with `position: relative` and `minHeight`/`minWidth` from `totalSize`.
@@ -73,14 +71,14 @@ Additional scroll-system options:
 - Absolutely position each rendered view yourself.
 - Hide inactive views instead of filtering them out.
 
-## Common Pitfalls
+## Common pitfalls
 
 - You must provide scrollable sizing styles yourself (`height` or `width` + overflow).
 - Use a stable key field for object items (default: `id`).
 - The composable manages pooling and index mapping, but does not provide built-in markup or CSS.
-- Render from `pool` and hide inactive views instead of filtering them out if you want to preserve DOM reuse like `RecycleScroller`.
-- If you need automatic unknown-size measurement, use `DynamicScroller`/`DynamicScrollerItem` or the headless [`useDynamicScroller`](./use-dynamic-scroller) path with its `vDynamicScrollerItem` directive.
-- If the outer scroll container is the browser window, prefer [`WindowScroller`](./window-scroller) or `useWindowScroller` instead of manually reproducing page-mode behavior.
+- Render from `pool` and hide inactive views instead of filtering them out if you want to preserve DOM reuse.
+- If item size has to be measured from the DOM after render, use [`useDynamicScroller`](./use-dynamic-scroller) instead.
+- If the browser window owns scrolling, use [`useWindowScroller`](./use-window-scroller) instead of reproducing page-mode behavior yourself.
 
 ## Full example
 

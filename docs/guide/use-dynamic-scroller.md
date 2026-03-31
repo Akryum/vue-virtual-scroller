@@ -1,18 +1,17 @@
 # useDynamicScroller (Headless Dynamic Items)
 
-`useDynamicScroller` is the headless dynamic-sizing path behind `DynamicScroller`.
+`useDynamicScroller` is the headless composable for virtual lists whose item size must be measured after render.
 
 Use it when you need custom markup, but item size still has to be measured from the DOM after render.
 
-## Pick This API When
+## When to use it
 
 - You need semantic markup such as table rows, list items, or design-system wrappers.
 - Item height or width is not known ahead of time.
 - You still want pooled rendering and DOM reuse instead of rendering every visible item from scratch.
+- You need dynamic measurement without relying on bundled wrapper markup.
 
-If item size is already fixed or precomputed, prefer [`useRecycleScroller`](./use-recycle-scroller).
-
-## Mental Model
+## Mental model
 
 - `useDynamicScroller` combines two concerns:
   - `useRecycleScroller` for pooled rendering, scroll math, and virtualization state
@@ -26,7 +25,7 @@ If item size is already fixed or precomputed, prefer [`useRecycleScroller`](./us
   - applies recycled-view positioning and visibility styles automatically
   - uses `top` positioning for table rows and transforms for generic elements
 
-## Directive Contract
+## Directive contract
 
 Use the directive with the pooled `view`:
 
@@ -47,7 +46,7 @@ Supported binding fields:
 
 In the recommended `view`-based path, you do not need to pass `item`, `active`, `index`, or per-item positioning styles manually.
 
-## Return Values You Will Use Most
+## Return values you will use most
 
 - `pool`: render-ready pooled views. This is the main render source.
 - `visiblePool`: active views in visible index order. Useful for readouts, debugging, or derived UI state.
@@ -62,7 +61,7 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 - `restoreCache(snapshot)`: restore previously known sizes when the item sequence matches.
 - `forceUpdate(clear?)`: trigger a recalculation, optionally clearing known sizes.
 
-## Render Checklist
+## Render checklist
 
 - Give the outer scroller a fixed size and overflow behavior.
 - Add an inner wrapper with `position: relative` and `minHeight`/`minWidth` from `totalSize`.
@@ -70,7 +69,7 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 - Bind the pooled `view` into `v-dynamic-scroller-item`.
 - Pass `sizeDependencies` for data that can change layout after first render.
 
-## Common Pitfalls
+## Common pitfalls
 
 - Forgetting `minItemSize` hurts the initial layout and scroll math.
 - Rendering from `visiblePool` instead of `pool` reduces the effectiveness of DOM reuse.
@@ -79,7 +78,7 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 - `watchData` works, but it is heavier than targeted `sizeDependencies`.
 - If you prepend into chat-style data, enable `shift` in the composable options so the viewport stays anchored.
 
-## Full Example
+## Full example
 
 ```vue
 <script setup lang="ts">
@@ -130,10 +129,8 @@ const {
 </template>
 ```
 
-## Related Guides
+## Related guides
 
 - [`useRecycleScroller`](./use-recycle-scroller) for fixed-size or pre-sized headless lists
-- [`DynamicScroller`](./dynamic-scroller) for the bundled component version
-- [`DynamicScrollerItem`](./dynamic-scroller-item) for the bundled per-item measurement wrapper
-- [`WindowScroller`](./window-scroller) for the dedicated window-scrolling component/composable
+- [`useWindowScroller`](./use-window-scroller) for headless window-based virtualization
 - [Headless table demo](../demos/headless-table) for a semantic table example

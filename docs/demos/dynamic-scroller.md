@@ -4,19 +4,19 @@ import DynamicScrollerDocDemo from '../.vitepress/components/demos/DynamicScroll
 
 # DynamicScroller Demo
 
-Use this demo when item height is not known ahead of time.
+This demo focuses on the case where row height is not known until the content is rendered. It is a practical example of when to reach for `DynamicScroller`.
 
-What to try:
+## Try it yourself
 
-- Filter the list to verify virtualization still behaves correctly.
-- Click messages to mutate content and trigger automatic re-measurement.
-- Adjust `Min row size` to see first-render tradeoffs.
-- Watch the visible range to understand viewport updates.
+- Filter the list to confirm virtualization still tracks the right rows.
+- Click messages to change their content and trigger a fresh measurement.
+- Adjust the minimum row size to see how the initial estimate affects the first render.
+- Watch the visible range to understand how the viewport is updated as you scroll.
 
 <DynamicScrollerDocDemo />
 
 
-## Relevant source code
+## Source code
 
 ```vue
 <script setup lang="ts">

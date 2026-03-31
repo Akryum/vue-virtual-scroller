@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import type { Person, PersonRow } from './demo-data'
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import RecycleScroller from '../../../../packages/vue-virtual-scroller/src/components/RecycleScroller.vue'
 import { avatarStyle, createPeopleRows } from './demo-data'
 import DemoShell from './DemoShell.vue'
 
+const ITEM_SIZE = 74
+
 const scroller = ref<InstanceType<typeof RecycleScroller>>()
 const count = ref(8000)
-const withLetters = ref(true)
 const buffer = ref(240)
 const scrollTo = ref(180)
 const rows = ref<PersonRow[]>([])
@@ -15,10 +16,8 @@ const rows = ref<PersonRow[]>([])
 const visibleStart = ref(0)
 const visibleEnd = ref(0)
 
-const itemSize = computed(() => (withLetters.value ? null : 74))
-
 function regenerate() {
-  rows.value = createPeopleRows(Math.max(50, count.value), withLetters.value, 17)
+  rows.value = createPeopleRows(Math.max(50, count.value), false, 17)
 }
 
 function addPeople(amount = 100) {
@@ -30,12 +29,6 @@ function jump() {
   scroller.value?.scrollToItem(target)
 }
 
-function toggleLetterSize(row: PersonRow) {
-  if (row.type === 'letter') {
-    row.height = row.height === 96 ? 136 : 96
-  }
-}
-
 function personOf(row: PersonRow) {
   return row.value as Person
 }
@@ -45,15 +38,15 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
   visibleEnd.value = end
 }
 
-watch([count, withLetters], regenerate)
+watch(count, regenerate)
 onMounted(regenerate)
 </script>
 
 <template>
   <DemoShell
     demo-id="recycle-scroller"
-    title="RecycleScroller: Large list, variable height"
-    description="Handles large lists with known or data-driven row sizes and fast programmatic navigation."
+    title="RecycleScroller with known sizes"
+    description="A large fixed-size list example with fast navigation and predictable recycling."
   >
     <template #toolbar>
       <label class="demo-chip">
@@ -64,15 +57,6 @@ onMounted(regenerate)
           type="number"
           min="50"
           max="50000"
-        >
-      </label>
-
-      <label class="demo-chip">
-        Variable height
-        <input
-          v-model="withLetters"
-          data-testid="demo:control:variable-height"
-          type="checkbox"
         >
       </label>
 
@@ -90,7 +74,7 @@ onMounted(regenerate)
       </label>
 
       <label class="demo-chip">
-        Scroll to
+        Go to item
         <input
           v-model.number="scrollTo"
           data-testid="demo:control:scroll-to"
@@ -105,7 +89,7 @@ onMounted(regenerate)
         data-testid="demo:control:add-500"
         @click="addPeople(500)"
       >
-        +500
+        Add 500
       </button>
 
       <button
@@ -113,13 +97,13 @@ onMounted(regenerate)
         data-testid="demo:control:jump"
         @click="jump"
       >
-        Jump
+        Go
       </button>
 
       <span
         class="demo-chip"
         data-testid="demo:metric:visible-range"
-      >Visible: {{ visibleStart }}-{{ visibleEnd }}</span>
+      >Visible rows: {{ visibleStart }}-{{ visibleEnd }}</span>
     </template>
 
     <RecycleScroller
@@ -127,34 +111,19 @@ onMounted(regenerate)
       class="demo-viewport"
       data-testid="demo:viewport"
       :items="rows"
-      :item-size="itemSize"
+      :item-size="ITEM_SIZE"
       :buffer="buffer"
       key-field="id"
-      size-field="height"
       :emit-update="true"
       @update="onUpdate"
     >
       <template #default="{ item, index }">
         <div
-          v-if="item.type === 'letter'"
-          class="demo-letter-row"
-          data-testid="demo:row"
-          data-row-type="letter"
-          :data-row-id="String(item.id)"
-          :style="{ height: `${item.height}px` }"
-          @click="toggleLetterSize(item)"
-        >
-          <strong>{{ item.value }}</strong>
-          <span>Segment {{ index }}</span>
-        </div>
-
-        <div
-          v-else
           class="demo-person-row"
           data-testid="demo:row"
           data-row-type="person"
           :data-row-id="String(item.id)"
-          :style="{ height: `${item.height}px` }"
+          :style="{ height: `${ITEM_SIZE}px` }"
         >
           <div
             class="demo-avatar"
@@ -165,7 +134,7 @@ onMounted(regenerate)
 
           <div>
             <div>{{ personOf(item).name }}</div>
-            <small class="demo-message-meta">Click letter rows to toggle heights</small>
+            <small class="demo-message-meta">Fixed row height keeps the pool stable and predictable</small>
           </div>
 
           <small class="demo-message-meta">#{{ index }}</small>

@@ -4,19 +4,19 @@ import ChatStreamDocDemo from '../.vitepress/components/demos/ChatStreamDocDemo.
 
 # Chat Stream Demo
 
-Use this demo for chat, logs, and live feeds that continuously append data.
+This demo shows a typical append-only stream such as chat, logs, or live activity feeds. New rows are added continuously while the view stays focused on the latest content.
 
-What to try:
+## Try it yourself
 
-- Start/stop the stream and observe scroll stability.
-- Append large batches (`+20 messages`) to validate throughput.
-- Apply filters while data is growing.
-- Confirm the list stays pinned near the latest items.
+- Start and stop the stream to see how the list behaves during continuous updates.
+- Add a larger batch of messages to check how quickly the view catches up.
+- Apply a filter while data is still growing.
+- Confirm that the list stays near the latest messages instead of drifting upward.
 
 <ChatStreamDocDemo />
 
 
-## Relevant source code
+## Source code
 
 ```vue
 <script setup lang="ts">

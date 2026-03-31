@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: Vue Virtual Scroller
-  tagline: Blazing fast scrolling of any amount of data
+  tagline: Render large Vue lists smoothly, without giving up control over your UI.
   actions:
     - theme: brand
       text: Get Started
@@ -13,16 +13,16 @@ hero:
       link: https://github.com/Akryum/vue-virtual-scroller
 
 features:
-  - title: Blazing Fast
-    details: Minimal overhead with smart pooling and recycling of views for buttery smooth scrolling.
+  - title: Built for Large Lists
+    details: Render only what is visible, keep DOM work low, and stay responsive even with large datasets.
     icon: ⚡
   - title: RecycleScroller
-    details: Only renders visible items and reuses components and DOM elements for optimal performance.
+    details: The default choice for lists with known sizes or data-driven sizes that are already available.
     icon: ♻️
   - title: DynamicScroller
-    details: Extends RecycleScroller with dynamic size management for items with unknown sizes.
+    details: Measure rows as they render when item height or width is not known ahead of time.
     icon: ↕️
-  - title: Headless
-    details: Provides low-level APIs for custom implementations and advanced use cases.
+  - title: Headless APIs
+    details: Use the same virtualization engine with your own markup, semantics, and design system components.
     icon: 🧠
 ---

@@ -87,7 +87,7 @@ function jump() {
   <DemoShell
     demo-id="headless-table"
     title="Headless table"
-    description="A semantic table powered by useDynamicScroller. Each real <tr> is measured without a wrapper component while the composable manages pooling and scrolling."
+    description="Keeps semantic table markup while useDynamicScroller handles measurement, pooling, and scrolling."
   >
     <template #toolbar>
       <label class="demo-chip">
@@ -107,7 +107,7 @@ function jump() {
           v-model="filter"
           data-testid="demo:control:filter"
           type="text"
-          placeholder="Name, region, status"
+          placeholder="Filter by name, region, or status"
         >
       </label>
 
@@ -125,7 +125,7 @@ function jump() {
       </label>
 
       <label class="demo-chip">
-        Scroll to
+        Go to row
         <input
           v-model.number="scrollTo"
           data-testid="demo:control:scroll-to"
@@ -140,17 +140,17 @@ function jump() {
         data-testid="demo:control:jump"
         @click="jump"
       >
-        Jump
+        Go
       </button>
 
       <span
         class="demo-chip"
         data-testid="demo:metric:rows"
-      >Rows: {{ filteredRows.length }}</span>
+      >Matching rows: {{ filteredRows.length }}</span>
       <span
         class="demo-chip"
         data-testid="demo:metric:visible-range"
-      >Visible: {{ visibleStart }}-{{ visibleEnd }}</span>
+      >Visible rows: {{ visibleStart }}-{{ visibleEnd }}</span>
     </template>
 
     <div

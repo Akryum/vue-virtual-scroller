@@ -4,18 +4,18 @@ import TestChatDocDemo from '../.vitepress/components/demos/TestChatDocDemo.vue'
 
 # Test Chat Demo
 
-Use this demo to test append-heavy timelines and quick burst updates.
+This demo is a compact stress test for append-heavy timelines. It is useful when you want to check how the list behaves during frequent burst updates.
 
-What to try:
+## Try it yourself
 
-- Add rows in different batch sizes (`+1`, `+5`, `+20`, `+80`).
-- Confirm auto-scroll behavior under repeated inserts.
-- Use it as a sanity check for real-time message UIs.
+- Add small and large batches of messages.
+- Confirm that the list stays pinned to the bottom as new content arrives.
+- Use it as a quick baseline when testing chat-style rendering.
 
 <TestChatDocDemo />
 
 
-## Relevant source code
+## Source code
 
 ```vue
 <script setup lang="ts">

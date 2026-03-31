@@ -4,17 +4,17 @@ import ShiftDocDemo from '../.vitepress/components/demos/ShiftDocDemo.vue'
 
 # Shift Demo
 
-Use this demo to verify prepend anchoring when older rows are inserted at the beginning of the list.
+This demo focuses on prepend anchoring. It shows what happens when older rows are inserted above the viewport, which is a common pattern in chat history and reverse timelines.
 
-What to try:
+## Try it yourself
 
-- Click `Prepend 10` with `Shift` enabled and confirm the visible rows stay in place.
-- Turn `Shift` off and prepend again to see the viewport jump.
-- Use `Jump to middle` before prepending so the difference is obvious.
+- Add older rows with shift enabled and confirm the visible content stays in place.
+- Turn shift off and repeat the same action to see the viewport jump.
+- Move to the middle of the list before prepending so the difference is easier to spot.
 
 <ShiftDocDemo />
 
-## Relevant source code
+## Source code
 
 ```vue
 <script setup lang="ts">

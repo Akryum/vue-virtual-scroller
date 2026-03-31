@@ -4,68 +4,51 @@ import RecycleScrollerDocDemo from '../.vitepress/components/demos/RecycleScroll
 
 # RecycleScroller Demo
 
-Use this demo when your list items have known sizes, or when sizes can be provided by data.
+This demo shows the main `RecycleScroller` workflow for large lists with known, fixed item sizes.
 
-What to try:
+## Try it yourself
 
-- Change `Items` to simulate very large datasets.
-- Toggle `Variable height` and click letter rows to see size updates.
-- Tune `Buffer` to understand render-ahead behavior.
-- Use `Jump` to test `scrollToItem`.
+- Change the item count to simulate a larger dataset.
+- Adjust the buffer to understand render-ahead behavior.
+- Jump to a specific item to test `scrollToItem`.
 
 <RecycleScrollerDocDemo />
 
 
-## Relevant source code
+## Source code
 
 ```vue
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { RecycleScroller } from 'vue-virtual-scroller'
 import { createPeopleRows } from '../.vitepress/components/demos/demo-data'
 
+const ITEM_SIZE = 74
+
 const count = ref(8000)
-const withLetters = ref(true)
 const buffer = ref(240)
 const rows = ref([])
 
-const itemSize = computed(() => (withLetters.value ? null : 74))
-
 function regenerate() {
-  rows.value = createPeopleRows(Math.max(50, count.value), withLetters.value, 17)
+  rows.value = createPeopleRows(Math.max(50, count.value), false, 17)
 }
 
-function toggleLetterSize(row: any) {
-  if (row.type === 'letter') {
-    row.height = row.height === 96 ? 136 : 96
-  }
-}
-
-watch([count, withLetters], regenerate)
+watch(count, regenerate)
 onMounted(regenerate)
 </script>
 
 <template>
   <RecycleScroller
     :items="rows"
-    :item-size="itemSize"
+    :item-size="ITEM_SIZE"
     :buffer="buffer"
     key-field="id"
-    size-field="height"
   >
     <template #default="{ item, index }">
       <div
-        v-if="item.type === 'letter'"
-        :style="{ height: `${item.height}px` }"
-        @click="toggleLetterSize(item)"
+        :style="{ height: `${ITEM_SIZE}px` }"
       >
-        <strong>{{ item.value }}</strong> ({{ index }})
-      </div>
-      <div
-        v-else
-        :style="{ height: `${item.height}px` }"
-      >
-        {{ item.value.name }}
+        {{ item.value.name }} ({{ index }})
       </div>
     </template>
   </RecycleScroller>

@@ -1,10 +1,10 @@
 # RecycleScroller
 
-RecycleScroller is a virtual scroller that only renders the visible items. As the user scrolls, RecycleScroller reuses all components and DOM nodes to maintain optimal performance.
+`RecycleScroller` is the core component for virtualizing large lists in Vue. It renders only the visible items, then reuses component instances and DOM nodes as you scroll.
 
 ## Basic usage
 
-Use the scoped slot to render each item in the list:
+Use the default scoped slot to render each item in the list:
 
 ```vue
 <script>
@@ -46,27 +46,27 @@ export default {
 ## Important notes
 
 ::: warning
-You need to set the size of the virtual-scroller element and the items elements (for example, with CSS). Unless you are using [variable size mode](#variable-size-mode), all items should have the same height (or width in horizontal mode) to prevent display glitches.
+Set the size of the scroller element and the item elements yourself, usually with CSS. Unless you are using [variable size mode](#variable-size-mode), every item should have the same height, or width in horizontal mode.
 :::
 
 ::: warning
-If the items are objects, the scroller needs to be able to identify them. By default it will look for an `id` field on the items. This can be configured with the `keyField` prop if you are using another field name.
+If your items are objects, the scroller needs a stable identifier for each one. By default it looks for an `id` field. Use `keyField` if your data uses a different property name.
 :::
 
-- It is not recommended to use functional components inside RecycleScroller since the components are reused (so it will actually be slower).
-- The list item components must be reactive to the `item` prop being updated without being re-created (use computed props or watchers to properly react to props changes!).
-- You don't need to set `key` on list content (but you should on all nested `<img>` elements to prevent load glitches).
-- The browsers have a size limitation on DOM elements, it means that currently the virtual scroller can't display more than ~500k items depending on the browser.
-- Since DOM elements are reused for items, it's recommended to define hover styles using the provided `hover` class instead of the `:hover` state selector (e.g. `.vue-recycle-scroller__item-view.hover` or `.hover .some-element-inside-the-item-view`).
+- Avoid functional components inside `RecycleScroller`. Because views are reused, they are usually slower here rather than faster.
+- Item components must react correctly when the `item` prop changes without the component being recreated. Computed properties and watchers are usually the right tools for that.
+- You do not need to set `key` on the list content itself, but nested `<img>` elements should still use keys to avoid loading glitches.
+- Browsers impose size limits on very large DOM elements, so the practical ceiling is still around a few hundred thousand items depending on the browser.
+- Because DOM elements are reused, hover styles should usually rely on the provided `hover` class rather than the `:hover` selector.
 
-## How does it work?
+## How it works
 
-- The RecycleScroller creates pools of views to render visible items to the user.
-- A view holds a rendered item, and is reused inside its pool.
-- For each type of item, a new pool is created so that the same components (and DOM trees) are reused for the same type.
-- Views can be deactivated if they go off-screen, and can be reused anytime for a newly visible item.
+- `RecycleScroller` creates pools of reusable views for the visible part of the list.
+- Each view holds one rendered item and can later be reassigned to another item.
+- If you render multiple item types, each type gets its own pool so Vue can reuse compatible component trees.
+- Views that move off-screen are deactivated and reused when new items enter the viewport.
 
-Here is what the internals of RecycleScroller look like in vertical mode:
+In vertical mode, the internal structure looks like this:
 
 ```html
 <RecycleScroller>
@@ -90,7 +90,7 @@ Here is what the internals of RecycleScroller look like in vertical mode:
 </RecycleScroller>
 ```
 
-When the user scrolls inside RecycleScroller, the views are mostly just moved around to fill the new visible space, and the default slot properties updated. That way we get the minimum amount of components/elements creation and destruction and we use the full power of Vue virtual-dom diff algorithm to optimize DOM operations!
+As you scroll, most views are simply moved to new positions and receive updated slot props. That keeps component creation and DOM churn low, which is where most of the performance gains come from.
 
 ## Props
 
@@ -105,7 +105,6 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 | `sizeField` | `'size'` | Field used to get the item's size in variable size mode. |
 | `typeField` | `'type'` | Field used to differentiate different kinds of components in the list. For each distinct type, a pool of recycled items will be created. |
 | `keyField` | `'id'` | Field used to identify items and optimize managing rendered views. |
-| `pageMode` | `false` | Enable [Page mode](#page-mode). |
 | `shift` | `false` | Keep the viewport anchored when items are prepended at the start of the list. Useful for chat-style feeds and reverse timelines. |
 | `cache` | — | Optional cache snapshot returned by `cacheSnapshot` to restore known item sizes after remounting. |
 | `prerender` | `0` | Render a fixed number of items for Server-Side Rendering (SSR). |
@@ -138,7 +137,7 @@ When the user scrolls inside RecycleScroller, the views are mostly just moved ar
 
 ## Other slots
 
-The `empty` slot is displayed only when `items` is empty.
+The `empty` slot is rendered only when `items` is empty.
 
 ```html
 <main>
@@ -173,7 +172,7 @@ Example:
 
 ## Exposed methods
 
-When you hold a template ref to `RecycleScroller`, the component exposes these helpers:
+If you keep a template ref to `RecycleScroller`, the component exposes these helpers:
 
 - `scrollToItem(index, options?)`
 - `scrollToPosition(position, options?)`
@@ -194,29 +193,13 @@ The optional `options` object for scrolling accepts:
 
 ## Page mode
 
-The page mode expands the virtual-scroller and uses the page viewport to compute which items are visible. That way, you can use it in a big page with HTML elements before or after (like a header and a footer). Set the `page-mode` prop to `true`:
-
-```html
-<header>
-  <menu></menu>
-</header>
-
-<RecycleScroller page-mode>
-  <!-- ... -->
-</RecycleScroller>
-
-<footer>
-  Copyright 2017 - Cat
-</footer>
-```
-
-If the list should always use the window scroll position, prefer [`WindowScroller`](./window-scroller). `pageMode` remains the lightweight compatibility path on `RecycleScroller`.
+If the list should always follow window scrolling, prefer [`WindowScroller`](./window-scroller).
 
 ## Prepend anchoring and cache restore
 
-Use `shift` when new items are inserted at the beginning of the list and you want the current content to stay visually anchored.
+Use `shift` when items are inserted at the beginning of the list and you want the current content to stay visually anchored.
 
-Use `cacheSnapshot` together with the `cache` prop or `restoreCache(snapshot)` when the same list is remounted and you want to reuse previously known item sizes instead of recalculating from scratch.
+Use `cacheSnapshot` together with the `cache` prop or `restoreCache(snapshot)` when the same list is remounted and you want to reuse previously known item sizes instead of measuring them again.
 
 See the dedicated [Shift demo](../demos/shift) for a prepend-history example.
 
@@ -226,13 +209,13 @@ See the dedicated [Shift demo](../demos/shift) for a prepend-history example.
 This mode can be performance heavy with a lot of items. Use with caution.
 :::
 
-If the `itemSize` prop is not set or is set to `null`, the virtual scroller will switch to variable size mode. You then need to expose a number field on the item objects with the size of the item element.
+If `itemSize` is omitted or set to `null`, the scroller switches to variable size mode. In that case, each item must expose a numeric field with its size.
 
 ::: warning
 You still need to set the size of the items with CSS correctly (with classes for example).
 :::
 
-Use the `sizeField` prop (default is `'size'`) to set the field used by the scroller to get the size for each item.
+Use the `sizeField` prop, which defaults to `'size'`, to choose the field that stores that value.
 
 Example:
 
@@ -258,7 +241,7 @@ const items = [
 
 ## Buffer
 
-You can set the `buffer` prop (in pixels) on the virtual-scroller to extend the viewport considered when determining the visible items. For example, if you set a buffer of 1000 pixels, the virtual-scroller will start rendering items that are 1000 pixels below the bottom of the scroller visible area, and will keep the items that are 1000 pixels above the top of the visible area.
+Use the `buffer` prop, in pixels, to render a little beyond the visible viewport. For example, a buffer of 1000 means the scroller starts rendering items 1000 pixels below the current viewport and keeps items 1000 pixels above it mounted as well.
 
 The default value is `200`.
 

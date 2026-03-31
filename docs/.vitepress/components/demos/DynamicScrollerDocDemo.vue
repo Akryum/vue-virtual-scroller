@@ -35,8 +35,8 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
 <template>
   <DemoShell
     demo-id="dynamic-scroller"
-    title="DynamicScroller: unknown heights"
-    description="Measures unknown row heights and recalculates them as content changes."
+    title="DynamicScroller with measured rows"
+    description="Measures row height after render and updates the layout as content changes."
   >
     <template #toolbar>
       <label class="demo-chip">
@@ -45,12 +45,12 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
           v-model="search"
           data-testid="demo:control:filter"
           type="text"
-          placeholder="Type keyword"
+          placeholder="Search messages"
         >
       </label>
 
       <label class="demo-chip">
-        Min row size
+        Minimum row size
         <input
           v-model.number="minItemSize"
           data-testid="demo:control:min-row-size"
@@ -65,11 +65,11 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
       <span
         class="demo-chip"
         data-testid="demo:metric:matches"
-      >Matches: {{ filteredMessages.length }}</span>
+      >Matching rows: {{ filteredMessages.length }}</span>
       <span
         class="demo-chip"
         data-testid="demo:metric:visible-range"
-      >Visible: {{ visibleStart }}-{{ visibleEnd }}</span>
+      >Visible rows: {{ visibleStart }}-{{ visibleEnd }}</span>
     </template>
 
     <DynamicScroller

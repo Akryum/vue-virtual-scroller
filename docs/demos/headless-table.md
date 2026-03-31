@@ -4,26 +4,26 @@ import HeadlessTableDocDemo from '../.vitepress/components/demos/HeadlessTableDo
 
 # Headless Table Demo
 
-Use this demo when you need full control over table markup while keeping the same virtualization engine as `RecycleScroller`, with row heights measured from the actual DOM through `useDynamicScroller`.
+This demo shows the headless dynamic path in a semantic table. It keeps regular `<table>`, `<tbody>`, and `<tr>` markup while measuring row height from the DOM through `useDynamicScroller`.
 
-For smooth headless rendering, treat `pool` as the render source and `visiblePool` as an informational convenience. The table demo keeps pooled rows mounted, passes the pooled `view` directly into measurement, and lets the directive apply the recycled-row positioning and visibility styles automatically.
+For smooth headless rendering, treat `pool` as the render source and `visiblePool` as informational only. The example keeps pooled rows mounted, passes the pooled `view` directly into measurement, and lets the directive apply recycled-row positioning and visibility styles automatically.
 
 See also:
 
 - [`useDynamicScroller`](../guide/use-dynamic-scroller) for the full headless dynamic API.
 - [`useRecycleScroller`](../guide/use-recycle-scroller) for the fixed-size or pre-sized headless path.
 
-What to try:
+## Try it yourself
 
-- Type in `Filter` to reduce the dataset without changing the table structure.
-- Adjust `Buffer` to see how much render-ahead affects the pooled rows while the heights are measured live.
-- Use `Scroll to` and `Jump` to confirm programmatic navigation still works.
-- Resize the page to verify the table keeps horizontal overflow usable on smaller screens.
+- Filter the dataset and confirm that the table structure stays intact.
+- Adjust the buffer to see how render-ahead affects measured rows.
+- Jump to a specific row to confirm programmatic navigation still works.
+- Resize the page to make sure horizontal overflow remains usable on smaller screens.
 
 <HeadlessTableDocDemo />
 
 
-## Relevant source code
+## Source code
 
 ```vue
 <script setup lang="ts">

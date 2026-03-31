@@ -21,8 +21,8 @@ const filteredRows = computed(() => {
 <template>
   <DemoShell
     demo-id="simple-list"
-    title="Simple list"
-    description="Switches between dynamic and fixed-size virtualization on the same dataset."
+    title="Fixed vs dynamic sizing"
+    description="Compares measured and fixed-size virtualization on the same filtered dataset."
   >
     <template #toolbar>
       <label class="demo-chip">
@@ -31,12 +31,12 @@ const filteredRows = computed(() => {
           v-model="search"
           data-testid="demo:control:filter"
           type="text"
-          placeholder="Find sentence"
+          placeholder="Search the list"
         >
       </label>
 
       <label class="demo-chip">
-        Dynamic mode
+        Use dynamic sizing
         <input
           v-model="useDynamic"
           data-testid="demo:control:dynamic-mode"
@@ -47,7 +47,7 @@ const filteredRows = computed(() => {
       <span
         class="demo-chip"
         data-testid="demo:metric:rows"
-      >Rows: {{ filteredRows.length }}</span>
+      >Matching rows: {{ filteredRows.length }}</span>
     </template>
 
     <DynamicScroller
@@ -73,7 +73,7 @@ const filteredRows = computed(() => {
           <div class="demo-message-body">
             {{ item }}
           </div>
-          <small class="demo-message-meta">dynamic</small>
+          <small class="demo-message-meta">measured</small>
         </DynamicScrollerItem>
       </template>
     </DynamicScroller>
@@ -97,7 +97,7 @@ const filteredRows = computed(() => {
           <div class="demo-message-body">
             {{ item }}
           </div>
-          <small class="demo-message-meta">fixed</small>
+          <small class="demo-message-meta">fixed size</small>
         </div>
       </template>
     </RecycleScroller>

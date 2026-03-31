@@ -26,8 +26,8 @@ function addItems(count = 1) {
 <template>
   <DemoShell
     demo-id="test-chat"
-    title="Test chat append"
-    description="Stress-tests append-heavy timelines while keeping the viewport pinned to the latest messages."
+    title="Append-heavy timeline"
+    description="A compact stress test for burst inserts and bottom pinning."
   >
     <template #toolbar>
       <button
@@ -35,33 +35,33 @@ function addItems(count = 1) {
         data-testid="demo:control:add-1"
         @click="addItems(1)"
       >
-        +1
+        Add 1
       </button>
       <button
         class="demo-button"
         data-testid="demo:control:add-5"
         @click="addItems(5)"
       >
-        +5
+        Add 5
       </button>
       <button
         class="demo-button"
         data-testid="demo:control:add-20"
         @click="addItems(20)"
       >
-        +20
+        Add 20
       </button>
       <button
         class="demo-button"
         data-testid="demo:control:add-80"
         @click="addItems(80)"
       >
-        +80
+        Add 80
       </button>
       <span
         class="demo-chip"
         data-testid="demo:metric:messages"
-      >Messages: {{ rows.length }}</span>
+      >Total messages: {{ rows.length }}</span>
     </template>
 
     <DynamicScroller

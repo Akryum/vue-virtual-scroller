@@ -64,8 +64,8 @@ onMounted(() => {
 <template>
   <DemoShell
     demo-id="shift"
-    title="Shift prepend anchoring"
-    description="Loads older rows above the viewport. With shift enabled, the visible content stays anchored instead of jumping."
+    title="Prepend anchoring with shift"
+    description="Adds older rows above the viewport. With shift enabled, the current view stays in place."
   >
     <template #toolbar>
       <label class="demo-chip">
@@ -74,7 +74,7 @@ onMounted(() => {
           data-testid="demo:control:shift"
           type="checkbox"
         >
-        Shift
+        Keep position with shift
       </label>
 
       <button
@@ -82,21 +82,21 @@ onMounted(() => {
         data-testid="demo:control:prepend-1"
         @click="prepend(1)"
       >
-        Prepend 1
+        Add 1 above
       </button>
       <button
         class="demo-button"
         data-testid="demo:control:prepend-10"
         @click="prepend(10)"
       >
-        Prepend 10
+        Add 10 above
       </button>
       <button
         class="demo-button secondary"
         data-testid="demo:control:jump-middle"
         @click="jumpToMiddle"
       >
-        Jump to middle
+        Go to middle
       </button>
       <button
         class="demo-button secondary"
@@ -109,11 +109,11 @@ onMounted(() => {
       <span
         class="demo-chip"
         data-testid="demo:metric:rows"
-      >Rows: {{ rows.length }}</span>
+      >Loaded rows: {{ rows.length }}</span>
       <span
         class="demo-chip"
         data-testid="demo:metric:top-row"
-      >Top row: {{ topRow ? `#${topRow.id}` : '—' }}</span>
+      >First visible row: {{ topRow ? `#${topRow.id}` : '—' }}</span>
     </template>
 
     <DynamicScroller
