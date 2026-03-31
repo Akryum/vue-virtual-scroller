@@ -1,4 +1,9 @@
 :root {
+  --vp-c-brand-1: #6ed1a5;
+  --vp-c-brand-2: #41B883;
+  --vp-c-brand-3: #1b774e;
+  --vp-c-brand-soft: rgba(65, 184, 131, 0.12);
+
   --demo-bg: linear-gradient(145deg, #f4f8f2 0%, #edf7f6 48%, #f8f2e9 100%);
   --demo-surface: rgba(255, 255, 255, 0.86);
   --demo-border: rgba(47, 73, 59, 0.16);

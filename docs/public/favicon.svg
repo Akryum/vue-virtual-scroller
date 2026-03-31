@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.1"
+   viewBox="0 0 261.76 261.76001"
+   id="svg12"
+   sodipodi:docname="vue-square.svg"
+   inkscape:export-filename="/home/akryum/Pictures/Logos/vue-300.png"
+   inkscape:export-xdpi="110.02444"
+   inkscape:export-ydpi="110.02444"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   width="261.76001"
+   height="261.76001"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs16" />
+  <sodipodi:namedview
+     id="namedview14"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="true"
+     showgrid="false"
+     inkscape:zoom="3.423177"
+     inkscape:cx="41.043744"
+     inkscape:cy="113.345"
+     inkscape:window-width="2560"
+     inkscape:window-height="1371"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg12"
+     height="226.69px"
+     width="261.76001px" />
+  <g
+     transform="matrix(1.3333,0,0,-1.3333,-76.302815,330.875)"
+     id="g10">
+    <g
+       transform="translate(178.06,235.01)"
+       id="g4">
+      <path
+         d="M 0,0 -22.669,-39.264 -45.338,0 h -75.491 L -22.669,-170.02 75.491,0 Z"
+         fill="#41b883"
+         id="path2" />
+    </g>
+    <g
+       transform="translate(178.06,235.01)"
+       id="g8">
+      <path
+         d="M 0,0 -22.669,-39.264 -45.338,0 H -81.565 L -22.669,-102.01 36.227,0 Z"
+         fill="#34495e"
+         id="path6" />
+    </g>
+  </g>
+</svg>

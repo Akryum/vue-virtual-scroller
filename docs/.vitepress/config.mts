@@ -84,4 +84,8 @@ export default defineConfig({
       provider: 'local',
     },
   },
+
+  head: [
+    ['link', { rel: 'icon', href: '/favicon.svg' }],
+  ],
 })
