@@ -236,6 +236,7 @@ export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
   let _previousKeys: Array<ItemKey<TItem, TKeyField>> = []
   let _shiftAnchor: DynamicScrollerShiftAnchor<ItemKey<TItem, TKeyField>> | null = null
   let _shiftAnchorRaf: number | null = null
+  const _rafIds = new Set<number>()
 
   // Reactive state
   const vscrollData = reactive<VScrollData>({
@@ -251,10 +252,27 @@ export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
   const after = computed(() => toValue(toValue(options).after))
   const anchorRegistry = new Map<HTMLElement, DynamicScrollerAnchorRecord>()
 
+  function requestFrame(cb: () => void): number {
+    let frameId = -1
+    frameId = requestAnimationFrame(() => {
+      _rafIds.delete(frameId)
+      cb()
+    })
+    _rafIds.add(frameId)
+    return frameId
+  }
+
+  function cancelPendingFrames() {
+    for (const frameId of _rafIds) {
+      cancelAnimationFrame(frameId)
+    }
+    _rafIds.clear()
+  }
+
   // ResizeObserver setup
   if (typeof ResizeObserver !== 'undefined') {
     _resizeObserver = new ResizeObserver((entries) => {
-      requestAnimationFrame(() => {
+      requestFrame(() => {
         if (!Array.isArray(entries)) {
           return
         }
@@ -402,6 +420,7 @@ export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
   function cancelShiftAnchorFrame() {
     if (_shiftAnchorRaf != null) {
       cancelAnimationFrame(_shiftAnchorRaf)
+      _rafIds.delete(_shiftAnchorRaf)
       _shiftAnchorRaf = null
     }
   }
@@ -416,7 +435,7 @@ export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
       return
     }
 
-    _shiftAnchorRaf = requestAnimationFrame(() => {
+    _shiftAnchorRaf = requestFrame(() => {
       _shiftAnchorRaf = null
       alignShiftAnchor()
     })
@@ -489,7 +508,7 @@ export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
     _applyingShiftAnchor = true
     scrollerEl.scrollTop = target
     scrollerEl.dispatchEvent(new Event('scroll'))
-    requestAnimationFrame(() => {
+    requestFrame(() => {
       _applyingShiftAnchor = false
     })
     return true
@@ -702,17 +721,17 @@ export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
       elValue.scrollTop = elValue.scrollHeight + 5000
       const cb = () => {
         elValue.scrollTop = elValue.scrollHeight + 5000
-        requestAnimationFrame(() => {
+        requestFrame(() => {
           elValue.scrollTop = elValue.scrollHeight + 5000
           if (_undefinedSizes === 0) {
             _scrollingToBottom = false
           }
           else {
-            requestAnimationFrame(cb)
+            requestFrame(cb)
           }
         })
       }
-      requestAnimationFrame(cb)
+      requestFrame(cb)
     })
   }
 
@@ -825,6 +844,7 @@ export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
 
   onUnmounted(() => {
     cancelShiftAnchorFrame()
+    cancelPendingFrames()
     el.value?.removeEventListener('scroll', onNativeScroll)
     _events.all.clear()
   })

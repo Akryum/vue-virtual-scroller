@@ -114,7 +114,9 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
   let _previousKeys: Array<ItemKey<TItem, TKeyField>> = []
   let _shiftAnchor: { key: ItemKey<TItem, TKeyField>, offset: number } | null = null
   let _shiftAnchorClearTimer: ReturnType<typeof setTimeout> | null = null
+  let _itemsLimitWarnTimer: ReturnType<typeof setTimeout> | null = null
   let _applyingShiftAnchor = false
+  const _rafIds = new Set<number>()
   const _restoredSizes = ref<Record<ItemKey<TItem, TKeyField>, number>>({} as Record<ItemKey<TItem, TKeyField>, number>)
 
   // Computed
@@ -242,6 +244,46 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
     }
   }
 
+  function requestFrame(cb: () => void): number {
+    let frameId = -1
+    frameId = requestAnimationFrame(() => {
+      _rafIds.delete(frameId)
+      cb()
+    })
+    _rafIds.add(frameId)
+    return frameId
+  }
+
+  function cancelPendingFrames() {
+    for (const frameId of _rafIds) {
+      cancelAnimationFrame(frameId)
+    }
+    _rafIds.clear()
+  }
+
+  function clearPendingTimeouts() {
+    if (_updateTimeout) {
+      clearTimeout(_updateTimeout)
+      _updateTimeout = null
+    }
+    if (_refreshTimout) {
+      clearTimeout(_refreshTimout)
+      _refreshTimout = null
+    }
+    if (_sortTimer) {
+      clearTimeout(_sortTimer)
+      _sortTimer = null
+    }
+    if (_shiftAnchorClearTimer) {
+      clearTimeout(_shiftAnchorClearTimer)
+      _shiftAnchorClearTimer = null
+    }
+    if (_itemsLimitWarnTimer) {
+      clearTimeout(_itemsLimitWarnTimer)
+      _itemsLimitWarnTimer = null
+    }
+  }
+
   function handleResize() {
     callbacks?.onResize?.()
     if (ready.value)
@@ -259,7 +301,7 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
       if (_updateTimeout)
         return
 
-      const requestUpdate = () => requestAnimationFrame(() => {
+      const requestUpdate = () => requestFrame(() => {
         _scrollDirty = false
         const { continuous } = updateVisibleItems(false, true)
 
@@ -289,7 +331,7 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
     if (ready.value) {
       if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {
         callbacks?.onVisible?.()
-        requestAnimationFrame(() => {
+        requestFrame(() => {
           updateVisibleItems(false)
         })
       }
@@ -502,7 +544,7 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
 
     _applyingShiftAnchor = true
     scrollToPosition(target)
-    requestAnimationFrame(() => {
+    requestFrame(() => {
       _applyingShiftAnchor = false
     })
     return true
@@ -868,7 +910,8 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
   }
 
   function itemsLimitError() {
-    setTimeout(() => {
+    _itemsLimitWarnTimer = setTimeout(() => {
+      _itemsLimitWarnTimer = null
       console.warn('It seems the scroller element isn\'t scrolling, so it tries to render all the items at once.', 'Scroller:', toValue(el))
       console.warn('Make sure the scroller has a fixed height (or width) and \'overflow-y\' (or \'overflow-x\') set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.')
     })
@@ -1010,6 +1053,8 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
   })
 
   onBeforeUnmount(() => {
+    clearPendingTimeouts()
+    cancelPendingFrames()
     removeListeners()
   })
 

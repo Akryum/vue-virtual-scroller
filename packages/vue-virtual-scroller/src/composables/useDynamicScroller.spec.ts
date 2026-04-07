@@ -750,4 +750,23 @@ describe('useDynamicScroller', () => {
     requestAnimationFrameSpy.mockRestore()
     wrapper.unmount()
   })
+
+  it('cancels pending animation frames on unmount', async () => {
+    const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame')
+    requestAnimationFrameSpy.mockImplementation(() => 456)
+    const cancelAnimationFrameSpy = vi.spyOn(window, 'cancelAnimationFrame')
+
+    const { wrapper, vm } = mountHarness([{ id: 'row-1' }])
+    await nextTick()
+
+    vm.scrollToBottom()
+    await nextTick()
+
+    wrapper.unmount()
+
+    expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(456)
+
+    requestAnimationFrameSpy.mockRestore()
+    cancelAnimationFrameSpy.mockRestore()
+  })
 })

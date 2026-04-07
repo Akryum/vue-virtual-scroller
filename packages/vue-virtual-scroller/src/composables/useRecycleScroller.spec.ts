@@ -28,6 +28,7 @@ function mountHarness(overrides: Partial<{
   sizeField: string
   shift: boolean
   cache: any
+  updateInterval: number
   clientHeight: number
   clientWidth: number
 }> = {}) {
@@ -258,5 +259,50 @@ describe('useRecycleScroller', () => {
       keys: ['x', 'y'],
       sizes: [15, 25],
     })).toBe(false)
+  })
+
+  it('cancels pending animation frames on unmount', async () => {
+    const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame')
+    requestAnimationFrameSpy.mockImplementation(() => 123)
+    const cancelAnimationFrameSpy = vi.spyOn(window, 'cancelAnimationFrame')
+
+    const { wrapper, vm } = mountHarness()
+    await nextTick()
+    await nextTick()
+
+    vm.handleVisibilityChange(true, {
+      boundingClientRect: {
+        width: 10,
+        height: 10,
+      },
+    } as IntersectionObserverEntry)
+
+    wrapper.unmount()
+
+    expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(123)
+
+    requestAnimationFrameSpy.mockRestore()
+    cancelAnimationFrameSpy.mockRestore()
+  })
+
+  it('clears pending timeouts on unmount', async () => {
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout')
+    setTimeoutSpy.mockImplementation(() => 789 as unknown as ReturnType<typeof setTimeout>)
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout')
+
+    const { wrapper, vm } = mountHarness({
+      updateInterval: 10,
+    })
+    await nextTick()
+    await nextTick()
+
+    vm.handleScroll()
+
+    wrapper.unmount()
+
+    expect(clearTimeoutSpy).toHaveBeenCalledWith(789)
+
+    setTimeoutSpy.mockRestore()
+    clearTimeoutSpy.mockRestore()
   })
 })
