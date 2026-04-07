@@ -1,3 +1,21 @@
+## v2.0.1
+
+[compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0...v2.0.1)
+
+### 🩹 Fixes
+
+- Clear requested frames and timeouts on unmount, closes #920 ([#920](https://github.com/Akryum/vue-virtual-scroller/issues/920))
+- Guard for undefined el, closes #919 ([#919](https://github.com/Akryum/vue-virtual-scroller/issues/919))
+
+### 📖 Documentation
+
+- Branding ([f619999](https://github.com/Akryum/vue-virtual-scroller/commit/f619999))
+- Use `useTemplateRef` ([895ac01](https://github.com/Akryum/vue-virtual-scroller/commit/895ac01))
+
+### ❤️ Contributors
+
+- Guillaume Chau ([@Akryum](http://github.com/Akryum))
+
 ## v2.0.0
 
 [compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0-beta.10...v2.0.0)
