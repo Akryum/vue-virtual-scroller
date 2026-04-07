@@ -28,7 +28,7 @@
     "playwright": "1.58.2",
     "typescript": "^5.3.3",
     "vitepress": "^1.6.4",
-    "vue": "^3.2.41",
+    "vue": "^3.5.0",
     "vue-tsc": "^3.2.6"
   }
 }

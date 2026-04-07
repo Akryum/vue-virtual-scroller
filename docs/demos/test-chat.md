@@ -19,12 +19,12 @@ This demo is a compact stress test for append-heavy timelines. It is useful when
 
 ```vue
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import { createSimpleStrings } from '../.vitepress/components/demos/demo-data'
 
 const pool = createSimpleStrings(1200, 1303)
-const scroller = ref<InstanceType<typeof DynamicScroller>>()
+const scroller = useTemplateRef<InstanceType<typeof DynamicScroller>>('scroller')
 const rows = ref<{ id: number, text: string }[]>([])
 
 let nextId = 1

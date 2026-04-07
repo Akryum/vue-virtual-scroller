@@ -1,7 +1,17 @@
 <script>
+import { useTemplateRef } from 'vue'
+
 import { getData } from '../data'
 
 export default {
+  setup() {
+    const scroller = useTemplateRef('scroller')
+
+    return {
+      scroller,
+    }
+  },
+
   data() {
     return {
       list: [],
@@ -12,6 +22,12 @@ export default {
 
   mounted() {
     this.list = getData(5000)
+  },
+
+  methods: {
+    scrollToItem(index) {
+      this.scroller?.scrollToItem(index)
+    },
   },
 }
 </script>
@@ -35,7 +51,9 @@ export default {
         max="20"
       >
       <span>
-        <button @mousedown="$refs.scroller.scrollToItem(scrollTo)">Scroll To: </button>
+        <button @mousedown="scrollToItem(scrollTo)">
+          Scroll To:
+        </button>
         <input
           v-model.number="scrollTo"
           type="number"

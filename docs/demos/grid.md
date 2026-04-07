@@ -20,7 +20,7 @@ This demo shows how `RecycleScroller` can power a grid layout when every card us
 ```vue
 <script setup lang="ts">
 import type { Person } from '../.vitepress/components/demos/demo-data'
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { RecycleScroller } from 'vue-virtual-scroller'
 import { createPeopleRows } from '../.vitepress/components/demos/demo-data'
 
@@ -32,7 +32,7 @@ type RecycleScrollerExposed = InstanceType<typeof RecycleScroller> & {
   visiblePool?: Array<{ nr: { index: number } }>
 }
 
-const scroller = ref<RecycleScrollerExposed>()
+const scroller = useTemplateRef<RecycleScrollerExposed>('scroller')
 const gridItems = ref(5)
 const scrollTo = ref(300)
 

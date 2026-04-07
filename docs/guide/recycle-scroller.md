@@ -200,7 +200,7 @@ Example:
 
 ## Exposed methods
 
-If you keep a template ref to `RecycleScroller`, the component exposes these helpers:
+If you keep a template ref to `RecycleScroller` via `useTemplateRef`, the component exposes these helpers:
 
 - `scrollToItem(index, options?)`
 - `scrollToPosition(position, options?)`

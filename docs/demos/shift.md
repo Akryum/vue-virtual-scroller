@@ -18,11 +18,11 @@ This demo focuses on prepend anchoring. It shows what happens when older rows ar
 
 ```vue
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, useTemplateRef } from 'vue'
 import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import { createMessages } from '../.vitepress/components/demos/demo-data'
 
-const scroller = ref<InstanceType<typeof DynamicScroller>>()
+const scroller = useTemplateRef<InstanceType<typeof DynamicScroller>>('scroller')
 const basePool = createMessages(320, 911)
 const shiftEnabled = ref(true)
 const rows = ref(basePool.slice(120, 156))

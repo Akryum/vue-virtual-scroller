@@ -1,8 +1,17 @@
 <script>
 import { faker } from '@faker-js/faker'
+import { useTemplateRef } from 'vue'
 
 export default {
   name: 'TestChat',
+
+  setup() {
+    const scroller = useTemplateRef('scroller')
+
+    return {
+      scroller,
+    }
+  },
 
   data() {
     return {
@@ -22,7 +31,7 @@ export default {
     },
 
     scrollToBottom() {
-      this.$refs.scroller.scrollToBottom()
+      this.scroller?.scrollToBottom()
     },
   },
 }

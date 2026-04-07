@@ -126,7 +126,7 @@ The default slot is still the simplest choice when the bundled wrapper markup al
 
 ## Exposed methods
 
-With a template ref, `WindowScroller` exposes the same navigation helpers as the core scroller:
+With a template ref created via `useTemplateRef`, `WindowScroller` exposes the same navigation helpers as the core scroller:
 
 - `scrollToItem(index, options?)`
 - `scrollToPosition(position, options?)`

@@ -27,11 +27,11 @@ See also:
 
 ```vue
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useDynamicScroller } from 'vue-virtual-scroller'
 
 const MIN_ROW_HEIGHT = 62
-const scrollerEl = ref<HTMLElement>()
+const scrollerEl = useTemplateRef<HTMLElement>('scrollerEl')
 const dynamicScroller = useDynamicScroller(computed(() => ({
   items: rows.value,
   keyField: 'id',

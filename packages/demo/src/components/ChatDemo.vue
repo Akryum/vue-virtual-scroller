@@ -1,4 +1,6 @@
 <script>
+import { useTemplateRef } from 'vue'
+
 import { generateMessage } from '../data'
 
 let id = 0
@@ -9,6 +11,14 @@ for (let i = 0; i < 10000; i++) {
 }
 
 export default {
+  setup() {
+    const scroller = useTemplateRef('scroller')
+
+    return {
+      scroller,
+    }
+  },
+
   data() {
     return {
       items: [],
@@ -51,7 +61,7 @@ export default {
     },
 
     scrollToBottom() {
-      this.$refs.scroller.scrollToBottom()
+      this.scroller?.scrollToBottom()
     },
 
     startStream() {

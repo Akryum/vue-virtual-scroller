@@ -101,7 +101,7 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 
 ```vue
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { useDynamicScroller } from 'vue-virtual-scroller'
 
 const rows = ref([
@@ -109,7 +109,7 @@ const rows = ref([
   { id: 2, title: 'Beta', body: 'This row can wrap and grow' },
 ])
 
-const scrollerEl = ref<HTMLElement>()
+const scrollerEl = useTemplateRef<HTMLElement>('scrollerEl')
 
 const {
   pool,

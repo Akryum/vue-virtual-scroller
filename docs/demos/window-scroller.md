@@ -19,10 +19,10 @@ In this demo, the browser window is the scroll container. The list stays in norm
 
 ```vue
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { WindowScroller } from 'vue-virtual-scroller'
 
-const scroller = ref<InstanceType<typeof WindowScroller>>()
+const scroller = useTemplateRef<InstanceType<typeof WindowScroller>>('scroller')
 const rows = ref([
   { id: 1, user: 'Avery Anderson', message: 'Window-driven row', timestamp: '08:00', height: 88 },
   { id: 2, user: 'Jordan Diaz', message: 'Another variable-size row', timestamp: '08:01', height: 116 },

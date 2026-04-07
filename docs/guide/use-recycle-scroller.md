@@ -109,7 +109,7 @@ Additional scroll-system options:
 
 ```vue
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { useRecycleScroller } from 'vue-virtual-scroller'
 
 interface User {
@@ -124,7 +124,7 @@ const items = ref<User[]>(
   })),
 )
 
-const scrollerEl = ref<HTMLElement>()
+const scrollerEl = useTemplateRef<HTMLElement>('scrollerEl')
 
 const options = computed(() => ({
   items: items.value,

@@ -59,7 +59,7 @@
     "vite": "^6.0.0",
     "vite-plugin-dts": "^4.0.0",
     "vitest": "4.0.16",
-    "vue": "^3.2.41"
+    "vue": "^3.5.0"
   },
   "browserslist": [
     "> 1%",

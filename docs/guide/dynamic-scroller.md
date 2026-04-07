@@ -113,7 +113,7 @@ The `before`, `after`, and `empty` slots behave the same way as in [RecycleScrol
 
 ## Exposed methods
 
-With a template ref, `DynamicScroller` exposes the same scrolling helpers as `RecycleScroller`:
+With a template ref created via `useTemplateRef`, `DynamicScroller` exposes the same scrolling helpers as `RecycleScroller`:
 
 - `scrollToItem(index, options?)`
 - `scrollToPosition(position, options?)`

@@ -103,7 +103,7 @@ Common options:
 
 ```vue
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { useWindowScroller } from 'vue-virtual-scroller'
 
 interface Row {
@@ -118,9 +118,9 @@ const rows = ref<Row[]>(
   })),
 )
 
-const rootEl = ref<HTMLElement>()
-const beforeEl = ref<HTMLElement>()
-const afterEl = ref<HTMLElement>()
+const rootEl = useTemplateRef<HTMLElement>('rootEl')
+const beforeEl = useTemplateRef<HTMLElement>('beforeEl')
+const afterEl = useTemplateRef<HTMLElement>('afterEl')
 
 const {
   pool,

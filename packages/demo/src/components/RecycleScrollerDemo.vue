@@ -1,4 +1,6 @@
 <script>
+import { useTemplateRef } from 'vue'
+
 import { addItem, getData } from '../data'
 
 import Person from './Person.vue'
@@ -6,6 +8,14 @@ import Person from './Person.vue'
 export default {
   components: {
     Person,
+  },
+
+  setup() {
+    const scroller = useTemplateRef('scroller')
+
+    return {
+      scroller,
+    }
   },
 
   data: () => ({
@@ -56,7 +66,7 @@ export default {
 
   mounted() {
     this.$nextTick(this.generateItems)
-    window.scroller = this.$refs.scroller
+    window.scroller = this.scroller
   },
 
   methods: {
@@ -67,6 +77,10 @@ export default {
 
     addItem() {
       addItem(this.items)
+    },
+
+    scrollToItem(index) {
+      this.scroller?.scrollToItem(index)
     },
 
     onUpdate(viewStartIndex, viewEndIndex, visibleStartIndex, visibleEndIndex) {
@@ -118,7 +132,9 @@ export default {
         > buffer
       </span>
       <span>
-        <button @mousedown="$refs.scroller.scrollToItem(scrollTo)">Scroll To: </button>
+        <button @mousedown="scrollToItem(scrollTo)">
+          Scroll To:
+        </button>
         <input
           v-model.number="scrollTo"
           type="number"

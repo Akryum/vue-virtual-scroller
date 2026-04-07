@@ -20,11 +20,11 @@ This demo shows a typical append-only stream such as chat, logs, or live activit
 
 ```vue
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, useTemplateRef } from 'vue'
 import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import { createMessages } from '../.vitepress/components/demos/demo-data'
 
-const scroller = ref<InstanceType<typeof DynamicScroller>>()
+const scroller = useTemplateRef<InstanceType<typeof DynamicScroller>>('scroller')
 const basePool = createMessages(1500, 303)
 
 let nextId = 1
