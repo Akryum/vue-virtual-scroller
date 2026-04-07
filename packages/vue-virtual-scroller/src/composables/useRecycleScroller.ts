@@ -342,7 +342,8 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
   }
 
   function getListenerTarget(): Window | Element {
-    const target: Element | undefined = getScrollParent(toValue(el)!)
+    const elValue = toValue(el)
+    const target: Element | undefined = elValue ? getScrollParent(elValue) : undefined
     // Fix global scroll target for Chrome and Safari
     if (window.document && (target === window.document.documentElement || target === window.document.body)) {
       return window
@@ -363,7 +364,10 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
   }
 
   function getScroll(): ScrollState {
-    const elValue = toValue(el)!
+    const elValue = toValue(el)
+    if (!elValue) {
+      return { start: 0, end: 0 }
+    }
     const opts = toValue(options)
     const isVertical = opts.direction === 'vertical'
     let scrollState: ScrollState
@@ -402,7 +406,10 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
   }
 
   function getSecondaryScroll(): ScrollState {
-    const elValue = toValue(el)!
+    const elValue = toValue(el)
+    if (!elValue) {
+      return { start: 0, end: 0 }
+    }
     const opts = toValue(options)
 
     if (opts.direction === 'vertical') {
@@ -944,9 +951,13 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
 
   function scrollToItem(index: number, scrollOptions?: ScrollToOptions) {
     const opts = toValue(options)
+    const elValue = toValue(el)
+    if (!elValue) {
+      return
+    }
     const targetIndex = Math.max(0, Math.min(index, opts.items.length - 1))
     const viewportStart = getScroll().start
-    const viewportSize = getViewportSize(toValue(el)!, opts.direction, opts.pageMode)
+    const viewportSize = getViewportSize(elValue, opts.direction, opts.pageMode)
     const itemStart = getItemOffset(targetIndex)
     const itemSize = getItemSize(targetIndex)
     const target = getAlignedScrollOffset(
@@ -965,7 +976,10 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
     scrollToPosition(target, scrollOptions)
 
     if (opts.gridItems && opts.itemSize != null) {
-      const elValue = toValue(el)!
+      const elValue = toValue(el)
+      if (!elValue) {
+        return
+      }
       const gridItems = opts.gridItems
       const itemSecondarySize = opts.itemSecondarySize || opts.itemSize
       const secondaryIndex = targetIndex % gridItems
@@ -994,7 +1008,10 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
 
   function scrollToPosition(position: number, scrollOptions?: ScrollToOptions) {
     const opts = toValue(options)
-    const elValue = toValue(el)!
+    const elValue = toValue(el)
+    if (!elValue) {
+      return
+    }
 
     if (opts.pageMode) {
       const viewportEl = getScrollParent(elValue) as HTMLElement
