@@ -83,7 +83,6 @@
 .demo-shell__header {
   padding: 18px 20px;
   border-bottom: 1px solid var(--demo-border);
-  background: var(--demo-panel-bg);
 }
 
 .demo-shell__title {
