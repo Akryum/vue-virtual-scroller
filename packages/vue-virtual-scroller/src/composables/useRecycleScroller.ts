@@ -422,6 +422,45 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
     }
   }
 
+  /**
+   * Detect whether variable-size scroll window crossed previous rendered item boundaries.
+   */
+  function hasVariableSizeWindowChange(scroll: ScrollState, count: number, sizesValue: Sizes, buffer: number): boolean {
+    const leadingSlotSize = getLeadingSlotSize()
+    const adjustedStart = scroll.start - buffer - leadingSlotSize
+    const adjustedEnd = scroll.end + buffer - leadingSlotSize
+
+    if (_startIndex > 0) {
+      const previousStartBoundary = sizesValue[_startIndex - 1]?.accumulator ?? 0
+      if (adjustedStart <= previousStartBoundary) {
+        return true
+      }
+    }
+
+    if (_startIndex < count - 1) {
+      const nextStartBoundary = sizesValue[_startIndex]?.accumulator ?? Number.POSITIVE_INFINITY
+      if (adjustedStart > nextStartBoundary) {
+        return true
+      }
+    }
+
+    if (_endIndex > 1) {
+      const previousEndBoundary = sizesValue[_endIndex - 2]?.accumulator ?? 0
+      if (adjustedEnd <= previousEndBoundary) {
+        return true
+      }
+    }
+
+    if (_endIndex < count) {
+      const nextEndBoundary = sizesValue[_endIndex - 1]?.accumulator ?? Number.POSITIVE_INFINITY
+      if (adjustedEnd > nextEndBoundary) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   function getItemSize(index: number): number {
     const opts = toValue(options)
     if (opts.itemSize != null) {
@@ -691,7 +730,9 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
         if (secondaryPositionDiff < 0)
           secondaryPositionDiff = -secondaryPositionDiff
 
-        const primaryThresholdMet = (itemSize === null && positionDiff >= minItemSize)
+        const variableSizeWindowChanged = itemSize === null
+          && hasVariableSizeWindowChange(scroll, count, sizesValue, opts.buffer)
+        const primaryThresholdMet = (itemSize === null && (positionDiff >= minItemSize || variableSizeWindowChanged))
           || (itemSize !== null && positionDiff >= itemSize)
         const secondaryThresholdMet = gridItems > 1
           && itemSize != null

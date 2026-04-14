@@ -160,6 +160,30 @@ describe('useRecycleScroller', () => {
     expect(vm.el.scrollTop).toBe(20)
   })
 
+  it('emits updates for large variable-size rows before scrolling a full minItemSize', async () => {
+    const { vm, onUpdate } = mountHarness({
+      items: [
+        { id: 1, size: 300 },
+        { id: 2, size: 300 },
+        { id: 3, size: 300 },
+      ],
+      itemSize: null,
+      minItemSize: 300,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => view.nr.index)).toEqual([0])
+    onUpdate.mockClear()
+
+    vm.el.scrollTop = 250
+    vm.updateVisibleItems(false, true)
+
+    expect(onUpdate).toHaveBeenCalledTimes(1)
+    expect(vm.visiblePool.map((view: View) => view.nr.index)).toEqual([0, 1])
+  })
+
   it('virtualizes grid items across the secondary axis and updates on horizontal scroll', async () => {
     const { vm } = mountHarness({
       items: Array.from({ length: 16 }, (_, id) => ({ id })),
