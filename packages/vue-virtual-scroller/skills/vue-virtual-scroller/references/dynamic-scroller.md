@@ -49,6 +49,7 @@ The default slot still exposes:
 ## Pitfalls
 
 - `DynamicScroller` does not detect size changes by itself; dynamic inputs must be forwarded to `DynamicScrollerItem` through `sizeDependencies`.
+- Pass slot `index` to `DynamicScrollerItem` when using simple-array mode or a function `keyField`.
 - Missing `minItemSize` degrades the initial layout.
 - This path is heavier than fixed-size virtualization, so prefer `RecycleScroller` when item size is already known.
 
@@ -65,8 +66,8 @@ Unknown-height rows:
     <DynamicScrollerItem
       :item="item"
       :active="active"
+      :index="index"
       :size-dependencies="[item.message]"
-      :data-index="index"
     >
       {{ item.message }}
     </DynamicScrollerItem>
