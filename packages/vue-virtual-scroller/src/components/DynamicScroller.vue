@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="TItem">
 import type { UseDynamicScrollerOptions, UseDynamicScrollerReturn } from '../composables/useDynamicScroller'
-import type { CacheSnapshot, DynamicScrollerExposed, DynamicScrollerSlotProps, ItemWithSize, KeyValue, RecycleScrollerExposed, ScrollDirection } from '../types'
+import type { CacheSnapshot, DynamicScrollerExposed, DynamicScrollerSlotProps, ItemWithSize, KeyFieldValue, KeyValue, RecycleScrollerExposed, ScrollDirection } from '../types'
 import { computed, ref } from 'vue'
 import { useDynamicScroller } from '../composables/useDynamicScroller'
 import RecycleScroller from './RecycleScroller.vue'
@@ -11,7 +11,7 @@ defineOptions({
 
 const props = withDefaults(defineProps<{
   items: TItem[]
-  keyField?: string
+  keyField?: KeyFieldValue<any>
   direction?: ScrollDirection
   listTag?: string
   itemTag?: string

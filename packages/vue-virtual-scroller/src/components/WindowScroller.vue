@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="TItem">
 import type { UseWindowScrollerOptions, UseWindowScrollerReturn } from '../composables/useWindowScroller'
-import type { CacheSnapshot, ClassValue, KeyValue, RecycleScrollerSlotProps, ScrollDirection, WindowScrollerExposed } from '../types'
+import type { CacheSnapshot, ClassValue, KeyFieldValue, KeyValue, RecycleScrollerSlotProps, ScrollDirection, WindowScrollerExposed } from '../types'
 import { ref } from 'vue'
 import { useWindowScroller } from '../composables/useWindowScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
@@ -9,7 +9,7 @@ import ResizeObserver from './ResizeObserver.vue'
 
 const props = withDefaults(defineProps<{
   items: TItem[]
-  keyField?: string
+  keyField?: KeyFieldValue<any>
   direction?: ScrollDirection
   listTag?: string
   itemTag?: string

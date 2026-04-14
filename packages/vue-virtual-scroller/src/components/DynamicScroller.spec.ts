@@ -126,10 +126,12 @@ describe('dynamicScroller', () => {
   })
 
   it('passes props to RecycleScroller and re-emits resize and visible', async () => {
+    const keyField = (item: { threadId: string, id: number }) => `${item.threadId}:${item.id}`
     const wrapper = mountDynamicScroller({
-      items: [{ id: 1 }],
+      items: [{ threadId: 'general', id: 1 }],
       minItemSize: 24,
       direction: 'horizontal',
+      keyField,
       listTag: 'ul',
       itemTag: 'li',
     })
@@ -137,6 +139,7 @@ describe('dynamicScroller', () => {
     const scroller = wrapper.getComponent({ name: 'RecycleScroller' })
     expect(scroller.props('minItemSize')).toBe(24)
     expect(scroller.props('direction')).toBe('horizontal')
+    expect(scroller.props('keyField')).toBe('id')
     expect(scroller.props('listTag')).toBe('ul')
     expect(scroller.props('itemTag')).toBe('li')
 
@@ -145,6 +148,7 @@ describe('dynamicScroller', () => {
 
     expect(wrapper.emitted('resize')).toHaveLength(1)
     expect(wrapper.emitted('visible')).toHaveLength(1)
+    expect((wrapper.vm as any).itemsWithSize[0].id).toBe('general:1')
   })
 
   it('exposes scrollToItem and getItemSize', async () => {

@@ -44,6 +44,8 @@ dynamicScroller.getItemSize(messages.value[0])
 
 The same declared type also flows into `useDynamicScrollerItem<TItem>()` when you use the lower-level measurement helper directly.
 
+Like the other scroller APIs, `keyField` can be either a string field name or a resolver function with the signature `(item, index) => string | number`.
+
 ## Directive contract
 
 Use the directive with the pooled `view`:

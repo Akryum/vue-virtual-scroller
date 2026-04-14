@@ -1,13 +1,14 @@
 import type { ComputedRef, MaybeRef, MaybeRefOrGetter, Ref } from 'vue'
-import type { CacheSnapshot, ItemKey, ScrollDirection, ScrollState, ScrollToOptions, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
+import type { CacheSnapshot, ItemKey, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
 import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
 import config from '../config'
 import { buildCacheSnapshot, findPrependOffset, getAlignedScrollOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
+import { resolveItemKey } from '../engine/keyField'
 import { getViewportSize, normalizeOffset, scrollElementTo } from '../engine/scroll'
 import { getScrollParent } from '../scrollparent'
 import { supportsPassive } from '../utils'
 
-export interface UseRecycleScrollerOptions<TItem = unknown, TKeyField extends string = 'id', TSizeField extends string = 'size'> {
+export interface UseRecycleScrollerOptions<TItem = unknown, TKeyField extends KeyFieldValue<TItem> = 'id', TSizeField extends string = 'size'> {
   items: TItem[]
   keyField: ValidKeyField<TItem, TKeyField>
   direction: ScrollDirection
@@ -59,18 +60,6 @@ function touchView<TItem, TKey>(view: View<TItem, TKey>) {
   stampedView._vs_styleStamp++
 }
 
-function getItemKeyValue<TItem, TKeyField extends string>(
-  item: TItem,
-  index: number,
-  keyField: ValidKeyField<TItem, TKeyField>,
-): ItemKey<TItem, TKeyField> {
-  const key = (item as any)?.[keyField]
-  if (key == null) {
-    throw new Error(`Key is ${key} on item (keyField is '${keyField}')`)
-  }
-  return key as ItemKey<TItem, TKeyField>
-}
-
 interface GridRenderWindow {
   renderedIndices: number[]
   startIndex: number
@@ -80,7 +69,7 @@ interface GridRenderWindow {
   totalSize: number
 }
 
-export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSizeField extends string = 'size'>(
+export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem> = 'id', TSizeField extends string = 'size'>(
   options: MaybeRefOrGetter<UseRecycleScrollerOptions<TItem, TKeyField, TSizeField>>,
   el: MaybeRef<HTMLElement | undefined>,
   before?: MaybeRef<HTMLElement | undefined>,
@@ -139,7 +128,7 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
       let accumulator = 0
       let current: number
       for (let i = 0, l = items.length; i < l; i++) {
-        const key = simpleArray.value ? i : getItemKeyValue(items[i], i, opts.keyField)
+        const key = simpleArray.value ? i : resolveItemKey(items[i], i, opts.keyField)
         current = restoredSizes[key] || (items[i] as any)[field] || minItemSize
         if (current < computedMinSize) {
           computedMinSize = current
@@ -510,14 +499,9 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
     const scrollStart = Math.max(getScroll().start - getLeadingSlotSize(), 0)
     const anchorIndex = Math.min(findItemIndex(scrollStart), previousItems.length - 1)
     const anchorItem = previousItems[anchorIndex]
-    const anchorKey = keyField
-      ? (anchorItem as any)?.[keyField]
-      : anchorIndex
-
-    if (anchorKey == null) {
-      clearShiftAnchor()
-      return
-    }
+    const anchorKey = (keyField
+      ? resolveItemKey(anchorItem, anchorIndex, keyField) as ItemKey<TItem, TKeyField>
+      : anchorIndex as ItemKey<TItem, TKeyField>)
 
     const anchorStart = getLeadingSlotSize() + getItemOffset(anchorIndex)
     _shiftAnchor = {
@@ -851,10 +835,7 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
       if (!elementSize)
         continue
       item = items[i]
-      const key = (keyField ? (item as any)[keyField] : i) as ItemKey<TItem, TKeyField>
-      if (key == null) {
-        throw new Error(`Key is ${key} on item (keyField is '${keyField}')`)
-      }
+      const key = (keyField ? resolveItemKey(item, i, keyField) : i) as ItemKey<TItem, TKeyField>
       view = views.get(key)
 
       if (!view) {
@@ -1104,6 +1085,14 @@ export function useRecycleScroller<TItem, TKeyField extends string = 'id', TSize
 
     _previousKeys = nextKeys as Array<ItemKey<TItem, TKeyField>>
     applyShiftAnchor(nextItems)
+    updateVisibleItems(true)
+  })
+
+  watch(() => toValue(options).keyField, () => {
+    const opts = toValue(options)
+    const keyField = simpleArray.value ? null : opts.keyField
+    _previousKeys = getItemKeys(opts.items, keyField) as Array<ItemKey<TItem, TKeyField>>
+    clearShiftAnchor()
     updateVisibleItems(true)
   })
 

@@ -111,10 +111,12 @@ function mountHarness(
   {
     beforeEl,
     afterEl,
+    keyField = 'id',
     shift = false,
   }: {
     beforeEl?: HTMLElement
     afterEl?: HTMLElement
+    keyField?: string | ((item: any, index: number) => string | number)
     shift?: boolean
   } = {},
 ) {
@@ -125,7 +127,7 @@ function mountHarness(
 
   const options = reactive({
     items: initialItems,
-    keyField: 'id',
+    keyField,
     direction: 'vertical' as ScrollDirection,
     minItemSize: 20,
     buffer: 200,
@@ -160,7 +162,7 @@ function mountHarness(
         onVisible,
         onHidden,
         onUpdate,
-      })))
+      })) as any)
 
       return {
         ...state,
@@ -366,6 +368,59 @@ describe('useDynamicScroller', () => {
     await nextTick()
 
     expect(Object.keys(vm.vscrollData.sizes)).toHaveLength(0)
+  })
+
+  it('supports function keyField for ids and size lookups', async () => {
+    const keyField = (item: { threadId: string, id: string }) => `${item.threadId}:${item.id}`
+    const items = [
+      { threadId: 'general', id: 'a', label: 'Alpha' },
+      { threadId: 'general', id: 'b', label: 'Beta' },
+      { threadId: 'general', id: 'c', label: 'Gamma' },
+    ]
+    const { vm } = mountHarness(items, {
+      keyField,
+    })
+    await nextTick()
+    await nextTick()
+
+    expect(vm.itemsWithSize.map((item: ItemWithSize) => item.id)).toEqual([
+      'general:a',
+      'general:b',
+      'general:c',
+    ])
+
+    vm.vscrollData.sizes['general:a'] = 42
+    await nextTick()
+    expect(vm.getItemSize(items[0])).toBe(42)
+  })
+
+  it('keeps shift anchoring with a function keyField', async () => {
+    const keyField = (item: { threadId: string, id: string }) => `${item.threadId}:${item.id}`
+    const items = [
+      { threadId: 'general', id: 'a', label: 'Alpha' },
+      { threadId: 'general', id: 'b', label: 'Beta' },
+      { threadId: 'general', id: 'c', label: 'Gamma' },
+    ]
+    const { vm, el, options } = mountHarness(items, {
+      keyField,
+      shift: true,
+    })
+    await nextTick()
+    await nextTick()
+
+    el.value.scrollTop = 25
+    vm.updateVisibleItems(false)
+    const initialAnchorIndex = vm.findItemIndex(el.value.scrollTop)
+    const initialAnchorId = vm.itemsWithSize[initialAnchorIndex].id
+    const initialAnchorOffset = el.value.scrollTop - vm.getItemOffset(initialAnchorIndex)
+    options.items = [
+      { threadId: 'general', id: 'z', label: 'Prepended' },
+      ...items,
+    ]
+    await nextTick()
+
+    expect(vm.itemsWithSize[vm.findItemIndex(el.value.scrollTop)].id).toBe(initialAnchorId)
+    expect(el.value.scrollTop - vm.getItemOffset(vm.findItemIndex(el.value.scrollTop))).toBe(initialAnchorOffset)
   })
 
   it('forwards before and after slot offsets to the virtualization engine', async () => {

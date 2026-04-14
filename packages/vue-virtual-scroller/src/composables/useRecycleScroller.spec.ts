@@ -226,6 +226,48 @@ describe('useRecycleScroller', () => {
     expect(vm.el.scrollTop).toBe(20)
   })
 
+  it('supports function keyField for cache snapshots and shift anchoring', async () => {
+    const keyField = (item: { threadId: string, id: number }) => `${item.threadId}:${item.id}`
+    const { vm, options } = mountHarness({
+      items: [
+        { threadId: 'general', id: 1, size: 10 },
+        { threadId: 'general', id: 2, size: 10 },
+        { threadId: 'general', id: 3, size: 10 },
+      ],
+      itemSize: null,
+      minItemSize: 10,
+      keyField,
+      shift: true,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.cacheSnapshot.keys).toEqual(['general:1', 'general:2', 'general:3'])
+
+    const initialView = vm.visiblePool.find((view: View) => view.nr.key === 'general:2')
+    const initialViewId = initialView.nr.id
+
+    options.items = [
+      { threadId: 'general', id: 1, size: 10, label: 'updated' },
+      { threadId: 'general', id: 2, size: 10 },
+      { threadId: 'general', id: 3, size: 10 },
+    ]
+    await nextTick()
+
+    expect(vm.visiblePool.find((view: View) => view.nr.key === 'general:2').nr.id).toBe(initialViewId)
+
+    vm.el.scrollTop = 20
+    options.items = [
+      { threadId: 'general', id: 0, size: 10 },
+      ...options.items,
+    ]
+    await nextTick()
+
+    expect(vm.el.scrollTop).toBe(30)
+    expect(vm.restoreCache(vm.cacheSnapshot)).toBe(true)
+  })
+
   it('builds and restores cache snapshots for variable-size lists', async () => {
     const { vm, options } = mountHarness({
       items: [

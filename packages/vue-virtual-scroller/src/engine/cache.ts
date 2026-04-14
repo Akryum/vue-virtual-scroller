@@ -1,24 +1,17 @@
-import type { CacheSnapshot, ScrollAlign } from '../types'
+import type { CacheSnapshot, KeyFieldValue, ScrollAlign } from '../types'
+import { resolveItemKey } from './keyField'
 
-export function getItemKey(item: unknown, index: number, keyField: string | null): string | number {
-  if (!keyField) {
-    return index
-  }
-
-  const key = (item as any)?.[keyField]
-  if (key == null) {
-    throw new Error(`Key is ${key} on item (keyField is '${keyField}')`)
-  }
-  return key
+export function getItemKey(item: unknown, index: number, keyField: KeyFieldValue<any> | null): string | number {
+  return resolveItemKey(item, index, keyField)
 }
 
-export function getItemKeys(items: unknown[], keyField: string | null): Array<string | number> {
+export function getItemKeys(items: unknown[], keyField: KeyFieldValue<any> | null): Array<string | number> {
   return items.map((item, index) => getItemKey(item, index, keyField))
 }
 
 export function buildCacheSnapshot(
   items: unknown[],
-  keyField: string | null,
+  keyField: KeyFieldValue<any> | null,
   getSize: (item: unknown, index: number, key: string | number) => number | undefined,
 ): CacheSnapshot {
   const keys: Array<string | number> = []
@@ -41,7 +34,7 @@ export function buildCacheSnapshot(
 export function isCacheSnapshotCompatible(
   snapshot: CacheSnapshot | null | undefined,
   items: unknown[],
-  keyField: string | null,
+  keyField: KeyFieldValue<any> | null,
 ): snapshot is CacheSnapshot {
   if (!snapshot) {
     return false
@@ -63,7 +56,7 @@ export function isCacheSnapshotCompatible(
 export function restoreCacheMap(
   snapshot: CacheSnapshot | null | undefined,
   items: unknown[],
-  keyField: string | null,
+  keyField: KeyFieldValue<any> | null,
 ): Record<string | number, number> {
   if (!isCacheSnapshotCompatible(snapshot, items, keyField)) {
     return {}

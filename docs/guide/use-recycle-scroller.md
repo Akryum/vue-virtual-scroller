@@ -43,7 +43,7 @@ const recycleScroller = useRecycleScroller<User>({
 recycleScroller.pool.value[0]?.item.name
 ```
 
-When `TItem` is an object type, `keyField` must be a string key on that type, and `sizeField` must be a numeric field when `itemSize` is `null`.
+When `TItem` is an object type, `keyField` can be either a string key on that type or a resolver function with the signature `(item, index) => string | number`. `sizeField` must still be a numeric field when `itemSize` is `null`.
 
 ## Required options
 
@@ -71,6 +71,12 @@ Additional scroll-system options:
 
 - `shift`
 - `cache`
+
+`keyField` can also be a resolver function when your data needs a derived key. The callback always receives `(item, index)`:
+
+```ts
+const compositeKey = (item: Message, index: number) => `${item.threadId}:${item.id}:${index}`
+```
 
 ## Return values you will use most
 

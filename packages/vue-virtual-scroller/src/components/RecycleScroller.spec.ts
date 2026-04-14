@@ -205,11 +205,12 @@ describe('recycleScroller', () => {
       keys: ['a'],
       sizes: [24],
     }
+    const keyField = (item: { threadId: string, id: string }) => `${item.threadId}:${item.id}`
     mount(RecycleScroller, {
       props: {
-        items: [{ id: 'a' }],
+        items: [{ threadId: 'general', id: 'a' }],
         direction: 'horizontal',
-        keyField: 'id',
+        keyField,
         listTag: 'ul',
         itemTag: 'li',
         itemSize: 30,
@@ -226,7 +227,7 @@ describe('recycleScroller', () => {
 
     const [optionsArg] = mocks.useRecycleScroller.mock.calls[0]
     expect(optionsArg.direction).toBe('horizontal')
-    expect(optionsArg.keyField).toBe('id')
+    expect(optionsArg.keyField).toBe(keyField)
     expect(optionsArg.listTag).toBe('ul')
     expect(optionsArg.itemTag).toBe('li')
     expect(optionsArg.itemSize).toBe(30)

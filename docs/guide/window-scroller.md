@@ -70,6 +70,8 @@ const rows = ref<Row[]>([])
 
 If you want the same item type to flow through the headless window-scrolling helpers, use [`useWindowScroller`](./use-window-scroller) with an explicit generic.
 
+`keyField` follows the same contract as `RecycleScroller`: pass a string field name or a resolver function with the signature `(item, index) => string | number`.
+
 ## How it behaves
 
 - The list stays in normal page flow instead of owning its own fixed-height scrollbox.

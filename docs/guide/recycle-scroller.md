@@ -69,7 +69,7 @@ const messages = ref<Message[]>([])
 </template>
 ```
 
-If you want compile-time validation for `keyField` or `sizeField`, use the headless [`useRecycleScroller`](./use-recycle-scroller) API with an explicit generic parameter.
+If you want compile-time validation for string `keyField` values or `sizeField`, use the headless [`useRecycleScroller`](./use-recycle-scroller) API with an explicit generic parameter.
 
 ## Important notes
 
@@ -78,7 +78,15 @@ Set the size of the scroller element and the item elements yourself, usually wit
 :::
 
 ::: warning
-If your items are objects, the scroller needs a stable identifier for each one. By default it looks for an `id` field. Use `keyField` if your data uses a different property name.
+If your items are objects, the scroller needs a stable identifier for each one. By default it looks for an `id` field. Use `keyField` if your data uses a different property name, or pass a resolver function with the signature `(item, index) => string | number` for derived keys such as composite IDs.
+
+```vue
+<RecycleScroller
+  :items="messages"
+  :item-size="32"
+  :key-field="(item, index) => `${item.threadId}:${item.id}:${index}`"
+>
+```
 :::
 
 - Avoid functional components inside `RecycleScroller`. Because views are reused, they are usually slower here rather than faster.
@@ -132,7 +140,7 @@ As you scroll, most views are simply moved to new positions and receive updated 
 | `minItemSize` | — | Minimum size used if the height (or width in horizontal mode) of an item is unknown. |
 | `sizeField` | `'size'` | Field used to get the item's size in variable size mode. |
 | `typeField` | `'type'` | Field used to differentiate different kinds of components in the list. For each distinct type, a pool of recycled items will be created. |
-| `keyField` | `'id'` | Field used to identify items and optimize managing rendered views. |
+| `keyField` | `'id'` | Field name or resolver function `(item, index) => string \| number` used to identify items and optimize managing rendered views. |
 | `shift` | `false` | Keep the viewport anchored when items are prepended at the start of the list. Useful for chat-style feeds and reverse timelines. |
 | `cache` | — | Optional cache snapshot returned by `cacheSnapshot` to restore known item sizes after remounting. |
 | `prerender` | `0` | Render a fixed number of items for Server-Side Rendering (SSR). |

@@ -5,11 +5,15 @@ export type ScrollDirection = 'vertical' | 'horizontal'
 export type ScrollAlign = 'start' | 'center' | 'end' | 'nearest'
 
 export type KeyValue = string | number
+export type KeyFieldResolver<TItem = unknown> = (item: TItem, index: number) => KeyValue
+export type KeyFieldValue<TItem = unknown> = string | KeyFieldResolver<TItem>
 
 export type StringKeyOf<T> = Extract<keyof T, string>
 
-export type ValidKeyField<TItem, TKeyField extends string> = TItem extends object
-  ? TKeyField extends StringKeyOf<TItem> ? TKeyField : never
+export type ValidKeyField<TItem, TKeyField extends KeyFieldValue<TItem>> = TItem extends object
+  ? TKeyField extends KeyFieldResolver<TItem>
+    ? TKeyField
+    : TKeyField extends StringKeyOf<TItem> ? TKeyField : never
   : string
 
 export type NumericFieldKey<TItem> = TItem extends object
@@ -24,8 +28,10 @@ export type ValidSizeField<TItem, TSizeField extends string> = TItem extends obj
       : TSizeField extends NumericFieldKey<TItem> ? TSizeField : never
   : string
 
-export type ItemKey<TItem, TKeyField extends string = 'id'> = TItem extends object
-  ? Extract<TKeyField extends keyof TItem ? TItem[TKeyField] : never, KeyValue>
+export type ItemKey<TItem, TKeyField extends KeyFieldValue<TItem> = 'id'> = TItem extends object
+  ? TKeyField extends KeyFieldResolver<TItem>
+    ? Extract<ReturnType<TKeyField>, KeyValue>
+    : Extract<TKeyField extends keyof TItem ? TItem[TKeyField] : never, KeyValue>
   : number
 
 export type ClassValue = string | Record<string, boolean> | Array<string | Record<string, boolean>>
@@ -73,7 +79,7 @@ export interface Sizes {
 export interface VScrollData {
   active: boolean
   sizes: Record<KeyValue, number>
-  keyField: string
+  keyField: KeyFieldValue<any>
   simpleArray: boolean
 }
 

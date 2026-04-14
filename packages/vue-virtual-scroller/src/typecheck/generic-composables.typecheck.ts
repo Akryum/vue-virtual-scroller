@@ -18,6 +18,7 @@ const messages: Message[] = [
 ]
 
 const scrollerEl = ref<HTMLElement>()
+const functionKeyField = (item: Message, index: number) => `${item.id}:${index}`
 
 const recycleScroller = useRecycleScroller<Message>({
   items: messages,
@@ -39,6 +40,23 @@ recycleScroller.pool.value[0]?.item.text
 
 // @ts-expect-error Message items should not expose missing properties.
 recycleScroller.pool.value[0]?.item.missing
+
+const functionKeyRecycleScroller = useRecycleScroller<Message, typeof functionKeyField>({
+  items: messages,
+  keyField: functionKeyField,
+  direction: 'vertical',
+  itemSize: 32,
+  minItemSize: 32,
+  typeField: 'type',
+  buffer: 200,
+  pageMode: false,
+  shift: false,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+}, scrollerEl)
+
+functionKeyRecycleScroller.pool.value[0]?.nr.key
 
 useRecycleScroller<Message>({
   items: messages,
@@ -81,8 +99,17 @@ const dynamicScroller = useDynamicScroller<Message>({
   el: scrollerEl,
 })
 
+const functionKeyDynamicScroller = useDynamicScroller<Message, typeof functionKeyField>({
+  items: messages,
+  keyField: functionKeyField,
+  direction: 'vertical',
+  minItemSize: 32,
+  el: scrollerEl,
+})
+
 dynamicScroller.itemsWithSize.value[0]?.item.text
 dynamicScroller.getItemSize(messages[0])
+functionKeyDynamicScroller.itemsWithSize.value[0]?.id
 
 // @ts-expect-error getItemSize should require the declared item type.
 dynamicScroller.getItemSize({ id: 'beta', size: 40 })

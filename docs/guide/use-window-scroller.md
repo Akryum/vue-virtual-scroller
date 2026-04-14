@@ -40,7 +40,7 @@ const windowScroller = useWindowScroller<Row>({
 windowScroller.pool.value[0]?.item.label
 ```
 
-For object items, `keyField` and variable-size `sizeField` follow the same compile-time checks as `useRecycleScroller`.
+For object items, `keyField` follows the same rules as `useRecycleScroller`: use a string property name for compile-time field validation, or pass a resolver function with the signature `(item, index) => string | number` for derived keys. Variable-size `sizeField` keeps the same compile-time checks as `useRecycleScroller`.
 
 ## Required inputs
 

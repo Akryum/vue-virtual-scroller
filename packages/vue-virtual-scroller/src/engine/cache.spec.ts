@@ -11,16 +11,25 @@ import {
 
 describe('cache helpers', () => {
   it('reads keys from the configured field or falls back to the index', () => {
+    const compositeKey = (item: { threadId: string, id: string }) => `${item.threadId}:${item.id}`
+
     expect(getItemKey({ id: 'a' }, 2, 'id')).toBe('a')
+    expect(getItemKey({ threadId: 't1', id: 'a' }, 2, compositeKey)).toBe('t1:a')
     expect(getItemKey({ label: 'row' }, 2, null)).toBe(2)
     expect(getItemKeys([{ id: 'a' }, { id: 'b' }], 'id')).toEqual(['a', 'b'])
+    expect(getItemKeys([
+      { threadId: 't1', id: 'a' },
+      { threadId: 't1', id: 'b' },
+    ], compositeKey)).toEqual(['t1:a', 't1:b'])
   })
 
   it('throws when the key field is missing', () => {
     expect(() => getItemKey({ label: 'row' }, 0, 'id')).toThrow('Key is undefined on item (keyField is \'id\')')
+    expect(() => getItemKey({ label: 'row' }, 0, () => undefined as unknown as string)).toThrow('Key is undefined on item (keyField is a function)')
   })
 
   it('builds snapshots and restores only compatible positive sizes', () => {
+    const compositeKey = (item: { threadId: string, id: string }) => `${item.threadId}:${item.id}`
     const items = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
     const snapshot = buildCacheSnapshot(items, 'id', (_item, index) => [24, 0, -5][index])
 
@@ -29,6 +38,21 @@ describe('cache helpers', () => {
       sizes: [24, null, null],
     })
     expect(restoreCacheMap(snapshot, items, 'id')).toEqual({ a: 24 })
+
+    const compositeItems = [
+      { threadId: 't1', id: 'a' },
+      { threadId: 't1', id: 'b' },
+    ]
+    const compositeSnapshot = buildCacheSnapshot(compositeItems, compositeKey, (_item, index) => [12, 18][index])
+
+    expect(compositeSnapshot).toEqual({
+      keys: ['t1:a', 't1:b'],
+      sizes: [12, 18],
+    })
+    expect(restoreCacheMap(compositeSnapshot, compositeItems, compositeKey)).toEqual({
+      't1:a': 12,
+      't1:b': 18,
+    })
   })
 
   it('rejects incompatible snapshots', () => {

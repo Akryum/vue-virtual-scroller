@@ -1,10 +1,11 @@
 import type { ComputedRef, Directive, MaybeRef, MaybeRefOrGetter } from 'vue'
-import type { CacheSnapshot, ItemKey, ItemWithSize, KeyValue, ScrollDirection, ValidKeyField, View, VScrollData } from '../types'
+import type { CacheSnapshot, ItemKey, ItemWithSize, KeyFieldValue, KeyValue, ScrollDirection, ValidKeyField, View, VScrollData } from '../types'
 import type { DynamicScrollerItemControllerCallbacks, DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext, DynamicScrollerUpdatePayload } from './dynamicScrollerMeasurement'
 import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './useRecycleScroller'
 import mitt from 'mitt'
 import { computed, effectScope, nextTick, onActivated, onDeactivated, onUnmounted, provide, reactive, shallowRef, toValue, watch } from 'vue'
 import { findPrependOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
+import { resolveItemKey, resolveItemKeyWithOptionalIndex } from '../engine/keyField'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
 import { useRecycleScroller } from './useRecycleScroller'
 
@@ -26,7 +27,7 @@ export type UseDynamicScrollerItemBindingOptions<TItem = unknown, TKey = KeyValu
   = | UseDynamicScrollerItemViewBindingOptions<TItem, TKey>
     | UseDynamicScrollerItemLegacyBindingOptions<TItem>
 
-export interface UseDynamicScrollerOptions<TItem = unknown, TKeyField extends string = 'id'> {
+export interface UseDynamicScrollerOptions<TItem = unknown, TKeyField extends KeyFieldValue<TItem> = 'id'> {
   items: TItem[]
   keyField: ValidKeyField<TItem, TKeyField>
   direction: ScrollDirection
@@ -207,7 +208,7 @@ function normalizeBindingOptions<TItem, TKey>(options: UseDynamicScrollerItemBin
   }
 }
 
-function getDynamicItemId<TItem, TKeyField extends string>(
+function getDynamicItemId<TItem, TKeyField extends KeyFieldValue<TItem>>(
   item: TItem,
   keyField: ValidKeyField<TItem, TKeyField>,
   simpleArray: boolean,
@@ -220,10 +221,10 @@ function getDynamicItemId<TItem, TKeyField extends string>(
     return index as ItemKey<TItem, TKeyField>
   }
 
-  return ((item as any)?.[keyField] ?? null) as ItemKey<TItem, TKeyField> | null
+  return resolveItemKeyWithOptionalIndex(item, index, keyField) as ItemKey<TItem, TKeyField>
 }
 
-export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
+export function useDynamicScroller<TItem, TKeyField extends KeyFieldValue<TItem> = 'id'>(
   options: MaybeRefOrGetter<UseDynamicScrollerOptions<TItem, TKeyField>>,
 ): UseDynamicScrollerReturn<TItem, ItemKey<TItem, TKeyField>> {
   // Internal state (non-reactive)
@@ -349,7 +350,7 @@ export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
     const l = items.length
     for (let i = 0; i < l; i++) {
       const item = items[i]
-      const id = (simple ? i : (item as any)[keyField]) as ItemKey<TItem, TKeyField>
+      const id = (simple ? i : resolveItemKey(item, i, keyField)) as ItemKey<TItem, TKeyField>
       let size: number | undefined = sizes[id]
       if (typeof size === 'undefined' && !_undefinedMap[id]) {
         size = 0
@@ -706,7 +707,10 @@ export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
 
   function getItemSize(item: TItem, index?: number): number {
     const opts = toValue(options)
-    const id = simpleArray.value ? (index ?? opts.items.indexOf(item)) : (item as any)[opts.keyField]
+    const resolvedIndex = index ?? opts.items.indexOf(item)
+    const id = simpleArray.value
+      ? resolvedIndex
+      : resolveItemKeyWithOptionalIndex(item, resolvedIndex >= 0 ? resolvedIndex : index, opts.keyField)
     return vscrollData.sizes[id] || 0
   }
 
@@ -781,6 +785,13 @@ export function useDynamicScroller<TItem, TKeyField extends string = 'id'>(
       restoreCache(snapshot)
     }
   })
+
+  watch(() => toValue(options).keyField, (keyField) => {
+    vscrollData.keyField = keyField
+    _previousKeys = getItemKeys(toValue(options).items, simpleArray.value ? null : keyField) as Array<ItemKey<TItem, TKeyField>>
+    clearShiftAnchor()
+    forceUpdate(true)
+  }, { flush: 'sync' })
 
   watch(simpleArray, (value) => {
     vscrollData.simpleArray = value

@@ -102,6 +102,26 @@ describe('dynamicScrollerMeasurement', () => {
     }, ref(createElement()), simple.context).id.value).toThrow('index is required')
   })
 
+  it('resolves ids with a keyField function', () => {
+    const keyed = createContext({
+      vscrollData: {
+        active: true,
+        keyField: (item: { threadId: string, id: string }) => `${item.threadId}:${item.id}`,
+        simpleArray: false,
+        sizes: {},
+      },
+    })
+    const controller = createDynamicScrollerItemController({
+      item: { threadId: 'general', id: 'alpha' },
+      watchData: false,
+      active: true,
+      index: 0,
+      emitResize: false,
+    }, ref(createElement()), keyed.context)
+
+    expect(controller.id.value).toBe('general:alpha')
+  })
+
   it('tracks undefined sizes as items become active and inactive', async () => {
     const options = reactive({
       item: { id: 'alpha' },

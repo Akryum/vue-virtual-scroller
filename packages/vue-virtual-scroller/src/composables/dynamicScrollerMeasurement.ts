@@ -1,6 +1,7 @@
 import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 import type { KeyValue, ScrollDirection, VScrollData } from '../types'
 import { computed, nextTick, toValue, watch } from 'vue'
+import { resolveItemKeyWithOptionalIndex } from '../engine/keyField'
 
 export interface DynamicScrollerUpdatePayload {
   force: boolean
@@ -63,9 +64,7 @@ export function createDynamicScrollerItemController(
       }
       return opts.index
     }
-    if (context.vscrollData.keyField in (opts.item as any))
-      return (opts.item as any)[context.vscrollData.keyField]
-    throw new Error(`keyField '${context.vscrollData.keyField}' not found in your item. You should set a valid keyField prop on your Scroller`)
+    return resolveItemKeyWithOptionalIndex(opts.item, opts.index, context.vscrollData.keyField)
   })
 
   const size = computed(() => {

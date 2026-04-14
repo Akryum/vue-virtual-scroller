@@ -44,7 +44,7 @@ const dynamicScroller = useDynamicScroller<Message>(options)
 const windowScroller = useWindowScroller<Row>(options, rootEl)
 ```
 
-For object items, the composables also validate fields such as `keyField` and variable-size `sizeField` against the declared item type.
+For object items, the composables validate string `keyField` values and variable-size `sizeField` values against the declared item type. You can also pass a `keyField` function with the signature `(item, index) => string | number` when you need a derived or composite key.
 
 ### Plugin import
 

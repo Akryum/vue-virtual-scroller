@@ -1,16 +1,16 @@
 import type { MaybeRef, MaybeRefOrGetter } from 'vue'
-import type { ItemKey } from '../types'
+import type { ItemKey, KeyFieldValue } from '../types'
 import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './useRecycleScroller'
 import { computed, toValue } from 'vue'
 import { useRecycleScroller } from './useRecycleScroller'
 
-export interface UseWindowScrollerOptions<TItem = unknown, TKeyField extends string = 'id', TSizeField extends string = 'size'> extends Omit<UseRecycleScrollerOptions<TItem, TKeyField, TSizeField>, 'pageMode'> {
+export interface UseWindowScrollerOptions<TItem = unknown, TKeyField extends KeyFieldValue<TItem> = 'id', TSizeField extends string = 'size'> extends Omit<UseRecycleScrollerOptions<TItem, TKeyField, TSizeField>, 'pageMode'> {
   pageMode?: boolean
 }
 
 export interface UseWindowScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>> extends UseRecycleScrollerReturn<TItem, TKey> {}
 
-export function useWindowScroller<TItem, TKeyField extends string = 'id', TSizeField extends string = 'size'>(
+export function useWindowScroller<TItem, TKeyField extends KeyFieldValue<TItem> = 'id', TSizeField extends string = 'size'>(
   options: MaybeRefOrGetter<UseWindowScrollerOptions<TItem, TKeyField, TSizeField>>,
   el: MaybeRef<HTMLElement | undefined>,
   before?: MaybeRef<HTMLElement | undefined>,
