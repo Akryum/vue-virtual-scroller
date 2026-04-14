@@ -16,7 +16,7 @@ export interface DemoSmokeOptions {
   slug: string
 }
 
-const METRIC_NUMBER_RE = /-?\d+/g
+const METRIC_NUMBER_RE = /-?\d+(?:\.\d+)?/g
 
 export async function gotoDemo(page: Page, slug: string) {
   await page.goto(`/demos/${slug}`)

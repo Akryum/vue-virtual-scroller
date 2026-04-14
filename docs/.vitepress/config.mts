@@ -58,6 +58,7 @@ export default defineConfig({
             { text: 'Overview', link: '/demos/' },
             { text: 'RecycleScroller', link: '/demos/recycle-scroller' },
             { text: 'DynamicScroller', link: '/demos/dynamic-scroller' },
+            { text: 'Virtual vs Plain List', link: '/demos/virtual-vs-plain-list' },
             { text: 'WindowScroller', link: '/demos/window-scroller' },
             { text: 'Disable Transform', link: '/demos/disable-transform' },
             { text: 'Chat Stream', link: '/demos/chat' },
