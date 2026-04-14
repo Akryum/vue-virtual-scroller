@@ -26,6 +26,10 @@ export interface UseRecycleScrollerOptions<TItem = unknown, TKeyField extends Ke
   prerender: number
   emitUpdate: boolean
   disableTransform?: boolean
+  /**
+   * Park recycled hidden views at custom main-axis position.
+   */
+  hiddenPosition?: number
   updateInterval: number
 }
 
@@ -220,7 +224,7 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
     const recycledPool = getRecycledPool(type)
     recycledPool.push(view)
     view.nr.used = false
-    view.position = -9999
+    view.position = toValue(options).hiddenPosition ?? -999999
     touchView(view)
     _views.delete(view.nr.key)
   }

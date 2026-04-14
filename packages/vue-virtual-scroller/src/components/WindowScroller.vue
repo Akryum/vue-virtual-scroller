@@ -25,6 +25,7 @@ const props = withDefaults(defineProps<{
   prerender?: number
   emitUpdate?: boolean
   disableTransform?: boolean
+  hiddenPosition?: number
   updateInterval?: number
   listClass?: ClassValue
   itemClass?: ClassValue
@@ -45,6 +46,7 @@ const props = withDefaults(defineProps<{
   prerender: 0,
   emitUpdate: false,
   disableTransform: false,
+  hiddenPosition: undefined,
   updateInterval: 0,
   listClass: '',
   itemClass: '',

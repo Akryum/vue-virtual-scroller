@@ -100,6 +100,7 @@ describe('windowScroller', () => {
         itemSize: 20,
         shift: true,
         cache,
+        hiddenPosition: -456,
       },
       slots: {
         default: ({ item }: any) => h('div', { class: 'row' }, item.label),
@@ -126,6 +127,7 @@ describe('windowScroller', () => {
     const [optionsArg] = mocks.useWindowScroller.mock.calls[0]
     expect(optionsArg.shift).toBe(true)
     expect(optionsArg.cache).toStrictEqual(cache)
+    expect(optionsArg.hiddenPosition).toBe(-456)
 
     const itemView = wrapper.get('.vue-recycle-scroller__item-view').element as HTMLElement
     expect(itemView.style.transform).toBe('translateY(40px) translateX(12px)')

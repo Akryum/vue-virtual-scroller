@@ -31,6 +31,7 @@ function mountHarness(overrides: Partial<{
   shift: boolean
   cache: any
   disableTransform: boolean
+  hiddenPosition: number
   updateInterval: number
   clientHeight: number
   clientWidth: number
@@ -55,6 +56,7 @@ function mountHarness(overrides: Partial<{
     prerender: 0,
     emitUpdate: true,
     disableTransform: false,
+    hiddenPosition: undefined,
     updateInterval: 0,
     ...overrides,
   })
@@ -341,6 +343,29 @@ describe('useRecycleScroller', () => {
     expect(style.left).toBe('40px')
     expect(style.top).toBe('12px')
     expect(style.transform).toBe('none')
+  })
+
+  it('parks recycled views at configured hidden position and keeps default fallback', async () => {
+    const defaultHarness = mountHarness()
+    const configuredHarness = mountHarness({
+      hiddenPosition: -12345,
+    })
+
+    await nextTick()
+    await nextTick()
+    await configuredHarness.wrapper.vm.$nextTick()
+    await configuredHarness.wrapper.vm.$nextTick()
+
+    defaultHarness.options.items = []
+    configuredHarness.options.items = []
+
+    await nextTick()
+    await configuredHarness.wrapper.vm.$nextTick()
+
+    expect(defaultHarness.vm.pool.every((view: View) => !view.nr.used)).toBe(true)
+    expect(defaultHarness.vm.pool.every((view: View) => view.position === -999999)).toBe(true)
+    expect(configuredHarness.vm.pool.every((view: View) => !view.nr.used)).toBe(true)
+    expect(configuredHarness.vm.pool.every((view: View) => view.position === -12345)).toBe(true)
   })
 
   it('builds and restores cache snapshots for variable-size lists', async () => {

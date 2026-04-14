@@ -26,6 +26,7 @@ const props = withDefaults(defineProps<{
   prerender?: number
   emitUpdate?: boolean
   disableTransform?: boolean
+  hiddenPosition?: number
   updateInterval?: number
   skipHover?: boolean
   listClass?: ClassValue
@@ -48,6 +49,7 @@ const props = withDefaults(defineProps<{
   prerender: 0,
   emitUpdate: false,
   disableTransform: false,
+  hiddenPosition: undefined,
   updateInterval: 0,
   skipHover: false,
   listClass: '',

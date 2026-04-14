@@ -231,6 +231,7 @@ describe('recycleScroller', () => {
         buffer: 150,
         shift: true,
         cache,
+        hiddenPosition: -321,
       },
       global: {
         stubs: {
@@ -248,6 +249,7 @@ describe('recycleScroller', () => {
     expect(optionsArg.buffer).toBe(150)
     expect(optionsArg.shift).toBe(true)
     expect(optionsArg.cache).toStrictEqual(cache)
+    expect(optionsArg.hiddenPosition).toBe(-321)
   })
 
   it('uses top and left positioning when disableTransform is enabled', async () => {

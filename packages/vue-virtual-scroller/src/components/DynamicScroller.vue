@@ -19,6 +19,7 @@ const props = withDefaults(defineProps<{
   shift?: boolean
   cache?: CacheSnapshot
   disableTransform?: boolean
+  hiddenPosition?: number
 }>(), {
   keyField: 'id',
   direction: 'vertical',
@@ -27,6 +28,7 @@ const props = withDefaults(defineProps<{
   shift: false,
   cache: undefined,
   disableTransform: false,
+  hiddenPosition: undefined,
 })
 
 const emit = defineEmits<{
@@ -60,6 +62,7 @@ const dynamicOptions = computed(() => ({
   minItemSize: props.minItemSize,
   shift: props.shift,
   cache: props.cache,
+  hiddenPosition: props.hiddenPosition,
   el: scrollerEl.value,
   onResize: () => emit('resize'),
   onVisible: () => emit('visible'),
@@ -121,6 +124,7 @@ defineExpose(exposed)
     :direction="props.direction"
     :cache="props.cache"
     :disable-transform="props.disableTransform"
+    :hidden-position="props.hiddenPosition"
     key-field="id"
     :list-tag="props.listTag"
     :item-tag="props.itemTag"

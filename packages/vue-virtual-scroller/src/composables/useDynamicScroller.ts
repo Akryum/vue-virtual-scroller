@@ -41,6 +41,7 @@ export interface UseDynamicScrollerOptions<TItem = unknown, TKeyField extends Ke
   shift?: boolean
   cache?: CacheSnapshot
   disableTransform?: boolean
+  hiddenPosition?: number
   prerender?: number
   emitUpdate?: boolean
   updateInterval?: number
@@ -393,6 +394,7 @@ export function useDynamicScroller<TItem, TKeyField extends KeyFieldValue<TItem>
       prerender: opts.prerender ?? 0,
       emitUpdate: opts.emitUpdate ?? false,
       disableTransform: opts.disableTransform ?? false,
+      hiddenPosition: opts.hiddenPosition,
       updateInterval: opts.updateInterval ?? 0,
     }
   })

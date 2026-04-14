@@ -32,6 +32,7 @@ const recycleScroller = useRecycleScroller<Message>({
   pageMode: false,
   shift: false,
   disableTransform: true,
+  hiddenPosition: -100,
   prerender: 0,
   emitUpdate: false,
   updateInterval: 0,
@@ -54,6 +55,7 @@ const functionKeyRecycleScroller = useRecycleScroller<Message, typeof functionKe
   pageMode: false,
   shift: false,
   disableTransform: true,
+  hiddenPosition: -100,
   prerender: 0,
   emitUpdate: false,
   updateInterval: 0,
@@ -102,6 +104,7 @@ const dynamicScroller = useDynamicScroller<Message>({
   direction: 'vertical',
   minItemSize: 32,
   disableTransform: true,
+  hiddenPosition: -100,
   el: scrollerEl,
 })
 
@@ -111,6 +114,7 @@ const functionKeyDynamicScroller = useDynamicScroller<Message, typeof functionKe
   direction: 'vertical',
   minItemSize: 32,
   disableTransform: true,
+  hiddenPosition: -100,
   el: scrollerEl,
 })
 
@@ -129,6 +133,7 @@ const windowScroller = useWindowScroller<Message>({
   buffer: 200,
   shift: false,
   disableTransform: true,
+  hiddenPosition: -100,
   prerender: 0,
   emitUpdate: false,
   updateInterval: 0,
