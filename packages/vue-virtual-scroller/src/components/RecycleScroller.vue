@@ -112,6 +112,7 @@ const {
   findItemIndex,
   getItemOffset,
   getItemSize,
+  getViewStyle,
   cacheSnapshot,
   restoreCache,
   updateVisibleItems,
@@ -193,18 +194,7 @@ defineExpose(exposed)
         :key="view.nr.id"
         :view="view"
         :item-tag="props.itemTag"
-        :style="ready
-          ? [
-            (props.disableTransform
-              ? { [props.direction === 'vertical' ? 'top' : 'left']: `${view.position}px`, willChange: 'unset' }
-              : { transform: `translate${props.direction === 'vertical' ? 'Y' : 'X'}(${view.position}px) translate${props.direction === 'vertical' ? 'X' : 'Y'}(${view.offset}px)` }),
-            {
-              width: props.gridItems ? `${props.direction === 'vertical' ? props.itemSecondarySize || props.itemSize : props.itemSize}px` : undefined,
-              height: props.gridItems ? `${props.direction === 'horizontal' ? props.itemSecondarySize || props.itemSize : props.itemSize}px` : undefined,
-              visibility: view.nr.used ? 'visible' : 'hidden',
-            },
-          ]
-          : null"
+        :style="ready ? getViewStyle(view) : null"
         class="vue-recycle-scroller__item-view"
         :class="[
           props.itemClass,

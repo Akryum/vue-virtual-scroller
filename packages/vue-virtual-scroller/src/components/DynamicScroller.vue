@@ -18,6 +18,7 @@ const props = withDefaults(defineProps<{
   minItemSize: number | string
   shift?: boolean
   cache?: CacheSnapshot
+  disableTransform?: boolean
 }>(), {
   keyField: 'id',
   direction: 'vertical',
@@ -25,6 +26,7 @@ const props = withDefaults(defineProps<{
   itemTag: 'div',
   shift: false,
   cache: undefined,
+  disableTransform: false,
 })
 
 const emit = defineEmits<{
@@ -118,6 +120,7 @@ defineExpose(exposed)
     :min-item-size="props.minItemSize"
     :direction="props.direction"
     :cache="props.cache"
+    :disable-transform="props.disableTransform"
     key-field="id"
     :list-tag="props.listTag"
     :item-tag="props.itemTag"

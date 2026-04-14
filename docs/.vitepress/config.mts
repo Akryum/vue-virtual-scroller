@@ -59,6 +59,7 @@ export default defineConfig({
             { text: 'RecycleScroller', link: '/demos/recycle-scroller' },
             { text: 'DynamicScroller', link: '/demos/dynamic-scroller' },
             { text: 'WindowScroller', link: '/demos/window-scroller' },
+            { text: 'Disable Transform', link: '/demos/disable-transform' },
             { text: 'Chat Stream', link: '/demos/chat' },
             { text: 'Shift', link: '/demos/shift' },
             { text: 'Simple List', link: '/demos/simple-list' },

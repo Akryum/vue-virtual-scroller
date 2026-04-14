@@ -71,6 +71,7 @@ Additional scroll-system options:
 
 - `shift`
 - `cache`
+- `disableTransform`
 
 `keyField` can also be a resolver function when your data needs a derived key. The callback always receives `(item, index)`:
 
@@ -90,6 +91,7 @@ const compositeKey = (item: Message, index: number) => `${item.threadId}:${item.
 - `findItemIndex(offset)`: resolve a pixel offset back to an item index.
 - `getItemOffset(index)`: read the starting pixel offset for an item.
 - `getItemSize(index)`: read the known size for an item.
+- `getViewStyle(view)`: build the same pooled wrapper positioning styles used by the component path, including optional `disableTransform`.
 - `cacheSnapshot`: current serializable size snapshot.
 - `restoreCache(snapshot)`: restore a previous snapshot when the item sequence matches.
 - `updateVisibleItems(itemsChanged, checkPositionDiff?)`: force recalculation.
@@ -99,7 +101,7 @@ const compositeKey = (item: Message, index: number) => `${item.threadId}:${item.
 - Give the outer scroller a fixed size and overflow behavior.
 - Add an inner wrapper with `position: relative` and `minHeight`/`minWidth` from `totalSize`.
 - Render every entry in `pool`.
-- Absolutely position each rendered view yourself.
+- Apply `getViewStyle(view)` to each rendered pooled wrapper.
 - Hide inactive views instead of filtering them out.
 
 ## Common pitfalls
@@ -107,6 +109,7 @@ const compositeKey = (item: Message, index: number) => `${item.threadId}:${item.
 - You must provide scrollable sizing styles yourself (`height` or `width` + overflow).
 - Use a stable key field for object items (default: `id`).
 - The composable manages pooling and index mapping, but does not provide built-in markup or CSS.
+- `disableTransform` only changes positioning strategy. You still own the surrounding layout and dimensions.
 - Render from `pool` and hide inactive views instead of filtering them out if you want to preserve DOM reuse.
 - If item size has to be measured from the DOM after render, use [`useDynamicScroller`](./use-dynamic-scroller) instead.
 - If the browser window owns scrolling, use [`useWindowScroller`](./use-window-scroller) instead of reproducing page-mode behavior yourself.
@@ -153,6 +156,7 @@ const {
   pool,
   totalSize,
   handleScroll,
+  getViewStyle,
 } = useRecycleScroller(options, scrollerEl)
 </script>
 
@@ -166,16 +170,11 @@ const {
       class="my-scroller__inner"
       :style="{ minHeight: `${totalSize}px` }"
     >
-      <!-- In the headless fixed-size path, you apply recycled-view styles yourself. -->
       <div
         v-for="view in pool"
         :key="view.nr.id"
         class="my-scroller__item"
-        :style="{
-          transform: `translateY(${view.position}px)`,
-          visibility: view.nr.used ? 'visible' : 'hidden',
-          pointerEvents: view.nr.used ? undefined : 'none',
-        }"
+        :style="getViewStyle(view)"
       >
         <strong>#{{ view.nr.index }}</strong> {{ (view.item as User).name }}
       </div>

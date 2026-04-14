@@ -96,6 +96,7 @@ The most commonly used props are:
 - `buffer`
 - `shift`
 - `cache`
+- `disableTransform`
 - `prerender`
 - `emitUpdate`
 - `updateInterval`

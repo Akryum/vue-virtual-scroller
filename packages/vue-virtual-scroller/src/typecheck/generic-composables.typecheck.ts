@@ -1,7 +1,7 @@
 /* eslint-disable ts/no-unused-expressions */
 
 import { ref } from 'vue'
-import { useDynamicScroller, useDynamicScrollerItem, useRecycleScroller } from '../index'
+import { useDynamicScroller, useDynamicScrollerItem, useRecycleScroller, useWindowScroller } from '../index'
 
 interface Message {
   id: string
@@ -31,12 +31,14 @@ const recycleScroller = useRecycleScroller<Message>({
   buffer: 200,
   pageMode: false,
   shift: false,
+  disableTransform: true,
   prerender: 0,
   emitUpdate: false,
   updateInterval: 0,
 }, scrollerEl)
 
 recycleScroller.pool.value[0]?.item.text
+recycleScroller.getViewStyle(recycleScroller.pool.value[0]!)
 
 // @ts-expect-error Message items should not expose missing properties.
 recycleScroller.pool.value[0]?.item.missing
@@ -51,6 +53,7 @@ const functionKeyRecycleScroller = useRecycleScroller<Message, typeof functionKe
   buffer: 200,
   pageMode: false,
   shift: false,
+  disableTransform: true,
   prerender: 0,
   emitUpdate: false,
   updateInterval: 0,
@@ -69,6 +72,7 @@ useRecycleScroller<Message>({
   buffer: 200,
   pageMode: false,
   shift: false,
+  disableTransform: true,
   prerender: 0,
   emitUpdate: false,
   updateInterval: 0,
@@ -86,6 +90,7 @@ useRecycleScroller<Message>({
   buffer: 200,
   pageMode: false,
   shift: false,
+  disableTransform: true,
   prerender: 0,
   emitUpdate: false,
   updateInterval: 0,
@@ -96,6 +101,7 @@ const dynamicScroller = useDynamicScroller<Message>({
   keyField: 'id',
   direction: 'vertical',
   minItemSize: 32,
+  disableTransform: true,
   el: scrollerEl,
 })
 
@@ -104,12 +110,31 @@ const functionKeyDynamicScroller = useDynamicScroller<Message, typeof functionKe
   keyField: functionKeyField,
   direction: 'vertical',
   minItemSize: 32,
+  disableTransform: true,
   el: scrollerEl,
 })
 
 dynamicScroller.itemsWithSize.value[0]?.item.text
 dynamicScroller.getItemSize(messages[0])
+dynamicScroller.getViewStyle(dynamicScroller.pool.value[0]!)
 functionKeyDynamicScroller.itemsWithSize.value[0]?.id
+
+const windowScroller = useWindowScroller<Message>({
+  items: messages,
+  keyField: 'id',
+  direction: 'vertical',
+  itemSize: 32,
+  minItemSize: 32,
+  typeField: 'type',
+  buffer: 200,
+  shift: false,
+  disableTransform: true,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+}, scrollerEl)
+
+windowScroller.getViewStyle(windowScroller.pool.value[0]!)
 
 // @ts-expect-error getItemSize should require the declared item type.
 dynamicScroller.getItemSize({ id: 'beta', size: 40 })

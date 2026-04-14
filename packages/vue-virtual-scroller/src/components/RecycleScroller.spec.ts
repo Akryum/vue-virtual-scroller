@@ -2,6 +2,7 @@ import type { CacheSnapshot } from '../types'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, defineComponent, h, nextTick, ref } from 'vue'
+import { getPooledViewStyle } from '../utils/viewStyle'
 import RecycleScroller from './RecycleScroller.vue'
 
 const mocks = vi.hoisted(() => {
@@ -70,8 +71,8 @@ describe('recycleScroller', () => {
       return {
         pool: ref([{
           item: { id: 'a', label: 'Alpha' },
-          position: 0,
-          offset: 0,
+          position: 40,
+          offset: 12,
           nr: {
             id: 1,
             index: 0,
@@ -90,6 +91,13 @@ describe('recycleScroller', () => {
         findItemIndex: (offset: number) => mocks.findItemIndex(offset),
         getItemOffset: (index: number) => mocks.getItemOffset(index),
         getItemSize: (index: number) => mocks.getItemSize(index),
+        getViewStyle: (view: any) => getPooledViewStyle(view, {
+          direction: _options.direction,
+          disableTransform: _options.disableTransform,
+          itemSize: _options.itemSize,
+          gridItems: _options.gridItems,
+          itemSecondarySize: _options.itemSecondarySize,
+        }),
         cacheSnapshot: computed(() => cacheSnapshot),
         restoreCache: (snapshot: CacheSnapshot | null | undefined) => mocks.restoreCache(snapshot),
         updateVisibleItems: (itemsChanged: boolean, checkPositionDiff?: boolean) =>
@@ -140,6 +148,12 @@ describe('recycleScroller', () => {
     expect(wrapper.find('.empty-slot').exists()).toBe(false)
     expect(wrapper.find('.row').text()).toBe('Alpha|0|true')
     expect(wrapper.emitted('visible')).toHaveLength(1)
+
+    const itemView = wrapper.get('.vue-recycle-scroller__item-view').element as HTMLElement
+    expect(itemView.style.transform).toBe('translateY(40px) translateX(12px)')
+    expect(itemView.style.top).toBe('0px')
+    expect(itemView.style.left).toBe('0px')
+    expect(itemView.style.willChange).toBe('transform')
   })
 
   it('renders empty slot only when items is empty', async () => {
@@ -234,5 +248,28 @@ describe('recycleScroller', () => {
     expect(optionsArg.buffer).toBe(150)
     expect(optionsArg.shift).toBe(true)
     expect(optionsArg.cache).toStrictEqual(cache)
+  })
+
+  it('uses top and left positioning when disableTransform is enabled', async () => {
+    const wrapper = mount(RecycleScroller, {
+      props: {
+        items: [{ id: 'a' }],
+        itemSize: 20,
+        disableTransform: true,
+      },
+      global: {
+        stubs: {
+          ResizeObserver: ResizeObserverStub,
+        },
+      },
+    })
+
+    await nextTick()
+
+    const itemView = wrapper.get('.vue-recycle-scroller__item-view').element as HTMLElement
+    expect(itemView.style.top).toBe('40px')
+    expect(itemView.style.left).toBe('12px')
+    expect(itemView.style.transform).toBe('none')
+    expect(itemView.style.willChange).toBe('unset')
   })
 })

@@ -113,11 +113,13 @@ function mountHarness(
     afterEl,
     keyField = 'id',
     shift = false,
+    disableTransform = false,
   }: {
     beforeEl?: HTMLElement
     afterEl?: HTMLElement
     keyField?: string | ((item: any, index: number) => string | number)
     shift?: boolean
+    disableTransform?: boolean
   } = {},
 ) {
   const onResize = vi.fn()
@@ -134,6 +136,7 @@ function mountHarness(
     emitUpdate: true,
     pageMode: false,
     shift,
+    disableTransform,
     prerender: 0,
     updateInterval: 0,
   })
@@ -156,6 +159,7 @@ function mountHarness(
         emitUpdate: options.emitUpdate,
         pageMode: options.pageMode,
         shift: options.shift,
+        disableTransform: options.disableTransform,
         prerender: options.prerender,
         updateInterval: options.updateInterval,
         onResize,
@@ -226,6 +230,7 @@ describe('useDynamicScroller', () => {
     expect(typeof vm.handleResize).toBe('function')
     expect(typeof vm.handleVisibilityChange).toBe('function')
     expect(typeof vm.scrollToPosition).toBe('function')
+    expect(typeof vm.getViewStyle).toBe('function')
     expect(typeof vm.vDynamicScrollerItem.mounted).toBe('function')
     expect(vm.visiblePool.map((view: any) => view.nr.index)).toEqual([0, 1, 2])
 
@@ -578,6 +583,28 @@ describe('useDynamicScroller', () => {
     expect(el.style.visibility).toBe('visible')
     expect(el.style.pointerEvents).toBe('')
     expect(el.style.transform).toBe('translateY(60px) translateX(0px)')
+    wrapper.unmount()
+  })
+
+  it('uses top and left positioning for generic elements when disableTransform is enabled', async () => {
+    const { wrapper, vm } = mountHarness([{ id: 'row-1', text: 'Alpha' }], {
+      disableTransform: true,
+    })
+    const el = createMeasuredElement(44)
+    const view = createDynamicView({ id: 'row-1', text: 'Alpha' }, { index: 2 })
+
+    view.offset = 12
+    vm.vDynamicScrollerItem.mounted(el, {
+      value: {
+        view,
+      },
+    } as any)
+
+    expect(vm.getViewStyle(view).transform).toBe('none')
+    expect(el.style.top).toBe('40px')
+    expect(el.style.left).toBe('12px')
+    expect(el.style.transform).toBe('none')
+    expect(el.style.willChange).toBe('unset')
     wrapper.unmount()
   })
 

@@ -22,6 +22,7 @@ describe('useWindowScroller', () => {
 
   it('forces page mode and forwards the remaining inputs unchanged', () => {
     const expected = {
+      getViewStyle: vi.fn(),
       pool: [],
       totalSize: 10,
     }
@@ -36,6 +37,7 @@ describe('useWindowScroller', () => {
       buffer: 0,
       pageMode: false,
       shift: true,
+      disableTransform: true,
       prerender: 0,
       emitUpdate: false,
       updateInterval: 0,
@@ -62,5 +64,6 @@ describe('useWindowScroller', () => {
     expect(forwardedBefore).toBe(before)
     expect(forwardedAfter).toBe(after)
     expect(forwardedCallbacks).toBe(callbacks)
+    expect(result.getViewStyle).toBe(expected.getViewStyle)
   })
 })

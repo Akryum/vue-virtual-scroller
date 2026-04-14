@@ -146,6 +146,7 @@ As you scroll, most views are simply moved to new positions and receive updated 
 | `prerender` | `0` | Render a fixed number of items for Server-Side Rendering (SSR). |
 | `buffer` | `200` | Amount of pixels to add to edges of the scrolling visible area to start rendering items further away. |
 | `emitUpdate` | `false` | Emit an `'update'` event each time the virtual scroller content is updated (can impact performance). |
+| `disableTransform` | `false` | Use absolute `top`/`left` positioning instead of CSS transforms for pooled item wrappers. This also keeps fixed-grid cross-axis placement in `left`/`top`. |
 | `updateInterval` | `0` | The interval in ms at which the view will be checked for updates after scrolling. When set to `0`, check happens during the next animation frame. |
 | `listClass` | `''` | Custom classes added to the item list wrapper. |
 | `itemClass` | `''` | Custom classes added to each item. |

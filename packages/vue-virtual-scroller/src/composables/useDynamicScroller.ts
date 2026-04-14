@@ -1,4 +1,4 @@
-import type { ComputedRef, Directive, MaybeRef, MaybeRefOrGetter } from 'vue'
+import type { ComputedRef, CSSProperties, Directive, MaybeRef, MaybeRefOrGetter } from 'vue'
 import type { CacheSnapshot, ItemKey, ItemWithSize, KeyFieldValue, KeyValue, ScrollDirection, ValidKeyField, View, VScrollData } from '../types'
 import type { DynamicScrollerItemControllerCallbacks, DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext, DynamicScrollerUpdatePayload } from './dynamicScrollerMeasurement'
 import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './useRecycleScroller'
@@ -6,6 +6,7 @@ import mitt from 'mitt'
 import { computed, effectScope, nextTick, onActivated, onDeactivated, onUnmounted, provide, reactive, shallowRef, toValue, watch } from 'vue'
 import { findPrependOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
 import { resolveItemKey, resolveItemKeyWithOptionalIndex } from '../engine/keyField'
+import { getPooledViewStyle } from '../utils/viewStyle'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
 import { useRecycleScroller } from './useRecycleScroller'
 
@@ -39,6 +40,7 @@ export interface UseDynamicScrollerOptions<TItem = unknown, TKeyField extends Ke
   pageMode?: boolean
   shift?: boolean
   cache?: CacheSnapshot
+  disableTransform?: boolean
   prerender?: number
   emitUpdate?: boolean
   updateInterval?: number
@@ -93,6 +95,7 @@ export interface UseDynamicScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>
   cacheSnapshot: UseDynamicScrollerCacheSnapshot<TItem, TKey>
   restoreCache: UseDynamicScrollerRestoreCache<TItem, TKey>
   getItemSize: (item: TItem, index?: number) => number
+  getViewStyle: (view: View<ItemWithSize<TItem, TKey>, TKey>) => CSSProperties
   scrollToBottom: () => void
   onScrollerResize: () => void
   onScrollerVisible: () => void
@@ -164,6 +167,7 @@ function applyViewStyles(
   elValue: HTMLElement,
   binding: UseDynamicScrollerItemBindingOptions<any, any>,
   direction: ScrollDirection,
+  disableTransform: boolean,
   snapshot: Record<string, string>,
 ) {
   if (!('view' in binding)) {
@@ -171,18 +175,18 @@ function applyViewStyles(
     return
   }
 
-  const isVertical = direction === 'vertical'
   const isTableRow = elValue.tagName === 'TR'
-  const offsetTransform = isVertical
-    ? `translateY(${binding.view.position}px) translateX(${binding.view.offset}px)`
-    : `translateX(${binding.view.position}px) translateY(${binding.view.offset}px)`
+  const style = getPooledViewStyle(binding.view, {
+    direction,
+    disableTransform: disableTransform || isTableRow,
+  })
 
-  elValue.style.position = 'absolute'
-  elValue.style.top = isVertical ? (isTableRow ? `${binding.view.position}px` : '0px') : '0px'
-  elValue.style.left = !isVertical && isTableRow ? `${binding.view.position}px` : '0px'
-  elValue.style.transform = isTableRow ? '' : offsetTransform
-  elValue.style.willChange = isTableRow ? 'unset' : 'transform'
-  elValue.style.visibility = binding.view.nr.used ? 'visible' : 'hidden'
+  elValue.style.position = String(style.position ?? 'absolute')
+  elValue.style.top = String(style.top ?? '0px')
+  elValue.style.left = String(style.left ?? '0px')
+  elValue.style.transform = isTableRow ? '' : String(style.transform ?? '')
+  elValue.style.willChange = String(style.willChange ?? '')
+  elValue.style.visibility = String(style.visibility ?? '')
   elValue.style.pointerEvents = binding.view.nr.used ? '' : 'none'
 }
 
@@ -388,6 +392,7 @@ export function useDynamicScroller<TItem, TKeyField extends KeyFieldValue<TItem>
       cache: opts.cache,
       prerender: opts.prerender ?? 0,
       emitUpdate: opts.emitUpdate ?? false,
+      disableTransform: opts.disableTransform ?? false,
       updateInterval: opts.updateInterval ?? 0,
     }
   })
@@ -400,6 +405,19 @@ export function useDynamicScroller<TItem, TKeyField extends KeyFieldValue<TItem>
   function onScrollerVisible() {
     _events.emit('vscroll:update', { force: false })
     toValue(options).onVisible?.()
+  }
+
+  /**
+   * Build inline styles for a pooled dynamic view.
+   */
+  function getViewStyle(
+    view: View<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>, ItemKey<TItem, TKeyField>>,
+  ): CSSProperties {
+    const opts = toValue(options)
+    return getPooledViewStyle(view, {
+      direction: opts.direction,
+      disableTransform: opts.disableTransform ?? false,
+    })
   }
 
   const recycleScroller = useRecycleScroller<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>, 'id', 'size'>(
@@ -624,7 +642,13 @@ export function useDynamicScroller<TItem, TKeyField extends KeyFieldValue<TItem>
               id: currentId,
             })
           }
-          applyViewStyles(currentEl, binding.value, direction.value, restoreStyles)
+          applyViewStyles(
+            currentEl,
+            binding.value,
+            direction.value,
+            toValue(options).disableTransform ?? false,
+            restoreStyles,
+          )
         }
       }, {
         immediate: true,
@@ -672,7 +696,13 @@ export function useDynamicScroller<TItem, TKeyField extends KeyFieldValue<TItem>
         onResize: normalizedValue.onResize,
       }
       record.el.value = elValue
-      applyViewStyles(elValue, binding.value, direction.value, record.restoreStyles)
+      applyViewStyles(
+        elValue,
+        binding.value,
+        direction.value,
+        toValue(options).disableTransform ?? false,
+        record.restoreStyles,
+      )
     },
     unmounted(elValue) {
       const record = bindings.get(elValue)
@@ -872,6 +902,7 @@ export function useDynamicScroller<TItem, TKeyField extends KeyFieldValue<TItem>
     scrollToItem,
     restoreCache,
     getItemSize,
+    getViewStyle,
     scrollToBottom,
     onScrollerResize,
     onScrollerVisible,

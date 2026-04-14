@@ -30,6 +30,10 @@ const RecycleScrollerStub = defineComponent({
       type: String,
       default: 'div',
     },
+    disableTransform: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['resize', 'visible'],
   setup(props, { slots, emit, expose }) {
@@ -134,6 +138,7 @@ describe('dynamicScroller', () => {
       keyField,
       listTag: 'ul',
       itemTag: 'li',
+      disableTransform: true,
     })
 
     const scroller = wrapper.getComponent({ name: 'RecycleScroller' })
@@ -142,6 +147,7 @@ describe('dynamicScroller', () => {
     expect(scroller.props('keyField')).toBe('id')
     expect(scroller.props('listTag')).toBe('ul')
     expect(scroller.props('itemTag')).toBe('li')
+    expect(scroller.props('disableTransform')).toBe(true)
 
     await scroller.get('.emit-resize').trigger('click')
     await scroller.get('.emit-visible').trigger('click')

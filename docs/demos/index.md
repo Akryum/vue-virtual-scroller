@@ -7,6 +7,7 @@ These demos show the main scrolling patterns supported by `vue-virtual-scroller`
 - [RecycleScroller demo](./recycle-scroller) — start here for large lists with known, fixed item sizes.
 - [DynamicScroller demo](./dynamic-scroller) — see how unknown row heights are measured and updated over time.
 - [WindowScroller demo](./window-scroller) — follow page scrolling instead of rendering inside an inner scroll container.
+- [Disable transform demo](./disable-transform) — inspect `disableTransform` on a fixed grid and compare live wrapper styles.
 - [Chat stream demo](./chat) — model a live feed that keeps the newest messages in view.
 - [Shift demo](./shift) — prepend older rows while keeping the current viewport anchored.
 - [Simple list demo](./simple-list) — compare fixed-size and measured rendering on the same dataset.

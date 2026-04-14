@@ -21,6 +21,7 @@ const messages = ref<Message[]>([
   <RecycleScroller
     :items="messages"
     :item-size="32"
+    :disable-transform="true"
   >
     <template #default="{ item }">
       {{ item.text.toUpperCase() }}
@@ -32,6 +33,7 @@ const messages = ref<Message[]>([
   <DynamicScroller
     :items="messages"
     :min-item-size="32"
+    :disable-transform="true"
   >
     <template #default="{ item, itemWithSize }">
       {{ item.text.toUpperCase() }}

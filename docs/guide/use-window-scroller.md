@@ -63,6 +63,7 @@ Common options:
 - `buffer`
 - `shift`
 - `cache`
+- `disableTransform`
 - `prerender`
 - `emitUpdate`
 - `updateInterval`
@@ -79,6 +80,7 @@ Common options:
 - `findItemIndex(offset)`: resolve a pixel offset back to an item index
 - `getItemOffset(index)`: read the starting pixel offset for an item
 - `getItemSize(index)`: read the known size for an item
+- `getViewStyle(view)`: build the pooled wrapper positioning styles used by the component path
 - `cacheSnapshot`: current serializable size snapshot
 - `restoreCache(snapshot)`: restore a previous snapshot when the item sequence matches
 - `updateVisibleItems(itemsChanged, checkPositionDiff?)`: force recalculation
@@ -88,7 +90,7 @@ Common options:
 - Keep the outer root in page flow.
 - Add an inner wrapper with `position: relative` and `minHeight` or `minWidth` from `totalSize`.
 - Render every entry in `pool`.
-- Absolutely position each pooled view yourself.
+- Apply `getViewStyle(view)` to each pooled wrapper.
 - Hide inactive views instead of filtering them out.
 
 ## Common pitfalls
@@ -126,6 +128,7 @@ const {
   pool,
   totalSize,
   scrollToItem,
+  getViewStyle,
 } = useWindowScroller(computed(() => ({
   items: rows.value,
   keyField: 'id',
@@ -155,11 +158,7 @@ const {
         v-for="view in pool"
         :key="view.nr.id"
         class="window-list__row"
-        :style="{
-          transform: `translateY(${view.position}px)`,
-          visibility: view.nr.used ? 'visible' : 'hidden',
-          pointerEvents: view.nr.used ? undefined : 'none',
-        }"
+        :style="getViewStyle(view)"
       >
         {{ (view.item as Row).label }}
       </div>

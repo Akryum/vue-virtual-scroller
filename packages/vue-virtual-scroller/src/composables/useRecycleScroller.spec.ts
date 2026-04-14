@@ -21,6 +21,8 @@ function createView(index: number, used = true): View {
 
 function mountHarness(overrides: Partial<{
   items: Array<Record<string, unknown>>
+  keyField: string | ((item: Record<string, unknown>, index: number) => string | number)
+  direction: 'vertical' | 'horizontal'
   itemSize: number | null
   gridItems: number | undefined
   itemSecondarySize: number | undefined
@@ -28,6 +30,7 @@ function mountHarness(overrides: Partial<{
   sizeField: string
   shift: boolean
   cache: any
+  disableTransform: boolean
   updateInterval: number
   clientHeight: number
   clientWidth: number
@@ -51,6 +54,7 @@ function mountHarness(overrides: Partial<{
     cache: undefined,
     prerender: 0,
     emitUpdate: true,
+    disableTransform: false,
     updateInterval: 0,
     ...overrides,
   })
@@ -266,6 +270,77 @@ describe('useRecycleScroller', () => {
 
     expect(vm.el.scrollTop).toBe(30)
     expect(vm.restoreCache(vm.cacheSnapshot)).toBe(true)
+  })
+
+  it('builds transform styles by default', async () => {
+    const { vm } = mountHarness()
+
+    await nextTick()
+    await nextTick()
+
+    const style = vm.getViewStyle(vm.pool[0])
+    expect(style.transform).toBe('translateY(0px) translateX(0px)')
+    expect(style.top).toBe('0px')
+    expect(style.left).toBe('0px')
+    expect(style.willChange).toBe('transform')
+  })
+
+  it('uses top and left when disableTransform is enabled', async () => {
+    const { vm } = mountHarness({
+      disableTransform: true,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const view = vm.pool[0]
+    view.position = 40
+    view.offset = 12
+
+    const style = vm.getViewStyle(view)
+    expect(style.top).toBe('40px')
+    expect(style.left).toBe('12px')
+    expect(style.transform).toBe('none')
+    expect(style.willChange).toBe('unset')
+  })
+
+  it('keeps fixed-grid secondary axis placement in disableTransform mode', async () => {
+    const { vm } = mountHarness({
+      items: Array.from({ length: 16 }, (_, id) => ({ id })),
+      itemSize: 10,
+      gridItems: 4,
+      itemSecondarySize: 20,
+      disableTransform: true,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const targetView = vm.pool.find((view: View) => view.nr.index === 1)
+    const style = vm.getViewStyle(targetView)
+    expect(style.top).toBe('0px')
+    expect(style.left).toBe('20px')
+    expect(style.width).toBe('20px')
+    expect(style.height).toBe('10px')
+  })
+
+  it('uses the main axis for horizontal positioning styles', async () => {
+    const { vm } = mountHarness({
+      direction: 'horizontal',
+      disableTransform: true,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const view = vm.pool[0]
+    view.position = 40
+    view.offset = 12
+
+    const style = vm.getViewStyle(view)
+    expect(style.left).toBe('40px')
+    expect(style.top).toBe('12px')
+    expect(style.transform).toBe('none')
   })
 
   it('builds and restores cache snapshots for variable-size lists', async () => {

@@ -1,4 +1,4 @@
-import type { ComputedRef, MaybeRef, MaybeRefOrGetter, Ref } from 'vue'
+import type { ComputedRef, CSSProperties, MaybeRef, MaybeRefOrGetter, Ref } from 'vue'
 import type { CacheSnapshot, ItemKey, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
 import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
 import config from '../config'
@@ -7,6 +7,7 @@ import { resolveItemKey } from '../engine/keyField'
 import { getViewportSize, normalizeOffset, scrollElementTo } from '../engine/scroll'
 import { getScrollParent } from '../scrollparent'
 import { supportsPassive } from '../utils'
+import { getPooledViewStyle } from '../utils/viewStyle'
 
 export interface UseRecycleScrollerOptions<TItem = unknown, TKeyField extends KeyFieldValue<TItem> = 'id', TSizeField extends string = 'size'> {
   items: TItem[]
@@ -24,6 +25,7 @@ export interface UseRecycleScrollerOptions<TItem = unknown, TKeyField extends Ke
   cache?: CacheSnapshot
   prerender: number
   emitUpdate: boolean
+  disableTransform?: boolean
   updateInterval: number
 }
 
@@ -40,6 +42,7 @@ export interface UseRecycleScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>
   findItemIndex: (offset: number) => number
   getItemOffset: (index: number) => number
   getItemSize: (index: number) => number
+  getViewStyle: (view: View<TItem, TKey>) => CSSProperties
   cacheSnapshot: ComputedRef<CacheSnapshot>
   restoreCache: (snapshot: CacheSnapshot | null | undefined) => boolean
   updateVisibleItems: (itemsChanged: boolean, checkPositionDiff?: boolean) => { continuous: boolean }
@@ -423,6 +426,20 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
 
     const sizeEntry = (sizes.value as Sizes)[index]
     return sizeEntry?.size || Number(opts.minItemSize) || 0
+  }
+
+  /**
+   * Build inline styles for a pooled view.
+   */
+  function getViewStyle(view: View<TItem, ItemKey<TItem, TKeyField>>): CSSProperties {
+    const opts = toValue(options)
+    return getPooledViewStyle(view, {
+      direction: opts.direction,
+      disableTransform: opts.disableTransform ?? false,
+      itemSize: opts.itemSize,
+      gridItems: opts.gridItems,
+      itemSecondarySize: opts.itemSecondarySize,
+    })
   }
 
   function getItemOffset(index: number): number {
@@ -1129,6 +1146,7 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
     findItemIndex,
     getItemOffset,
     getItemSize,
+    getViewStyle,
     cacheSnapshot,
     restoreCache,
     updateVisibleItems,

@@ -19,6 +19,7 @@ Use it when you need custom markup, but item size still has to be measured from 
 - You render from `pool`.
 - Each `view` inside `pool` wraps an internal `ItemWithSize`, so the original item lives at `view.item.item`.
 - `totalSize` still belongs on your inner wrapper.
+- `getViewStyle(view)` exposes pooled positioning styles for custom integrations. Generic elements use transforms by default, and `disableTransform` switches them to `top`/`left`.
 - When you bind `v-dynamic-scroller-item="{ view, ... }"`, the directive:
   - derives `item`, `active`, and `index` from the pooled view
   - measures the DOM element for unknown-size updates
@@ -78,6 +79,7 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 - `findItemIndex(offset)`: resolve a pixel offset back to an item index.
 - `getItemOffset(index)`: read the known starting offset for an item.
 - `getItemSize(item, index?)`: read the measured size for an item.
+- `getViewStyle(view)`: build pooled wrapper positioning styles for the current direction.
 - `cacheSnapshot`: current serializable size snapshot.
 - `restoreCache(snapshot)`: restore previously known sizes when the item sequence matches.
 - `forceUpdate(clear?)`: trigger a recalculation, optionally clearing known sizes.
@@ -98,6 +100,7 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 - Reading `view.item` as if it were the original item can be confusing in headless mode. The original row lives at `view.item.item`.
 - `watchData` works, but it is heavier than targeted `sizeDependencies`.
 - If you prepend into chat-style data, enable `shift` in the composable options so the viewport stays anchored.
+- Set `disableTransform` when generic pooled wrappers must avoid translate transforms.
 
 ## Full example
 
