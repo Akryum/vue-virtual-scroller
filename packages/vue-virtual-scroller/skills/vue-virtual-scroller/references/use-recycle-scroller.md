@@ -9,7 +9,7 @@ Generated from the package's public headless virtualization documentation at ski
 ## When to use
 
 - You need a custom DOM structure that does not fit the component slot API.
-- You want direct control over pooled views, scroll handling, and item placement.
+- You want direct control over pooled views and item placement.
 - Item size is fixed or already known before render.
 
 ## Required inputs
@@ -18,7 +18,7 @@ Generated from the package's public headless virtualization documentation at ski
 - An options object with the documented core settings:
   - `items`
   - `keyField`
-  - `direction`
+  - `direction` (optional, defaults to `'vertical'`)
   - `itemSize`
   - `minItemSize`
   - `sizeField`
@@ -56,7 +56,6 @@ Returns used most often:
 - `pool`
 - `visiblePool`
 - `totalSize`
-- `handleScroll`
 - `scrollToItem`
 - `scrollToPosition`
 - `getScroll`
@@ -87,10 +86,9 @@ import { useRecycleScroller } from 'vue-virtual-scroller'
 
 const scrollerEl = useTemplateRef<HTMLElement>('scrollerEl')
 
-const { pool, totalSize, handleScroll, getViewStyle } = useRecycleScroller(computed(() => ({
+const { pool, totalSize, getViewStyle } = useRecycleScroller(computed(() => ({
   items: rows.value,
   keyField: 'id',
-  direction: 'vertical' as const,
   itemSize: 40,
   minItemSize: null,
   sizeField: 'size',

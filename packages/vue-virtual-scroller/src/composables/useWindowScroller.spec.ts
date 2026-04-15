@@ -66,4 +66,31 @@ describe('useWindowScroller', () => {
     expect(forwardedCallbacks).toBe(callbacks)
     expect(result.getViewStyle).toBe(expected.getViewStyle)
   })
+
+  it('allows direction to be omitted and still forwards page mode', () => {
+    const options: UseWindowScrollerOptions = {
+      items: [{ id: 1 }],
+      keyField: 'id',
+      itemSize: 20,
+      minItemSize: null,
+      sizeField: 'size',
+      typeField: 'type',
+      buffer: 0,
+      shift: false,
+      disableTransform: false,
+      prerender: 0,
+      emitUpdate: false,
+      updateInterval: 0,
+    }
+    mocks.useRecycleScroller.mockReturnValue({})
+
+    useWindowScroller(options, ref(document.createElement('div')))
+
+    const [forwardedOptions] = mocks.useRecycleScroller.mock.calls[0]
+    expect(toValue(forwardedOptions)).toEqual({
+      ...options,
+      pageMode: true,
+    })
+    expect(toValue(forwardedOptions).direction).toBeUndefined()
+  })
 })

@@ -112,12 +112,14 @@ function mountHarness(
     beforeEl,
     afterEl,
     keyField = 'id',
+    direction = 'vertical' as ScrollDirection,
     shift = false,
     disableTransform = false,
   }: {
     beforeEl?: HTMLElement
     afterEl?: HTMLElement
     keyField?: string | ((item: any, index: number) => string | number)
+    direction?: ScrollDirection
     shift?: boolean
     disableTransform?: boolean
   } = {},
@@ -130,7 +132,7 @@ function mountHarness(
   const options = reactive({
     items: initialItems,
     keyField,
-    direction: 'vertical' as ScrollDirection,
+    direction,
     minItemSize: 20,
     buffer: 200,
     emitUpdate: true,
@@ -226,7 +228,6 @@ describe('useDynamicScroller', () => {
     expect(vm.visiblePool.length).toBeGreaterThan(0)
     expect(vm.totalSize).toBe(60)
     expect(vm.ready).toBe(true)
-    expect(typeof vm.handleScroll).toBe('function')
     expect(typeof vm.handleResize).toBe('function')
     expect(typeof vm.handleVisibilityChange).toBe('function')
     expect(typeof vm.scrollToPosition).toBe('function')
@@ -244,6 +245,25 @@ describe('useDynamicScroller', () => {
     await nextTick()
 
     expect(vm.getItemSize(items[0])).toBe(42)
+  })
+
+  it('defaults omitted direction to vertical behavior', async () => {
+    const items = [
+      { id: 'a', label: 'Alpha' },
+      { id: 'b', label: 'Beta' },
+      { id: 'c', label: 'Gamma' },
+    ]
+    const { vm, el } = mountHarness(items, {
+      direction: undefined,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.measurementContext.direction.value).toBe('vertical')
+
+    vm.scrollToItem(2)
+    expect(el.value.scrollTop).toBe(40)
   })
 
   it('uses minItemSize for initial scroll math and measured sizes for later scrolls', async () => {

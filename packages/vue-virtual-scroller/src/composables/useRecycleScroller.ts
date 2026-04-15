@@ -13,7 +13,7 @@ import { getPooledViewStyle } from '../utils/viewStyle'
 export interface UseRecycleScrollerOptions<TItem = unknown, TSizeField extends string = 'size'> {
   items: TItem[]
   keyField: KeyFieldValue<TItem>
-  direction: ScrollDirection
+  direction?: ScrollDirection
   itemSize: ItemSizeValue<TItem>
   gridItems?: number
   itemSecondarySize?: number
@@ -51,7 +51,6 @@ export interface UseRecycleScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>
   cacheSnapshot: ComputedRef<CacheSnapshot>
   restoreCache: (snapshot: CacheSnapshot | null | undefined) => boolean
   updateVisibleItems: (itemsChanged: boolean, checkPositionDiff?: boolean) => { continuous: boolean }
-  handleScroll: () => void
   handleResize: () => void
   handleVisibilityChange: (isVisible: boolean, entry: IntersectionObserverEntry) => void
   sortViews: () => void
@@ -146,7 +145,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   let _refreshTimout: ReturnType<typeof setTimeout> | null = null
   let _sortTimer: ReturnType<typeof setTimeout> | null = null
   let _computedMinItemSize = 0
-  let _listenerTarget: (Window | Element) | null = null
+  let _scrollListenerTarget: (Window | Element) | null = null
+  let _resizeListenerTarget: (Window | Element) | null = null
   let _previousKeys: Array<ItemKey<TItem, TKeyField>> = []
   let _shiftAnchor: { key: ItemKey<TItem, TKeyField>, offset: number } | null = null
   let _shiftAnchorClearTimer: ReturnType<typeof setTimeout> | null = null
@@ -215,6 +215,10 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       )
     })
   })
+
+  function getDirection(opts = toValue(options)): ScrollDirection {
+    return opts.direction ?? 'vertical'
+  }
 
   // Methods
   function restoreCache(snapshot: CacheSnapshot | null | undefined): boolean {
@@ -403,7 +407,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
 
     const opts = toValue(options)
-    return opts.direction === 'vertical'
+    return getDirection(opts) === 'vertical'
       ? beforeEl.scrollHeight
       : beforeEl.scrollWidth
   }
@@ -414,7 +418,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       return { start: 0, end: 0 }
     }
     const opts = toValue(options)
-    const isVertical = opts.direction === 'vertical'
+    const direction = getDirection(opts)
+    const isVertical = direction === 'vertical'
     let scrollState: ScrollState
 
     if (opts.pageMode) {
@@ -442,8 +447,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
     else {
       scrollState = {
-        start: normalizeOffset(elValue.scrollLeft, opts.direction, elValue),
-        end: normalizeOffset(elValue.scrollLeft, opts.direction, elValue) + elValue.clientWidth,
+        start: normalizeOffset(elValue.scrollLeft, direction, elValue),
+        end: normalizeOffset(elValue.scrollLeft, direction, elValue) + elValue.clientWidth,
       }
     }
 
@@ -457,7 +462,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
     const opts = toValue(options)
 
-    if (opts.direction === 'vertical') {
+    if (getDirection(opts) === 'vertical') {
       const start = normalizeOffset(elValue.scrollLeft, 'horizontal', elValue)
       return {
         start,
@@ -527,7 +532,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   function getViewStyle(view: View<TItem, ItemKey<TItem, TKeyField>>): CSSProperties {
     const opts = toValue(options)
     return getPooledViewStyle(view, {
-      direction: opts.direction,
+      direction: getDirection(opts),
       disableTransform: opts.disableTransform ?? false,
       itemSize: getFixedItemSize(opts.itemSize),
       gridItems: opts.gridItems,
@@ -653,33 +658,38 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     return true
   }
 
-  function applyPageMode() {
-    const opts = toValue(options)
-    if (opts.pageMode) {
-      addListeners()
-    }
-    else {
-      removeListeners()
-    }
-  }
-
   function addListeners() {
-    _listenerTarget = getListenerTarget()
-    _listenerTarget.addEventListener('scroll', handleScroll, supportsPassive()
-      ? { passive: true }
-      : false)
-    _listenerTarget.addEventListener('resize', handleResize as EventListener)
-  }
+    removeListeners()
 
-  function removeListeners() {
-    if (!_listenerTarget) {
+    const opts = toValue(options)
+    const scrollTarget = opts.pageMode
+      ? getListenerTarget()
+      : toValue(el)
+    if (!scrollTarget) {
       return
     }
 
-    _listenerTarget.removeEventListener('scroll', handleScroll)
-    _listenerTarget.removeEventListener('resize', handleResize as EventListener)
+    _scrollListenerTarget = scrollTarget
+    _scrollListenerTarget.addEventListener('scroll', handleScroll, supportsPassive()
+      ? { passive: true }
+      : false)
 
-    _listenerTarget = null
+    if (opts.pageMode) {
+      _resizeListenerTarget = scrollTarget
+      _resizeListenerTarget.addEventListener('resize', handleResize as EventListener)
+    }
+  }
+
+  function removeListeners() {
+    if (_scrollListenerTarget) {
+      _scrollListenerTarget.removeEventListener('scroll', handleScroll)
+      _scrollListenerTarget = null
+    }
+
+    if (_resizeListenerTarget) {
+      _resizeListenerTarget.removeEventListener('resize', handleResize as EventListener)
+      _resizeListenerTarget = null
+    }
   }
 
   function getGridRenderWindow(
@@ -735,7 +745,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
 
     const itemSecondarySize = opts.itemSecondarySize || fixedItemSize
-    const secondaryViewportSize = opts.direction === 'vertical'
+    const secondaryViewportSize = getDirection(opts) === 'vertical'
       ? elValue.clientWidth
       : elValue.clientHeight
 
@@ -1047,13 +1057,14 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
   function scrollToItem(index: number, scrollOptions?: ScrollToOptions) {
     const opts = toValue(options)
+    const direction = getDirection(opts)
     const elValue = toValue(el)
     if (!elValue) {
       return
     }
     const targetIndex = Math.max(0, Math.min(index, opts.items.length - 1))
     const viewportStart = getScroll().start
-    const viewportSize = getViewportSize(elValue, opts.direction, opts.pageMode)
+    const viewportSize = getViewportSize(elValue, direction, opts.pageMode)
     const itemStart = getItemOffset(targetIndex)
     const itemSize = getItemSize(targetIndex)
     const target = getAlignedScrollOffset(
@@ -1081,7 +1092,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       const itemSecondarySize = opts.itemSecondarySize || fixedItemSize
       const secondaryIndex = targetIndex % gridItems
       const secondaryItemStart = secondaryIndex * itemSecondarySize
-      const secondaryDirection = opts.direction === 'vertical' ? 'horizontal' : 'vertical'
+      const secondaryDirection = direction === 'vertical' ? 'horizontal' : 'vertical'
       const secondaryViewportStart = secondaryDirection === 'horizontal'
         ? normalizeOffset(elValue.scrollLeft, 'horizontal', elValue)
         : elValue.scrollTop
@@ -1105,6 +1116,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
   function scrollToPosition(position: number, scrollOptions?: ScrollToOptions) {
     const opts = toValue(options)
+    const direction = getDirection(opts)
     const elValue = toValue(el)
     if (!elValue) {
       return
@@ -1114,21 +1126,21 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       const viewportEl = getScrollParent(elValue) as HTMLElement
       const bounds = viewportEl.getBoundingClientRect()
       const scroller = elValue.getBoundingClientRect()
-      const startProp = opts.direction === 'vertical' ? 'top' : 'left'
+      const startProp = direction === 'vertical' ? 'top' : 'left'
       const currentScroll = getScrollParent(elValue) === document.documentElement || getScrollParent(elValue) === document.body
-        ? (opts.direction === 'vertical' ? window.scrollY : window.scrollX)
+        ? (direction === 'vertical' ? window.scrollY : window.scrollX)
         : normalizeOffset(
-            opts.direction === 'vertical'
+            direction === 'vertical'
               ? (viewportEl as any).scrollTop
               : (viewportEl as any).scrollLeft,
-            opts.direction,
+            direction,
             viewportEl,
           )
       const scrollerPosition = (scroller as any)[startProp] - (bounds as any)[startProp]
-      scrollElementTo(viewportEl.tagName === 'HTML' ? window : viewportEl, opts.direction, position + currentScroll + scrollerPosition, scrollOptions)
+      scrollElementTo(viewportEl.tagName === 'HTML' ? window : viewportEl, direction, position + currentScroll + scrollerPosition, scrollOptions)
     }
     else {
-      scrollElementTo(elValue, opts.direction, position, scrollOptions)
+      scrollElementTo(elValue, direction, position, scrollOptions)
     }
   }
 
@@ -1148,7 +1160,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   }
 
   onMounted(() => {
-    applyPageMode()
+    addListeners()
     nextTick(() => {
       // In SSR mode, render the number of visible items
       _prerender = false
@@ -1213,7 +1225,12 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   })
 
   watch(() => toValue(options).pageMode, () => {
-    applyPageMode()
+    addListeners()
+    updateVisibleItems(false)
+  })
+
+  watch(() => toValue(el), () => {
+    addListeners()
     updateVisibleItems(false)
   })
 
@@ -1249,7 +1266,6 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     cacheSnapshot,
     restoreCache,
     updateVisibleItems,
-    handleScroll,
     handleResize,
     handleVisibilityChange,
     sortViews,

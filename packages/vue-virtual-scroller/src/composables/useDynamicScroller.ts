@@ -31,7 +31,7 @@ export type UseDynamicScrollerItemBindingOptions<TItem = unknown, TKey = KeyValu
 export interface UseDynamicScrollerOptions<TItem = unknown> {
   items: TItem[]
   keyField: KeyFieldValue<TItem>
-  direction: ScrollDirection
+  direction?: ScrollDirection
   minItemSize: number | string
   el: MaybeRef<HTMLElement | undefined>
   before?: MaybeRef<HTMLElement | undefined>
@@ -58,7 +58,6 @@ type UseDynamicScrollerPool<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem
 type UseDynamicScrollerVisiblePool<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['visiblePool']
 type UseDynamicScrollerHandleResize<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['handleResize']
 type UseDynamicScrollerHandleVisibilityChange<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['handleVisibilityChange']
-type UseDynamicScrollerHandleScroll<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['handleScroll']
 type UseDynamicScrollerGetScroll<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['getScroll']
 type UseDynamicScrollerFindItemIndex<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['findItemIndex']
 type UseDynamicScrollerGetItemOffset<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['getItemOffset']
@@ -89,7 +88,6 @@ export interface UseDynamicScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>
   findItemIndex: UseDynamicScrollerFindItemIndex<TItem, TKey>
   getItemOffset: UseDynamicScrollerGetItemOffset<TItem, TKey>
   updateVisibleItems: UseDynamicScrollerUpdateVisibleItems<TItem, TKey>
-  handleScroll: UseDynamicScrollerHandleScroll<TItem, TKey>
   handleResize: UseDynamicScrollerHandleResize<TItem, TKey>
   handleVisibilityChange: UseDynamicScrollerHandleVisibilityChange<TItem, TKey>
   sortViews: UseDynamicScrollerSortViews<TItem, TKey>
@@ -273,7 +271,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     simpleArray: false,
   })
 
-  const direction = computed(() => toValue(options).direction)
+  const direction = computed<ScrollDirection>(() => toValue(options).direction ?? 'vertical')
   const el = computed(() => toValue(toValue(options).el))
   const before = computed(() => toValue(toValue(options).before))
   const after = computed(() => toValue(toValue(options).after))
@@ -401,7 +399,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     return {
       items: itemsWithSize.value,
       keyField: 'id' as const,
-      direction: opts.direction,
+      direction: direction.value,
       itemSize: null,
       gridItems: undefined,
       itemSecondarySize: undefined,
@@ -438,7 +436,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   ): CSSProperties {
     const opts = toValue(options)
     return getPooledViewStyle(view, {
-      direction: opts.direction,
+      direction: direction.value,
       disableTransform: opts.disableTransform ?? false,
     })
   }

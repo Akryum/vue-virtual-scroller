@@ -22,7 +22,7 @@ Common options:
 
 - `items`
 - `keyField`
-- `direction`
+- `direction` (optional, defaults to `'vertical'`)
 - `itemSize`
 - `minItemSize`
 - `sizeField`
@@ -49,7 +49,6 @@ Returns used most often:
 - `pool`
 - `visiblePool`
 - `totalSize`
-- `handleScroll`
 - `scrollToItem`
 - `scrollToPosition`
 - `getScroll`

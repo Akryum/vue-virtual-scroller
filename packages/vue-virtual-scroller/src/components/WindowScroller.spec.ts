@@ -74,7 +74,6 @@ describe('windowScroller', () => {
         cacheSnapshot: computed(() => ({ keys: ['a'], sizes: [20] })),
         restoreCache: (snapshot: unknown) => mocks.restoreCache(snapshot),
         updateVisibleItems: () => ({ continuous: true }),
-        handleScroll: () => undefined,
         handleResize: () => callbacks?.onResize?.(),
         handleVisibilityChange: (isVisible: boolean) => {
           if (isVisible) {

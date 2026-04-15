@@ -119,7 +119,6 @@ const {
   cacheSnapshot,
   restoreCache,
   updateVisibleItems,
-  handleScroll,
   handleResize,
   handleVisibilityChange,
 } = recycleScroller
@@ -175,7 +174,6 @@ defineExpose(exposed)
       'page-mode': props.pageMode,
       [`direction-${props.direction}`]: true,
     }"
-    @scroll.passive="handleScroll"
   >
     <div
       v-if="$slots.before"

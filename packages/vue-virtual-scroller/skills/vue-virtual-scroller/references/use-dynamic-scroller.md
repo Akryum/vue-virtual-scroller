@@ -16,7 +16,7 @@ Generated from the package's public headless dynamic-sizing documentation at ski
 
 - `items`
 - `keyField`
-- `direction`
+- `direction` (optional, defaults to `'vertical'`)
 - `minItemSize`
 - `el` for the scroll container
 
@@ -50,7 +50,6 @@ Returns used most often:
 - `pool`
 - `visiblePool`
 - `totalSize`
-- `handleScroll`
 - `scrollToItem`
 - `scrollToPosition`
 - `findItemIndex`

@@ -16,7 +16,6 @@ const mocks = vi.hoisted(() => {
     getItemSize: vi.fn(),
     restoreCache: vi.fn(),
     updateVisibleItems: vi.fn(),
-    handleScroll: vi.fn(),
     handleResize: vi.fn(),
     handleVisibilityChange: vi.fn(),
   }
@@ -51,7 +50,6 @@ describe('recycleScroller', () => {
     mocks.getItemSize.mockReset()
     mocks.restoreCache.mockReset()
     mocks.updateVisibleItems.mockReset()
-    mocks.handleScroll.mockReset()
     mocks.handleResize.mockReset()
     mocks.handleVisibilityChange.mockReset()
 
@@ -103,7 +101,6 @@ describe('recycleScroller', () => {
         restoreCache: (snapshot: CacheSnapshot | null | undefined) => mocks.restoreCache(snapshot),
         updateVisibleItems: (itemsChanged: boolean, checkPositionDiff?: boolean) =>
           mocks.updateVisibleItems(itemsChanged, checkPositionDiff),
-        handleScroll: () => mocks.handleScroll(),
         handleResize: () => {
           mocks.handleResize()
           callbacks?.onResize?.()
@@ -178,7 +175,7 @@ describe('recycleScroller', () => {
     expect(wrapper.find('.empty-slot').exists()).toBe(true)
   })
 
-  it('wires scroll/resize handlers and exposes composable methods', async () => {
+  it('wires resize handlers and exposes composable methods', async () => {
     const wrapper = mount(RecycleScroller, {
       props: {
         items: [{ id: 'a' }],
@@ -192,10 +189,8 @@ describe('recycleScroller', () => {
     })
     const vm = wrapper.vm as any
 
-    await wrapper.trigger('scroll')
     await wrapper.get('.resize-observer-notify').trigger('click')
 
-    expect(mocks.handleScroll).toHaveBeenCalledTimes(1)
     expect(mocks.handleResize).toHaveBeenCalledTimes(1)
     expect(wrapper.emitted('resize')).toHaveLength(1)
 

@@ -22,7 +22,7 @@ function createView(index: number, used = true): View {
 function mountHarness(overrides: Partial<{
   items: Array<Record<string, unknown>>
   keyField: string | ((item: Record<string, unknown>, index: number) => string | number)
-  direction: 'vertical' | 'horizontal'
+  direction: 'vertical' | 'horizontal' | undefined
   itemSize: number | null | ((item: Record<string, unknown>, index: number) => number)
   gridItems: number | undefined
   itemSecondarySize: number | undefined
@@ -158,6 +158,30 @@ describe('useRecycleScroller', () => {
     vm.el.scrollTop = 20
     vm.scrollToItem(2, { align: 'nearest' })
     expect(vm.el.scrollTop).toBe(20)
+  })
+
+  it('reacts to native scroll events without exposing a public handler', async () => {
+    const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame')
+    requestAnimationFrameSpy.mockImplementation((callback: FrameRequestCallback) => {
+      callback(0)
+      return 321
+    })
+
+    const { vm, onUpdate } = mountHarness({
+      items: Array.from({ length: 20 }, (_, id) => ({ id })),
+    })
+
+    await nextTick()
+    await nextTick()
+    onUpdate.mockClear()
+
+    vm.el.scrollTop = 40
+    vm.el.dispatchEvent(new Event('scroll'))
+
+    expect(onUpdate).toHaveBeenCalledTimes(1)
+    expect(vm.visiblePool[0].nr.index).toBe(4)
+
+    requestAnimationFrameSpy.mockRestore()
   })
 
   it('emits updates for large variable-size rows before scrolling a full minItemSize', async () => {
@@ -374,7 +398,8 @@ describe('useRecycleScroller', () => {
     await nextTick()
     await nextTick()
 
-    const style = vm.getViewStyle(vm.pool[0])
+    const targetView = vm.pool.find((view: View) => view.nr.index === 0)
+    const style = vm.getViewStyle(targetView)
     expect(style.transform).toBe('translateY(0px) translateX(0px)')
     expect(style.top).toBe('0px')
     expect(style.left).toBe('0px')
@@ -437,6 +462,20 @@ describe('useRecycleScroller', () => {
     expect(style.left).toBe('40px')
     expect(style.top).toBe('12px')
     expect(style.transform).toBe('none')
+  })
+
+  it('defaults omitted direction to vertical behavior', async () => {
+    const { vm } = mountHarness({
+      direction: undefined,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    vm.scrollToItem(2)
+
+    expect(vm.el.scrollTop).toBe(20)
+    expect(vm.getScroll()).toEqual({ start: 20, end: 120 })
   })
 
   it('parks recycled views at configured hidden position and keeps default fallback', async () => {
@@ -532,7 +571,7 @@ describe('useRecycleScroller', () => {
     await nextTick()
     await nextTick()
 
-    vm.handleScroll()
+    vm.el.dispatchEvent(new Event('scroll'))
 
     wrapper.unmount()
 

@@ -99,7 +99,6 @@ const {
   cacheSnapshot,
   restoreCache,
   updateVisibleItems,
-  handleScroll,
   handleResize,
   handleVisibilityChange,
 } = windowScroller
@@ -129,7 +128,6 @@ defineExpose(exposed)
       ready,
       [`direction-${props.direction}`]: true,
     }"
-    @scroll.passive="handleScroll"
   >
     <div
       v-if="$slots.before"
