@@ -1,6 +1,6 @@
 # RecycleScroller
 
-Scope: the main component for virtualizing fixed-size lists, pre-sized variable lists, grids, and page-level scrolling.
+Scope: the main component for fixed-size and pre-sized virtualization, including grids, prepend anchoring, and cache restore.
 
 ## Provenance
 
@@ -9,16 +9,16 @@ Generated from the package's public component documentation and shipped demo pat
 ## When to use
 
 - Item height or width is fixed.
-- Each item already exposes a numeric size field and you want variable-size mode without DOM measurement.
+- Each item already exposes a numeric size field.
+- Item size can be derived in memory through an `itemSize(item, index)` resolver.
 - You need grid rendering with fixed item dimensions.
-- You want page mode or SSR prerender support through the component API.
 
 ## Required inputs
 
 - `items`
-- A stable scroller size in CSS.
-- `itemSize` for fixed-size mode, or `itemSize: null` plus a numeric size field for variable-size mode.
-- `keyField` when object items do not use `id`.
+- A stable scroller size in CSS
+- `itemSize` as a fixed number, `null` plus `sizeField`, or a resolver function
+- `keyField` when object items do not use `id`
 
 ## Core props/options
 
@@ -29,29 +29,23 @@ Common props:
 - `itemSize`
 - `keyField`
 - `buffer`
-- `pageMode`
 - `prerender`
+- `shift`
+- `cache`
+- `disableTransform`
 
-Variable-size mode:
+Mode-specific props:
 
-- `itemSize: null`
-- `sizeField`
-- `minItemSize` for unknown item sizes before they are fully known
-
-Grid mode:
-
+- `sizeField` for `itemSize: null`
 - `gridItems`
 - `itemSecondarySize`
+- `minItemSize` when some pre-sized values may be missing initially
 
-Other documented props:
+Documented behavior:
 
-- `typeField`
-- `emitUpdate`
-- `updateInterval`
-- `listClass`
-- `itemClass`
-- `listTag`
-- `itemTag`
+- `itemSize` accepts a fixed number, `null`, or `(item, index) => number`
+- `gridItems` still requires a fixed numeric `itemSize`
+- `pageMode` still exists, but new code should prefer `WindowScroller` for page scrolling
 
 ## Events/returns
 
@@ -60,31 +54,24 @@ Documented events:
 - `resize`
 - `visible`
 - `hidden`
-- `update(startIndex, endIndex, visibleStartIndex, visibleEndIndex)` when `emitUpdate` is enabled
 - `scroll-start`
 - `scroll-end`
+- `update(startIndex, endIndex, visibleStartIndex, visibleEndIndex)` when `emitUpdate` is `true`
 
-Default slot props:
+Documented slot props and helpers:
 
-- `item`
-- `index`
-- `active`
-
-Named slots:
-
-- `before`
-- `empty`
-- `after`
+- default slot: `item`, `index`, `active`
+- named slots: `before`, `after`, `empty`
+- exposed helpers: `scrollToItem`, `scrollToPosition`, `findItemIndex`, `getItemOffset`, `getItemSize`, `cacheSnapshot`, `restoreCache`, `updateVisibleItems`
 
 ## Pitfalls
 
-- The scroller element and item elements must be sized correctly with CSS.
-- Do not use functional components in recycled views when performance matters.
-- Child components must respond to `item` changing because views are reused.
-- Nested images should still receive keys to avoid load glitches.
-- Use the `hover` class rather than raw `:hover` selectors on recycled nodes.
-- Browser element-size limits make extremely large lists impractical.
-- Variable-size mode can become expensive with many items.
+- Size the scroller element and item elements correctly with CSS.
+- Recycled child components must respond when `item` changes.
+- Functional components are usually a bad fit inside recycled views.
+- Key nested images, but not the immediate recycled row shell.
+- Use the provided `hover` class instead of raw `:hover` selectors on recycled nodes.
+- Variable-size mode is heavier than fixed-size mode.
 
 ## Example patterns
 
@@ -93,13 +80,27 @@ Fixed-size rows:
 ```vue
 <RecycleScroller
   v-slot="{ item }"
-  :items="list"
-  :item-size="32"
+  :items="rows"
+  :item-size="40"
   key-field="id"
 >
   <div class="row">
-    {{ item.name }}
+    {{ item.label }}
   </div>
+</RecycleScroller>
+```
+
+Resolver-based size:
+
+```vue
+<RecycleScroller
+  :items="rows"
+  :item-size="(item, index) => item.compact ? 40 : 56"
+  key-field="id"
+>
+  <template #default="{ item }">
+    {{ item.label }}
+  </template>
 </RecycleScroller>
 ```
 
@@ -116,14 +117,4 @@ Grid layout:
     <article>{{ item.name }}</article>
   </template>
 </RecycleScroller>
-```
-
-Page mode:
-
-```vue
-<RecycleScroller
-  :items="items"
-  :item-size="42"
-  page-mode
-/>
 ```

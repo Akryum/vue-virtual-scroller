@@ -27,7 +27,10 @@ If implementation behavior appears to differ from docs, fix docs first, then reg
 - `docs/guide/dynamic-scroller.md`
 - `docs/guide/dynamic-scroller-item.md`
 - `docs/guide/id-state.md`
+- `docs/guide/window-scroller.md`
 - `docs/guide/use-recycle-scroller.md`
+- `docs/guide/use-dynamic-scroller.md`
+- `docs/guide/use-window-scroller.md`
 
 ### Supporting examples
 
@@ -56,7 +59,7 @@ If an exported surface is not documented enough to support skill content, update
 Current areas that require extra care:
 
 - `docs/guide/id-state.md` describes `IdState`, while the current package exports `useIdState`
-- `useDynamicScroller` and `useDynamicScrollerItem` are exported but do not currently have guide pages
+- `useDynamicScrollerItem` is exported but does not currently have a guide page
 - plugin install options such as `installComponents` and `componentsPrefix` are exported but not fully documented in the guide
 
 Do not silently fill those gaps from source code into the skill. Either document them first or keep them out of the generated skill.
@@ -75,7 +78,10 @@ Expected initial reference set for this repo:
 - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/recycle-scroller.md`
 - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/dynamic-scroller.md`
 - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/dynamic-scroller-item.md`
+- `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/window-scroller.md`
 - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-recycle-scroller.md`
+- `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-dynamic-scroller.md`
+- `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-window-scroller.md`
 
 Optional reference files:
 
@@ -156,7 +162,7 @@ Each reference file should:
 
 ```bash
 rg --files docs packages/vue-virtual-scroller
-rg -n "RecycleScroller|DynamicScroller|DynamicScrollerItem|useRecycleScroller|useDynamicScroller|useDynamicScrollerItem|useIdState|installComponents|componentsPrefix|ESM" \
+rg -n "RecycleScroller|DynamicScroller|DynamicScrollerItem|WindowScroller|useRecycleScroller|useDynamicScroller|useDynamicScrollerItem|useWindowScroller|useIdState|installComponents|componentsPrefix|ESM" \
   docs \
   packages/vue-virtual-scroller/src/index.ts \
   packages/vue-virtual-scroller/src/types.ts \
@@ -179,9 +185,12 @@ For the current repo baseline, the minimum covered surfaces should be:
 - `RecycleScroller`
 - `DynamicScroller`
 - `DynamicScrollerItem`
+- `WindowScroller`
 - `useRecycleScroller`
+- `useDynamicScroller`
+- `useWindowScroller`
 
-Only add `id-state`, `useDynamicScroller`, `useDynamicScrollerItem`, or plugin option references after the docs clearly support them.
+Only add `id-state`, `useDynamicScrollerItem`, or plugin option references after the docs clearly support them.
 
 ### 3. Generate or update the skill
 
@@ -204,6 +213,7 @@ Checklist:
 - [ ] Frontmatter is valid and the description is specific enough to trigger on virtual scrolling tasks.
 - [ ] Setup guidance includes the ESM-only note and the CSS import.
 - [ ] The choose-the-right-surface guidance distinguishes `RecycleScroller`, `DynamicScroller`, and headless usage correctly.
+- [ ] `WindowScroller` and `useWindowScroller` are covered when window scrolling is documented.
 - [ ] Fixed-size, variable-size, page mode, and common performance pitfalls are grounded in current docs.
 - [ ] `references/index.md` exists and links to every reference file.
 - [ ] Each reference file covers one surface or one focused workflow only.
@@ -238,11 +248,11 @@ Then:
 
 ## Current generation metadata
 
-- Last generation date: `2026-03-10T14:40:32+01:00`
-- Baseline commit SHA: `4ffe378192353c24e474d7541c649613458cf1eb`
-- Baseline short SHA: `4ffe378`
-- Baseline commit date: `2026-03-10T14:25:42+01:00`
-- Baseline commit message: `refactor: esm only`
+- Last generation date: `2026-04-15T09:20:26+02:00`
+- Baseline commit SHA: `60950f2a0929cb5a3a3a95399810dd0da7939521`
+- Baseline short SHA: `60950f2`
+- Baseline commit date: `2026-04-15T09:17:35+02:00`
+- Baseline commit message: `feat: functiong etter for itemSize, closes #848`
 - Generated artifacts:
   - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/SKILL.md`
   - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/index.md`
@@ -250,7 +260,10 @@ Then:
   - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/recycle-scroller.md`
   - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/dynamic-scroller.md`
   - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/dynamic-scroller-item.md`
+  - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/window-scroller.md`
   - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-recycle-scroller.md`
+  - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-dynamic-scroller.md`
+  - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-window-scroller.md`
 
 ## Notes
 

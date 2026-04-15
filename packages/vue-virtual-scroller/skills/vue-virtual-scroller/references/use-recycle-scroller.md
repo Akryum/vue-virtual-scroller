@@ -9,13 +9,13 @@ Generated from the package's public headless virtualization documentation at ski
 ## When to use
 
 - You need a custom DOM structure that does not fit the component slot API.
-- You want to integrate virtualization into an existing design-system component.
 - You want direct control over pooled views, scroll handling, and item placement.
+- Item size is fixed or already known before render.
 
 ## Required inputs
 
-- A scroller element ref.
-- An options object containing the same core settings used by `RecycleScroller`:
+- A scroller element ref
+- An options object with the documented core settings:
   - `items`
   - `keyField`
   - `direction`
@@ -29,42 +29,52 @@ Generated from the package's public headless virtualization documentation at ski
   - `emitUpdate`
   - `updateInterval`
 
-Optional grid inputs:
+Optional extras:
 
 - `gridItems`
 - `itemSecondarySize`
+- `shift`
+- `cache`
+- `disableTransform`
 
 ## Core props/options
 
-Fixed-size path:
+Documented sizing paths:
 
-- set `itemSize` to a number
+- fixed numeric `itemSize`
+- `itemSize: null` plus numeric `sizeField`
+- `itemSize(item, index)` resolver when size is already known in memory
 
-Variable-size path:
+Documented keying path:
 
-- set `itemSize` to `null`
-- provide a numeric field on each item
-- set `sizeField` if that field is not `size`
-
-The composable manages virtualization state, but markup, CSS, and event wiring stay in user land.
+- `keyField` can be a string field name or `(item, index) => string | number`
 
 ## Events/returns
 
-Documented returns used most often:
+Returns used most often:
 
 - `pool`
+- `visiblePool`
 - `totalSize`
 - `handleScroll`
-- `scrollToItem(index)`
-- `scrollToPosition(px)`
-- `getScroll()`
-- `updateVisibleItems(itemsChanged, checkPositionDiff?)`
+- `scrollToItem`
+- `scrollToPosition`
+- `getScroll`
+- `findItemIndex`
+- `getItemOffset`
+- `getItemSize`
+- `getViewStyle`
+- `cacheSnapshot`
+- `restoreCache`
+- `updateVisibleItems`
 
 ## Pitfalls
 
 - You must provide your own scrollable sizing styles.
+- Render from `pool` and hide inactive views instead of filtering them out when you want normal recycling behavior.
 - Without a stable key field, object-item reuse becomes unreliable.
-- This composable does not provide measurement for unknown-size items; move to `DynamicScroller` when content size must be discovered from the DOM.
+- If size must be measured from the DOM after render, move to `useDynamicScroller`.
+- If the browser window owns scrolling, move to `useWindowScroller`.
 
 ## Example patterns
 
@@ -72,18 +82,13 @@ Minimal fixed-size setup:
 
 ```vue
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useRecycleScroller } from 'vue-virtual-scroller'
 
-const items = ref(Array.from({ length: 10000 }, (_, i) => ({
-  id: i + 1,
-  name: `User ${i + 1}`,
-})))
+const scrollerEl = useTemplateRef<HTMLElement>('scrollerEl')
 
-const scrollerEl = ref<HTMLElement>()
-
-const options = computed(() => ({
-  items: items.value,
+const { pool, totalSize, handleScroll, getViewStyle } = useRecycleScroller(computed(() => ({
+  items: rows.value,
   keyField: 'id',
   direction: 'vertical' as const,
   itemSize: 40,
@@ -95,27 +100,12 @@ const options = computed(() => ({
   prerender: 0,
   emitUpdate: false,
   updateInterval: 0,
-}))
-
-const { pool, totalSize, handleScroll } = useRecycleScroller(options, scrollerEl)
+})), scrollerEl)
 </script>
 ```
 
-Variable-size setup with explicit item field:
+Resolver-based size:
 
 ```ts
-const options = computed(() => ({
-  items: items.value,
-  keyField: 'id',
-  direction: 'vertical' as const,
-  itemSize: null,
-  minItemSize: 40,
-  sizeField: 'size',
-  typeField: 'type',
-  buffer: 200,
-  pageMode: false,
-  prerender: 0,
-  emitUpdate: false,
-  updateInterval: 0,
-}))
+const itemSize = (item: Row, index: number) => item.compact ? 40 : 56
 ```

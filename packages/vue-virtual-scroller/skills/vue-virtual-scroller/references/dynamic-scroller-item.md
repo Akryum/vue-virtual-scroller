@@ -2,7 +2,7 @@
 
 Scope: the per-item measurement wrapper used inside `DynamicScroller`.
 
-When wrapper-free markup is required, prefer the headless `vDynamicScrollerItem` directive returned by `useDynamicScroller` instead of this component wrapper.
+When wrapper-free markup is required, prefer the headless `vDynamicScrollerItem` directive returned by `useDynamicScroller`.
 
 ## Provenance
 
@@ -11,18 +11,19 @@ Generated from the package's public dynamic-item documentation and shipped demo 
 ## When to use
 
 - You are rendering an item inside `DynamicScroller`.
-- The rendered content can change size after first render.
-- You need resize events for item-level measurement updates.
+- Rendered content can change size after first render.
+- The wrapper component fits your markup.
 
 ## Required inputs
 
 - `item`
 - `active`
+- `index` when `DynamicScroller` uses simple-array mode or a function `keyField`
 
-Recommended for real updates:
+Recommended dynamic inputs:
 
 - `sizeDependencies`
-- `index` when `DynamicScroller` uses simple-array mode or a function `keyField`
+- `emitResize` only when the parent UI needs resize callbacks
 
 ## Core props/options
 
@@ -36,9 +37,9 @@ Recommended for real updates:
 
 Documented guidance:
 
-- Prefer `sizeDependencies` over `watchData`.
-- Pass slot `index` directly when `keyField` is function or list is simple array.
-- `watchData` deeply watches the item and is not recommended for performance-sensitive lists.
+- prefer `sizeDependencies` over `watchData`
+- pass slot `index` directly when it is required
+- `watchData` deeply watches the item and is not recommended for performance-sensitive lists
 
 ## Events/returns
 
@@ -48,10 +49,10 @@ Documented event:
 
 ## Pitfalls
 
-- Omitting `active` breaks the documented optimization path for avoiding unnecessary recomputation.
-- `data-index` on DOM is diagnostic markup only; it does not drive measurement identity.
-- Reaching for `watchData` first is usually the wrong tradeoff; use targeted dependencies instead.
-- `emitResize` increases work and should be enabled only when the parent UI needs to react.
+- Omitting `active` breaks the documented optimization path.
+- Reaching for `watchData` first is usually the wrong tradeoff.
+- `emitResize` increases work and should stay off unless needed.
+- Debug DOM attributes do not define measurement identity.
 
 ## Example patterns
 

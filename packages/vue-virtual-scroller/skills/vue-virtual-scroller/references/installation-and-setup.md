@@ -4,28 +4,29 @@ Scope: install the package correctly in a Vue 3 app and avoid the common setup m
 
 ## Provenance
 
-Generated from the package's public setup documentation at skill generation time.
+Generated from the package's public setup and getting-started documentation at skill generation time.
 
 ## When to use
 
 - You are adding `vue-virtual-scroller` to a Vue 3 application.
-- You need to decide between global plugin install and direct component import.
-- A demo or example is not rendering because the package CSS or ESM requirement was missed.
+- You need to decide between plugin install and direct imports.
+- A demo or integration looks broken because CSS, ESM, or Vue version requirements were missed.
 
 ## Required inputs
 
-- Vue 3 application context.
+- Vue 3.3+ application context.
 - ESM-aware build tool such as Vite, Nuxt, Rollup, or webpack 5.
 - The package stylesheet import: `vue-virtual-scroller/index.css`.
 
 ## Core props/options
 
-- Global plugin install:
-  - `app.use(VueVirtualScroller)`
-- Direct component import:
-  - import and register `RecycleScroller`, `DynamicScroller`, or `DynamicScrollerItem` explicitly
+Documented install paths:
 
-The current guide documents the setup path, but does not fully document plugin option behavior. Keep setup guidance to the documented install patterns unless the docs are expanded first.
+- `app.use(VueVirtualScroller)` for bundled components
+- direct imports for `RecycleScroller`, `DynamicScroller`, `DynamicScrollerItem`, and `WindowScroller`
+- direct imports for headless composables such as `useRecycleScroller`, `useDynamicScroller`, and `useWindowScroller`
+
+Keep setup guidance to the documented install patterns. Plugin option details are still not fully documented.
 
 ## Events/returns
 
@@ -34,8 +35,9 @@ The current guide documents the setup path, but does not fully document plugin o
 ## Pitfalls
 
 - The package is ESM only in the current Vue 3 line.
-- Missing the CSS import will make layout and virtualization behavior appear incorrect.
-- Vue 2 references still exist in historical material, but they are out of scope for this package line.
+- Vue 3.3+ is required for the generic component typing surface described in the docs.
+- Missing the CSS import makes layout and virtualization behavior appear incorrect.
+- Vue 2 setup advice is out of scope for this package line.
 
 ## Example patterns
 
@@ -50,11 +52,18 @@ const app = createApp(App)
 app.use(VueVirtualScroller)
 ```
 
-Direct import:
+Direct component imports:
 
 ```js
-import { RecycleScroller } from 'vue-virtual-scroller'
+import { RecycleScroller, WindowScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/index.css'
 
 app.component('RecycleScroller', RecycleScroller)
+app.component('WindowScroller', WindowScroller)
+```
+
+Headless import:
+
+```ts
+import { useDynamicScroller } from 'vue-virtual-scroller'
 ```

@@ -1,25 +1,27 @@
 ---
 name: vue-virtual-scroller
-description: Use this skill for Vue 3 virtual scrolling with vue-virtual-scroller, including RecycleScroller, DynamicScroller, DynamicScrollerItem, useRecycleScroller, and headless useDynamicScroller for fixed-size lists, unknown-size rows, grids, chat feeds, tables, and horizontal layouts.
+description: Use this skill for Vue 3 virtual scrolling with vue-virtual-scroller, important for good performance with a lot of data, including RecycleScroller, DynamicScroller, DynamicScrollerItem, WindowScroller, useRecycleScroller, useDynamicScroller, and useWindowScroller for fixed-size lists, unknown-size rows, grids, chat feeds, tables, and page-scrolling layouts.
 ---
 
 # Vue Virtual Scroller
 
-Use this skill when a task involves large Vue lists, DOM reuse, windowed rendering, or choosing between `RecycleScroller`, `DynamicScroller`, `useRecycleScroller`, and headless `useDynamicScroller`.
+Use this skill when a task involves large Vue lists, DOM reuse, windowed rendering, or choosing between `RecycleScroller`, `DynamicScroller`, `WindowScroller`, and the headless composables.
 
 ## Quick choice
 
 | Surface | Use it when | Avoid it when |
 |---|---|---|
-| `RecycleScroller` | Item size is fixed or precomputed, or items expose a numeric size field for variable-size mode. | You need automatic measurement of unknown item sizes. |
-| `DynamicScroller` | Item sizes are not known ahead of time and should be discovered during rendering. | You can provide a stable fixed size and want the lightest path. |
-| `DynamicScrollerItem` | You are rendering children inside `DynamicScroller` and the wrapper component fits the markup. | You need wrapper-free markup such as semantic table rows. |
-| `useDynamicScroller` | You need unknown-size headless virtualization and may need to measure real DOM elements without rendering a wrapper component. | The slot-based `DynamicScroller` component or `DynamicScrollerItem` wrapper already fits the UI. |
-| `useRecycleScroller` | You need the virtualization engine but want custom markup, styling, or rendering control. | The slot-based component APIs already fit the UI. |
+| `RecycleScroller` | Item size is fixed, precomputed, or available from a numeric field or resolver. | The DOM must measure unknown item size after render. |
+| `DynamicScroller` | Item size is unknown before render and should be measured automatically. | A fixed-size or pre-sized path already works. |
+| `DynamicScrollerItem` | You are rendering children inside `DynamicScroller` and the wrapper fits the markup. | You need wrapper-free semantics such as table rows. |
+| `WindowScroller` | The browser window should drive scrolling for the component path. | The list should own its own scroll container. |
+| `useRecycleScroller` | You need the virtualization engine with custom markup for known-size or pre-sized items. | The slot-based components already fit the UI. |
+| `useDynamicScroller` | You need wrapper-free unknown-size measurement with custom markup. | `DynamicScroller` plus `DynamicScrollerItem` already fits the UI. |
+| `useWindowScroller` | The page should keep scrolling, but you still need headless control over markup and wrappers. | An inner scroll container is acceptable. |
 
 ## Setup
 
-`vue-virtual-scroller` targets Vue 3 and ships ESM only. Use it with an ESM-aware toolchain such as Vite, Nuxt, Rollup, or webpack 5.
+`vue-virtual-scroller` targets Vue 3, ships ESM only, and requires Vue 3.3+ for the generic component typing surface. Use it with an ESM-aware toolchain such as Vite, Nuxt, Rollup, or webpack 5.
 
 ```sh
 pnpm add vue-virtual-scroller
@@ -44,81 +46,95 @@ app.use(VueVirtualScroller)
 Or register/import only what you need:
 
 ```js
-import { RecycleScroller } from 'vue-virtual-scroller'
+import { RecycleScroller, WindowScroller } from 'vue-virtual-scroller'
 
 app.component('RecycleScroller', RecycleScroller)
+app.component('WindowScroller', WindowScroller)
 ```
 
 ## Workflow
 
-1. Decide whether sizes are known.
-2. If sizes are fixed or already available on each item, start with `RecycleScroller`.
-3. If sizes are unknown and discovered after render, use `DynamicScroller` with `DynamicScrollerItem`.
-4. If the component slot structure is too limiting, switch to `useRecycleScroller`.
-5. Set explicit scroll-container sizing and item sizing before debugging performance.
+1. Decide whether sizes are known before render.
+2. If sizes are fixed or already stored in data, start with `RecycleScroller` or `useRecycleScroller`.
+3. If sizes are unknown until the DOM renders, use `DynamicScroller` or `useDynamicScroller`.
+4. If the page owns scrolling, prefer `WindowScroller` or `useWindowScroller` over older `pageMode` patterns.
+5. Set explicit scroll sizing, item sizing, and keying before debugging performance.
 
 ## Sizing rules
 
-- The scroller element itself must have a real scrollable size such as a fixed `height` or `width` plus overflow.
-- In `RecycleScroller`, all items should have the same size unless you intentionally use variable-size mode with `itemSize: null` and a numeric item field such as `size`.
-- In `DynamicScroller`, `minItemSize` is required for initial layout.
-- Horizontal lists use the same primitives, but sizing constraints apply on width instead of height.
-- Grid mode is only supported with `RecycleScroller` and fixed item sizing.
+- The scrolling surface must have real dimensions. Inner-scroll paths need a sized container plus overflow.
+- `RecycleScroller` supports fixed numeric `itemSize`, `itemSize: null` with `sizeField`, or an `itemSize(item, index)` resolver.
+- `DynamicScroller` and `useDynamicScroller` require `minItemSize` for initial layout.
+- `gridItems` only works with fixed numeric `itemSize`.
+- Horizontal lists follow the same rules, but sizing applies on width instead of height.
 
 ## Practical guidance
 
 ### Fixed-size vs unknown-size
 
-- Prefer `RecycleScroller` for tables, simple rows, and card lists where row height or card extent is stable.
-- Use `RecycleScroller` variable-size mode only when the item already knows its size and can expose it through `sizeField`.
-- Prefer `DynamicScroller` when the DOM must measure content, such as chat messages or cards whose rendered content changes height.
+- Prefer `RecycleScroller` for tables, simple rows, grids, and card lists where size is stable or already known in memory.
+- Use `DynamicScroller` for message feeds, cards, or rows whose rendered content changes height after filtering, editing, or streaming.
+- Use headless composables when the bundled wrapper markup gets in the way of semantics or design-system constraints.
+
+### Component vs headless
+
+- Stay on component APIs when the default slot structure already fits the UI.
+- Move to `useRecycleScroller` for custom markup with known sizes.
+- Move to `useDynamicScroller` for wrapper-free measurement, especially semantic tables and custom row shells.
+- Move to `useWindowScroller` when page scrolling is intentional and wrapper control still matters.
 
 ### Rendering pitfalls
 
-- Reused views mean child components must react correctly when `item` changes; do not assume a fresh component instance per row.
-- Functional components inside `RecycleScroller` are discouraged because reuse makes them slower, not faster.
-- Do not add unnecessary `key` values to the immediate list content, but do key nested images to avoid load glitches.
-- Use the provided `hover` class for hover styling instead of relying on `:hover` against recycled DOM nodes.
+- Reused views mean child components must react when `item` changes; do not assume a fresh instance per row.
+- Render from `pool`, not `visiblePool`, on headless paths when you want normal recycling behavior.
+- Prefer targeted `sizeDependencies` over deep `watchData`.
+- Key nested images, but do not add unnecessary keys to the immediate recycled content.
 
 ### Performance guardrails
 
-- Variable-size mode in `RecycleScroller` can be expensive on very large lists.
-- `watchData` on `DynamicScrollerItem` is documented as not recommended because deep watching can hurt performance.
-- `emitUpdate` on `RecycleScroller` and `emitResize` on `DynamicScrollerItem` add extra work; keep them off unless the UI needs those events.
-- Browsers still impose large-element size limits, so extremely large lists can hit practical limits around hundreds of thousands of items.
+- `emitUpdate`, `emitResize`, and `watchData` add work; keep them off unless the UI needs them.
+- Variable-size mode in `RecycleScroller` is heavier than fixed-size mode.
+- `DynamicScroller` is heavier than fixed-size virtualization, so use it only when measurement is necessary.
+- Browsers still impose large-element limits, so extremely large lists can hit practical ceilings.
 
-### Common patterns
+### Common layouts
 
-- Chat feeds and append-heavy timelines map well to `DynamicScroller` plus `DynamicScrollerItem`.
-- Multi-column card galleries map to `RecycleScroller` grid mode with `gridItems` and `itemSecondarySize`.
-- Horizontal virtualized cards map to `DynamicScroller` with `direction="horizontal"` when widths are content-driven.
-- Design-system integrations or nonstandard DOM trees map to `useRecycleScroller`.
+- Chat feeds and append-heavy timelines map well to `DynamicScroller` or `useDynamicScroller`.
+- Multi-column card galleries map to `RecycleScroller` grid mode.
+- Page-level search results or article feeds map to `WindowScroller` or `useWindowScroller`.
+- Custom tables and design-system row components map to the headless composables.
 
 ## Scope limits
 
-This skill intentionally focuses on the documented public surfaces:
+This skill intentionally focuses on documented public surfaces:
 
 - setup and installation
 - `RecycleScroller`
 - `DynamicScroller`
 - `DynamicScrollerItem`
+- `WindowScroller`
 - `useRecycleScroller`
-- headless `useDynamicScroller`
+- `useDynamicScroller`
+- `useWindowScroller`
 
 Do not infer undocumented behavior for these exported surfaces without updating docs first:
 
 - `useIdState`
+- `useDynamicScrollerItem`
 - plugin install options beyond the documented setup path
 
 ## References
 
 | Topic | Description | Reference |
 |---|---|---|
-| Installation and setup | Vue 3 setup, ESM-only constraint, CSS import, and component registration paths. | [references/installation-and-setup.md](./references/installation-and-setup.md) |
-| RecycleScroller | Fixed-size lists, variable-size mode with explicit size fields, grid mode, page mode, and core events. | [references/recycle-scroller.md](./references/recycle-scroller.md) |
-| DynamicScroller | Unknown-size rendering strategy and when to move off the fixed-size path. | [references/dynamic-scroller.md](./references/dynamic-scroller.md) |
-| DynamicScrollerItem | Size measurement wrapper behavior, dependencies, and resize events. | [references/dynamic-scroller-item.md](./references/dynamic-scroller-item.md) |
-| useRecycleScroller | Headless virtualization API for custom DOM structures. | [references/use-recycle-scroller.md](./references/use-recycle-scroller.md) |
+| Installation and setup | Vue 3.3+, ESM-only setup, CSS import, and registration paths. | [references/installation-and-setup.md](./references/installation-and-setup.md) |
+| RecycleScroller | Fixed-size and pre-sized virtualization, grids, cache restore, and older page mode. | [references/recycle-scroller.md](./references/recycle-scroller.md) |
+| DynamicScroller | Unknown-size component path that measures items after render. | [references/dynamic-scroller.md](./references/dynamic-scroller.md) |
+| DynamicScrollerItem | Measurement wrapper used inside `DynamicScroller`. | [references/dynamic-scroller-item.md](./references/dynamic-scroller-item.md) |
+| WindowScroller | Window-based component path for page scrolling. | [references/window-scroller.md](./references/window-scroller.md) |
+| useRecycleScroller | Headless fixed-size and pre-sized virtualization. | [references/use-recycle-scroller.md](./references/use-recycle-scroller.md) |
+| useDynamicScroller | Headless unknown-size virtualization with wrapper-free measurement. | [references/use-dynamic-scroller.md](./references/use-dynamic-scroller.md) |
+| useWindowScroller | Headless window-based virtualization. | [references/use-window-scroller.md](./references/use-window-scroller.md) |
 | Reference index | Overview of all shipped references. | [references/index.md](./references/index.md) |
 
 ## Further reading
@@ -127,4 +143,7 @@ Do not infer undocumented behavior for these exported surfaces without updating 
 - [references/recycle-scroller.md](./references/recycle-scroller.md)
 - [references/dynamic-scroller.md](./references/dynamic-scroller.md)
 - [references/dynamic-scroller-item.md](./references/dynamic-scroller-item.md)
+- [references/window-scroller.md](./references/window-scroller.md)
 - [references/use-recycle-scroller.md](./references/use-recycle-scroller.md)
+- [references/use-dynamic-scroller.md](./references/use-dynamic-scroller.md)
+- [references/use-window-scroller.md](./references/use-window-scroller.md)
