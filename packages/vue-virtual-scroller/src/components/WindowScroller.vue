@@ -72,7 +72,7 @@ const before = ref<HTMLElement>()
 const after = ref<HTMLElement>()
 
 const windowScroller = useWindowScroller(
-  props as unknown as UseWindowScrollerOptions<TItem, any, 'size'>,
+  props as unknown as UseWindowScrollerOptions<TItem, 'size'>,
   el,
   before,
   after,

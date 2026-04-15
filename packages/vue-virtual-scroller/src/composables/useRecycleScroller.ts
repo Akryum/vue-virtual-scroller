@@ -1,5 +1,5 @@
 import type { ComputedRef, CSSProperties, MaybeRef, MaybeRefOrGetter, Ref } from 'vue'
-import type { CacheSnapshot, ItemKey, ItemSizeValue, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
+import type { CacheSnapshot, DefaultKeyField, ItemKey, ItemSizeValue, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
 import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
 import config from '../config'
 import { buildCacheSnapshot, findPrependOffset, getAlignedScrollOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
@@ -10,9 +10,9 @@ import { supportsPassive } from '../utils'
 import { getFixedItemSize, resolveSnapshotItemSize, resolveVariableItemSize } from '../utils/itemSize'
 import { getPooledViewStyle } from '../utils/viewStyle'
 
-export interface UseRecycleScrollerOptions<TItem = unknown, TKeyField extends KeyFieldValue<TItem> = 'id', TSizeField extends string = 'size'> {
+export interface UseRecycleScrollerOptions<TItem = unknown, TSizeField extends string = 'size'> {
   items: TItem[]
-  keyField: ValidKeyField<TItem, TKeyField>
+  keyField: KeyFieldValue<TItem>
   direction: ScrollDirection
   itemSize: ItemSizeValue<TItem>
   gridItems?: number
@@ -77,8 +77,14 @@ interface GridRenderWindow {
   totalSize: number
 }
 
-export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem> = 'id', TSizeField extends string = 'size'>(
-  options: MaybeRefOrGetter<UseRecycleScrollerOptions<TItem, TKeyField, TSizeField>>,
+type InferredRecycleScrollerItem<TOptions extends UseRecycleScrollerOptions<any, any>> = TOptions['items'][number]
+type InferredRecycleScrollerKeyField<TOptions extends UseRecycleScrollerOptions<any, any>>
+  = Extract<TOptions['keyField'], KeyFieldValue<InferredRecycleScrollerItem<TOptions>>>
+
+export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem> = DefaultKeyField<TItem>, TSizeField extends string = 'size'>(
+  options: MaybeRefOrGetter<UseRecycleScrollerOptions<TItem, TSizeField> & {
+    keyField: ValidKeyField<TItem, TKeyField>
+  }>,
   el: MaybeRef<HTMLElement | undefined>,
   before?: MaybeRef<HTMLElement | undefined>,
   after?: MaybeRef<HTMLElement | undefined>,
@@ -88,7 +94,40 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
     onHidden?: () => void
     onUpdate?: (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => void
   },
-): UseRecycleScrollerReturn<TItem, ItemKey<TItem, TKeyField>> {
+): UseRecycleScrollerReturn<TItem, ItemKey<TItem, TKeyField>>
+export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<any, any>>(
+  options: MaybeRefOrGetter<TOptions>,
+  el: MaybeRef<HTMLElement | undefined>,
+  before?: MaybeRef<HTMLElement | undefined>,
+  after?: MaybeRef<HTMLElement | undefined>,
+  callbacks?: {
+    onResize?: () => void
+    onVisible?: () => void
+    onHidden?: () => void
+    onUpdate?: (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => void
+  },
+): UseRecycleScrollerReturn<
+  InferredRecycleScrollerItem<TOptions>,
+  ItemKey<InferredRecycleScrollerItem<TOptions>, InferredRecycleScrollerKeyField<TOptions>>
+>
+export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<any, any>>(
+  options: MaybeRefOrGetter<TOptions>,
+  el: MaybeRef<HTMLElement | undefined>,
+  before?: MaybeRef<HTMLElement | undefined>,
+  after?: MaybeRef<HTMLElement | undefined>,
+  callbacks?: {
+    onResize?: () => void
+    onVisible?: () => void
+    onHidden?: () => void
+    onUpdate?: (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => void
+  },
+): UseRecycleScrollerReturn<
+  InferredRecycleScrollerItem<TOptions>,
+  ItemKey<InferredRecycleScrollerItem<TOptions>, InferredRecycleScrollerKeyField<TOptions>>
+> {
+  type TItem = InferredRecycleScrollerItem<TOptions>
+  type TKeyField = InferredRecycleScrollerKeyField<TOptions>
+
   // Reactive state
   const pool = ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>([]) as Ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>
   const totalSize = ref(0)
@@ -563,7 +602,7 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
     }, 150)
   }
 
-  function captureShiftAnchor(previousItems: TItem[], keyField: ValidKeyField<TItem, TKeyField> | null) {
+  function captureShiftAnchor(previousItems: TItem[], keyField: KeyFieldValue<TItem> | null) {
     if (!previousItems.length) {
       clearShiftAnchor()
       return

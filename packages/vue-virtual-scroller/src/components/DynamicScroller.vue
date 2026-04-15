@@ -66,7 +66,7 @@ const dynamicOptions = computed(() => ({
   el: scrollerEl.value,
   onResize: () => emit('resize'),
   onVisible: () => emit('visible'),
-}) as unknown as UseDynamicScrollerOptions<TItem, any>)
+}) as unknown as UseDynamicScrollerOptions<TItem>)
 
 const dynamicScroller = useDynamicScroller(
   dynamicOptions,

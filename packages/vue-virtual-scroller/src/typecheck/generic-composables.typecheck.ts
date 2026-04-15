@@ -1,5 +1,9 @@
 /* eslint-disable ts/no-unused-expressions */
 
+import type { MaybeRefOrGetter } from 'vue'
+import type { UseDynamicScrollerOptions } from '../composables/useDynamicScroller'
+import type { UseRecycleScrollerOptions } from '../composables/useRecycleScroller'
+import type { UseWindowScrollerOptions } from '../composables/useWindowScroller'
 import { ref } from 'vue'
 import { useDynamicScroller, useDynamicScrollerItem, useRecycleScroller, useWindowScroller } from '../index'
 
@@ -7,6 +11,10 @@ interface Message {
   id: string
   text: string
   size: number
+}
+
+interface CompositeMessage extends Message {
+  scopeId: string
 }
 
 const messages: Message[] = [
@@ -19,6 +27,7 @@ const messages: Message[] = [
 
 const scrollerEl = ref<HTMLElement>()
 const functionKeyField = (item: Message, index: number) => `${item.id}:${index}`
+const compositeKeyField = (item: CompositeMessage) => `${item.scopeId}:${item.id}`
 const functionItemSize = (item: Message) => item.size
 
 const recycleScroller = useRecycleScroller<Message>({
@@ -158,6 +167,86 @@ dynamicScroller.itemsWithSize.value[0]?.item.text
 dynamicScroller.getItemSize(messages[0])
 dynamicScroller.getViewStyle(dynamicScroller.pool.value[0]!)
 functionKeyDynamicScroller.itemsWithSize.value[0]?.id
+
+function useWrappedDynamicScroller<TItem>(
+  options: MaybeRefOrGetter<UseDynamicScrollerOptions<TItem>>,
+) {
+  return useDynamicScroller(options)
+}
+
+useWrappedDynamicScroller<CompositeMessage>(() => ({
+  items: [
+    {
+      id: 'alpha',
+      scopeId: 'thread-1',
+      text: 'Hello',
+      size: 32,
+    },
+  ],
+  keyField: compositeKeyField,
+  direction: 'vertical',
+  minItemSize: 32,
+  el: scrollerEl,
+}))
+
+function useWrappedRecycleScroller<TItem>(
+  options: MaybeRefOrGetter<UseRecycleScrollerOptions<TItem>>,
+) {
+  return useRecycleScroller(options, scrollerEl)
+}
+
+useWrappedRecycleScroller<CompositeMessage>(() => ({
+  items: [
+    {
+      id: 'alpha',
+      scopeId: 'thread-1',
+      text: 'Hello',
+      size: 32,
+    },
+  ],
+  keyField: compositeKeyField,
+  direction: 'vertical',
+  itemSize: 32,
+  minItemSize: 32,
+  typeField: 'type',
+  buffer: 200,
+  pageMode: false,
+  shift: false,
+  disableTransform: true,
+  hiddenPosition: -100,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+}))
+
+function useWrappedWindowScroller<TItem>(
+  options: MaybeRefOrGetter<UseWindowScrollerOptions<TItem>>,
+) {
+  return useWindowScroller(options, scrollerEl)
+}
+
+useWrappedWindowScroller<CompositeMessage>(() => ({
+  items: [
+    {
+      id: 'alpha',
+      scopeId: 'thread-1',
+      text: 'Hello',
+      size: 32,
+    },
+  ],
+  keyField: compositeKeyField,
+  direction: 'vertical',
+  itemSize: 32,
+  minItemSize: 32,
+  typeField: 'type',
+  buffer: 200,
+  shift: false,
+  disableTransform: true,
+  hiddenPosition: -100,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+}))
 
 const windowScroller = useWindowScroller<Message>({
   items: messages,

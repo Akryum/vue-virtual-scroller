@@ -33,9 +33,9 @@ const filteredRows = computed(() => {
   )
 })
 
-const dynamicScroller = useDynamicScroller(computed(() => ({
+const dynamicScroller = useDynamicScroller(() => ({
   items: filteredRows.value,
-  keyField: 'id',
+  keyField: (item: { id: number }) => item.id,
   direction: 'vertical' as const,
   minItemSize: MIN_ROW_HEIGHT,
   el: scrollerEl.value,
@@ -45,7 +45,7 @@ const dynamicScroller = useDynamicScroller(computed(() => ({
     visibleStart.value = visibleStartIndex
     visibleEnd.value = visibleEndIndex
   },
-})))
+}))
 
 const {
   pool,

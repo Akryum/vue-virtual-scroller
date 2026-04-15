@@ -12,6 +12,14 @@ export type ItemSizeValue<TItem = unknown> = number | null | ItemSizeResolver<TI
 
 export type StringKeyOf<T> = Extract<keyof T, string>
 
+/**
+ * Default key-field shape for generic option helpers.
+ * Keep valid object field names plus resolver functions, instead of freezing to `'id'`.
+ */
+export type DefaultKeyField<TItem> = TItem extends object
+  ? StringKeyOf<TItem> | KeyFieldResolver<TItem>
+  : string
+
 export type ValidKeyField<TItem, TKeyField extends KeyFieldValue<TItem>> = TItem extends object
   ? TKeyField extends KeyFieldResolver<TItem>
     ? TKeyField

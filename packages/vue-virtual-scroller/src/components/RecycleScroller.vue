@@ -84,7 +84,7 @@ const after = ref<HTMLElement>()
 const hoverKey = ref<KeyValue | null>(null)
 
 const recycleScroller = useRecycleScroller(
-  props as unknown as UseRecycleScrollerOptions<TItem, any, 'size'>,
+  props as unknown as UseRecycleScrollerOptions<TItem, 'size'>,
   el,
   before,
   after,

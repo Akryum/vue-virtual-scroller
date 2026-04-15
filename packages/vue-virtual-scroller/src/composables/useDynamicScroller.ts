@@ -1,7 +1,7 @@
 import type { ComputedRef, CSSProperties, Directive, MaybeRef, MaybeRefOrGetter } from 'vue'
-import type { CacheSnapshot, ItemKey, ItemWithSize, KeyFieldValue, KeyValue, ScrollDirection, ValidKeyField, View, VScrollData } from '../types'
+import type { CacheSnapshot, DefaultKeyField, ItemKey, ItemWithSize, KeyFieldValue, KeyValue, ScrollDirection, ValidKeyField, View, VScrollData } from '../types'
 import type { DynamicScrollerItemControllerCallbacks, DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext, DynamicScrollerUpdatePayload } from './dynamicScrollerMeasurement'
-import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './useRecycleScroller'
+import type { UseRecycleScrollerReturn } from './useRecycleScroller'
 import mitt from 'mitt'
 import { computed, effectScope, nextTick, onActivated, onDeactivated, onUnmounted, provide, reactive, shallowRef, toValue, watch } from 'vue'
 import { findPrependOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
@@ -28,9 +28,9 @@ export type UseDynamicScrollerItemBindingOptions<TItem = unknown, TKey = KeyValu
   = | UseDynamicScrollerItemViewBindingOptions<TItem, TKey>
     | UseDynamicScrollerItemLegacyBindingOptions<TItem>
 
-export interface UseDynamicScrollerOptions<TItem = unknown, TKeyField extends KeyFieldValue<TItem> = 'id'> {
+export interface UseDynamicScrollerOptions<TItem = unknown> {
   items: TItem[]
-  keyField: ValidKeyField<TItem, TKeyField>
+  keyField: KeyFieldValue<TItem>
   direction: ScrollDirection
   minItemSize: number | string
   el: MaybeRef<HTMLElement | undefined>
@@ -132,6 +132,10 @@ interface DynamicScrollerShiftAnchor<TKey = KeyValue> {
   visualOffset: number
 }
 
+type InferredDynamicScrollerItem<TOptions extends UseDynamicScrollerOptions<any>> = TOptions['items'][number]
+type InferredDynamicScrollerKeyField<TOptions extends UseDynamicScrollerOptions<any>>
+  = Extract<TOptions['keyField'], KeyFieldValue<InferredDynamicScrollerItem<TOptions>>>
+
 function viewItemWithSize<TItem, TKey>(view: View<ItemWithSize<TItem, TKey>, TKey>) {
   return view.item
 }
@@ -215,7 +219,7 @@ function normalizeBindingOptions<TItem, TKey>(options: UseDynamicScrollerItemBin
 
 function getDynamicItemId<TItem, TKeyField extends KeyFieldValue<TItem>>(
   item: TItem,
-  keyField: ValidKeyField<TItem, TKeyField>,
+  keyField: KeyFieldValue<TItem>,
   simpleArray: boolean,
   index?: number,
 ): ItemKey<TItem, TKeyField> | null {
@@ -229,9 +233,26 @@ function getDynamicItemId<TItem, TKeyField extends KeyFieldValue<TItem>>(
   return resolveItemKeyWithOptionalIndex(item, index, keyField) as ItemKey<TItem, TKeyField>
 }
 
-export function useDynamicScroller<TItem, TKeyField extends KeyFieldValue<TItem> = 'id'>(
-  options: MaybeRefOrGetter<UseDynamicScrollerOptions<TItem, TKeyField>>,
-): UseDynamicScrollerReturn<TItem, ItemKey<TItem, TKeyField>> {
+export function useDynamicScroller<TItem, TKeyField extends KeyFieldValue<TItem> = DefaultKeyField<TItem>>(
+  options: MaybeRefOrGetter<UseDynamicScrollerOptions<TItem> & {
+    keyField: ValidKeyField<TItem, TKeyField>
+  }>,
+): UseDynamicScrollerReturn<TItem, ItemKey<TItem, TKeyField>>
+export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<any>>(
+  options: MaybeRefOrGetter<TOptions>,
+): UseDynamicScrollerReturn<
+  InferredDynamicScrollerItem<TOptions>,
+  ItemKey<InferredDynamicScrollerItem<TOptions>, InferredDynamicScrollerKeyField<TOptions>>
+>
+export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<any>>(
+  options: MaybeRefOrGetter<TOptions>,
+): UseDynamicScrollerReturn<
+  InferredDynamicScrollerItem<TOptions>,
+  ItemKey<InferredDynamicScrollerItem<TOptions>, InferredDynamicScrollerKeyField<TOptions>>
+> {
+  type TItem = InferredDynamicScrollerItem<TOptions>
+  type TKeyField = InferredDynamicScrollerKeyField<TOptions>
+
   // Internal state (non-reactive)
   let _undefinedSizes = 0
   let _undefinedMap: Record<KeyValue, boolean | undefined> = {}
@@ -375,17 +396,17 @@ export function useDynamicScroller<TItem, TKeyField extends KeyFieldValue<TItem>
     vscrollData.sizes = restoreCacheMap(initialOpts.cache, initialOpts.items, simpleArray.value ? null : initialOpts.keyField)
   }
 
-  const recycleOptions = computed<UseRecycleScrollerOptions<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>, 'id', 'size'>>(() => {
+  const recycleOptions = computed(() => {
     const opts = toValue(options)
     return {
       items: itemsWithSize.value,
-      keyField: 'id',
+      keyField: 'id' as const,
       direction: opts.direction,
       itemSize: null,
       gridItems: undefined,
       itemSecondarySize: undefined,
       minItemSize: opts.minItemSize,
-      sizeField: 'size',
+      sizeField: 'size' as const,
       typeField: 'type',
       buffer: opts.buffer ?? 200,
       pageMode: opts.pageMode ?? false,
