@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import GridDocDemo from '../.vitepress/components/demos/GridDocDemo.vue'
 </script>

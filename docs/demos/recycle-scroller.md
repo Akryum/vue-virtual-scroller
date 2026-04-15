@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import RecycleScrollerDocDemo from '../.vitepress/components/demos/RecycleScrollerDocDemo.vue'
 </script>

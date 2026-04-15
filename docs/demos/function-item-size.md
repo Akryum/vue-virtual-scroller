@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import FunctionItemSizeDocDemo from '../.vitepress/components/demos/FunctionItemSizeDocDemo.vue'
 </script>

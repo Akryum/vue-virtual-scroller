@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import TestChatDocDemo from '../.vitepress/components/demos/TestChatDocDemo.vue'
 </script>

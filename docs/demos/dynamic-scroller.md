@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import DynamicScrollerDocDemo from '../.vitepress/components/demos/DynamicScrollerDocDemo.vue'
 </script>

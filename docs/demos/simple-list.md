@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import SimpleListDocDemo from '../.vitepress/components/demos/SimpleListDocDemo.vue'
 </script>

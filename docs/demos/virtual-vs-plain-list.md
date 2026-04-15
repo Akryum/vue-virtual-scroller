@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import VirtualVsPlainListDocDemo from '../.vitepress/components/demos/VirtualVsPlainListDocDemo.vue'
 </script>

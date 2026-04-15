@@ -3,6 +3,7 @@ import type { DynamicScrollerMeasurementContext, DynamicScrollerUpdatePayload } 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, nextTick, reactive, ref } from 'vue'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
+import { createDynamicScrollerMeasureQueue } from './dynamicScrollerMeasureQueue'
 
 type TestElement = HTMLElement & {
   offsetWidth: number
@@ -38,6 +39,7 @@ function createContext(overrides: Partial<DynamicScrollerMeasurementContext> = {
       sizes: {},
     },
     resizeObserver: undefined,
+    measureQueue: createDynamicScrollerMeasureQueue(),
     direction: computed(() => 'vertical') as ComputedRef<'vertical'>,
     undefinedMap: {},
     undefinedSizeCount: { value: 0 },

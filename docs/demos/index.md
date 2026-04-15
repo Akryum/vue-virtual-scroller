@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 # Demos
 
 These demos show the main scrolling patterns supported by `vue-virtual-scroller`, from straightforward fixed-size lists to dynamic layouts and window-based scrolling.

@@ -1,5 +1,5 @@
 import type { ComputedRef, CSSProperties, MaybeRefOrGetter, Ref } from 'vue'
-import type { CacheSnapshot, DefaultKeyField, ItemKey, ItemSizeValue, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
+import type { CacheSnapshot, DefaultKeyField, ItemKey, ItemSizeValue, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, SizeEntry, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
 import type { PooledViewPositionMode } from '../utils/viewStyle'
 import type { ScrollerCallbacks, ScrollerOptionCallbacks, ScrollerOptionElements } from './scrollerOptions'
 import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
@@ -11,7 +11,7 @@ import { getScrollParent } from '../scrollparent'
 import { supportsPassive } from '../utils'
 import { getFixedItemSize, resolveSnapshotItemSize, resolveVariableItemSize } from '../utils/itemSize'
 import { getPooledViewStyle, resolvePooledViewMode } from '../utils/viewStyle'
-import { normalizeScrollerInputs } from './scrollerOptions'
+import { normalizeScrollerInputs, resolveScrollerOptions } from './scrollerOptions'
 
 export interface UseRecycleScrollerOptions<TItem = unknown, TSizeField extends string = 'size'> extends ScrollerOptionElements, ScrollerOptionCallbacks {
   items: MaybeRefOrGetter<TItem[]>
@@ -64,12 +64,25 @@ export interface UseRecycleScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>
 
 type ViewWithStyleStamp<TItem = unknown, TKey = ItemKey<TItem>> = View<TItem, TKey> & {
   _vs_styleStamp: number
+  _vs_visibilityStamp: number
 }
 
 let uid = 0
+const EMPTY_SIZES: never[] = []
 
 function touchView<TItem, TKey>(view: View<TItem, TKey>) {
   const stampedView = view as ViewWithStyleStamp<TItem, TKey>
+  stampedView._vs_styleStamp++
+}
+
+/**
+ * Bump a dedicated visibility stamp so flow-mode rows only restyle when their
+ * visible/parked state changes, not whenever the recycled view gets rebound to
+ * a different logical item.
+ */
+function touchViewVisibility<TItem, TKey>(view: View<TItem, TKey>) {
+  const stampedView = view as ViewWithStyleStamp<TItem, TKey>
+  stampedView._vs_visibilityStamp++
   stampedView._vs_styleStamp++
 }
 
@@ -89,11 +102,38 @@ interface RenderWindowRange {
   visibleEndIndex: number
 }
 
+/**
+ * Walk rendered indices without allocating a temporary range array for linear windows.
+ */
+function forEachRenderedIndex(
+  startIndex: number,
+  endIndex: number,
+  renderedIndices: number[] | null,
+  cb: (index: number) => void,
+) {
+  if (renderedIndices) {
+    for (const index of renderedIndices) {
+      cb(index)
+    }
+    return
+  }
+
+  for (let index = startIndex; index < endIndex; index++) {
+    cb(index)
+  }
+}
+
 interface FlowWindowEdges {
   rawViewportStart: number
   rawViewportEnd: number
   renderStart: number
   renderEnd: number
+}
+
+interface FlowModeOrderContext {
+  activeStart: number
+  activeCount: number
+  headInsertCount: number
 }
 
 const FLOW_IDLE_HYSTERESIS_PX = 8
@@ -140,8 +180,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   type TItem = InferredRecycleScrollerItem<TOptions>
   type TKeyField = InferredRecycleScrollerKeyField<TOptions>
 
-  const normalizedInputs = normalizeScrollerInputs(options, el, before, after, callbacks)
-  const items = computed(() => toValue(toValue(options).items))
+  const resolvedOptions = resolveScrollerOptions(options)
+  const normalizedInputs = normalizeScrollerInputs(resolvedOptions, el, before, after, callbacks)
+  const items = computed(() => toValue(getOptions().items))
 
   // Reactive state
   const pool = ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>([]) as Ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>
@@ -177,12 +218,16 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   let _flowModeGridWarned = false
   const _rafIds = new Set<number>()
   const _restoredSizes = ref<Record<ItemKey<TItem, TKeyField>, number>>({} as Record<ItemKey<TItem, TKeyField>, number>)
+  const _variableSizeEntries: SizeEntry[] = []
+  const _variableSizeBaseEntry: SizeEntry = {
+    accumulator: 0,
+  }
 
   /**
    * Resolve current option object without collapsing hot-path inputs into one aggregate computed.
    */
   function getOptions() {
-    return toValue(options)
+    return resolvedOptions.value
   }
 
   /**
@@ -202,17 +247,18 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     const opts = getOptions()
     const fixedItemSize = getFixedItemSize(opts.itemSize)
     if (fixedItemSize === null) {
-      const sizes: Sizes = {
-        [-1]: { accumulator: 0 },
-      }
       const currentItems = items.value
+      const sizes = Array.from({ length: currentItems.length }) as unknown as Sizes
+      _variableSizeBaseEntry.accumulator = 0
+      sizes[-1] = _variableSizeBaseEntry
       const minItemSize = opts.minItemSize as number
       const restoredSizes = _restoredSizes.value
+      const isSimpleArray = simpleArray.value
       let computedMinSize = 10000
       let accumulator = 0
       let current: number
       for (let i = 0, l = currentItems.length; i < l; i++) {
-        const key = simpleArray.value ? i : resolveItemKey(currentItems[i], i, opts.keyField)
+        const key = isSimpleArray ? i : resolveItemKey(currentItems[i], i, opts.keyField)
         current = resolveVariableItemSize(
           currentItems[i],
           i,
@@ -225,12 +271,19 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
           computedMinSize = current
         }
         accumulator += current
-        sizes[i] = { accumulator, size: current }
+        const entry = _variableSizeEntries[i] ?? (_variableSizeEntries[i] = {
+          accumulator: 0,
+          size: undefined,
+        })
+        entry.accumulator = accumulator
+        entry.size = current
+        sizes[i] = entry
       }
+      _variableSizeEntries.length = currentItems.length
       _computedMinItemSize = computedMinSize
       return sizes
     }
-    return []
+    return EMPTY_SIZES
   })
 
   const visiblePool = computed(() =>
@@ -341,6 +394,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       offset: 0,
       nr,
       _vs_styleStamp: 0,
+      _vs_visibilityStamp: 0,
     }) as View<TItem, ItemKey<TItem, TKeyField>>
     viewPool.push(view)
     return view
@@ -351,20 +405,98 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     if (recycledPool && recycledPool.length) {
       const view = recycledPool.pop()!
       view.nr.used = true
-      touchView(view)
+      touchViewVisibility(view)
       return view
     }
     return undefined
   }
 
-  function removeAndRecycleView(view: View<TItem, ItemKey<TItem, TKeyField>>) {
+  /**
+   * Move one pooled view to a precise DOM slot without re-sorting the full pool.
+   */
+  function movePoolView(view: View<TItem, ItemKey<TItem, TKeyField>>, targetIndex: number) {
+    const poolValue = pool.value
+    const currentIndex = poolValue.indexOf(view)
+    if (currentIndex === -1) {
+      return
+    }
+
+    const boundedTargetIndex = Math.max(0, Math.min(targetIndex, poolValue.length - 1))
+    if (currentIndex === boundedTargetIndex) {
+      return
+    }
+
+    poolValue.splice(currentIndex, 1)
+    poolValue.splice(boundedTargetIndex, 0, view)
+  }
+
+  /**
+   * Keep parked flow-mode views after the active DOM range so native table order stays stable.
+   */
+  function moveFlowModeViewToEnd(view: View<TItem, ItemKey<TItem, TKeyField>>) {
+    movePoolView(view, pool.value.length - 1)
+  }
+
+  /**
+   * Capture contiguous active segment after flow-mode removals.
+   */
+  function createFlowModeOrderContext(): FlowModeOrderContext {
+    const poolValue = pool.value
+    let activeStart = 0
+    while (activeStart < poolValue.length && !poolValue[activeStart].nr.used) {
+      activeStart++
+    }
+
+    let activeCount = 0
+    for (let i = activeStart; i < poolValue.length && poolValue[i].nr.used; i++) {
+      activeCount++
+    }
+
+    return {
+      activeStart,
+      activeCount,
+      headInsertCount: 0,
+    }
+  }
+
+  /**
+   * Reinsert newly visible flow-mode views only at the entering edge that changed.
+   * This avoids a full sort on every scroll tick, which showed up as Vue move/insert churn.
+   */
+  function placeFlowModeVisibleView(
+    view: View<TItem, ItemKey<TItem, TKeyField>>,
+    index: number,
+    orderContext: FlowModeOrderContext,
+  ) {
+    let targetIndex: number | null = null
+
+    if (index < _startIndex) {
+      targetIndex = orderContext.activeStart + orderContext.headInsertCount
+      orderContext.headInsertCount++
+      orderContext.activeCount++
+    }
+    else if (index >= _endIndex) {
+      targetIndex = orderContext.activeStart + orderContext.activeCount
+      orderContext.activeCount++
+    }
+
+    if (targetIndex != null) {
+      movePoolView(view, targetIndex)
+    }
+  }
+
+  function removeAndRecycleView(view: View<TItem, ItemKey<TItem, TKeyField>>, parkFlowModeView = false) {
     const type = view.nr.type
     const recycledPool = getRecycledPool(type)
     recycledPool.push(view)
     view.nr.used = false
     view.position = getOptions().hiddenPosition ?? -999999
-    touchView(view)
+    touchViewVisibility(view)
     _views.delete(view.nr.key)
+
+    if (parkFlowModeView) {
+      moveFlowModeViewToEnd(view)
+    }
   }
 
   function removeAndRecycleAllViews() {
@@ -1117,16 +1249,19 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     let view: View<TItem, ItemKey<TItem, TKeyField>> | undefined
 
     const continuous = startIndex <= _endIndex && endIndex >= _startIndex
+    const flowMode = getViewPositionMode(opts) === 'flow'
+    const keepFlowModeOrderIncrementally = flowMode && continuous && !itemsChanged
+    let flowModeOrderContext: FlowModeOrderContext | null = null
 
     // Step 1: Mark any invisible elements as unused
     if (!continuous || itemsChanged) {
       removeAndRecycleAllViews()
     }
     else {
-      for (let i = 0, l = poolValue.length; i < l; i++) {
-        const currentView = poolValue[i]
+      const removeInvisibleViewAtIndex = (poolIndex: number) => {
+        const currentView = poolValue[poolIndex]
         if (!currentView) {
-          continue
+          return
         }
         view = currentView
         if (view.nr.used) {
@@ -1135,8 +1270,20 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
             : (view.nr.index >= startIndex && view.nr.index < endIndex)
           const viewSize = itemSize || (sizesValue[view.nr.index] && sizesValue[view.nr.index].size)
           if (!viewVisible || !viewSize) {
-            removeAndRecycleView(view)
+            removeAndRecycleView(view, keepFlowModeOrderIncrementally)
           }
+        }
+      }
+
+      if (keepFlowModeOrderIncrementally) {
+        for (let i = poolValue.length - 1; i >= 0; i--) {
+          removeInvisibleViewAtIndex(i)
+        }
+        flowModeOrderContext = createFlowModeOrderContext()
+      }
+      else {
+        for (let i = 0, l = poolValue.length; i < l; i++) {
+          removeInvisibleViewAtIndex(i)
         }
       }
     }
@@ -1145,14 +1292,14 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     let item: TItem, type: unknown
     let firstVisiblePosition: number | null = null
     let renderedVisibleSize = 0
-    const indices = renderedIndices ?? Array.from({ length: Math.max(0, endIndex - startIndex) }, (_, index) => startIndex + index)
-    for (const i of indices) {
+    forEachRenderedIndex(startIndex, endIndex, renderedIndices, (i) => {
       const elementSize = itemSize || (sizesValue[i] && sizesValue[i].size)
       if (!elementSize)
-        continue
+        return
       item = currentItems[i]
       const key = (keyField ? resolveItemKey(item, i, keyField) : i) as ItemKey<TItem, TKeyField>
       view = views.get(key)
+      let isNewVisibleView = false
 
       if (!view) {
         // Item just became visible
@@ -1176,6 +1323,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
           view = createView(poolValue, i, item, key, type)
         }
         views.set(key, view)
+        isNewVisibleView = true
       }
       else {
         if (view.item !== item) {
@@ -1196,11 +1344,15 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         view.offset = (i % gridItems) * itemSecondarySize
       }
 
+      if (flowModeOrderContext && isNewVisibleView) {
+        placeFlowModeVisibleView(view, i, flowModeOrderContext)
+      }
+
       firstVisiblePosition ??= view.position
       renderedVisibleSize += elementSize
-    }
+    })
 
-    if (getViewPositionMode(opts) === 'flow') {
+    if (flowMode) {
       if (firstVisiblePosition == null) {
         startSpacerSize.value = 0
         endSpacerSize.value = totalSizeValue
@@ -1209,7 +1361,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         startSpacerSize.value = firstVisiblePosition
         endSpacerSize.value = Math.max(0, totalSizeValue - firstVisiblePosition - renderedVisibleSize)
       }
-      sortFlowModePool()
+      if (!keepFlowModeOrderIncrementally) {
+        sortFlowModePool()
+      }
     }
     else {
       startSpacerSize.value = 0
@@ -1462,7 +1616,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       scheduleShiftAnchorClear()
     }
     updateVisibleItems(false)
-  }, { deep: true })
+  })
 
   watch(() => getOptions().gridItems, () => {
     updateVisibleItems(true)

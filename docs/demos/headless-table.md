@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import HeadlessTableDocDemo from '../.vitepress/components/demos/HeadlessTableDocDemo.vue'
 </script>
@@ -28,37 +33,54 @@ See also:
 
 ```vue
 <script setup lang="ts">
-import { computed, useTemplateRef } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useDynamicScroller, useTableColumnWidths } from 'vue-virtual-scroller'
+import HeadlessTableRow from '../.vitepress/components/demos/HeadlessTableRow.vue'
 
 const MIN_ROW_HEIGHT = 62
-const scrollerEl = useTemplateRef<HTMLElement>('scrollerEl')
-const tableEl = useTemplateRef<HTMLTableElement>('tableEl')
-const dynamicScroller = useDynamicScroller(computed(() => ({
-  items: rows.value,
-  keyField: 'id',
+
+const buffer = ref(280)
+const scrollerEl = ref<HTMLElement>()
+const tableEl = ref<HTMLTableElement>()
+const rows = ref([])
+
+const dynamicScrollerOptions = reactive({
+  get items() {
+    return rows.value
+  },
+  keyField: (item: { id: number }) => item.id,
   direction: 'vertical' as const,
   minItemSize: MIN_ROW_HEIGHT,
-  el: scrollerEl.value,
-  buffer: buffer.value,
+  get el() {
+    return scrollerEl.value
+  },
+  get buffer() {
+    return buffer.value
+  },
   flowMode: true,
-  emitUpdate: true,
-})))
+})
 
-const { pool, startSpacerSize, endSpacerSize, vDynamicScrollerItem } = dynamicScroller
+const {
+  pool,
+  startSpacerSize,
+  endSpacerSize,
+  vDynamicScrollerItem,
+} = useDynamicScroller(dynamicScrollerOptions)
+
 const { columnWidths, tableStyle } = useTableColumnWidths({
   table: tableEl,
-  dependencies: computed(() => [rows.value.length, filter.value, buffer.value]),
+  dependencies: computed(() => [rows.value.length, buffer.value]),
 })
 </script>
 
 <template>
   <div
     ref="scrollerEl"
-    class="table-viewport"
+    class="demo-viewport demo-table-viewport"
   >
     <table
       ref="tableEl"
+      class="demo-headless-table"
       :style="tableStyle"
     >
       <colgroup v-if="columnWidths.length > 0">
@@ -68,8 +90,9 @@ const { columnWidths, tableStyle } = useTableColumnWidths({
           :style="{ width: `${width}px` }"
         >
       </colgroup>
-      <thead>
-        <tr>
+
+      <thead class="demo-headless-table__head">
+        <tr class="demo-headless-table__row demo-headless-table__row--head">
           <th>ID</th>
           <th>Name</th>
           <th>Email</th>
@@ -78,32 +101,28 @@ const { columnWidths, tableStyle } = useTableColumnWidths({
         </tr>
       </thead>
 
-      <tbody>
+      <tbody class="demo-headless-table__body">
+        <!-- Spacer row before the active pooled rows -->
         <tr
           v-if="startSpacerSize > 0"
           aria-hidden="true"
-          :style="{ height: `${startSpacerSize}px`, padding: 0, border: 0 }"
+          class="demo-headless-table__spacer"
+          :style="{ height: `${startSpacerSize}px` }"
         />
 
-        <tr
+        <HeadlessTableRow
           v-for="view in pool"
           :key="view.nr.id"
-          v-dynamic-scroller-item="{
-            view,
-            sizeDependencies: [view.item.item.summary, view.item.item.email],
-          }"
-        >
-          <td>{{ view.item.item.id }}</td>
-          <td>{{ view.item.item.name }}</td>
-          <td>{{ view.item.item.email }}</td>
-          <td>{{ view.item.item.region }}</td>
-          <td>{{ view.item.item.status }}</td>
-        </tr>
+          v-dynamic-scroller-item="{ view }"
+          :row="view.item.item"
+        />
 
+        <!-- Spacer row after the active pooled rows -->
         <tr
           v-if="endSpacerSize > 0"
           aria-hidden="true"
-          :style="{ height: `${endSpacerSize}px`, padding: 0, border: 0 }"
+          class="demo-headless-table__spacer"
+          :style="{ height: `${endSpacerSize}px` }"
         />
       </tbody>
     </table>

@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import DisableTransformDocDemo from '../.vitepress/components/demos/DisableTransformDocDemo.vue'
 </script>

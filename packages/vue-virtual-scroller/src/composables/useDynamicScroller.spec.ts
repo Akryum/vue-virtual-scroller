@@ -92,6 +92,7 @@ function createDynamicView(
     position: index * 20,
     offset: 0,
     _vs_styleStamp: 0,
+    _vs_visibilityStamp: 0,
     nr: {
       id: index,
       index,
@@ -104,6 +105,7 @@ function createDynamicView(
 
 function touchViewStyle(view: View) {
   ;((view as View & { _vs_styleStamp?: number })._vs_styleStamp) = (((view as View & { _vs_styleStamp?: number })._vs_styleStamp) ?? 0) + 1
+  ;((view as View & { _vs_visibilityStamp?: number })._vs_visibilityStamp) = (((view as View & { _vs_visibilityStamp?: number })._vs_visibilityStamp) ?? 0) + 1
 }
 
 function mountHarness(
@@ -244,6 +246,50 @@ function mountObjectHarness(initialItems: unknown[]) {
   }
 }
 
+function mountFactoryHarness(initialItems: unknown[]) {
+  const onUpdate = vi.fn()
+  const items = ref(initialItems)
+  const el = ref(createScrollerElement())
+  const optionsFactory = vi.fn(() => ({
+    items: items.value,
+    keyField: 'id' as const,
+    direction: 'vertical' as const,
+    minItemSize: 20,
+    el: el.value,
+    buffer: 200,
+    emitUpdate: true,
+    pageMode: false,
+    shift: false,
+    disableTransform: false,
+    prerender: 0,
+    updateInterval: 0,
+    onUpdate,
+  }))
+
+  const Harness = defineComponent({
+    setup() {
+      const state = useDynamicScroller(optionsFactory)
+
+      return {
+        ...state,
+        items,
+        el,
+      }
+    },
+    template: '<div />',
+  })
+
+  const wrapper = mount(Harness)
+  return {
+    wrapper,
+    vm: wrapper.vm as any,
+    items,
+    onUpdate,
+    el,
+    optionsFactory,
+  }
+}
+
 describe('useDynamicScroller', () => {
   let originalResizeObserver: typeof globalThis.ResizeObserver
 
@@ -318,6 +364,35 @@ describe('useDynamicScroller', () => {
     expect(vm.itemsWithSize.map((item: ItemWithSize) => item.id)).toEqual(['d', 'e'])
   })
 
+  it('caches getter-based option factories between reactive changes', async () => {
+    const { vm, items, optionsFactory } = mountFactoryHarness([
+      { id: 'a', label: 'Alpha' },
+      { id: 'b', label: 'Beta' },
+      { id: 'c', label: 'Gamma' },
+    ])
+
+    await nextTick()
+    await nextTick()
+
+    optionsFactory.mockClear()
+
+    vm.getItemSize(vm.itemsWithSize[0].item)
+    vm.getViewStyle(vm.pool[0])
+    vm.updateVisibleItems(false)
+    vm.updateVisibleItems(false)
+
+    expect(optionsFactory).not.toHaveBeenCalled()
+
+    items.value = [
+      { id: 'd', label: 'Delta' },
+      { id: 'e', label: 'Epsilon' },
+    ]
+    await nextTick()
+
+    expect(optionsFactory).toHaveBeenCalled()
+    expect(vm.itemsWithSize.map((item: ItemWithSize) => item.id)).toEqual(['d', 'e'])
+  })
+
   it('defaults omitted direction to vertical behavior', async () => {
     const items = [
       { id: 'a', label: 'Alpha' },
@@ -357,6 +432,27 @@ describe('useDynamicScroller', () => {
 
     vm.scrollToItem(2)
     expect(el.value.scrollTop).toBe(132)
+  })
+
+  it('reuses item-with-size wrappers across size updates', async () => {
+    const { vm } = mountHarness([
+      { id: 'a', label: 'Alpha' },
+      { id: 'b', label: 'Beta' },
+      { id: 'c', label: 'Gamma' },
+    ])
+
+    await nextTick()
+    await nextTick()
+
+    const firstEntry = vm.itemsWithSize[0]
+    const secondEntry = vm.itemsWithSize[1]
+
+    vm.vscrollData.sizes.a = 44
+    await nextTick()
+
+    expect(vm.itemsWithSize[0]).toBe(firstEntry)
+    expect(vm.itemsWithSize[1]).toBe(secondEntry)
+    expect(vm.itemsWithSize[0].size).toBe(44)
   })
 
   it('forwards resize, visible, hidden, and update callbacks through the merged composable', async () => {
@@ -580,6 +676,53 @@ describe('useDynamicScroller', () => {
         view: createDynamicView({ id: 'row-1', text: 'Alpha' }),
         sizeDependencies: ['Alpha'],
       },
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.vscrollData.sizes['row-1']).toBe(88)
+    wrapper.unmount()
+  })
+
+  it('skips remeasurement for no-op updates when the binding object stays stable', async () => {
+    const { wrapper, vm } = mountHarness([{ id: 'row-1', text: 'Alpha' }])
+    const el = createMeasuredElement(44)
+    const view = ref(createDynamicView({ id: 'row-1', text: 'Alpha' }))
+    const sizeDependencies = ref(['Alpha'])
+    const bindingValue = reactive({
+      get view() {
+        return view.value
+      },
+      get sizeDependencies() {
+        return sizeDependencies.value
+      },
+    })
+
+    vm.vDynamicScrollerItem.mounted(el, {
+      value: bindingValue,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.vscrollData.sizes['row-1']).toBe(44)
+
+    el.setAttribute('data-height', '88')
+    vm.vDynamicScrollerItem.updated(el, {
+      value: bindingValue,
+      oldValue: bindingValue,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.vscrollData.sizes['row-1']).toBe(44)
+
+    sizeDependencies.value = ['Alpha updated']
+    vm.vDynamicScrollerItem.updated(el, {
+      value: bindingValue,
+      oldValue: bindingValue,
     } as any)
 
     await nextTick()

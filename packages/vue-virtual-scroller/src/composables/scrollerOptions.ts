@@ -36,6 +36,15 @@ export interface NormalizedScrollerInputs {
 }
 
 /**
+ * Cache single-object scroller options so getter-based callers do not rebuild the object on every access.
+ */
+export function resolveScrollerOptions<TOptions>(
+  options: MaybeRefOrGetter<TOptions>,
+): ComputedRef<TOptions> {
+  return computed(() => toValue(options))
+}
+
+/**
  * Resolve shared scroller inputs while keeping `items` and DOM refs as separate reactive sources.
  */
 export function normalizeScrollerInputs<TOptions extends ScrollerOptionElements & ScrollerOptionCallbacks>(
@@ -45,25 +54,27 @@ export function normalizeScrollerInputs<TOptions extends ScrollerOptionElements 
   after?: MaybeRefOrGetter<HTMLElement | undefined>,
   callbacks?: ScrollerCallbacks,
 ): NormalizedScrollerInputs {
+  const resolvedOptions = resolveScrollerOptions(options)
+
   return {
     el: computed(() => {
-      const optionEl = toValue(options).el
+      const optionEl = resolvedOptions.value.el
       return toValue(el ?? optionEl)
     }),
     before: computed(() => {
-      const optionBefore = toValue(options).before
+      const optionBefore = resolvedOptions.value.before
       return toValue(before ?? optionBefore)
     }),
     after: computed(() => {
-      const optionAfter = toValue(options).after
+      const optionAfter = resolvedOptions.value.after
       return toValue(after ?? optionAfter)
     }),
     callbacks: {
-      onResize: () => (callbacks?.onResize ?? toValue(options).onResize)?.(),
-      onVisible: () => (callbacks?.onVisible ?? toValue(options).onVisible)?.(),
-      onHidden: () => (callbacks?.onHidden ?? toValue(options).onHidden)?.(),
+      onResize: () => (callbacks?.onResize ?? resolvedOptions.value.onResize)?.(),
+      onVisible: () => (callbacks?.onVisible ?? resolvedOptions.value.onVisible)?.(),
+      onHidden: () => (callbacks?.onHidden ?? resolvedOptions.value.onHidden)?.(),
       onUpdate: (startIndex, endIndex, visibleStartIndex, visibleEndIndex) =>
-        (callbacks?.onUpdate ?? toValue(options).onUpdate)?.(startIndex, endIndex, visibleStartIndex, visibleEndIndex),
+        (callbacks?.onUpdate ?? resolvedOptions.value.onUpdate)?.(startIndex, endIndex, visibleStartIndex, visibleEndIndex),
     },
   }
 }

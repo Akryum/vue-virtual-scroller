@@ -168,6 +168,70 @@ function mountObjectHarness(initialItems: Array<Record<string, unknown>>) {
   }
 }
 
+function mountFactoryHarness(initialItems: Array<Record<string, unknown>>) {
+  const onUpdate = vi.fn()
+  const items = ref(initialItems)
+  const optionsFactory = vi.fn(() => ({
+    items: items.value,
+    keyField: 'id' as const,
+    direction: 'vertical' as const,
+    itemSize: 10,
+    minItemSize: null,
+    sizeField: 'size' as const,
+    typeField: 'type',
+    buffer: 0,
+    pageMode: false,
+    shift: false,
+    prerender: 0,
+    emitUpdate: true,
+    disableTransform: false,
+    hiddenPosition: undefined,
+    updateInterval: 0,
+    onUpdate,
+  }))
+
+  const Harness = defineComponent({
+    setup() {
+      const el = ref<HTMLElement>()
+      const state = useRecycleScroller(optionsFactory, el)
+
+      return {
+        ...state,
+        el,
+        items,
+      }
+    },
+    template: '<div ref="el" style="height: 100px; overflow-y: auto;" />',
+  })
+
+  const wrapper = mount(Harness)
+  const el = (wrapper.vm as any).el as HTMLElement
+  Object.defineProperty(el, 'clientHeight', {
+    configurable: true,
+    get: () => 100,
+  })
+  Object.defineProperty(el, 'clientWidth', {
+    configurable: true,
+    get: () => 100,
+  })
+  el.scrollTo = vi.fn(({ top, left }: ScrollToOptions & { top?: number, left?: number }) => {
+    if (typeof top === 'number') {
+      el.scrollTop = top
+    }
+    if (typeof left === 'number') {
+      el.scrollLeft = left
+    }
+  }) as any
+
+  return {
+    wrapper,
+    vm: wrapper.vm as any,
+    items,
+    onUpdate,
+    optionsFactory,
+  }
+}
+
 describe('useRecycleScroller', () => {
   it('does not refresh when visible views remain contiguous after sorting', async () => {
     const { vm, onUpdate } = mountHarness()
@@ -242,6 +306,34 @@ describe('useRecycleScroller', () => {
     await nextTick()
 
     expect(onUpdate).toHaveBeenCalledTimes(1)
+    expect(vm.visiblePool.slice(0, 2).map((view: View) => (view.item as { id: number }).id)).toEqual([4, 5])
+  })
+
+  it('caches getter-based option factories between reactive changes', async () => {
+    const { vm, items, optionsFactory } = mountFactoryHarness([
+      { id: 1 },
+      { id: 2 },
+      { id: 3 },
+    ])
+
+    await nextTick()
+    await nextTick()
+
+    optionsFactory.mockClear()
+
+    vm.getScroll()
+    vm.getItemSize(0)
+    vm.getItemOffset(2)
+    vm.getViewStyle(vm.pool[0])
+    vm.updateVisibleItems(false)
+    vm.updateVisibleItems(false)
+
+    expect(optionsFactory).not.toHaveBeenCalled()
+
+    items.value = [{ id: 4 }, { id: 5 }]
+    await nextTick()
+
+    expect(optionsFactory).toHaveBeenCalled()
     expect(vm.visiblePool.slice(0, 2).map((view: View) => (view.item as { id: number }).id)).toEqual([4, 5])
   })
 
@@ -432,6 +524,33 @@ describe('useRecycleScroller', () => {
     expect(vm.el.scrollTop).toBe(40)
   })
 
+  it('reuses variable-size accumulator entries across size updates', async () => {
+    const { vm, options } = mountHarness({
+      items: [
+        { id: 'a', size: 20 },
+        { id: 'b', size: 30 },
+        { id: 'c', size: 40 },
+      ],
+      itemSize: null,
+      minItemSize: 10,
+      sizeField: 'size',
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const firstEntry = vm.sizes[0]
+    const secondEntry = vm.sizes[1]
+
+    ;(options.items[0] as { size: number }).size = 24
+    await nextTick()
+
+    expect(vm.sizes[0]).toBe(firstEntry)
+    expect(vm.sizes[1]).toBe(secondEntry)
+    expect(vm.sizes[0].size).toBe(24)
+    expect(vm.sizes[1].accumulator).toBe(54)
+  })
+
   it('builds and restores cache snapshots for function itemSize', async () => {
     const itemSize = (item: Record<string, unknown>) => Number(item.size || 0)
     const { vm, options } = mountHarness({
@@ -602,6 +721,33 @@ describe('useRecycleScroller', () => {
       .filter((view: View) => view.nr.used)
       .map((view: View) => view.nr.index))
       .toEqual(baselineUsedIndices)
+  })
+
+  it('preserves flow-mode visible order across continuous multi-item downward scroll shifts', async () => {
+    const { vm } = mountHarness({
+      items: Array.from({ length: 8 }, (_, id) => ({ id })),
+      itemSize: 10,
+      flowMode: true,
+      clientHeight: 30,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.pool.map((view: View) => [view.nr.used, view.nr.index])).toEqual([
+      [true, 0],
+      [true, 1],
+      [true, 2],
+    ])
+
+    vm.el.scrollTop = 20
+    vm.updateVisibleItems(false)
+
+    expect(vm.pool.map((view: View) => [view.nr.used, view.nr.index])).toEqual([
+      [true, 2],
+      [true, 3],
+      [true, 4],
+    ])
   })
 
   it('keeps fixed-grid secondary axis placement in disableTransform mode', async () => {

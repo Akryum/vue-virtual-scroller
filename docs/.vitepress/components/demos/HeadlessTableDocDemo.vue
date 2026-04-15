@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import type { ItemWithSize, View } from '../../../../packages/vue-virtual-scroller/src/types'
-import type { TableRow } from './demo-data'
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useDynamicScroller } from '../../../../packages/vue-virtual-scroller/src/composables/useDynamicScroller'
 import { useTableColumnWidths } from '../../../../packages/vue-virtual-scroller/src/composables/useTableColumnWidths'
 import { createTableRows } from './demo-data'
@@ -36,20 +34,28 @@ const filteredRows = computed(() => {
   )
 })
 
-const dynamicScroller = useDynamicScroller(() => ({
-  items: filteredRows.value,
+const dynamicScrollerOptions = reactive({
+  get items() {
+    return filteredRows.value
+  },
   keyField: (item: { id: number }) => item.id,
   direction: 'vertical' as const,
   minItemSize: MIN_ROW_HEIGHT,
-  el: scrollerEl.value,
-  buffer: buffer.value,
+  get el() {
+    return scrollerEl.value
+  },
+  get buffer() {
+    return buffer.value
+  },
   flowMode: true,
   emitUpdate: true,
-  onUpdate(_startIndex, _endIndex, visibleStartIndex, visibleEndIndex) {
+  onUpdate(_startIndex: number, _endIndex: number, visibleStartIndex: number, visibleEndIndex: number) {
     visibleStart.value = visibleStartIndex
     visibleEnd.value = visibleEndIndex
   },
-}))
+})
+
+const dynamicScroller = useDynamicScroller(dynamicScrollerOptions)
 
 const {
   pool,
@@ -66,25 +72,6 @@ const {
   table: tableEl,
   dependencies: computed(() => [count.value, filter.value, buffer.value]),
 })
-
-function itemWithSizeOf(item: unknown) {
-  return item as ItemWithSize
-}
-
-function rowOf(view: View) {
-  return itemWithSizeOf(view.item).item as TableRow
-}
-
-function sizeDependencies(view: View) {
-  const item = rowOf(view)
-  return [
-    item.name,
-    item.summary,
-    item.email,
-    item.region,
-    item.status,
-  ]
-}
 
 function jump() {
   if (!filteredRows.value.length)
@@ -207,9 +194,8 @@ function jump() {
             :key="view.nr.id"
             v-dynamic-scroller-item="{
               view,
-              sizeDependencies: sizeDependencies(view),
             }"
-            :row="rowOf(view)"
+            :row="view.item.item"
           />
 
           <tr

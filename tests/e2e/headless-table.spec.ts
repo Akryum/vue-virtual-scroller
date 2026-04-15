@@ -58,6 +58,38 @@ function expectContiguousRows(rows: VisibleRowMetric[]) {
   }
 }
 
+async function trackRenderedRows(page: Parameters<typeof test>[0]['page']) {
+  return page.evaluate(() => {
+    const store = ((window as typeof window & {
+      __headlessTableRowTracking__?: {
+        seen: WeakSet<Element>
+        uniqueCount: number
+        maxLiveCount: number
+      }
+    }).__headlessTableRowTracking__ ??= {
+      seen: new WeakSet<Element>(),
+      uniqueCount: 0,
+      maxLiveCount: 0,
+    })
+
+    const rows = [...document.querySelectorAll('[data-testid="demo:row"]')]
+    for (const row of rows) {
+      if (!store.seen.has(row)) {
+        store.seen.add(row)
+        store.uniqueCount++
+      }
+    }
+
+    store.maxLiveCount = Math.max(store.maxLiveCount, rows.length)
+
+    return {
+      liveCount: rows.length,
+      maxLiveCount: store.maxLiveCount,
+      uniqueCount: store.uniqueCount,
+    }
+  })
+}
+
 test('headless table demo smoke', async ({ page }) => {
   await expectDemoSmoke(page, {
     slug: 'headless-table',
@@ -161,4 +193,25 @@ test('headless table keeps rows contiguous and supports filter/jump', async ({ b
   expect(tableLayout?.rowPosition).toBe('static')
   expect(tableLayout?.rowTransform).toBe('none')
   expect(Math.abs((tableLayout?.headerLeft ?? 0) - (tableLayout?.cellLeft ?? 0))).toBeLessThanOrEqual(2)
+})
+
+test('headless table keeps rendered row nodes bounded while scrolling', async ({ browserName, page }) => {
+  test.skip(browserName !== 'chromium')
+
+  await page.goto('/demos/headless-table')
+  await expect(viewport(page)).toBeVisible()
+  await waitForSettle(page)
+
+  let tracking = await trackRenderedRows(page)
+  expect(tracking.liveCount).toBeGreaterThan(3)
+
+  for (const delta of [700, 900, 1200, 1500, 1800, -1100, 2100, -1600, 2400, 2600]) {
+    await scrollViewportBy(page, delta)
+    await waitForSettle(page)
+    expectContiguousRows(await getVisibleRows(page))
+    tracking = await trackRenderedRows(page)
+  }
+
+  expect(tracking.uniqueCount).toBeLessThanOrEqual(tracking.maxLiveCount * 2)
+  expect(tracking.uniqueCount).toBeLessThan(64)
 })

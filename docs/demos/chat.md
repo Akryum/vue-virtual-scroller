@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import ChatStreamDocDemo from '../.vitepress/components/demos/ChatStreamDocDemo.vue'
 </script>

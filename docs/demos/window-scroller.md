@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import WindowScrollerDocDemo from '../.vitepress/components/demos/WindowScrollerDocDemo.vue'
 </script>

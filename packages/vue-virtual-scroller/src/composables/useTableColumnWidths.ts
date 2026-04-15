@@ -41,8 +41,8 @@ function getInlineSize(entry: ResizeObserverEntry) {
 }
 
 function getLastHeaderRow(table: HTMLTableElement) {
-  const headRows = table.tHead?.rows
-  return headRows?.length ? headRows.at(-1) : null
+  const headRows = table.tHead ? [...table.tHead.rows] : []
+  return headRows.at(-1) ?? null
 }
 
 function isMeasurableRow(row: HTMLTableRowElement, columnCount: number) {
@@ -120,7 +120,7 @@ function measureTable(table: HTMLTableElement) {
     return []
   }
 
-  const widths = Array.from({ length: columnCount }).fill(0)
+  const widths = Array.from({ length: columnCount }, (_, index) => index).fill(0)
   const headerRow = getLastHeaderRow(table)
   if (headerRow && headerRow.cells.length === columnCount && headerRow.getBoundingClientRect().width > 0) {
     measureRowCells(headerRow, widths)

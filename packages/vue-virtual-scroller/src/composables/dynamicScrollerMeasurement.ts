@@ -1,6 +1,7 @@
 import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 import type { KeyValue, ScrollDirection, VScrollData } from '../types'
-import { computed, nextTick, toValue, watch } from 'vue'
+import type { DynamicScrollerMeasureQueue } from './dynamicScrollerMeasureQueue'
+import { computed, toValue, watch } from 'vue'
 import { resolveItemKeyWithOptionalIndex } from '../engine/keyField'
 
 export interface DynamicScrollerUpdatePayload {
@@ -10,6 +11,7 @@ export interface DynamicScrollerUpdatePayload {
 export interface DynamicScrollerMeasurementContext {
   vscrollData: VScrollData
   resizeObserver: ResizeObserver | undefined
+  measureQueue: DynamicScrollerMeasureQueue
   direction: ComputedRef<ScrollDirection>
   undefinedMap: Record<string | number, boolean | undefined>
   undefinedSizeCount: {
@@ -146,16 +148,29 @@ export function createDynamicScrollerItemController(
   }
 
   function computeSize(targetId: KeyValue) {
-    nextTick(() => {
-      if (id.value === targetId) {
+    context.measureQueue.schedule(targetId, {
+      read() {
+        if (id.value !== targetId) {
+          return null
+        }
+
         const elValue = toValue(el)
-        if (!elValue)
-          return
-        const width = elValue.offsetWidth
-        const height = elValue.offsetHeight
+        if (!elValue) {
+          return null
+        }
+
+        return {
+          width: elValue.offsetWidth,
+          height: elValue.offsetHeight,
+        }
+      },
+      write(value) {
+        const { width, height } = value as { width: number, height: number }
         applyWidthHeight(width, height)
-      }
-      _pendingSizeUpdate = null
+      },
+      done() {
+        _pendingSizeUpdate = null
+      },
     })
   }
 
@@ -267,6 +282,7 @@ export function createDynamicScrollerItemController(
   }
 
   function unmount() {
+    context.measureQueue.cancel(id.value)
     unsubscribeVscrollUpdate()
     unobserveSize()
     clearUndefinedState(id.value)

@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import ShiftDocDemo from '../.vitepress/components/demos/ShiftDocDemo.vue'
 </script>

@@ -1,3 +1,8 @@
+---
+aside: false
+outline: false
+---
+
 <script setup>
 import HorizontalDocDemo from '../.vitepress/components/demos/HorizontalDocDemo.vue'
 </script>
