@@ -3,8 +3,10 @@ import type { ItemWithSize, View } from '../../../../packages/vue-virtual-scroll
 import type { TableRow } from './demo-data'
 import { computed, ref } from 'vue'
 import { useDynamicScroller } from '../../../../packages/vue-virtual-scroller/src/composables/useDynamicScroller'
+import { useTableColumnWidths } from '../../../../packages/vue-virtual-scroller/src/composables/useTableColumnWidths'
 import { createTableRows } from './demo-data'
 import DemoShell from './DemoShell.vue'
+import HeadlessTableRow from './HeadlessTableRow.vue'
 
 const MIN_ROW_HEIGHT = 62
 
@@ -13,6 +15,7 @@ const buffer = ref(280)
 const filter = ref('')
 const scrollTo = ref(240)
 const scrollerEl = ref<HTMLElement>()
+const tableEl = ref<HTMLTableElement>()
 
 const visibleStart = ref(0)
 const visibleEnd = ref(0)
@@ -40,6 +43,7 @@ const dynamicScroller = useDynamicScroller(() => ({
   minItemSize: MIN_ROW_HEIGHT,
   el: scrollerEl.value,
   buffer: buffer.value,
+  flowMode: true,
   emitUpdate: true,
   onUpdate(_startIndex, _endIndex, visibleStartIndex, visibleEndIndex) {
     visibleStart.value = visibleStartIndex
@@ -49,11 +53,19 @@ const dynamicScroller = useDynamicScroller(() => ({
 
 const {
   pool,
-  totalSize,
-  handleScroll,
+  startSpacerSize,
+  endSpacerSize,
   scrollToItem,
   vDynamicScrollerItem,
 } = dynamicScroller
+
+const {
+  columnWidths,
+  tableStyle,
+} = useTableColumnWidths({
+  table: tableEl,
+  dependencies: computed(() => [count.value, filter.value, buffer.value]),
+})
 
 function itemWithSizeOf(item: unknown) {
   return item as ItemWithSize
@@ -87,7 +99,7 @@ function jump() {
   <DemoShell
     demo-id="headless-table"
     title="Headless table"
-    description="Keeps semantic table markup while useDynamicScroller handles measurement, pooling, and scrolling."
+    description="Keeps semantic table markup while useDynamicScroller handles row measurement and useTableColumnWidths keeps columns stable."
   >
     <template #toolbar>
       <label class="demo-chip">
@@ -157,9 +169,19 @@ function jump() {
       ref="scrollerEl"
       class="demo-viewport demo-table-viewport"
       data-testid="demo:viewport"
-      @scroll.passive="handleScroll"
     >
-      <table class="demo-headless-table">
+      <table
+        ref="tableEl"
+        class="demo-headless-table"
+        :style="tableStyle"
+      >
+        <colgroup v-if="columnWidths.length > 0">
+          <col
+            v-for="(width, index) in columnWidths"
+            :key="index"
+            :style="{ width: `${width}px` }"
+          >
+        </colgroup>
         <thead class="demo-headless-table__head">
           <tr class="demo-headless-table__row demo-headless-table__row--head">
             <th>ID</th>
@@ -172,42 +194,30 @@ function jump() {
 
         <tbody
           class="demo-headless-table__body"
-          :style="{ height: `${totalSize}px` }"
         >
           <tr
+            v-if="startSpacerSize > 0"
+            aria-hidden="true"
+            class="demo-headless-table__spacer"
+            :style="{ height: `${startSpacerSize}px` }"
+          />
+
+          <HeadlessTableRow
             v-for="view in pool"
             :key="view.nr.id"
             v-dynamic-scroller-item="{
               view,
               sizeDependencies: sizeDependencies(view),
             }"
-            class="demo-headless-table__row"
-            data-testid="demo:row"
-            :data-row-id="String(rowOf(view).id)"
-          >
-            <td>#{{ rowOf(view).id }}</td>
-            <td>
-              <div class="demo-table-cell">
-                <strong class="demo-table-cell__primary">{{ rowOf(view).name }}</strong>
-                <span class="demo-table-cell__secondary">{{ rowOf(view).summary }}</span>
-              </div>
-            </td>
-            <td>
-              <span
-                class="demo-table-cell__mono"
-                :title="rowOf(view).email"
-              >{{ rowOf(view).email }}</span>
-            </td>
-            <td>{{ rowOf(view).region }}</td>
-            <td>
-              <span
-                class="demo-status-badge"
-                :data-status="rowOf(view).status.toLowerCase()"
-              >
-                {{ rowOf(view).status }}
-              </span>
-            </td>
-          </tr>
+            :row="rowOf(view)"
+          />
+
+          <tr
+            v-if="endSpacerSize > 0"
+            aria-hidden="true"
+            class="demo-headless-table__spacer"
+            :style="{ height: `${endSpacerSize}px` }"
+          />
         </tbody>
       </table>
     </div>

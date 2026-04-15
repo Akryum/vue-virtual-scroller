@@ -2,14 +2,35 @@ import type { CSSProperties } from 'vue'
 import type { ScrollDirection, View } from '../types'
 
 /**
+ * Supported pooled-view positioning modes.
+ */
+export type PooledViewPositionMode = 'transform' | 'position' | 'flow'
+
+/**
  * Shared style inputs for pooled view positioning.
  */
 export interface PooledViewStyleOptions {
   direction: ScrollDirection
-  disableTransform?: boolean
+  mode?: PooledViewPositionMode
   itemSize?: number | null
   gridItems?: number
   itemSecondarySize?: number
+}
+
+/**
+ * Resolve pooled-view positioning mode from public options.
+ */
+export function resolvePooledViewMode(options: {
+  direction: ScrollDirection
+  disableTransform?: boolean
+  flowMode?: boolean
+  gridItems?: number
+}): PooledViewPositionMode {
+  if (options.flowMode && options.direction === 'vertical' && !options.gridItems) {
+    return 'flow'
+  }
+
+  return options.disableTransform ? 'position' : 'transform'
 }
 
 /**
@@ -20,20 +41,29 @@ export function getPooledViewStyle<TItem, TKey>(
   options: PooledViewStyleOptions,
 ): CSSProperties {
   const isVertical = options.direction === 'vertical'
+  const mode = options.mode ?? 'transform'
   const style: CSSProperties = {
-    position: 'absolute',
-    top: '0px',
-    left: '0px',
     visibility: view.nr.used ? 'visible' : 'hidden',
+    pointerEvents: view.nr.used ? undefined : 'none',
   }
 
-  if (options.disableTransform) {
+  if (mode === 'flow') {
+    style.display = view.nr.used ? undefined : 'none'
+  }
+  else {
+    style.position = 'absolute'
+    style.top = '0px'
+    style.left = '0px'
+    style.display = undefined
+  }
+
+  if (mode === 'position') {
     style[isVertical ? 'top' : 'left'] = `${view.position}px`
     style[isVertical ? 'left' : 'top'] = `${view.offset}px`
     style.transform = 'none'
     style.willChange = 'unset'
   }
-  else {
+  else if (mode === 'transform') {
     style.transform = isVertical
       ? `translateY(${view.position}px) translateX(${view.offset}px)`
       : `translateX(${view.position}px) translateY(${view.offset}px)`

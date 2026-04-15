@@ -75,7 +75,6 @@ Common options:
 - `pool`: render-ready pooled views
 - `visiblePool`: active views in visible index order
 - `totalSize`: virtual size for the inner wrapper
-- `handleScroll`: available for symmetry, but the composable already listens to the window/page scroll target in page mode
 - `scrollToItem(index, options?)`: jump to a logical item index with `align`, `smooth`, and `offset`
 - `scrollToPosition(px, options?)`: scroll the page to an absolute list offset
 - `getScroll()`: current viewport range intersected with this list

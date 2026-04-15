@@ -2,7 +2,7 @@ import type { CacheSnapshot } from '../types'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, defineComponent, h, nextTick, ref, toValue } from 'vue'
-import { getPooledViewStyle } from '../utils/viewStyle'
+import { getPooledViewStyle, resolvePooledViewMode } from '../utils/viewStyle'
 import RecycleScroller from './RecycleScroller.vue'
 
 const mocks = vi.hoisted(() => {
@@ -82,6 +82,8 @@ describe('recycleScroller', () => {
           },
         }]),
         totalSize: ref(320),
+        startSpacerSize: ref(40),
+        endSpacerSize: ref(60),
         ready: ref(true),
         sizes: computed(() => []),
         simpleArray: computed(() => false),
@@ -93,7 +95,12 @@ describe('recycleScroller', () => {
         getItemSize: (index: number) => mocks.getItemSize(index),
         getViewStyle: (view: any) => getPooledViewStyle(view, {
           direction: resolvedOptions.direction,
-          disableTransform: resolvedOptions.disableTransform,
+          mode: resolvePooledViewMode({
+            direction: resolvedOptions.direction,
+            disableTransform: resolvedOptions.disableTransform,
+            flowMode: resolvedOptions.flowMode,
+            gridItems: resolvedOptions.gridItems,
+          }),
           itemSize: fixedItemSize,
           gridItems: resolvedOptions.gridItems,
           itemSecondarySize: resolvedOptions.itemSecondarySize,
@@ -228,6 +235,7 @@ describe('recycleScroller', () => {
         buffer: 150,
         shift: true,
         cache,
+        flowMode: true,
         hiddenPosition: -321,
       },
       global: {
@@ -245,7 +253,39 @@ describe('recycleScroller', () => {
     expect(resolvedOptions.buffer).toBe(150)
     expect(resolvedOptions.shift).toBe(true)
     expect(resolvedOptions.cache).toStrictEqual(cache)
+    expect(resolvedOptions.flowMode).toBe(true)
     expect(resolvedOptions.hiddenPosition).toBe(-321)
+  })
+
+  it('renders flow-mode spacers and exposes spacer refs', async () => {
+    const wrapper = mount(RecycleScroller, {
+      props: {
+        items: [{ id: 'a' }],
+        itemSize: 20,
+        flowMode: true,
+      },
+      slots: {
+        default: ({ item }: any) => h('div', { class: 'row' }, item.label),
+      },
+      global: {
+        stubs: {
+          ResizeObserver: ResizeObserverStub,
+        },
+      },
+    })
+
+    await nextTick()
+
+    const spacers = wrapper.findAll('.vue-recycle-scroller__item-spacer')
+    expect(spacers).toHaveLength(2)
+    expect((spacers[0].element as HTMLElement).style.height).toBe('40px')
+    expect((spacers[1].element as HTMLElement).style.height).toBe('60px')
+    expect((wrapper.vm as any).startSpacerSize).toBe(40)
+    expect((wrapper.vm as any).endSpacerSize).toBe(60)
+
+    const itemView = wrapper.get('.vue-recycle-scroller__item-view').element as HTMLElement
+    expect(itemView.style.position).toBe('')
+    expect(itemView.style.transform).toBe('')
   })
 
   it('forwards function itemSize without enabling fixed grid sizing', async () => {

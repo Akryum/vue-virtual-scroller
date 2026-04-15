@@ -6,7 +6,7 @@ import mitt from 'mitt'
 import { computed, effectScope, nextTick, onActivated, onDeactivated, onUnmounted, provide, reactive, shallowRef, toValue, watch } from 'vue'
 import { findPrependOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
 import { resolveItemKey, resolveItemKeyWithOptionalIndex } from '../engine/keyField'
-import { getPooledViewStyle } from '../utils/viewStyle'
+import { getPooledViewStyle, resolvePooledViewMode } from '../utils/viewStyle'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
 import { useRecycleScroller } from './useRecycleScroller'
 
@@ -41,6 +41,7 @@ export interface UseDynamicScrollerOptions<TItem = unknown> {
   shift?: boolean
   cache?: CacheSnapshot
   disableTransform?: boolean
+  flowMode?: boolean
   hiddenPosition?: number
   prerender?: number
   emitUpdate?: boolean
@@ -85,6 +86,8 @@ export interface UseDynamicScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>
   pool: UseDynamicScrollerPool<TItem, TKey>
   visiblePool: UseDynamicScrollerVisiblePool<TItem, TKey>
   totalSize: UseDynamicScrollerTotalSize<TItem, TKey>
+  startSpacerSize: UseDynamicScrollerRecycleReturn<TItem, TKey>['startSpacerSize']
+  endSpacerSize: UseDynamicScrollerRecycleReturn<TItem, TKey>['endSpacerSize']
   ready: UseDynamicScrollerReady<TItem, TKey>
   sizes: UseDynamicScrollerSizes<TItem, TKey>
   forceUpdate: (clear?: boolean) => void
@@ -152,6 +155,7 @@ const MANAGED_STYLE_PROPS = [
   'willChange',
   'visibility',
   'pointerEvents',
+  'display',
 ] as const
 
 function captureManagedStyles(elValue: HTMLElement) {
@@ -173,6 +177,7 @@ function applyViewStyles(
   binding: UseDynamicScrollerItemBindingOptions<any, any>,
   direction: ScrollDirection,
   disableTransform: boolean,
+  flowMode: boolean,
   snapshot: Record<string, string>,
 ) {
   if (!('view' in binding)) {
@@ -181,18 +186,28 @@ function applyViewStyles(
   }
 
   const isTableRow = elValue.tagName === 'TR'
+  const mode = flowMode
+    ? resolvePooledViewMode({
+        direction,
+        flowMode: true,
+      })
+    : resolvePooledViewMode({
+        direction,
+        disableTransform: disableTransform || isTableRow,
+      })
   const style = getPooledViewStyle(binding.view, {
     direction,
-    disableTransform: disableTransform || isTableRow,
+    mode,
   })
 
-  elValue.style.position = String(style.position ?? 'absolute')
-  elValue.style.top = String(style.top ?? '0px')
-  elValue.style.left = String(style.left ?? '0px')
-  elValue.style.transform = isTableRow ? '' : String(style.transform ?? '')
+  elValue.style.position = String(style.position ?? '')
+  elValue.style.top = String(style.top ?? '')
+  elValue.style.left = String(style.left ?? '')
+  elValue.style.transform = mode === 'flow' || isTableRow ? '' : String(style.transform ?? '')
   elValue.style.willChange = String(style.willChange ?? '')
   elValue.style.visibility = String(style.visibility ?? '')
-  elValue.style.pointerEvents = binding.view.nr.used ? '' : 'none'
+  elValue.style.pointerEvents = String(style.pointerEvents ?? '')
+  elValue.style.display = String(style.display ?? '')
 }
 
 function normalizeBindingOptions<TItem, TKey>(options: UseDynamicScrollerItemBindingOptions<TItem, TKey>): BoundDynamicScrollerItemOptions<TItem> {
@@ -415,6 +430,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     get prerender() { return toValue(options).prerender ?? 0 },
     get emitUpdate() { return toValue(options).emitUpdate ?? false },
     get disableTransform() { return toValue(options).disableTransform ?? false },
+    get flowMode() { return toValue(options).flowMode ?? false },
     get hiddenPosition() { return toValue(options).hiddenPosition },
     get updateInterval() { return toValue(options).updateInterval ?? 0 },
     get el() { return el.value },
@@ -450,7 +466,11 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     const opts = toValue(options)
     return getPooledViewStyle(view, {
       direction: direction.value,
-      disableTransform: opts.disableTransform ?? false,
+      mode: resolvePooledViewMode({
+        direction: direction.value,
+        disableTransform: opts.disableTransform ?? false,
+        flowMode: opts.flowMode ?? false,
+      }),
     })
   }
 
@@ -671,6 +691,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
             binding.value,
             direction.value,
             toValue(options).disableTransform ?? false,
+            toValue(options).flowMode ?? false,
             restoreStyles,
           )
         }
@@ -725,6 +746,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
         binding.value,
         direction.value,
         toValue(options).disableTransform ?? false,
+        toValue(options).flowMode ?? false,
         record.restoreStyles,
       )
     },

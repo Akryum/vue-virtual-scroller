@@ -92,6 +92,10 @@ Use the headless APIs when you want the virtualization engine without the bundle
 - Move to [**useDynamicScroller**](./use-dynamic-scroller) when the DOM needs to measure size after render.
 - Use [**useWindowScroller**](./use-window-scroller) when the page should still drive scrolling, but you need custom wrappers or semantics.
 
+## Utilities
+
+- Use [**useTableColumnWidths**](./use-table-column-widths) when semantic table columns should stay stable while row content churns.
+
 <style scoped>
 .badges p {
   display: flex;

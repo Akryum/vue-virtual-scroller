@@ -19,7 +19,8 @@ Use it when you need custom markup, but item size still has to be measured from 
 - You render from `pool`.
 - Each `view` inside `pool` wraps an internal `ItemWithSize`, so the original item lives at `view.item.item`.
 - `totalSize` still belongs on your inner wrapper.
-- `getViewStyle(view)` exposes pooled positioning styles for custom integrations. Generic elements use transforms by default, and `disableTransform` switches them to `top`/`left`.
+- `startSpacerSize` and `endSpacerSize` expose the spacer sizes needed by `flowMode`.
+- `getViewStyle(view)` exposes pooled positioning styles for custom integrations. Generic elements use transforms by default, `disableTransform` switches them to `top`/`left`, and `flowMode` keeps active views in native flow.
 - When you bind `v-dynamic-scroller-item="{ view, ... }"`, the directive:
   - derives `item`, `active`, and `index` from the pooled view
   - measures the DOM element for unknown-size updates
@@ -73,7 +74,8 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 - `pool`: render-ready pooled views. This is the main render source.
 - `visiblePool`: active views in visible index order. Useful for readouts, debugging, or derived UI state.
 - `totalSize`: virtual size for the inner wrapper.
-- `handleScroll`: call this on the scroll container.
+- `startSpacerSize`: spacer size before the active pooled window in `flowMode`.
+- `endSpacerSize`: spacer size after the active pooled window in `flowMode`.
 - `scrollToItem(index, options?)`: jump to a logical item index with `align`, `smooth`, and `offset`.
 - `scrollToPosition(px, options?)`: scroll to an absolute pixel offset.
 - `findItemIndex(offset)`: resolve a pixel offset back to an item index.
@@ -92,6 +94,10 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 - Bind the pooled `view` into `v-dynamic-scroller-item`.
 - Pass `sizeDependencies` for data that can change layout after first render.
 
+If you enable `flowMode`, render start and end spacer elements from `startSpacerSize` and `endSpacerSize` instead of applying `totalSize` to an absolutely positioned inner wrapper. This is the path used by the [headless table demo](../demos/headless-table).
+
+When that headless path renders a semantic table, pair it with [`useTableColumnWidths`](./use-table-column-widths) so column widths stay locked while pooled rows churn.
+
 ## Common pitfalls
 
 - Forgetting `minItemSize` hurts the initial layout and scroll math.
@@ -101,6 +107,7 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 - `watchData` works, but it is heavier than targeted `sizeDependencies`.
 - If you prepend into chat-style data, enable `shift` in the composable options so the viewport stays anchored.
 - Set `disableTransform` when generic pooled wrappers must avoid translate transforms.
+- `flowMode` only supports vertical single-axis layouts in v1. It is meant for native block or table flow, not grids or horizontal virtualization.
 
 ## Full example
 
@@ -119,7 +126,6 @@ const scrollerEl = useTemplateRef<HTMLElement>('scrollerEl')
 const {
   pool,
   totalSize,
-  handleScroll,
   vDynamicScrollerItem,
 } = useDynamicScroller(computed(() => ({
   items: rows.value,
@@ -134,7 +140,6 @@ const {
   <div
     ref="scrollerEl"
     class="scroller"
-    @scroll.passive="handleScroll"
   >
     <div :style="{ minHeight: `${totalSize}px`, position: 'relative' }">
       <article
@@ -156,5 +161,6 @@ const {
 ## Related guides
 
 - [`useRecycleScroller`](./use-recycle-scroller) for fixed-size or pre-sized headless lists
+- [`useTableColumnWidths`](./use-table-column-widths) for locking semantic table columns after measurement
 - [`useWindowScroller`](./use-window-scroller) for headless window-based virtualization
 - [Headless table demo](../demos/headless-table) for a semantic table example

@@ -112,6 +112,8 @@ export interface DynamicScrollerSlotProps<TItem = unknown, TKey = KeyValue> exte
 export interface RecycleScrollerExposed<TItem = unknown, TKey = KeyValue> {
   el: Ref<HTMLElement | undefined>
   visiblePool: ComputedRef<Array<View<TItem, TKey>>>
+  startSpacerSize: Ref<number>
+  endSpacerSize: Ref<number>
   scrollToItem: (index: number, options?: ScrollToOptions) => void
   scrollToPosition: (position: number, options?: ScrollToOptions) => void
   getScroll: () => ScrollState
@@ -124,6 +126,8 @@ export interface RecycleScrollerExposed<TItem = unknown, TKey = KeyValue> {
 }
 
 export interface DynamicScrollerExposed<TItem = unknown> {
+  startSpacerSize: Ref<number>
+  endSpacerSize: Ref<number>
   scrollToItem: (index: number, options?: ScrollToOptions) => void
   scrollToPosition: (position: number, options?: ScrollToOptions) => void
   findItemIndex: (offset: number) => number
@@ -138,6 +142,8 @@ export interface DynamicScrollerExposed<TItem = unknown> {
 // eslint-disable-next-line unused-imports/no-unused-vars
 export interface WindowScrollerExposed<TItem = unknown, TKey = KeyValue> {
   el: Ref<HTMLElement | undefined>
+  startSpacerSize: Ref<number>
+  endSpacerSize: Ref<number>
   scrollToItem: (index: number, options?: ScrollToOptions) => void
   scrollToPosition: (position: number, options?: ScrollToOptions) => void
   getScroll: () => ScrollState

@@ -14,6 +14,8 @@ export type { UseDynamicScrollerItemOptions, UseDynamicScrollerItemReturn } from
 export { useIdState } from './composables/useIdState'
 export { useRecycleScroller } from './composables/useRecycleScroller'
 export type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './composables/useRecycleScroller'
+export { useTableColumnWidths } from './composables/useTableColumnWidths'
+export type { UseTableColumnWidthsOptions, UseTableColumnWidthsReturn } from './composables/useTableColumnWidths'
 export { useWindowScroller } from './composables/useWindowScroller'
 export type { UseWindowScrollerOptions, UseWindowScrollerReturn } from './composables/useWindowScroller'
 

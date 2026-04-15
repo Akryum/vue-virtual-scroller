@@ -5,6 +5,7 @@ import type { CacheSnapshot, ClassValue, ItemSizeValue, KeyFieldValue, KeyValue,
 import { computed, ref, toRef } from 'vue'
 import { useWindowScroller } from '../composables/useWindowScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
+import { resolvePooledViewMode } from '../utils/viewStyle'
 import ItemView from './ItemView.vue'
 import ResizeObserver from './ResizeObserver.vue'
 
@@ -26,6 +27,7 @@ const props = withDefaults(defineProps<{
   prerender?: number
   emitUpdate?: boolean
   disableTransform?: boolean
+  flowMode?: boolean
   hiddenPosition?: number
   updateInterval?: number
   listClass?: ClassValue
@@ -47,6 +49,7 @@ const props = withDefaults(defineProps<{
   prerender: 0,
   emitUpdate: false,
   disableTransform: false,
+  flowMode: false,
   hiddenPosition: undefined,
   updateInterval: 0,
   listClass: '',
@@ -91,6 +94,7 @@ const windowScrollerOptions = computed(() => ({
   prerender: props.prerender,
   emitUpdate: props.emitUpdate,
   disableTransform: props.disableTransform,
+  flowMode: props.flowMode,
   hiddenPosition: props.hiddenPosition,
   updateInterval: props.updateInterval,
   onResize: () => emit('resize'),
@@ -107,6 +111,8 @@ const windowScroller = useWindowScroller(
 const {
   pool,
   totalSize,
+  startSpacerSize,
+  endSpacerSize,
   ready,
   scrollToItem,
   scrollToPosition,
@@ -122,8 +128,27 @@ const {
   handleVisibilityChange,
 } = windowScroller
 
+const isFlowMode = computed(() =>
+  resolvePooledViewMode({
+    direction: props.direction,
+    disableTransform: props.disableTransform,
+    flowMode: props.flowMode,
+    gridItems: props.gridItems,
+  }) === 'flow',
+)
+
+const startSpacerStyle = computed(() => ({
+  height: `${startSpacerSize.value}px`,
+}))
+
+const endSpacerStyle = computed(() => ({
+  height: `${endSpacerSize.value}px`,
+}))
+
 const exposed: WindowScrollerExposed<TItem, KeyValue> = {
   el,
+  startSpacerSize,
+  endSpacerSize,
   scrollToItem,
   scrollToPosition,
   getScroll,
@@ -144,6 +169,7 @@ defineExpose(exposed)
     v-observe-visibility="handleVisibilityChange"
     class="vue-recycle-scroller vue-window-scroller"
     :class="{
+      'flow-mode': isFlowMode,
       ready,
       [`direction-${props.direction}`]: true,
     }"
@@ -162,6 +188,14 @@ defineExpose(exposed)
       class="vue-recycle-scroller__item-wrapper"
       :class="props.listClass"
     >
+      <component
+        :is="props.itemTag"
+        v-if="isFlowMode && startSpacerSize > 0"
+        aria-hidden="true"
+        class="vue-recycle-scroller__item-spacer"
+        :style="startSpacerStyle"
+      />
+
       <ItemView
         v-for="view of pool"
         :key="view.nr.id"
@@ -175,6 +209,14 @@ defineExpose(exposed)
           <slot v-bind="slotProps" />
         </template>
       </ItemView>
+
+      <component
+        :is="props.itemTag"
+        v-if="isFlowMode && endSpacerSize > 0"
+        aria-hidden="true"
+        class="vue-recycle-scroller__item-spacer"
+        :style="endSpacerStyle"
+      />
 
       <slot
         v-if="props.items.length === 0"

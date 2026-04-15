@@ -34,6 +34,10 @@ const RecycleScrollerStub = defineComponent({
       type: Boolean,
       default: false,
     },
+    flowMode: {
+      type: Boolean,
+      default: false,
+    },
     hiddenPosition: {
       type: Number,
       default: undefined,
@@ -161,6 +165,17 @@ describe('dynamicScroller', () => {
     expect(wrapper.emitted('resize')).toHaveLength(1)
     expect(wrapper.emitted('visible')).toHaveLength(1)
     expect((wrapper.vm as any).itemsWithSize[0].id).toBe('general:1')
+  })
+
+  it('passes flowMode to RecycleScroller', () => {
+    const wrapper = mountDynamicScroller({
+      items: [{ id: 'a' }],
+      minItemSize: 24,
+      flowMode: true,
+    })
+
+    const scroller = wrapper.getComponent({ name: 'RecycleScroller' })
+    expect(scroller.props('flowMode')).toBe(true)
   })
 
   it('exposes scrollToItem and getItemSize', async () => {

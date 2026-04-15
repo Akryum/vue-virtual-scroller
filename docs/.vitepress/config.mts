@@ -46,6 +46,7 @@ export default defineConfig({
         {
           text: 'Utilities',
           items: [
+            { text: 'useTableColumnWidths', link: '/guide/use-table-column-widths' },
             { text: 'IdState', link: '/guide/id-state' },
           ],
         },

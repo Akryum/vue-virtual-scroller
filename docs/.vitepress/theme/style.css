@@ -412,6 +412,7 @@
 .demo-table-viewport {
   overflow: auto;
   padding: 0;
+  overflow-anchor: none;
 }
 
 .demo-headless-table {
@@ -419,62 +420,39 @@
   min-width: 820px;
   border-collapse: separate;
   border-spacing: 0;
-  table-layout: fixed;
-}
-
-.demo-headless-table__head {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  display: block;
-  background: var(--demo-table-head-bg);
-  backdrop-filter: blur(10px);
-}
-
-.demo-headless-table__body {
-  position: relative;
-  display: block;
-}
-
-.demo-headless-table__row {
-  display: grid;
-  grid-template-columns: 84px minmax(170px, 1.15fr) minmax(240px, 1.55fr) minmax(150px, 1fr) 110px;
-  align-items: stretch;
-  width: 100%;
-  box-sizing: border-box;
+  overflow-anchor: none;
 }
 
 .demo-headless-table__row--head {
-  position: static;
   min-height: 58px;
-  border-bottom: 1px solid var(--demo-divider-strong);
 }
 
 .demo-headless-table__body > .demo-headless-table__row {
-  position: absolute;
-  top: 0;
-  left: 0;
   min-height: 62px;
-  padding: 0 2px;
-  border-bottom: 1px solid var(--demo-divider-soft);
 }
 
-.demo-headless-table__body > .demo-headless-table__row:hover {
+.demo-headless-table__spacer > td {
+  padding: 0;
+  border: 0;
   background: transparent;
+  line-height: 0;
+  overflow-anchor: none;
 }
 
-.demo-headless-table__row > * {
+.demo-headless-table tr > * {
   background: var(--demo-table-row-bg);
   border-right: 1px solid var(--demo-table-grid);
+  border-bottom: 1px solid var(--demo-divider-soft);
   transition: background-color 140ms ease, border-color 140ms ease;
 }
 
-.demo-headless-table__row > *:last-child {
+.demo-headless-table tr > *:last-child {
   border-right: 0;
 }
 
 .demo-headless-table__row--head > * {
   background: var(--demo-table-head-bg);
+  border-bottom: 1px solid var(--demo-divider-strong);
 }
 
 .demo-headless-table__body > .demo-headless-table__row:hover > * {
@@ -486,12 +464,14 @@
   padding: 12px 16px;
   text-align: left;
   box-sizing: border-box;
-  border: 0;
 }
 
 .demo-headless-table th {
-  display: flex;
-  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--demo-table-head-bg);
+  backdrop-filter: blur(10px);
   color: var(--demo-table-head-text);
   font-size: 0.77rem;
   letter-spacing: 0.08em;
@@ -499,11 +479,10 @@
 }
 
 .demo-headless-table td {
-  display: flex;
-  align-items: center;
   color: var(--demo-table-body-text);
   font-size: 0.91rem;
   min-width: 0;
+  vertical-align: middle;
 }
 
 .demo-table-cell {

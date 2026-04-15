@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, defineComponent, h, ref, toValue } from 'vue'
-import { getPooledViewStyle } from '../utils/viewStyle'
+import { getPooledViewStyle, resolvePooledViewMode } from '../utils/viewStyle'
 import WindowScroller from './WindowScroller.vue'
 
 const mocks = vi.hoisted(() => {
@@ -56,6 +56,8 @@ describe('windowScroller', () => {
           },
         }]),
         totalSize: ref(240),
+        startSpacerSize: ref(30),
+        endSpacerSize: ref(50),
         ready: ref(true),
         sizes: computed(() => []),
         simpleArray: computed(() => false),
@@ -67,7 +69,12 @@ describe('windowScroller', () => {
         getItemSize: () => 20,
         getViewStyle: (view: any) => getPooledViewStyle(view, {
           direction: resolvedOptions.direction,
-          disableTransform: resolvedOptions.disableTransform,
+          mode: resolvePooledViewMode({
+            direction: resolvedOptions.direction,
+            disableTransform: resolvedOptions.disableTransform,
+            flowMode: resolvedOptions.flowMode,
+            gridItems: resolvedOptions.gridItems,
+          }),
           itemSize: fixedItemSize,
           gridItems: resolvedOptions.gridItems,
           itemSecondarySize: resolvedOptions.itemSecondarySize,
@@ -135,6 +142,34 @@ describe('windowScroller', () => {
     expect(itemView.style.transform).toBe('translateY(40px) translateX(12px)')
     expect(itemView.style.top).toBe('0px')
     expect(itemView.style.left).toBe('0px')
+  })
+
+  it('renders flow-mode spacers and exposes spacer refs', () => {
+    const wrapper = mount(WindowScroller, {
+      props: {
+        items: [{ id: 'a' }],
+        itemSize: 20,
+        flowMode: true,
+      },
+      slots: {
+        default: ({ item }: any) => h('div', { class: 'row' }, item.label),
+      },
+      global: {
+        stubs: {
+          ResizeObserver: ResizeObserverStub,
+        },
+      },
+    })
+
+    const spacers = wrapper.findAll('.vue-recycle-scroller__item-spacer')
+    expect(spacers).toHaveLength(2)
+    expect((spacers[0].element as HTMLElement).style.height).toBe('30px')
+    expect((spacers[1].element as HTMLElement).style.height).toBe('50px')
+    expect((wrapper.vm as any).startSpacerSize).toBe(30)
+    expect((wrapper.vm as any).endSpacerSize).toBe(50)
+
+    const [optionsArg] = mocks.useWindowScroller.mock.calls.at(-1)!
+    expect(toValue(optionsArg).flowMode).toBe(true)
   })
 
   it('uses top and left positioning when disableTransform is enabled', async () => {

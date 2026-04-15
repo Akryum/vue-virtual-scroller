@@ -19,6 +19,7 @@ const props = withDefaults(defineProps<{
   shift?: boolean
   cache?: CacheSnapshot
   disableTransform?: boolean
+  flowMode?: boolean
   hiddenPosition?: number
 }>(), {
   keyField: 'id',
@@ -28,6 +29,7 @@ const props = withDefaults(defineProps<{
   shift: false,
   cache: undefined,
   disableTransform: false,
+  flowMode: false,
   hiddenPosition: undefined,
 })
 
@@ -62,6 +64,7 @@ const dynamicOptions = computed(() => ({
   minItemSize: props.minItemSize,
   shift: props.shift,
   cache: props.cache,
+  flowMode: props.flowMode,
   hiddenPosition: props.hiddenPosition,
   el: scrollerEl.value,
   onResize: () => emit('resize'),
@@ -75,6 +78,8 @@ const dynamicScroller = useDynamicScroller(
 const {
   itemsWithSize,
   forceUpdate,
+  startSpacerSize,
+  endSpacerSize,
   scrollToItem,
   scrollToPosition,
   findItemIndex,
@@ -102,6 +107,8 @@ function getDefaultSlotBindings(
 
 // Expose
 const exposed: DynamicScrollerExposed<TItem> = {
+  startSpacerSize,
+  endSpacerSize,
   scrollToItem,
   scrollToPosition,
   findItemIndex,
@@ -124,6 +131,7 @@ defineExpose(exposed)
     :direction="props.direction"
     :cache="props.cache"
     :disable-transform="props.disableTransform"
+    :flow-mode="props.flowMode"
     :hidden-position="props.hiddenPosition"
     key-field="id"
     :list-tag="props.listTag"

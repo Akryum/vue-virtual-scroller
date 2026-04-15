@@ -75,4 +75,8 @@ describe('plugin', () => {
     expect(index.WindowScroller).toBe(WindowScroller)
     expect(typeof index.useWindowScroller).toBe('function')
   })
+
+  it('exports the table column width helper', () => {
+    expect(typeof index.useTableColumnWidths).toBe('function')
+  })
 })

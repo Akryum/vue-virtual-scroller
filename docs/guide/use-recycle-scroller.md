@@ -72,6 +72,7 @@ Additional scroll-system options:
 - `shift`
 - `cache`
 - `disableTransform`
+- `flowMode`
 
 `keyField` can also be a resolver function when your data needs a derived key. The callback always receives `(item, index)`:
 
@@ -92,14 +93,15 @@ const itemSize = (item: Message, index: number) => item.size || (index % 2 === 0
 - `pool`: the render-ready set of pooled views. This is the main render source when you want the smoothest recycling behavior.
 - `visiblePool`: `pool` filtered to active views and sorted by visible index order. Useful for readouts, debugging, or simple derived UI.
 - `totalSize`: full virtual size (wrapper min-height/min-width).
-- `handleScroll`: call this on scroll events.
+- `startSpacerSize`: spacer size before the active pooled window in `flowMode`.
+- `endSpacerSize`: spacer size after the active pooled window in `flowMode`.
 - `scrollToItem(index, options?)`: programmatic navigation with `align`, `smooth`, and `offset`.
 - `scrollToPosition(px, options?)`: absolute scroll positioning.
 - `getScroll()`: current viewport range in pixels.
 - `findItemIndex(offset)`: resolve a pixel offset back to an item index.
 - `getItemOffset(index)`: read the starting pixel offset for an item.
 - `getItemSize(index)`: read the known size for an item.
-- `getViewStyle(view)`: build the same pooled wrapper positioning styles used by the component path, including optional `disableTransform`.
+- `getViewStyle(view)`: build the same pooled wrapper positioning styles used by the component path, including optional `disableTransform` or `flowMode`.
 - `cacheSnapshot`: current serializable size snapshot.
 - `restoreCache(snapshot)`: restore a previous snapshot when the item sequence matches.
 - `updateVisibleItems(itemsChanged, checkPositionDiff?)`: force recalculation.
@@ -112,13 +114,40 @@ const itemSize = (item: Message, index: number) => item.size || (index % 2 === 0
 - Apply `getViewStyle(view)` to each rendered pooled wrapper.
 - Hide inactive views instead of filtering them out.
 
+If you enable `flowMode` instead:
+
+- keep the scroller vertical and single-axis
+- render start and end spacer elements from `startSpacerSize` and `endSpacerSize`
+- keep rendering from `pool`
+- let inactive pooled views stay mounted and hidden
+
+Example flow-mode spacer pattern:
+
+```vue
+<div ref="scrollerEl" class="scroller">
+  <div>
+    <div v-if="startSpacerSize > 0" :style="{ height: `${startSpacerSize}px` }" />
+    <article
+      v-for="view in pool"
+      :key="view.nr.id"
+      :style="getViewStyle(view)"
+    >
+      {{ view.item.title }}
+    </article>
+    <div v-if="endSpacerSize > 0" :style="{ height: `${endSpacerSize}px` }" />
+  </div>
+</div>
+```
+
 ## Common pitfalls
 
 - You must provide scrollable sizing styles yourself (`height` or `width` + overflow).
 - Use a stable key field for object items (default: `id`).
 - The composable manages pooling and index mapping, but does not provide built-in markup or CSS.
 - `disableTransform` only changes positioning strategy. You still own the surrounding layout and dimensions.
+- `flowMode` only supports vertical single-axis layouts in v1. `gridItems`, horizontal mode, and `hiddenPosition` fall back to standard positioning.
 - Render from `pool` and hide inactive views instead of filtering them out if you want to preserve DOM reuse.
+- If you render a semantic table, pair it with [`useTableColumnWidths`](./use-table-column-widths) so native auto layout does not shift between pooled rows.
 - If item size has to be measured from the DOM after render, use [`useDynamicScroller`](./use-dynamic-scroller) instead.
 - If the browser window owns scrolling, use [`useWindowScroller`](./use-window-scroller) instead of reproducing page-mode behavior yourself.
 
@@ -163,7 +192,6 @@ const options = computed(() => ({
 const {
   pool,
   totalSize,
-  handleScroll,
   getViewStyle,
 } = useRecycleScroller(options, scrollerEl)
 </script>
@@ -172,7 +200,6 @@ const {
   <div
     ref="scrollerEl"
     class="my-scroller"
-    @scroll.passive="handleScroll"
   >
     <div
       class="my-scroller__inner"

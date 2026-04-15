@@ -2,6 +2,10 @@
   position: relative;
 }
 
+.vue-recycle-scroller.flow-mode {
+  overflow-anchor: none;
+}
+
 .vue-recycle-scroller.direction-vertical:not(.page-mode) {
   overflow-y: auto;
 }
@@ -29,11 +33,24 @@
   position: relative;
 }
 
+.vue-recycle-scroller.flow-mode .vue-recycle-scroller__item-wrapper {
+  overflow: visible;
+  overflow-anchor: none;
+}
+
 .vue-recycle-scroller.ready .vue-recycle-scroller__item-view {
   position: absolute;
   top: 0;
   left: 0;
   will-change: transform;
+}
+
+.vue-recycle-scroller.ready.flow-mode .vue-recycle-scroller__item-view {
+  position: static;
+  top: auto;
+  left: auto;
+  will-change: auto;
+  overflow-anchor: none;
 }
 
 .vue-recycle-scroller.direction-vertical .vue-recycle-scroller__item-wrapper {
@@ -50,4 +67,15 @@
 
 .vue-recycle-scroller.ready.direction-horizontal .vue-recycle-scroller__item-view {
   height: 100%;
+}
+
+.vue-recycle-scroller__item-spacer {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  visibility: hidden;
+  pointer-events: none;
+  overflow-anchor: none;
 }

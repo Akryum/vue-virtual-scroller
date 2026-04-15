@@ -1,5 +1,6 @@
 import type { ComputedRef, CSSProperties, MaybeRefOrGetter, Ref } from 'vue'
 import type { CacheSnapshot, DefaultKeyField, ItemKey, ItemSizeValue, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
+import type { PooledViewPositionMode } from '../utils/viewStyle'
 import type { ScrollerCallbacks, ScrollerOptionCallbacks, ScrollerOptionElements } from './scrollerOptions'
 import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
 import config from '../config'
@@ -9,7 +10,7 @@ import { getViewportSize, normalizeOffset, scrollElementTo } from '../engine/scr
 import { getScrollParent } from '../scrollparent'
 import { supportsPassive } from '../utils'
 import { getFixedItemSize, resolveSnapshotItemSize, resolveVariableItemSize } from '../utils/itemSize'
-import { getPooledViewStyle } from '../utils/viewStyle'
+import { getPooledViewStyle, resolvePooledViewMode } from '../utils/viewStyle'
 import { normalizeScrollerInputs } from './scrollerOptions'
 
 export interface UseRecycleScrollerOptions<TItem = unknown, TSizeField extends string = 'size'> extends ScrollerOptionElements, ScrollerOptionCallbacks {
@@ -29,6 +30,7 @@ export interface UseRecycleScrollerOptions<TItem = unknown, TSizeField extends s
   prerender: number
   emitUpdate: boolean
   disableTransform?: boolean
+  flowMode?: boolean
   /**
    * Park recycled hidden views at custom main-axis position.
    */
@@ -40,6 +42,8 @@ export interface UseRecycleScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>
   pool: Ref<Array<View<TItem, TKey>>>
   visiblePool: ComputedRef<Array<View<TItem, TKey>>>
   totalSize: Ref<number>
+  startSpacerSize: Ref<number>
+  endSpacerSize: Ref<number>
   ready: Ref<boolean>
   sizes: ComputedRef<Sizes | never[]>
   simpleArray: ComputedRef<boolean>
@@ -77,6 +81,23 @@ interface GridRenderWindow {
   visibleEndIndex: number
   totalSize: number
 }
+
+interface RenderWindowRange {
+  startIndex: number
+  endIndex: number
+  visibleStartIndex: number
+  visibleEndIndex: number
+}
+
+interface FlowWindowEdges {
+  rawViewportStart: number
+  rawViewportEnd: number
+  renderStart: number
+  renderEnd: number
+}
+
+const FLOW_IDLE_HYSTERESIS_PX = 8
+const FLOW_IDLE_SCROLL_EPSILON_PX = 1
 
 type ResolvedRecycleScrollerItems<TOptions extends UseRecycleScrollerOptions<any, any>>
   = TOptions['items'] extends MaybeRefOrGetter<infer TItems extends any[]> ? TItems : never
@@ -125,11 +146,16 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   // Reactive state
   const pool = ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>([]) as Ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>
   const totalSize = ref(0)
+  const startSpacerSize = ref(0)
+  const endSpacerSize = ref(0)
   const ready = ref(false)
 
   // Internal state (non-reactive)
   let _startIndex = 0
   let _endIndex = 0
+  let _visibleStartIndex = 0
+  let _visibleEndIndex = 0
+  let _hasWindowState = false
   const _views = new Map<ItemKey<TItem, TKeyField>, View<TItem, ItemKey<TItem, TKeyField>>>()
   const _recycledPools = new Map<unknown, Array<View<TItem, ItemKey<TItem, TKeyField>>>>()
   let _scrollDirty = false
@@ -147,6 +173,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   let _shiftAnchorClearTimer: ReturnType<typeof setTimeout> | null = null
   let _itemsLimitWarnTimer: ReturnType<typeof setTimeout> | null = null
   let _applyingShiftAnchor = false
+  let _flowModeDirectionWarned = false
+  let _flowModeGridWarned = false
   const _rafIds = new Set<number>()
   const _restoredSizes = ref<Record<ItemKey<TItem, TKeyField>, number>>({} as Record<ItemKey<TItem, TKeyField>, number>)
 
@@ -227,6 +255,54 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
   function getDirection(opts = getOptions()): ScrollDirection {
     return opts.direction ?? 'vertical'
+  }
+
+  /**
+   * Warn once for unsupported flow-mode combinations and resolve actual mode.
+   */
+  function getViewPositionMode(opts = getOptions()): PooledViewPositionMode {
+    const direction = getDirection(opts)
+    let flowMode = opts.flowMode ?? false
+
+    if (flowMode && direction !== 'vertical') {
+      if (!_flowModeDirectionWarned) {
+        console.warn('[vue-recycle-scroller] flowMode only supports vertical lists. Falling back to standard positioning.')
+        _flowModeDirectionWarned = true
+      }
+      flowMode = false
+    }
+
+    if (flowMode && opts.gridItems) {
+      if (!_flowModeGridWarned) {
+        console.warn('[vue-recycle-scroller] flowMode does not support gridItems. Falling back to standard positioning.')
+        _flowModeGridWarned = true
+      }
+      flowMode = false
+    }
+
+    return resolvePooledViewMode({
+      direction,
+      disableTransform: opts.disableTransform ?? false,
+      flowMode,
+      gridItems: opts.gridItems,
+    })
+  }
+
+  /**
+   * Keep active views first in DOM order for native-flow rendering.
+   */
+  function sortFlowModePool() {
+    pool.value.sort((viewA, viewB) => {
+      if (viewA.nr.used !== viewB.nr.used) {
+        return viewA.nr.used ? -1 : 1
+      }
+
+      if (viewA.nr.used && viewB.nr.used) {
+        return viewA.nr.index - viewB.nr.index
+      }
+
+      return viewA.nr.id - viewB.nr.id
+    })
   }
 
   // Methods
@@ -542,7 +618,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     const opts = getOptions()
     return getPooledViewStyle(view, {
       direction: getDirection(opts),
-      disableTransform: opts.disableTransform ?? false,
+      mode: getViewPositionMode(opts),
       itemSize: getFixedItemSize(opts.itemSize),
       gridItems: opts.gridItems,
       itemSecondarySize: opts.itemSecondarySize,
@@ -760,6 +836,79 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     return itemSecondarySize * opts.gridItems > secondaryViewportSize
   }
 
+  /**
+   * Keep a start boundary sticky when only one row toggles near the edge.
+   */
+  function stabilizeStartBoundary(candidate: number, previous: number, count: number, edge: number): number {
+    if (Math.abs(candidate - previous) !== 1 || previous < 0 || previous >= count) {
+      return candidate
+    }
+
+    const boundary = candidate > previous
+      ? getItemOffset(previous) + getItemSize(previous)
+      : getItemOffset(previous)
+
+    return Math.abs(boundary - edge) <= FLOW_IDLE_HYSTERESIS_PX
+      ? previous
+      : candidate
+  }
+
+  /**
+   * Keep an end boundary sticky under the same one-row oscillation rule.
+   */
+  function stabilizeEndBoundary(
+    candidate: number,
+    previous: number,
+    count: number,
+    edge: number,
+    exclusive: boolean,
+  ): number {
+    if (Math.abs(candidate - previous) !== 1) {
+      return candidate
+    }
+
+    const boundaryIndex = exclusive ? previous - 1 : previous
+    if (boundaryIndex < 0 || boundaryIndex >= count) {
+      return candidate
+    }
+
+    const boundary = candidate > previous
+      ? getItemOffset(boundaryIndex) + getItemSize(boundaryIndex)
+      : getItemOffset(boundaryIndex)
+
+    return Math.abs(boundary - edge) <= FLOW_IDLE_HYSTERESIS_PX
+      ? previous
+      : candidate
+  }
+
+  /**
+   * Stabilize idle flow-mode variable-size windows against tiny layout churn.
+   */
+  function stabilizeFlowWindow(nextRange: RenderWindowRange, count: number, edges: FlowWindowEdges): RenderWindowRange {
+    const stabilizedRange: RenderWindowRange = {
+      ...nextRange,
+      visibleStartIndex: stabilizeStartBoundary(nextRange.visibleStartIndex, _visibleStartIndex, count, edges.rawViewportStart),
+      visibleEndIndex: stabilizeEndBoundary(nextRange.visibleEndIndex, _visibleEndIndex, count, edges.rawViewportEnd, false),
+      startIndex: stabilizeStartBoundary(nextRange.startIndex, _startIndex, count, edges.renderStart),
+      endIndex: stabilizeEndBoundary(nextRange.endIndex, _endIndex, count, edges.renderEnd, true),
+    }
+
+    if (stabilizedRange.startIndex > stabilizedRange.visibleStartIndex) {
+      stabilizedRange.startIndex = stabilizedRange.visibleStartIndex
+    }
+
+    const minimumEndIndex = Math.min(count, stabilizedRange.visibleEndIndex + 1)
+    if (stabilizedRange.endIndex < minimumEndIndex) {
+      stabilizedRange.endIndex = minimumEndIndex
+    }
+
+    if (stabilizedRange.endIndex < stabilizedRange.startIndex) {
+      stabilizedRange.endIndex = stabilizedRange.startIndex
+    }
+
+    return stabilizedRange
+  }
+
   function updateVisibleItems(itemsChanged: boolean, checkPositionDiff = false): { continuous: boolean } {
     const opts = getOptions()
     const itemSize = getFixedItemSize(opts.itemSize)
@@ -788,21 +937,25 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       totalSizeValue = 0
     }
     else {
-      const scroll = getScroll()
-      const secondaryScroll = getSecondaryScroll()
+      const rawScroll = getScroll()
+      const rawSecondaryScroll = getSecondaryScroll()
+      const previousScrollPosition = _lastUpdateScrollPosition
+      const previousSecondaryScrollPosition = _lastUpdateSecondaryScrollPosition
+      const scroll = { ...rawScroll }
+      const secondaryScroll = { ...rawSecondaryScroll }
 
       // Skip update if user hasn't scrolled enough
       if (checkPositionDiff) {
-        let positionDiff = scroll.start - _lastUpdateScrollPosition
+        let positionDiff = rawScroll.start - previousScrollPosition
         if (positionDiff < 0)
           positionDiff = -positionDiff
 
-        let secondaryPositionDiff = secondaryScroll.start - _lastUpdateSecondaryScrollPosition
+        let secondaryPositionDiff = rawSecondaryScroll.start - previousSecondaryScrollPosition
         if (secondaryPositionDiff < 0)
           secondaryPositionDiff = -secondaryPositionDiff
 
         const variableSizeWindowChanged = itemSize === null
-          && hasVariableSizeWindowChange(scroll, count, sizesValue, opts.buffer)
+          && hasVariableSizeWindowChange(rawScroll, count, sizesValue, opts.buffer)
         const primaryThresholdMet = (itemSize === null && (positionDiff >= minItemSize || variableSizeWindowChanged))
           || (itemSize !== null && positionDiff >= itemSize)
         const secondaryThresholdMet = gridItems > 1
@@ -815,8 +968,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
           }
         }
       }
-      _lastUpdateScrollPosition = scroll.start
-      _lastUpdateSecondaryScrollPosition = secondaryScroll.start
+      _lastUpdateScrollPosition = rawScroll.start
+      _lastUpdateSecondaryScrollPosition = rawSecondaryScroll.start
 
       const buffer = opts.buffer
       scroll.start -= buffer
@@ -838,6 +991,13 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         const afterSize = afterEl.scrollHeight
         scroll.end += afterSize
       }
+
+      const shouldStabilizeIdleFlowWindow = getViewPositionMode(opts) === 'flow'
+        && itemSize === null
+        && !checkPositionDiff
+        && _hasWindowState
+        && Math.abs(rawScroll.start - previousScrollPosition) <= FLOW_IDLE_SCROLL_EPSILON_PX
+        && Math.abs(rawSecondaryScroll.start - previousSecondaryScrollPosition) <= FLOW_IDLE_SCROLL_EPSILON_PX
 
       // Variable size mode
       if (itemSize === null) {
@@ -883,6 +1043,25 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
         // search visible endIndex
         for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeSize + sizesValue[visibleEndIndex].accumulator) < scroll.end; visibleEndIndex++);
+
+        if (shouldStabilizeIdleFlowWindow) {
+          const stabilizedRange = stabilizeFlowWindow({
+            startIndex,
+            endIndex,
+            visibleStartIndex,
+            visibleEndIndex,
+          }, count, {
+            rawViewportStart: rawScroll.start - beforeSize,
+            rawViewportEnd: rawScroll.end - beforeSize,
+            renderStart: rawScroll.start - buffer - beforeSize,
+            renderEnd: rawScroll.end + buffer - beforeSize,
+          })
+
+          startIndex = stabilizedRange.startIndex
+          endIndex = stabilizedRange.endIndex
+          visibleStartIndex = stabilizedRange.visibleStartIndex
+          visibleEndIndex = stabilizedRange.visibleEndIndex
+        }
       }
       else {
         // Fixed size mode
@@ -932,6 +1111,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
 
     totalSize.value = totalSizeValue
+    startSpacerSize.value = 0
+    endSpacerSize.value = getViewPositionMode(opts) === 'flow' ? totalSizeValue : 0
 
     let view: View<TItem, ItemKey<TItem, TKeyField>> | undefined
 
@@ -962,6 +1143,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
     // Step 2: Assign a view and update props for every view that became visible
     let item: TItem, type: unknown
+    let firstVisiblePosition: number | null = null
+    let renderedVisibleSize = 0
     const indices = renderedIndices ?? Array.from({ length: Math.max(0, endIndex - startIndex) }, (_, index) => startIndex + index)
     for (const i of indices) {
       const elementSize = itemSize || (sizesValue[i] && sizesValue[i].size)
@@ -1012,18 +1195,42 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         view.position = Math.floor(i / gridItems) * itemSize
         view.offset = (i % gridItems) * itemSecondarySize
       }
+
+      firstVisiblePosition ??= view.position
+      renderedVisibleSize += elementSize
+    }
+
+    if (getViewPositionMode(opts) === 'flow') {
+      if (firstVisiblePosition == null) {
+        startSpacerSize.value = 0
+        endSpacerSize.value = totalSizeValue
+      }
+      else {
+        startSpacerSize.value = firstVisiblePosition
+        endSpacerSize.value = Math.max(0, totalSizeValue - firstVisiblePosition - renderedVisibleSize)
+      }
+      sortFlowModePool()
+    }
+    else {
+      startSpacerSize.value = 0
+      endSpacerSize.value = 0
     }
 
     _startIndex = startIndex
     _endIndex = endIndex
+    _visibleStartIndex = visibleStartIndex
+    _visibleEndIndex = visibleEndIndex
+    _hasWindowState = true
     if (opts.emitUpdate)
       normalizedInputs.callbacks.onUpdate?.(startIndex, endIndex, visibleStartIndex, visibleEndIndex)
 
     // After the user has finished scrolling
     // Sort views so text selection is correct
-    if (_sortTimer)
-      clearTimeout(_sortTimer)
-    _sortTimer = setTimeout(sortViews, opts.updateInterval + 300)
+    if (getViewPositionMode(opts) !== 'flow') {
+      if (_sortTimer)
+        clearTimeout(_sortTimer)
+      _sortTimer = setTimeout(sortViews, opts.updateInterval + 300)
+    }
 
     return {
       continuous,
@@ -1054,6 +1261,11 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   }
 
   function sortViews() {
+    if (getViewPositionMode() === 'flow') {
+      sortFlowModePool()
+      return
+    }
+
     pool.value.sort((viewA, viewB) => viewA.nr.index - viewB.nr.index)
 
     if (hasVisibleViewGap()) {
@@ -1264,6 +1476,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     pool,
     visiblePool,
     totalSize,
+    startSpacerSize,
+    endSpacerSize,
     ready,
     sizes,
     simpleArray,

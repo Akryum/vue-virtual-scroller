@@ -31,6 +31,7 @@ function mountHarness(overrides: Partial<{
   shift: boolean
   cache: any
   disableTransform: boolean
+  flowMode: boolean
   hiddenPosition: number
   updateInterval: number
   clientHeight: number
@@ -56,6 +57,7 @@ function mountHarness(overrides: Partial<{
     prerender: 0,
     emitUpdate: true,
     disableTransform: false,
+    flowMode: false,
     hiddenPosition: undefined,
     updateInterval: 0,
     ...overrides,
@@ -508,6 +510,100 @@ describe('useRecycleScroller', () => {
     expect(style.willChange).toBe('unset')
   })
 
+  it('uses native flow styles and spacer sizes when flowMode is enabled', async () => {
+    const { vm } = mountHarness({
+      items: Array.from({ length: 8 }, (_, id) => ({ id })),
+      itemSize: 10,
+      flowMode: true,
+      clientHeight: 25,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const view = vm.pool[0]
+    let style = vm.getViewStyle(view)
+    expect(style.position).toBeUndefined()
+    expect(style.top).toBeUndefined()
+    expect(style.left).toBeUndefined()
+    expect(style.transform).toBeUndefined()
+    expect(style.display).toBeUndefined()
+    expect(vm.startSpacerSize).toBe(0)
+    expect(vm.endSpacerSize).toBe(50)
+
+    vm.el.scrollTop = 20
+    vm.updateVisibleItems(false)
+
+    style = vm.getViewStyle(vm.pool[0])
+    expect(style.position).toBeUndefined()
+    expect(style.display).toBeUndefined()
+    expect(vm.pool.slice(0, 3).map((currentView: View) => currentView.nr.index)).toEqual([2, 3, 4])
+    expect(vm.startSpacerSize).toBe(20)
+    expect(vm.endSpacerSize).toBe(30)
+  })
+
+  it('keeps flow-mode pool ordered as active views followed by parked views', async () => {
+    const { vm, options } = mountHarness({
+      items: Array.from({ length: 6 }, (_, id) => ({ id })),
+      itemSize: 10,
+      flowMode: true,
+      clientHeight: 50,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.pool).toHaveLength(5)
+
+    options.items = options.items.slice(0, 3)
+    await nextTick()
+
+    expect(vm.pool.slice(0, 3).map((view: View) => [view.nr.used, view.nr.index])).toEqual([
+      [true, 0],
+      [true, 1],
+      [true, 2],
+    ])
+    expect(vm.pool.slice(3).every((view: View) => !view.nr.used)).toBe(true)
+
+    const parkedStyle = vm.getViewStyle(vm.pool[3])
+    expect(parkedStyle.display).toBe('none')
+    expect(parkedStyle.pointerEvents).toBe('none')
+  })
+
+  it('keeps idle flow-mode variable-size boundaries stable across tiny size changes', async () => {
+    const { vm, onUpdate, options } = mountHarness({
+      items: Array.from({ length: 6 }, (_, id) => ({ id, size: 20 })),
+      itemSize: null,
+      minItemSize: 20,
+      flowMode: true,
+      clientHeight: 60,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    vm.el.scrollTop = 0
+    onUpdate.mockClear()
+    vm.updateVisibleItems(false)
+
+    const baselineRange = onUpdate.mock.lastCall!.slice(0, 4)
+    const baselineUsedIndices = vm.pool
+      .filter((view: View) => view.nr.used)
+      .map((view: View) => view.nr.index)
+
+    ;(options.items[2] as { size: number }).size = 19
+    await nextTick()
+
+    onUpdate.mockClear()
+    vm.updateVisibleItems(false)
+
+    expect(onUpdate).toHaveBeenCalledWith(...baselineRange)
+    expect(vm.pool
+      .filter((view: View) => view.nr.used)
+      .map((view: View) => view.nr.index))
+      .toEqual(baselineUsedIndices)
+  })
+
   it('keeps fixed-grid secondary axis placement in disableTransform mode', async () => {
     const { vm } = mountHarness({
       items: Array.from({ length: 16 }, (_, id) => ({ id })),
@@ -545,6 +641,40 @@ describe('useRecycleScroller', () => {
     expect(style.left).toBe('40px')
     expect(style.top).toBe('12px')
     expect(style.transform).toBe('none')
+  })
+
+  it('warns once and falls back when flowMode is incompatible with horizontal or grid mode', async () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const horizontalHarness = mountHarness({
+      direction: 'horizontal',
+      flowMode: true,
+    })
+    const gridHarness = mountHarness({
+      items: Array.from({ length: 8 }, (_, id) => ({ id })),
+      itemSize: 10,
+      gridItems: 2,
+      flowMode: true,
+    })
+
+    await nextTick()
+    await nextTick()
+    await horizontalHarness.wrapper.vm.$nextTick()
+    await gridHarness.wrapper.vm.$nextTick()
+
+    horizontalHarness.vm.updateVisibleItems(false)
+    gridHarness.vm.updateVisibleItems(false)
+
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(2)
+    expect(consoleWarnSpy).toHaveBeenNthCalledWith(1, '[vue-recycle-scroller] flowMode only supports vertical lists. Falling back to standard positioning.')
+    expect(consoleWarnSpy).toHaveBeenNthCalledWith(2, '[vue-recycle-scroller] flowMode does not support gridItems. Falling back to standard positioning.')
+    expect(horizontalHarness.vm.getViewStyle(horizontalHarness.vm.pool[0]).transform).toBe(
+      `translateX(${horizontalHarness.vm.pool[0].position}px) translateY(${horizontalHarness.vm.pool[0].offset}px)`,
+    )
+    expect(gridHarness.vm.getViewStyle(gridHarness.vm.pool[0]).transform).toBe(
+      `translateY(${gridHarness.vm.pool[0].position}px) translateX(${gridHarness.vm.pool[0].offset}px)`,
+    )
+
+    consoleWarnSpy.mockRestore()
   })
 
   it('defaults omitted direction to vertical behavior', async () => {

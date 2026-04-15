@@ -147,6 +147,7 @@ As you scroll, most views are simply moved to new positions and receive updated 
 | `buffer` | `200` | Amount of pixels to add to edges of the scrolling visible area to start rendering items further away. |
 | `emitUpdate` | `false` | Emit an `'update'` event each time the virtual scroller content is updated (can impact performance). |
 | `disableTransform` | `false` | Use absolute `top`/`left` positioning instead of CSS transforms for pooled item wrappers. This also keeps fixed-grid cross-axis placement in `left`/`top`. |
+| `flowMode` | `false` | Keep active pooled views in native document flow and use spacer elements before/after them instead of absolute positioning. v1 only supports vertical single-axis lists. `gridItems`, horizontal mode, and `hiddenPosition` fall back to standard positioning. |
 | `updateInterval` | `0` | The interval in ms at which the view will be checked for updates after scrolling. When set to `0`, check happens during the next animation frame. |
 | `listClass` | `''` | Custom classes added to the item list wrapper. |
 | `itemClass` | `''` | Custom classes added to each item. |
@@ -216,9 +217,22 @@ If you keep a template ref to `RecycleScroller` via `useTemplateRef`, the compon
 - `findItemIndex(offset)`
 - `getItemOffset(index)`
 - `getItemSize(index)`
+- `startSpacerSize`
+- `endSpacerSize`
 - `cacheSnapshot`
 - `restoreCache(snapshot)`
 - `updateVisibleItems(itemsChanged, checkPositionDiff?)`
+
+## Flow mode
+
+Use `flowMode` when the surrounding CSS must stay close to native layout, such as block rows or semantic lists. In this mode RecycleScroller keeps active pooled views in DOM order and inserts spacer elements ahead of and after the active window.
+
+`flowMode` is intentionally limited in v1:
+
+- vertical direction only
+- no `gridItems`
+- no horizontal virtualization
+- `hiddenPosition` is ignored because parked pooled views use `display: none`
 
 The optional `options` object for scrolling accepts:
 

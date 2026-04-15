@@ -3,9 +3,10 @@
 import type { MaybeRefOrGetter } from 'vue'
 import type { UseDynamicScrollerOptions } from '../composables/useDynamicScroller'
 import type { UseRecycleScrollerOptions } from '../composables/useRecycleScroller'
+import type { UseTableColumnWidthsOptions } from '../composables/useTableColumnWidths'
 import type { UseWindowScrollerOptions } from '../composables/useWindowScroller'
 import { ref } from 'vue'
-import { useDynamicScroller, useDynamicScrollerItem, useRecycleScroller, useWindowScroller } from '../index'
+import { useDynamicScroller, useDynamicScrollerItem, useRecycleScroller, useTableColumnWidths, useWindowScroller } from '../index'
 
 interface Message {
   id: string
@@ -26,6 +27,7 @@ const messages: Message[] = [
 ]
 
 const scrollerEl = ref<HTMLElement>()
+const tableEl = ref<HTMLTableElement>()
 const functionKeyField = (item: Message, index: number) => `${item.id}:${index}`
 const compositeKeyField = (item: CompositeMessage) => `${item.scopeId}:${item.id}`
 const functionItemSize = (item: Message) => item.size
@@ -214,6 +216,23 @@ dynamicScroller.getItemSize(messages[0])
 dynamicScroller.getViewStyle(dynamicScroller.pool.value[0]!)
 dynamicScrollerWithDefaultDirection.measurementContext.direction.value
 functionKeyDynamicScroller.itemsWithSize.value[0]?.id
+
+const tableColumnWidths = useTableColumnWidths({
+  table: tableEl,
+  dependencies: ['messages'],
+  disabled: false,
+})
+
+tableColumnWidths.columnWidths.value[0]
+tableColumnWidths.tableStyle.value?.tableLayout
+
+function useWrappedTableColumnWidths(options: UseTableColumnWidthsOptions) {
+  return useTableColumnWidths(options)
+}
+
+useWrappedTableColumnWidths({
+  table: tableEl,
+})
 
 function useWrappedDynamicScroller<TItem>(
   options: MaybeRefOrGetter<UseDynamicScrollerOptions<TItem>>,

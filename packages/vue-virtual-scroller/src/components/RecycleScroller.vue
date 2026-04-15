@@ -6,6 +6,7 @@ import { computed, ref, toRef } from 'vue'
 import { useRecycleScroller } from '../composables/useRecycleScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
 import { getFixedItemSize } from '../utils/itemSize'
+import { resolvePooledViewMode } from '../utils/viewStyle'
 import ItemView from './ItemView.vue'
 import ResizeObserver from './ResizeObserver.vue'
 
@@ -28,6 +29,7 @@ const props = withDefaults(defineProps<{
   prerender?: number
   emitUpdate?: boolean
   disableTransform?: boolean
+  flowMode?: boolean
   hiddenPosition?: number
   updateInterval?: number
   skipHover?: boolean
@@ -51,6 +53,7 @@ const props = withDefaults(defineProps<{
   prerender: 0,
   emitUpdate: false,
   disableTransform: false,
+  flowMode: false,
   hiddenPosition: undefined,
   updateInterval: 0,
   skipHover: false,
@@ -112,6 +115,7 @@ const recycleScrollerOptions = computed(() => ({
   prerender: props.prerender,
   emitUpdate: props.emitUpdate,
   disableTransform: props.disableTransform,
+  flowMode: props.flowMode,
   hiddenPosition: props.hiddenPosition,
   updateInterval: props.updateInterval,
   onResize: () => emit('resize'),
@@ -136,6 +140,8 @@ const {
   pool,
   visiblePool,
   totalSize,
+  startSpacerSize,
+  endSpacerSize,
   ready,
   scrollToItem,
   scrollToPosition,
@@ -150,6 +156,23 @@ const {
   handleResize,
   handleVisibilityChange,
 } = recycleScroller
+
+const isFlowMode = computed(() =>
+  resolvePooledViewMode({
+    direction: props.direction,
+    disableTransform: props.disableTransform,
+    flowMode: props.flowMode,
+    gridItems: props.gridItems,
+  }) === 'flow',
+)
+
+const startSpacerStyle = computed(() => ({
+  height: `${startSpacerSize.value}px`,
+}))
+
+const endSpacerStyle = computed(() => ({
+  height: `${endSpacerSize.value}px`,
+}))
 
 function setHoverKey(key: KeyValue) {
   hoverKey.value = key
@@ -177,6 +200,8 @@ const itemWrapperStyle = computed(() => {
 const exposed: RecycleScrollerExposed<TItem, KeyValue> = {
   el,
   visiblePool,
+  startSpacerSize,
+  endSpacerSize,
   scrollToItem,
   scrollToPosition,
   getScroll,
@@ -198,6 +223,7 @@ defineExpose(exposed)
     class="vue-recycle-scroller"
     :class="{
       'grid-mode': props.gridItems,
+      'flow-mode': isFlowMode,
       ready,
       'page-mode': props.pageMode,
       [`direction-${props.direction}`]: true,
@@ -219,6 +245,14 @@ defineExpose(exposed)
       class="vue-recycle-scroller__item-wrapper"
       :class="props.listClass"
     >
+      <component
+        :is="props.itemTag"
+        v-if="isFlowMode && startSpacerSize > 0"
+        aria-hidden="true"
+        class="vue-recycle-scroller__item-spacer"
+        :style="startSpacerStyle"
+      />
+
       <ItemView
         v-for="view of pool"
         :key="view.nr.id"
@@ -241,6 +275,14 @@ defineExpose(exposed)
           <slot v-bind="slotProps" />
         </template>
       </ItemView>
+
+      <component
+        :is="props.itemTag"
+        v-if="isFlowMode && endSpacerSize > 0"
+        aria-hidden="true"
+        class="vue-recycle-scroller__item-spacer"
+        :style="endSpacerStyle"
+      />
 
       <slot
         v-if="props.items.length === 0"

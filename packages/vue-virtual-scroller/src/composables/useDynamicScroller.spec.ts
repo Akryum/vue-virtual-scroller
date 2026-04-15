@@ -113,15 +113,19 @@ function mountHarness(
     afterEl,
     keyField = 'id',
     direction = 'vertical' as ScrollDirection,
+    buffer = 200,
     shift = false,
     disableTransform = false,
+    flowMode = false,
   }: {
     beforeEl?: HTMLElement
     afterEl?: HTMLElement
     keyField?: string | ((item: any, index: number) => string | number)
     direction?: ScrollDirection
+    buffer?: number
     shift?: boolean
     disableTransform?: boolean
+    flowMode?: boolean
   } = {},
 ) {
   const onResize = vi.fn()
@@ -134,11 +138,12 @@ function mountHarness(
     keyField,
     direction,
     minItemSize: 20,
-    buffer: 200,
+    buffer,
     emitUpdate: true,
     pageMode: false,
     shift,
     disableTransform,
+    flowMode,
     prerender: 0,
     updateInterval: 0,
   })
@@ -162,6 +167,7 @@ function mountHarness(
         pageMode: options.pageMode,
         shift: options.shift,
         disableTransform: options.disableTransform,
+        flowMode: options.flowMode,
         prerender: options.prerender,
         updateInterval: options.updateInterval,
         onResize,
@@ -723,6 +729,108 @@ describe('useDynamicScroller', () => {
     expect(el.style.transform).toBe('')
     expect(el.style.willChange).toBe('unset')
     wrapper.unmount()
+  })
+
+  it('uses native flow styles for generic elements when flowMode is enabled', async () => {
+    const { wrapper, vm } = mountHarness([{ id: 'row-1', text: 'Alpha' }], {
+      flowMode: true,
+    })
+    const el = createMeasuredElement(44)
+    const view = createDynamicView({ id: 'row-1', text: 'Alpha' }, { index: 2 })
+
+    vm.vDynamicScrollerItem.mounted(el, {
+      value: {
+        view,
+      },
+    } as any)
+
+    expect(vm.getViewStyle(view).position).toBeUndefined()
+    expect(el.style.position).toBe('')
+    expect(el.style.top).toBe('')
+    expect(el.style.left).toBe('')
+    expect(el.style.transform).toBe('')
+    expect(el.style.display).toBe('')
+
+    view.nr.used = false
+    touchViewStyle(view)
+    await nextTick()
+
+    expect(el.style.display).toBe('none')
+    expect(el.style.pointerEvents).toBe('none')
+
+    vm.vDynamicScrollerItem.unmounted(el)
+    expect(el.style.display).toBe('')
+    wrapper.unmount()
+  })
+
+  it('keeps table rows in native layout when flowMode is enabled', async () => {
+    const { wrapper, vm } = mountHarness([{ id: 'row-1', text: 'Alpha' }], {
+      flowMode: true,
+    })
+    const el = document.createElement('tr')
+
+    Object.defineProperty(el, 'offsetHeight', {
+      configurable: true,
+      get() {
+        return 44
+      },
+    })
+
+    Object.defineProperty(el, 'offsetWidth', {
+      configurable: true,
+      get() {
+        return 240
+      },
+    })
+
+    vm.vDynamicScrollerItem.mounted(el, {
+      value: {
+        view: createDynamicView({ id: 'row-1', text: 'Alpha' }, { index: 2 }),
+      },
+    } as any)
+
+    expect(el.style.position).toBe('')
+    expect(el.style.top).toBe('')
+    expect(el.style.left).toBe('')
+    expect(el.style.transform).toBe('')
+    expect(el.style.display).toBe('')
+    wrapper.unmount()
+  })
+
+  it('does not oscillate idle flow-mode updates when a boundary row is remeasured', async () => {
+    const items = Array.from({ length: 6 }, (_, index) => ({ id: `row-${index}` }))
+    const { vm, el, onUpdate } = mountHarness(items, {
+      flowMode: true,
+      buffer: 0,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    for (const item of items) {
+      vm.vscrollData.sizes[item.id] = 20
+    }
+    await nextTick()
+    await nextTick()
+
+    el.value.scrollTop = 0
+    onUpdate.mockClear()
+    vm.updateVisibleItems(false)
+
+    const baselineRange = onUpdate.mock.lastCall!.slice(0, 4)
+
+    onUpdate.mockClear()
+    vm.vscrollData.sizes['row-2'] = 19
+    await nextTick()
+    await nextTick()
+
+    vm.vscrollData.sizes['row-2'] = 20
+    await nextTick()
+    await nextTick()
+
+    const updatedRanges = onUpdate.mock.calls.map(call => call.slice(0, 4))
+    expect(updatedRanges.length).toBeGreaterThan(0)
+    expect(updatedRanges).toEqual(updatedRanges.map(() => baselineRange))
   })
 
   it('handles recycled DOM rebinding without losing item sizing', async () => {
