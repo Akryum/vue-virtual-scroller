@@ -32,6 +32,7 @@ const functionItemSize = (item: Message) => item.size
 
 const recycleScroller = useRecycleScroller<Message>({
   items: messages,
+  el: scrollerEl,
   keyField: 'id',
   direction: 'vertical',
   itemSize: null,
@@ -89,8 +90,28 @@ const functionKeyRecycleScroller = useRecycleScroller<Message, typeof functionKe
 
 functionKeyRecycleScroller.pool.value[0]?.nr.key
 
+const nestedRefRecycleScroller = useRecycleScroller<Message>({
+  items: ref(messages),
+  el: scrollerEl,
+  keyField: 'id',
+  direction: 'vertical',
+  itemSize: 32,
+  minItemSize: 32,
+  typeField: 'type',
+  buffer: 200,
+  pageMode: false,
+  shift: false,
+  disableTransform: true,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+})
+
+nestedRefRecycleScroller.pool.value[0]?.item.text
+
 const functionItemSizeRecycleScroller = useRecycleScroller<Message>({
   items: messages,
+  el: scrollerEl,
   keyField: 'id',
   direction: 'vertical',
   itemSize: functionItemSize,
@@ -276,6 +297,7 @@ useWrappedWindowScroller<CompositeMessage>(() => ({
 
 const windowScroller = useWindowScroller<Message>({
   items: messages,
+  el: scrollerEl,
   keyField: 'id',
   direction: 'vertical',
   itemSize: 32,
@@ -292,6 +314,7 @@ const windowScroller = useWindowScroller<Message>({
 
 const windowScrollerWithDefaultDirection = useWindowScroller<Message>({
   items: messages,
+  el: scrollerEl,
   keyField: 'id',
   itemSize: 32,
   minItemSize: 32,
@@ -306,6 +329,7 @@ const windowScrollerWithDefaultDirection = useWindowScroller<Message>({
 
 useWindowScroller<Message>({
   items: messages,
+  el: scrollerEl,
   keyField: 'id',
   direction: 'vertical',
   itemSize: functionItemSize,
@@ -330,7 +354,17 @@ useDynamicScrollerItem<Message>({
   active: true,
   watchData: false,
   emitResize: false,
-}, scrollerEl)
+  el: scrollerEl,
+})
+
+useDynamicScrollerItem<Message>({
+  item: messages[0],
+  active: true,
+  watchData: false,
+  emitResize: false,
+  el: scrollerEl,
+  onResize: id => id,
+})
 
 useDynamicScrollerItem<Message>({
   // @ts-expect-error Dynamic item helpers should reject incompatible item shapes.

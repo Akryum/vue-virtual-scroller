@@ -1,7 +1,7 @@
-import type { MaybeRef, MaybeRefOrGetter } from 'vue'
+import type { MaybeRefOrGetter } from 'vue'
 import type { DefaultKeyField, ItemKey, KeyFieldValue, ValidKeyField } from '../types'
+import type { ScrollerCallbacks } from './scrollerOptions'
 import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './useRecycleScroller'
-import { computed, toValue } from 'vue'
 import { useRecycleScroller } from './useRecycleScroller'
 
 export interface UseWindowScrollerOptions<TItem = unknown, TSizeField extends string = 'size'> extends Omit<UseRecycleScrollerOptions<TItem, TSizeField>, 'pageMode'> {
@@ -10,7 +10,9 @@ export interface UseWindowScrollerOptions<TItem = unknown, TSizeField extends st
 
 export interface UseWindowScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>> extends UseRecycleScrollerReturn<TItem, TKey> {}
 
-type InferredWindowScrollerItem<TOptions extends UseWindowScrollerOptions<any, any>> = TOptions['items'][number]
+type ResolvedWindowScrollerItems<TOptions extends UseWindowScrollerOptions<any, any>>
+  = TOptions['items'] extends MaybeRefOrGetter<infer TItems extends any[]> ? TItems : never
+type InferredWindowScrollerItem<TOptions extends UseWindowScrollerOptions<any, any>> = ResolvedWindowScrollerItems<TOptions>[number]
 type InferredWindowScrollerKeyField<TOptions extends UseWindowScrollerOptions<any, any>>
   = Extract<TOptions['keyField'], KeyFieldValue<InferredWindowScrollerItem<TOptions>>>
 
@@ -18,27 +20,27 @@ export function useWindowScroller<TItem, TKeyField extends KeyFieldValue<TItem> 
   options: MaybeRefOrGetter<UseWindowScrollerOptions<TItem, TSizeField> & {
     keyField: ValidKeyField<TItem, TKeyField>
   }>,
-  el: MaybeRef<HTMLElement | undefined>,
-  before?: MaybeRef<HTMLElement | undefined>,
-  after?: MaybeRef<HTMLElement | undefined>,
-  callbacks?: Parameters<typeof useRecycleScroller>[4],
+  el?: MaybeRefOrGetter<HTMLElement | undefined>,
+  before?: MaybeRefOrGetter<HTMLElement | undefined>,
+  after?: MaybeRefOrGetter<HTMLElement | undefined>,
+  callbacks?: ScrollerCallbacks,
 ): UseWindowScrollerReturn<TItem, ItemKey<TItem, TKeyField>>
 export function useWindowScroller<TOptions extends UseWindowScrollerOptions<any, any>>(
   options: MaybeRefOrGetter<TOptions>,
-  el: MaybeRef<HTMLElement | undefined>,
-  before?: MaybeRef<HTMLElement | undefined>,
-  after?: MaybeRef<HTMLElement | undefined>,
-  callbacks?: Parameters<typeof useRecycleScroller>[4],
+  el?: MaybeRefOrGetter<HTMLElement | undefined>,
+  before?: MaybeRefOrGetter<HTMLElement | undefined>,
+  after?: MaybeRefOrGetter<HTMLElement | undefined>,
+  callbacks?: ScrollerCallbacks,
 ): UseWindowScrollerReturn<
   InferredWindowScrollerItem<TOptions>,
   ItemKey<InferredWindowScrollerItem<TOptions>, InferredWindowScrollerKeyField<TOptions>>
 >
 export function useWindowScroller<TOptions extends UseWindowScrollerOptions<any, any>>(
   options: MaybeRefOrGetter<TOptions>,
-  el: MaybeRef<HTMLElement | undefined>,
-  before?: MaybeRef<HTMLElement | undefined>,
-  after?: MaybeRef<HTMLElement | undefined>,
-  callbacks?: Parameters<typeof useRecycleScroller>[4],
+  el?: MaybeRefOrGetter<HTMLElement | undefined>,
+  before?: MaybeRefOrGetter<HTMLElement | undefined>,
+  after?: MaybeRefOrGetter<HTMLElement | undefined>,
+  callbacks?: ScrollerCallbacks,
 ): UseWindowScrollerReturn<
   InferredWindowScrollerItem<TOptions>,
   ItemKey<InferredWindowScrollerItem<TOptions>, InferredWindowScrollerKeyField<TOptions>>
@@ -46,8 +48,14 @@ export function useWindowScroller<TOptions extends UseWindowScrollerOptions<any,
   type TItem = InferredWindowScrollerItem<TOptions>
   type TKeyField = InferredWindowScrollerKeyField<TOptions>
 
-  return useRecycleScroller(computed(() => ({
-    ...toValue(options),
-    pageMode: true,
-  })), el, before, after, callbacks) as UseWindowScrollerReturn<TItem, ItemKey<TItem, TKeyField>>
+  return (useRecycleScroller as any)(
+    options,
+    el,
+    before,
+    after,
+    callbacks,
+    {
+      pageMode: true,
+    },
+  ) as UseWindowScrollerReturn<TItem, ItemKey<TItem, TKeyField>>
 }

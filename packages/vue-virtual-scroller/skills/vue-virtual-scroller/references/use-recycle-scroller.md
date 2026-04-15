@@ -14,9 +14,9 @@ Generated from the package's public headless virtualization documentation at ski
 
 ## Required inputs
 
-- A scroller element ref
-- An options object with the documented core settings:
+- One options object with the documented core settings:
   - `items`
+  - `el`
   - `keyField`
   - `direction` (optional, defaults to `'vertical'`)
   - `itemSize`
@@ -81,13 +81,14 @@ Minimal fixed-size setup:
 
 ```vue
 <script setup lang="ts">
-import { computed, useTemplateRef } from 'vue'
+import { useTemplateRef } from 'vue'
 import { useRecycleScroller } from 'vue-virtual-scroller'
 
 const scrollerEl = useTemplateRef<HTMLElement>('scrollerEl')
 
-const { pool, totalSize, getViewStyle } = useRecycleScroller(computed(() => ({
-  items: rows.value,
+const { pool, totalSize, getViewStyle } = useRecycleScroller({
+  items: rows,
+  el: scrollerEl,
   keyField: 'id',
   itemSize: 40,
   minItemSize: null,
@@ -98,7 +99,7 @@ const { pool, totalSize, getViewStyle } = useRecycleScroller(computed(() => ({
   prerender: 0,
   emitUpdate: false,
   updateInterval: 0,
-})), scrollerEl)
+})
 </script>
 ```
 

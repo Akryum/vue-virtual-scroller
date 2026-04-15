@@ -1,6 +1,6 @@
 import type { UseWindowScrollerOptions } from './useWindowScroller'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref, toValue } from 'vue'
+import { ref } from 'vue'
 import { useWindowScroller } from './useWindowScroller'
 
 const mocks = vi.hoisted(() => {
@@ -20,7 +20,7 @@ describe('useWindowScroller', () => {
     mocks.useRecycleScroller.mockReset()
   })
 
-  it('forces page mode and forwards the remaining inputs unchanged', () => {
+  it('forces page mode and forwards remaining inputs unchanged', () => {
     const expected = {
       getViewStyle: vi.fn(),
       pool: [],
@@ -42,9 +42,9 @@ describe('useWindowScroller', () => {
       emitUpdate: false,
       updateInterval: 0,
     }
-    const el = ref(document.createElement('div'))
-    const before = ref(document.createElement('div'))
-    const after = ref(document.createElement('div'))
+    const el = ref({} as HTMLElement)
+    const before = ref({} as HTMLElement)
+    const after = ref({} as HTMLElement)
     const callbacks = {
       onResize: vi.fn(),
     }
@@ -55,19 +55,19 @@ describe('useWindowScroller', () => {
     expect(result).toBe(expected)
     expect(mocks.useRecycleScroller).toHaveBeenCalledTimes(1)
 
-    const [forwardedOptions, forwardedEl, forwardedBefore, forwardedAfter, forwardedCallbacks] = mocks.useRecycleScroller.mock.calls[0]
-    expect(toValue(forwardedOptions)).toEqual({
-      ...options,
-      pageMode: true,
-    })
+    const [forwardedOptions, forwardedEl, forwardedBefore, forwardedAfter, forwardedCallbacks, forwardedOverrides] = mocks.useRecycleScroller.mock.calls[0]
+    expect(forwardedOptions).toBe(options)
     expect(forwardedEl).toBe(el)
     expect(forwardedBefore).toBe(before)
     expect(forwardedAfter).toBe(after)
     expect(forwardedCallbacks).toBe(callbacks)
+    expect(forwardedOverrides).toEqual({
+      pageMode: true,
+    })
     expect(result.getViewStyle).toBe(expected.getViewStyle)
   })
 
-  it('allows direction to be omitted and still forwards page mode', () => {
+  it('supports single-object options and still forces page mode', () => {
     const options: UseWindowScrollerOptions = {
       items: [{ id: 1 }],
       keyField: 'id',
@@ -81,16 +81,22 @@ describe('useWindowScroller', () => {
       prerender: 0,
       emitUpdate: false,
       updateInterval: 0,
+      el: ref({} as HTMLElement),
+      onVisible: vi.fn(),
     }
     mocks.useRecycleScroller.mockReturnValue({})
 
-    useWindowScroller(options, ref(document.createElement('div')))
+    useWindowScroller(options)
 
-    const [forwardedOptions] = mocks.useRecycleScroller.mock.calls[0]
-    expect(toValue(forwardedOptions)).toEqual({
-      ...options,
+    const [forwardedOptions, forwardedEl, forwardedBefore, forwardedAfter, forwardedCallbacks, forwardedOverrides] = mocks.useRecycleScroller.mock.calls[0]
+    expect(forwardedOptions).toBe(options)
+    expect(forwardedEl).toBeUndefined()
+    expect(forwardedBefore).toBeUndefined()
+    expect(forwardedAfter).toBeUndefined()
+    expect(forwardedCallbacks).toBeUndefined()
+    expect(forwardedOverrides).toEqual({
       pageMode: true,
     })
-    expect(toValue(forwardedOptions).direction).toBeUndefined()
+    expect(forwardedOptions.direction).toBeUndefined()
   })
 })

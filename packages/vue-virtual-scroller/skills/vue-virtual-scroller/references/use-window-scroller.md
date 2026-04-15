@@ -15,8 +15,8 @@ Generated from the package's public headless window-scrolling documentation at s
 ## Required inputs
 
 - `options`
-- `el` for the root element in page flow
-- optional `before` and `after` refs when surrounding content should be included in offset math
+- `options.el` for the root element in page flow
+- optional `options.before` and `options.after` refs when surrounding content should be included in offset math
 
 Common options:
 
@@ -83,4 +83,20 @@ Headless page-scrolling list:
     </div>
   </div>
 </section>
+```
+
+```ts
+const state = useWindowScroller({
+  items: rows,
+  el: rootEl,
+  keyField: 'id',
+  itemSize: 48,
+  minItemSize: null,
+  sizeField: 'size',
+  typeField: 'type',
+  buffer: 200,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+})
 ```

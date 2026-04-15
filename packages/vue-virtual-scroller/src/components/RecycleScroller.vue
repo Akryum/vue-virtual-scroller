@@ -1,7 +1,8 @@
 <script setup lang="ts" generic="TItem">
+import type { ScrollerCallbacks } from '../composables/scrollerOptions'
 import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from '../composables/useRecycleScroller'
 import type { CacheSnapshot, ClassValue, ItemSizeValue, KeyFieldValue, KeyValue, RecycleScrollerExposed, RecycleScrollerSlotProps, ScrollDirection } from '../types'
-import { computed, ref } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { useRecycleScroller } from '../composables/useRecycleScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
 import { getFixedItemSize } from '../utils/itemSize'
@@ -83,25 +84,52 @@ const after = ref<HTMLElement>()
 // Hover state (UI-specific, not in composable)
 const hoverKey = ref<KeyValue | null>(null)
 
-const recycleScroller = useRecycleScroller(
-  props as unknown as UseRecycleScrollerOptions<TItem, 'size'>,
+/**
+ * Keep the items array as a ref to ensure reactivity, while allowing the useRecycleScroller composable to work with a stable reference to it. This avoids unnecessary recomputations in the composable when the items array is replaced.
+ */
+const items = toRef(props, 'items')
+
+/**
+ * Keep cold props reactive while passing hot refs like `items` and `el` through stable handles.
+ */
+const recycleScrollerOptions = computed(() => ({
+  items,
   el,
   before,
   after,
-  {
-    onResize: () => emit('resize'),
-    onVisible: () => emit('visible'),
-    onHidden: () => emit('hidden'),
-    onUpdate: (startIndex, endIndex, visibleStartIndex, visibleEndIndex) => {
-      emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex)
-      if (visibleStartIndex <= 0) {
-        emit('scrollStart')
-      }
-      if (visibleEndIndex >= props.items.length - 1) {
-        emit('scrollEnd')
-      }
-    },
+  keyField: props.keyField,
+  direction: props.direction,
+  itemSize: props.itemSize,
+  gridItems: props.gridItems,
+  itemSecondarySize: props.itemSecondarySize,
+  minItemSize: props.minItemSize,
+  sizeField: props.sizeField,
+  typeField: props.typeField,
+  buffer: props.buffer,
+  pageMode: props.pageMode,
+  shift: props.shift,
+  cache: props.cache,
+  prerender: props.prerender,
+  emitUpdate: props.emitUpdate,
+  disableTransform: props.disableTransform,
+  hiddenPosition: props.hiddenPosition,
+  updateInterval: props.updateInterval,
+  onResize: () => emit('resize'),
+  onVisible: () => emit('visible'),
+  onHidden: () => emit('hidden'),
+  onUpdate: (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => {
+    emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex)
+    if (visibleStartIndex <= 0) {
+      emit('scrollStart')
+    }
+    if (visibleEndIndex >= props.items.length - 1) {
+      emit('scrollEnd')
+    }
   },
+}) as UseRecycleScrollerOptions<TItem, 'size'> & ScrollerCallbacks)
+
+const recycleScroller = useRecycleScroller(
+  recycleScrollerOptions,
 ) as unknown as UseRecycleScrollerReturn<TItem, KeyValue>
 
 const {

@@ -29,7 +29,7 @@ defineSlots<{
 
 const el = ref<HTMLElement>()
 
-useDynamicScrollerItem<TItem>(
+useDynamicScrollerItem(
   props,
   el,
   {

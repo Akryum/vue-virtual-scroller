@@ -103,6 +103,69 @@ function mountHarness(overrides: Partial<{
   }
 }
 
+function mountObjectHarness(initialItems: Array<Record<string, unknown>>) {
+  const onUpdate = vi.fn()
+  const items = ref(initialItems)
+
+  const Harness = defineComponent({
+    setup() {
+      const el = ref<HTMLElement>()
+      const state = useRecycleScroller({
+        items,
+        el,
+        keyField: 'id',
+        direction: 'vertical',
+        itemSize: 10,
+        minItemSize: null,
+        sizeField: 'size',
+        typeField: 'type',
+        buffer: 0,
+        pageMode: false,
+        shift: false,
+        prerender: 0,
+        emitUpdate: true,
+        disableTransform: false,
+        hiddenPosition: undefined,
+        updateInterval: 0,
+        onUpdate,
+      })
+
+      return {
+        ...state,
+        el,
+        items,
+      }
+    },
+    template: '<div ref="el" style="height: 100px; overflow-y: auto;" />',
+  })
+
+  const wrapper = mount(Harness)
+  const el = (wrapper.vm as any).el as HTMLElement
+  Object.defineProperty(el, 'clientHeight', {
+    configurable: true,
+    get: () => 100,
+  })
+  Object.defineProperty(el, 'clientWidth', {
+    configurable: true,
+    get: () => 100,
+  })
+  el.scrollTo = vi.fn(({ top, left }: ScrollToOptions & { top?: number, left?: number }) => {
+    if (typeof top === 'number') {
+      el.scrollTop = top
+    }
+    if (typeof left === 'number') {
+      el.scrollLeft = left
+    }
+  }) as any
+
+  return {
+    wrapper,
+    vm: wrapper.vm as any,
+    items,
+    onUpdate,
+  }
+}
+
 describe('useRecycleScroller', () => {
   it('does not refresh when visible views remain contiguous after sorting', async () => {
     const { vm, onUpdate } = mountHarness()
@@ -158,6 +221,26 @@ describe('useRecycleScroller', () => {
     vm.el.scrollTop = 20
     vm.scrollToItem(2, { align: 'nearest' })
     expect(vm.el.scrollTop).toBe(20)
+  })
+
+  it('supports single-object options with nested items and el refs', async () => {
+    const { vm, items, onUpdate } = mountObjectHarness([
+      { id: 1 },
+      { id: 2 },
+      { id: 3 },
+    ])
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => view.nr.index)).toEqual([0, 1, 2])
+
+    onUpdate.mockClear()
+    items.value = [{ id: 4 }, { id: 5 }]
+    await nextTick()
+
+    expect(onUpdate).toHaveBeenCalledTimes(1)
+    expect(vm.visiblePool.slice(0, 2).map((view: View) => (view.item as { id: number }).id)).toEqual([4, 5])
   })
 
   it('reacts to native scroll events without exposing a public handler', async () => {

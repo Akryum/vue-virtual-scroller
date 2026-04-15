@@ -1,7 +1,7 @@
 import type { CacheSnapshot } from '../types'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, defineComponent, h, nextTick, ref } from 'vue'
+import { computed, defineComponent, h, nextTick, ref, toValue } from 'vue'
 import { getPooledViewStyle } from '../utils/viewStyle'
 import RecycleScroller from './RecycleScroller.vue'
 
@@ -65,8 +65,9 @@ describe('recycleScroller', () => {
       sizes: [20],
     }
 
-    mocks.useRecycleScroller.mockImplementation((_options, _el, _before, _after, callbacks) => {
-      const fixedItemSize = typeof _options.itemSize === 'number' ? _options.itemSize : null
+    mocks.useRecycleScroller.mockImplementation((_options) => {
+      const resolvedOptions = toValue(_options)
+      const fixedItemSize = typeof resolvedOptions.itemSize === 'number' ? resolvedOptions.itemSize : null
       return {
         pool: ref([{
           item: { id: 'a', label: 'Alpha' },
@@ -91,11 +92,11 @@ describe('recycleScroller', () => {
         getItemOffset: (index: number) => mocks.getItemOffset(index),
         getItemSize: (index: number) => mocks.getItemSize(index),
         getViewStyle: (view: any) => getPooledViewStyle(view, {
-          direction: _options.direction,
-          disableTransform: _options.disableTransform,
+          direction: resolvedOptions.direction,
+          disableTransform: resolvedOptions.disableTransform,
           itemSize: fixedItemSize,
-          gridItems: _options.gridItems,
-          itemSecondarySize: _options.itemSecondarySize,
+          gridItems: resolvedOptions.gridItems,
+          itemSecondarySize: resolvedOptions.itemSecondarySize,
         }),
         cacheSnapshot: computed(() => cacheSnapshot),
         restoreCache: (snapshot: CacheSnapshot | null | undefined) => mocks.restoreCache(snapshot),
@@ -103,14 +104,14 @@ describe('recycleScroller', () => {
           mocks.updateVisibleItems(itemsChanged, checkPositionDiff),
         handleResize: () => {
           mocks.handleResize()
-          callbacks?.onResize?.()
+          resolvedOptions.onResize?.()
         },
         handleVisibilityChange: (isVisible: boolean, entry: IntersectionObserverEntry) => {
           mocks.handleVisibilityChange(isVisible, entry)
           if (isVisible)
-            callbacks?.onVisible?.()
+            resolvedOptions.onVisible?.()
           else
-            callbacks?.onHidden?.()
+            resolvedOptions.onHidden?.()
         },
         sortViews: vi.fn(),
       }
@@ -237,15 +238,14 @@ describe('recycleScroller', () => {
     })
 
     const [optionsArg] = mocks.useRecycleScroller.mock.calls[0]
-    expect(optionsArg.direction).toBe('horizontal')
-    expect(optionsArg.keyField).toBe(keyField)
-    expect(optionsArg.listTag).toBe('ul')
-    expect(optionsArg.itemTag).toBe('li')
-    expect(optionsArg.itemSize).toBe(30)
-    expect(optionsArg.buffer).toBe(150)
-    expect(optionsArg.shift).toBe(true)
-    expect(optionsArg.cache).toStrictEqual(cache)
-    expect(optionsArg.hiddenPosition).toBe(-321)
+    const resolvedOptions = toValue(optionsArg)
+    expect(resolvedOptions.direction).toBe('horizontal')
+    expect(resolvedOptions.keyField).toBe(keyField)
+    expect(resolvedOptions.itemSize).toBe(30)
+    expect(resolvedOptions.buffer).toBe(150)
+    expect(resolvedOptions.shift).toBe(true)
+    expect(resolvedOptions.cache).toStrictEqual(cache)
+    expect(resolvedOptions.hiddenPosition).toBe(-321)
   })
 
   it('forwards function itemSize without enabling fixed grid sizing', async () => {
@@ -270,7 +270,7 @@ describe('recycleScroller', () => {
     await nextTick()
 
     const [optionsArg] = mocks.useRecycleScroller.mock.calls.at(-1)!
-    expect(optionsArg.itemSize).toBe(itemSize)
+    expect(toValue(optionsArg).itemSize).toBe(itemSize)
 
     const itemWrapper = wrapper.get('.vue-recycle-scroller__item-wrapper').element as HTMLElement
     expect(itemWrapper.style.minWidth).toBe('')

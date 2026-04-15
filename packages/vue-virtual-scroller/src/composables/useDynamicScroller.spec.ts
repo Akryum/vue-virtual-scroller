@@ -196,6 +196,48 @@ function mountHarness(
   }
 }
 
+function mountObjectHarness(initialItems: unknown[]) {
+  const onUpdate = vi.fn()
+  const items = ref(initialItems)
+  const el = ref(createScrollerElement())
+
+  const Harness = defineComponent({
+    setup() {
+      const state = useDynamicScroller({
+        items,
+        keyField: 'id',
+        direction: 'vertical',
+        minItemSize: 20,
+        el,
+        buffer: 200,
+        emitUpdate: true,
+        pageMode: false,
+        shift: false,
+        disableTransform: false,
+        prerender: 0,
+        updateInterval: 0,
+        onUpdate,
+      } as any)
+
+      return {
+        ...state,
+        items,
+        el,
+      }
+    },
+    template: '<div />',
+  })
+
+  const wrapper = mount(Harness)
+  return {
+    wrapper,
+    vm: wrapper.vm as any,
+    items,
+    onUpdate,
+    el,
+  }
+}
+
 describe('useDynamicScroller', () => {
   let originalResizeObserver: typeof globalThis.ResizeObserver
 
@@ -245,6 +287,29 @@ describe('useDynamicScroller', () => {
     await nextTick()
 
     expect(vm.getItemSize(items[0])).toBe(42)
+  })
+
+  it('supports single-object options with nested items and el refs', async () => {
+    const { vm, items, onUpdate } = mountObjectHarness([
+      { id: 'a', label: 'Alpha' },
+      { id: 'b', label: 'Beta' },
+      { id: 'c', label: 'Gamma' },
+    ])
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.itemsWithSize.map((item: ItemWithSize) => item.id)).toEqual(['a', 'b', 'c'])
+
+    onUpdate.mockClear()
+    items.value = [
+      { id: 'd', label: 'Delta' },
+      { id: 'e', label: 'Epsilon' },
+    ]
+    await nextTick()
+
+    expect(onUpdate).toHaveBeenCalled()
+    expect(vm.itemsWithSize.map((item: ItemWithSize) => item.id)).toEqual(['d', 'e'])
   })
 
   it('defaults omitted direction to vertical behavior', async () => {

@@ -1,7 +1,8 @@
 <script setup lang="ts" generic="TItem">
+import type { ScrollerCallbacks } from '../composables/scrollerOptions'
 import type { UseWindowScrollerOptions, UseWindowScrollerReturn } from '../composables/useWindowScroller'
 import type { CacheSnapshot, ClassValue, ItemSizeValue, KeyFieldValue, KeyValue, RecycleScrollerSlotProps, ScrollDirection, WindowScrollerExposed } from '../types'
-import { ref } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { useWindowScroller } from '../composables/useWindowScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
 import ItemView from './ItemView.vue'
@@ -70,19 +71,37 @@ const vObserveVisibility = ObserveVisibility
 const el = ref<HTMLElement>()
 const before = ref<HTMLElement>()
 const after = ref<HTMLElement>()
-
-const windowScroller = useWindowScroller(
-  props as unknown as UseWindowScrollerOptions<TItem, 'size'>,
+const items = toRef(props, 'items')
+const windowScrollerOptions = computed(() => ({
+  items,
   el,
   before,
   after,
-  {
-    onResize: () => emit('resize'),
-    onVisible: () => emit('visible'),
-    onHidden: () => emit('hidden'),
-    onUpdate: (startIndex, endIndex, visibleStartIndex, visibleEndIndex) =>
-      emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex),
-  },
+  keyField: props.keyField,
+  direction: props.direction,
+  itemSize: props.itemSize,
+  gridItems: props.gridItems,
+  itemSecondarySize: props.itemSecondarySize,
+  minItemSize: props.minItemSize,
+  sizeField: props.sizeField,
+  typeField: props.typeField,
+  buffer: props.buffer,
+  shift: props.shift,
+  cache: props.cache,
+  prerender: props.prerender,
+  emitUpdate: props.emitUpdate,
+  disableTransform: props.disableTransform,
+  hiddenPosition: props.hiddenPosition,
+  updateInterval: props.updateInterval,
+  onResize: () => emit('resize'),
+  onVisible: () => emit('visible'),
+  onHidden: () => emit('hidden'),
+  onUpdate: (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) =>
+    emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex),
+}) as UseWindowScrollerOptions<TItem, 'size'> & ScrollerCallbacks)
+
+const windowScroller = useWindowScroller(
+  windowScrollerOptions,
 ) as unknown as UseWindowScrollerReturn<TItem, KeyValue>
 
 const {

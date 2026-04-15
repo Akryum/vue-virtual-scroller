@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, defineComponent, h, ref } from 'vue'
+import { computed, defineComponent, h, ref, toValue } from 'vue'
 import { getPooledViewStyle } from '../utils/viewStyle'
 import WindowScroller from './WindowScroller.vue'
 
@@ -39,8 +39,9 @@ describe('windowScroller', () => {
     mocks.restoreCache.mockReset()
     mocks.restoreCache.mockReturnValue(true)
 
-    mocks.useWindowScroller.mockImplementation((_options, _el, _before, _after, callbacks) => {
-      const fixedItemSize = typeof _options.itemSize === 'number' ? _options.itemSize : null
+    mocks.useWindowScroller.mockImplementation((_options) => {
+      const resolvedOptions = toValue(_options)
+      const fixedItemSize = typeof resolvedOptions.itemSize === 'number' ? resolvedOptions.itemSize : null
       return {
         pool: ref([{
           item: { id: 'a', label: 'Alpha' },
@@ -65,22 +66,22 @@ describe('windowScroller', () => {
         getItemOffset: () => 40,
         getItemSize: () => 20,
         getViewStyle: (view: any) => getPooledViewStyle(view, {
-          direction: _options.direction,
-          disableTransform: _options.disableTransform,
+          direction: resolvedOptions.direction,
+          disableTransform: resolvedOptions.disableTransform,
           itemSize: fixedItemSize,
-          gridItems: _options.gridItems,
-          itemSecondarySize: _options.itemSecondarySize,
+          gridItems: resolvedOptions.gridItems,
+          itemSecondarySize: resolvedOptions.itemSecondarySize,
         }),
         cacheSnapshot: computed(() => ({ keys: ['a'], sizes: [20] })),
         restoreCache: (snapshot: unknown) => mocks.restoreCache(snapshot),
         updateVisibleItems: () => ({ continuous: true }),
-        handleResize: () => callbacks?.onResize?.(),
+        handleResize: () => resolvedOptions.onResize?.(),
         handleVisibilityChange: (isVisible: boolean) => {
           if (isVisible) {
-            callbacks?.onVisible?.()
+            resolvedOptions.onVisible?.()
           }
           else {
-            callbacks?.onHidden?.()
+            resolvedOptions.onHidden?.()
           }
         },
         sortViews: vi.fn(),
@@ -125,9 +126,10 @@ describe('windowScroller', () => {
     expect(vm.restoreCache(vm.cacheSnapshot)).toBe(true)
 
     const [optionsArg] = mocks.useWindowScroller.mock.calls[0]
-    expect(optionsArg.shift).toBe(true)
-    expect(optionsArg.cache).toStrictEqual(cache)
-    expect(optionsArg.hiddenPosition).toBe(-456)
+    const resolvedOptions = toValue(optionsArg)
+    expect(resolvedOptions.shift).toBe(true)
+    expect(resolvedOptions.cache).toStrictEqual(cache)
+    expect(resolvedOptions.hiddenPosition).toBe(-456)
 
     const itemView = wrapper.get('.vue-recycle-scroller__item-view').element as HTMLElement
     expect(itemView.style.transform).toBe('translateY(40px) translateX(12px)')
@@ -178,6 +180,6 @@ describe('windowScroller', () => {
     })
 
     const [optionsArg] = mocks.useWindowScroller.mock.calls.at(-1)!
-    expect(optionsArg.itemSize).toBe(itemSize)
+    expect(toValue(optionsArg).itemSize).toBe(itemSize)
   })
 })

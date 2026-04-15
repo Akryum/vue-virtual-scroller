@@ -20,6 +20,8 @@ Generated from the package's public headless dynamic-sizing documentation at ski
 - `minItemSize`
 - `el` for the scroll container
 
+`items`, `el`, `before`, and `after` can be refs/getters directly inside the single options object.
+
 Recommended dynamic inputs:
 
 - `sizeDependencies` through `vDynamicScrollerItem`
