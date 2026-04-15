@@ -7,6 +7,8 @@ export type ScrollAlign = 'start' | 'center' | 'end' | 'nearest'
 export type KeyValue = string | number
 export type KeyFieldResolver<TItem = unknown> = (item: TItem, index: number) => KeyValue
 export type KeyFieldValue<TItem = unknown> = string | KeyFieldResolver<TItem>
+export type ItemSizeResolver<TItem = unknown> = (item: TItem, index: number) => number
+export type ItemSizeValue<TItem = unknown> = number | null | ItemSizeResolver<TItem>
 
 export type StringKeyOf<T> = Extract<keyof T, string>
 

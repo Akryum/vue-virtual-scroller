@@ -23,7 +23,7 @@ function mountHarness(overrides: Partial<{
   items: Array<Record<string, unknown>>
   keyField: string | ((item: Record<string, unknown>, index: number) => string | number)
   direction: 'vertical' | 'horizontal'
-  itemSize: number | null
+  itemSize: number | null | ((item: Record<string, unknown>, index: number) => number)
   gridItems: number | undefined
   itemSecondarySize: number | undefined
   minItemSize: number | null
@@ -296,6 +296,76 @@ describe('useRecycleScroller', () => {
 
     expect(vm.el.scrollTop).toBe(30)
     expect(vm.restoreCache(vm.cacheSnapshot)).toBe(true)
+  })
+
+  it('supports function itemSize for variable-size math and scrolling', async () => {
+    const itemSize = (item: Record<string, unknown>, index: number) => Number(item.size ?? ((index + 1) * 10))
+    const { vm } = mountHarness({
+      items: [
+        { id: 'a', size: 15 },
+        { id: 'b', size: 25 },
+        { id: 'c', size: 35 },
+        { id: 'd', size: 45 },
+      ],
+      itemSize,
+      minItemSize: 10,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.getItemSize(2)).toBe(35)
+    expect(vm.getItemOffset(2)).toBe(40)
+    expect(vm.findItemIndex(41)).toBe(2)
+
+    vm.scrollToItem(2, { align: 'start' })
+
+    expect(vm.el.scrollTop).toBe(40)
+  })
+
+  it('builds and restores cache snapshots for function itemSize', async () => {
+    const itemSize = (item: Record<string, unknown>) => Number(item.size || 0)
+    const { vm, options } = mountHarness({
+      items: [
+        { id: 'a', size: 15 },
+        { id: 'b', size: 25 },
+      ],
+      itemSize,
+      minItemSize: 10,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const snapshot = vm.cacheSnapshot
+
+    expect(snapshot).toEqual({
+      keys: ['a', 'b'],
+      sizes: [15, 25],
+    })
+
+    options.items = [{ id: 'a' }, { id: 'b' }]
+    await nextTick()
+
+    expect(vm.getItemOffset(1)).toBe(10)
+    expect(vm.restoreCache(snapshot)).toBe(true)
+    await nextTick()
+    expect(vm.getItemOffset(1)).toBe(15)
+  })
+
+  it('rejects grid mode when itemSize is a function getter', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    mountHarness({
+      items: Array.from({ length: 4 }, (_, id) => ({ id, size: 20 })),
+      itemSize: item => Number(item.size || 0),
+      minItemSize: 20,
+      gridItems: 2,
+    })
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[vue-recycle-scroller] You must provide an itemSize when using gridItems')
+
+    consoleErrorSpy.mockRestore()
   })
 
   it('builds transform styles by default', async () => {

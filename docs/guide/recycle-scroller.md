@@ -134,8 +134,8 @@ As you scroll, most views are simply moved to new positions and receive updated 
 |------|---------|-------------|
 | `items` | — | List of items you want to display in the scroller. |
 | `direction` | `'vertical'` | Scrolling direction, either `'vertical'` or `'horizontal'`. |
-| `itemSize` | `null` | Display height (or width in horizontal mode) of the items in pixels used to calculate the scroll size and position. If set to `null`, it will use [variable size mode](#variable-size-mode). |
-| `gridItems` | — | Display that many items on the same line to create a grid. You must set `itemSize` to use this prop (dynamic sizes are not supported). |
+| `itemSize` | `null` | Display height (or width in horizontal mode) of the items in pixels used to calculate the scroll size and position. Accepts a fixed number, `null` for `sizeField`-based [variable size mode](#variable-size-mode), or a resolver function `(item, index) => number`. |
+| `gridItems` | — | Display that many items on the same line to create a grid. You must set `itemSize` to a fixed number to use this prop (dynamic sizes are not supported). |
 | `itemSecondarySize` | — | Size in pixels (width in vertical mode, height in horizontal mode) of the items in the grid when `gridItems` is set. Defaults to `itemSize` if not set. |
 | `minItemSize` | — | Minimum size used if the height (or width in horizontal mode) of an item is unknown. |
 | `sizeField` | `'size'` | Field used to get the item's size in variable size mode. |
@@ -248,11 +248,17 @@ This mode can be performance heavy with a lot of items. Use with caution.
 
 If `itemSize` is omitted or set to `null`, the scroller switches to variable size mode. In that case, each item must expose a numeric field with its size.
 
+You can also pass `itemSize` as a resolver function with the signature `(item, index) => number` when the size is already available in memory but not stored under a single field name.
+
 ::: warning
 You still need to set the size of the items with CSS correctly (with classes for example).
 :::
 
-Use the `sizeField` prop, which defaults to `'size'`, to choose the field that stores that value.
+Use the `sizeField` prop, which defaults to `'size'`, to choose the field that stores that value when `itemSize` is `null`.
+
+`gridItems` still requires a fixed numeric `itemSize`. Function-based item sizes are not supported in grid mode.
+
+See the dedicated [Function `itemSize` demo](../demos/function-item-size) for a live example that derives row heights from item content and UI state.
 
 Example:
 

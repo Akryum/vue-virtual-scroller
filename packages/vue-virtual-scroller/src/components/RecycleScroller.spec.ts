@@ -68,6 +68,7 @@ describe('recycleScroller', () => {
     }
 
     mocks.useRecycleScroller.mockImplementation((_options, _el, _before, _after, callbacks) => {
+      const fixedItemSize = typeof _options.itemSize === 'number' ? _options.itemSize : null
       return {
         pool: ref([{
           item: { id: 'a', label: 'Alpha' },
@@ -94,7 +95,7 @@ describe('recycleScroller', () => {
         getViewStyle: (view: any) => getPooledViewStyle(view, {
           direction: _options.direction,
           disableTransform: _options.disableTransform,
-          itemSize: _options.itemSize,
+          itemSize: fixedItemSize,
           gridItems: _options.gridItems,
           itemSecondarySize: _options.itemSecondarySize,
         }),
@@ -250,6 +251,38 @@ describe('recycleScroller', () => {
     expect(optionsArg.shift).toBe(true)
     expect(optionsArg.cache).toStrictEqual(cache)
     expect(optionsArg.hiddenPosition).toBe(-321)
+  })
+
+  it('forwards function itemSize without enabling fixed grid sizing', async () => {
+    const itemSize = (item: unknown) => (item as { size: number }).size
+    const wrapper = mount(RecycleScroller, {
+      props: {
+        items: [{ id: 'a', size: 30 }],
+        itemSize,
+        gridItems: 2,
+        itemSecondarySize: 40,
+      },
+      slots: {
+        default: ({ item }: any) => h('div', { class: 'row' }, item.id),
+      },
+      global: {
+        stubs: {
+          ResizeObserver: ResizeObserverStub,
+        },
+      },
+    })
+
+    await nextTick()
+
+    const [optionsArg] = mocks.useRecycleScroller.mock.calls.at(-1)!
+    expect(optionsArg.itemSize).toBe(itemSize)
+
+    const itemWrapper = wrapper.get('.vue-recycle-scroller__item-wrapper').element as HTMLElement
+    expect(itemWrapper.style.minWidth).toBe('')
+
+    const itemView = wrapper.get('.vue-recycle-scroller__item-view').element as HTMLElement
+    expect(itemView.style.width).toBe('')
+    expect(itemView.style.height).toBe('')
   })
 
   it('uses top and left positioning when disableTransform is enabled', async () => {

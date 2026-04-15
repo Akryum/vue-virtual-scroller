@@ -40,7 +40,7 @@ const windowScroller = useWindowScroller<Row>({
 windowScroller.pool.value[0]?.item.label
 ```
 
-For object items, `keyField` follows the same rules as `useRecycleScroller`: use a string property name for compile-time field validation, or pass a resolver function with the signature `(item, index) => string | number` for derived keys. Variable-size `sizeField` keeps the same compile-time checks as `useRecycleScroller`.
+For object items, `keyField` follows the same rules as `useRecycleScroller`: use a string property name for compile-time field validation, or pass a resolver function with the signature `(item, index) => string | number` for derived keys. `itemSize` also supports a resolver function `(item, index) => number` for variable-size lists. Variable-size `sizeField` keeps the same compile-time checks as `useRecycleScroller` when `itemSize` is `null`.
 
 ## Required inputs
 
@@ -67,6 +67,8 @@ Common options:
 - `prerender`
 - `emitUpdate`
 - `updateInterval`
+
+`gridItems` still requires a numeric fixed `itemSize`. Function-based sizes are not supported in grid mode.
 
 ## Return values you will use most
 

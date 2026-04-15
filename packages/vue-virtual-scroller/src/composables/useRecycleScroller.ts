@@ -1,5 +1,5 @@
 import type { ComputedRef, CSSProperties, MaybeRef, MaybeRefOrGetter, Ref } from 'vue'
-import type { CacheSnapshot, ItemKey, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
+import type { CacheSnapshot, ItemKey, ItemSizeValue, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
 import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
 import config from '../config'
 import { buildCacheSnapshot, findPrependOffset, getAlignedScrollOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
@@ -7,13 +7,14 @@ import { resolveItemKey } from '../engine/keyField'
 import { getViewportSize, normalizeOffset, scrollElementTo } from '../engine/scroll'
 import { getScrollParent } from '../scrollparent'
 import { supportsPassive } from '../utils'
+import { getFixedItemSize, resolveSnapshotItemSize, resolveVariableItemSize } from '../utils/itemSize'
 import { getPooledViewStyle } from '../utils/viewStyle'
 
 export interface UseRecycleScrollerOptions<TItem = unknown, TKeyField extends KeyFieldValue<TItem> = 'id', TSizeField extends string = 'size'> {
   items: TItem[]
   keyField: ValidKeyField<TItem, TKeyField>
   direction: ScrollDirection
-  itemSize: number | null
+  itemSize: ItemSizeValue<TItem>
   gridItems?: number
   itemSecondarySize?: number
   minItemSize: number | string | null
@@ -123,12 +124,12 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
 
   const sizes = computed<Sizes | never[]>(() => {
     const opts = toValue(options)
-    if (opts.itemSize === null) {
+    const fixedItemSize = getFixedItemSize(opts.itemSize)
+    if (fixedItemSize === null) {
       const sizes: Sizes = {
         [-1]: { accumulator: 0 },
       }
       const items = opts.items
-      const field = opts.sizeField ?? 'size'
       const minItemSize = opts.minItemSize as number
       const restoredSizes = _restoredSizes.value
       let computedMinSize = 10000
@@ -136,7 +137,14 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
       let current: number
       for (let i = 0, l = items.length; i < l; i++) {
         const key = simpleArray.value ? i : resolveItemKey(items[i], i, opts.keyField)
-        current = restoredSizes[key] || (items[i] as any)[field] || minItemSize
+        current = resolveVariableItemSize(
+          items[i],
+          i,
+          opts.itemSize,
+          restoredSizes[key],
+          minItemSize,
+          opts.sizeField,
+        )
         if (current < computedMinSize) {
           computedMinSize = current
         }
@@ -159,11 +167,13 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
     const opts = toValue(options)
     const keyField = simpleArray.value ? null : opts.keyField
     return buildCacheSnapshot(opts.items, keyField, (item, index, key) => {
-      if (opts.itemSize != null) {
-        return opts.itemSize
-      }
-
-      return _restoredSizes.value[key as ItemKey<TItem, TKeyField>] || (item as any)?.[opts.sizeField ?? 'size'] || undefined
+      return resolveSnapshotItemSize(
+        item as TItem,
+        index,
+        opts.itemSize,
+        _restoredSizes.value[key as ItemKey<TItem, TKeyField>],
+        opts.sizeField,
+      )
     })
   })
 
@@ -463,8 +473,9 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
 
   function getItemSize(index: number): number {
     const opts = toValue(options)
-    if (opts.itemSize != null) {
-      return opts.itemSize
+    const fixedItemSize = getFixedItemSize(opts.itemSize)
+    if (fixedItemSize !== null) {
+      return fixedItemSize
     }
 
     const sizeEntry = (sizes.value as Sizes)[index]
@@ -479,7 +490,7 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
     return getPooledViewStyle(view, {
       direction: opts.direction,
       disableTransform: opts.disableTransform ?? false,
-      itemSize: opts.itemSize,
+      itemSize: getFixedItemSize(opts.itemSize),
       gridItems: opts.gridItems,
       itemSecondarySize: opts.itemSecondarySize,
     })
@@ -488,12 +499,13 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
   function getItemOffset(index: number): number {
     const opts = toValue(options)
     const gridItems = opts.gridItems || 1
+    const fixedItemSize = getFixedItemSize(opts.itemSize)
     if (index <= 0) {
       return 0
     }
 
-    if (opts.itemSize != null) {
-      return Math.floor(index / gridItems) * opts.itemSize
+    if (fixedItemSize !== null) {
+      return Math.floor(index / gridItems) * fixedItemSize
     }
 
     return ((sizes.value as Sizes)[index - 1]?.accumulator) || 0
@@ -503,13 +515,14 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
     const opts = toValue(options)
     const count = opts.items.length
     const gridItems = opts.gridItems || 1
+    const fixedItemSize = getFixedItemSize(opts.itemSize)
 
     if (!count) {
       return 0
     }
 
-    if (opts.itemSize != null) {
-      const index = Math.floor(offset / opts.itemSize) * gridItems
+    if (fixedItemSize !== null) {
+      const index = Math.floor(offset / fixedItemSize) * gridItems
       return Math.min(Math.max(index, 0), count - 1)
     }
 
@@ -672,7 +685,8 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
 
   function supportsGridSecondaryVirtualization() {
     const opts = toValue(options)
-    if (!opts.gridItems || opts.itemSize == null) {
+    const fixedItemSize = getFixedItemSize(opts.itemSize)
+    if (!opts.gridItems || fixedItemSize == null) {
       return false
     }
 
@@ -681,7 +695,7 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
       return false
     }
 
-    const itemSecondarySize = opts.itemSecondarySize || opts.itemSize
+    const itemSecondarySize = opts.itemSecondarySize || fixedItemSize
     const secondaryViewportSize = opts.direction === 'vertical'
       ? elValue.clientWidth
       : elValue.clientHeight
@@ -691,9 +705,9 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
 
   function updateVisibleItems(itemsChanged: boolean, checkPositionDiff = false): { continuous: boolean } {
     const opts = toValue(options)
-    const itemSize = opts.itemSize
+    const itemSize = getFixedItemSize(opts.itemSize)
     const gridItems = opts.gridItems || 1
-    const itemSecondarySize = opts.itemSecondarySize || (itemSize as number)
+    const itemSecondarySize = opts.itemSecondarySize || itemSize || 0
     const minItemSize = _computedMinItemSize
     const typeField = opts.typeField
     const keyField = simpleArray.value ? null : opts.keyField
@@ -1018,13 +1032,14 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
 
     scrollToPosition(target, scrollOptions)
 
-    if (opts.gridItems && opts.itemSize != null) {
+    const fixedItemSize = getFixedItemSize(opts.itemSize)
+    if (opts.gridItems && fixedItemSize != null) {
       const elValue = toValue(el)
       if (!elValue) {
         return
       }
       const gridItems = opts.gridItems
-      const itemSecondarySize = opts.itemSecondarySize || opts.itemSize
+      const itemSecondarySize = opts.itemSecondarySize || fixedItemSize
       const secondaryIndex = targetIndex % gridItems
       const secondaryItemStart = secondaryIndex * itemSecondarySize
       const secondaryDirection = opts.direction === 'vertical' ? 'horizontal' : 'vertical'
@@ -1089,7 +1104,7 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
     updateVisibleItems(false)
   }
 
-  if (initialOpts.gridItems && !initialOpts.itemSize) {
+  if (initialOpts.gridItems && getFixedItemSize(initialOpts.itemSize) == null) {
     console.error('[vue-recycle-scroller] You must provide an itemSize when using gridItems')
   }
 

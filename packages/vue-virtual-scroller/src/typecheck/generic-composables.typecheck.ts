@@ -19,6 +19,7 @@ const messages: Message[] = [
 
 const scrollerEl = ref<HTMLElement>()
 const functionKeyField = (item: Message, index: number) => `${item.id}:${index}`
+const functionItemSize = (item: Message) => item.size
 
 const recycleScroller = useRecycleScroller<Message>({
   items: messages,
@@ -63,6 +64,24 @@ const functionKeyRecycleScroller = useRecycleScroller<Message, typeof functionKe
 
 functionKeyRecycleScroller.pool.value[0]?.nr.key
 
+const functionItemSizeRecycleScroller = useRecycleScroller<Message>({
+  items: messages,
+  keyField: 'id',
+  direction: 'vertical',
+  itemSize: functionItemSize,
+  minItemSize: 32,
+  typeField: 'type',
+  buffer: 200,
+  pageMode: false,
+  shift: false,
+  disableTransform: true,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+}, scrollerEl)
+
+functionItemSizeRecycleScroller.getItemSize(0)
+
 useRecycleScroller<Message>({
   items: messages,
   // @ts-expect-error Invalid object-item key fields should be rejected.
@@ -88,6 +107,23 @@ useRecycleScroller<Message>({
   minItemSize: 32,
   // @ts-expect-error Invalid object-item size fields should be rejected in variable-size mode.
   sizeField: 'missing',
+  typeField: 'type',
+  buffer: 200,
+  pageMode: false,
+  shift: false,
+  disableTransform: true,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+}, scrollerEl)
+
+useRecycleScroller<Message>({
+  items: messages,
+  keyField: 'id',
+  direction: 'vertical',
+  // @ts-expect-error Function itemSize should stay item-aware.
+  itemSize: item => item.missing,
+  minItemSize: 32,
   typeField: 'type',
   buffer: 200,
   pageMode: false,
@@ -134,6 +170,21 @@ const windowScroller = useWindowScroller<Message>({
   shift: false,
   disableTransform: true,
   hiddenPosition: -100,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+}, scrollerEl)
+
+useWindowScroller<Message>({
+  items: messages,
+  keyField: 'id',
+  direction: 'vertical',
+  itemSize: functionItemSize,
+  minItemSize: 32,
+  typeField: 'type',
+  buffer: 200,
+  shift: false,
+  disableTransform: true,
   prerender: 0,
   emitUpdate: false,
   updateInterval: 0,

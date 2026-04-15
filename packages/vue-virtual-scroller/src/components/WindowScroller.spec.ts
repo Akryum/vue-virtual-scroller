@@ -40,6 +40,7 @@ describe('windowScroller', () => {
     mocks.restoreCache.mockReturnValue(true)
 
     mocks.useWindowScroller.mockImplementation((_options, _el, _before, _after, callbacks) => {
+      const fixedItemSize = typeof _options.itemSize === 'number' ? _options.itemSize : null
       return {
         pool: ref([{
           item: { id: 'a', label: 'Alpha' },
@@ -66,7 +67,7 @@ describe('windowScroller', () => {
         getViewStyle: (view: any) => getPooledViewStyle(view, {
           direction: _options.direction,
           disableTransform: _options.disableTransform,
-          itemSize: _options.itemSize,
+          itemSize: fixedItemSize,
           gridItems: _options.gridItems,
           itemSecondarySize: _options.itemSecondarySize,
         }),
@@ -157,5 +158,27 @@ describe('windowScroller', () => {
     expect(itemView.style.left).toBe('12px')
     expect(itemView.style.transform).toBe('none')
     expect(itemView.style.willChange).toBe('unset')
+  })
+
+  it('forwards function itemSize to useWindowScroller', () => {
+    const itemSize = (item: unknown) => (item as { size: number }).size
+
+    mount(WindowScroller, {
+      props: {
+        items: [{ id: 'a', size: 20 }],
+        itemSize,
+      },
+      slots: {
+        default: ({ item }: any) => h('div', { class: 'row' }, item.id),
+      },
+      global: {
+        stubs: {
+          ResizeObserver: ResizeObserverStub,
+        },
+      },
+    })
+
+    const [optionsArg] = mocks.useWindowScroller.mock.calls.at(-1)!
+    expect(optionsArg.itemSize).toBe(itemSize)
   })
 })

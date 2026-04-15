@@ -15,6 +15,8 @@ const messages = ref<Message[]>([
     size: 32,
   },
 ])
+
+const functionItemSize = (item: Message) => item.size
 </script>
 
 <template>
@@ -27,6 +29,17 @@ const messages = ref<Message[]>([
       {{ item.text.toUpperCase() }}
       <!-- @vue-expect-error Message slot props should stay item-aware. -->
       {{ item.missing }}
+    </template>
+  </RecycleScroller>
+
+  <RecycleScroller
+    :items="messages"
+    :item-size="functionItemSize"
+    :min-item-size="32"
+    :disable-transform="true"
+  >
+    <template #default="{ item }">
+      {{ item.text.toUpperCase() }}
     </template>
   </RecycleScroller>
 

@@ -43,7 +43,7 @@ const recycleScroller = useRecycleScroller<User>({
 recycleScroller.pool.value[0]?.item.name
 ```
 
-When `TItem` is an object type, `keyField` can be either a string key on that type or a resolver function with the signature `(item, index) => string | number`. `sizeField` must still be a numeric field when `itemSize` is `null`.
+When `TItem` is an object type, `keyField` can be either a string key on that type or a resolver function with the signature `(item, index) => string | number`. `itemSize` can be a fixed number, `null` plus `sizeField`, or a resolver function with the signature `(item, index) => number`. `sizeField` must still be a numeric field when `itemSize` is `null`.
 
 ## Required options
 
@@ -78,6 +78,14 @@ Additional scroll-system options:
 ```ts
 const compositeKey = (item: Message, index: number) => `${item.threadId}:${item.id}:${index}`
 ```
+
+`itemSize` also accepts a resolver function for variable-size mode when sizes are already known in memory:
+
+```ts
+const itemSize = (item: Message, index: number) => item.size || (index % 2 === 0 ? 48 : 32)
+```
+
+`gridItems` still requires a numeric fixed `itemSize`. Function-based sizes are not supported in grid mode.
 
 ## Return values you will use most
 

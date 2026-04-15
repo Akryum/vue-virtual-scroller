@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="TItem">
 import type { UseWindowScrollerOptions, UseWindowScrollerReturn } from '../composables/useWindowScroller'
-import type { CacheSnapshot, ClassValue, KeyFieldValue, KeyValue, RecycleScrollerSlotProps, ScrollDirection, WindowScrollerExposed } from '../types'
+import type { CacheSnapshot, ClassValue, ItemSizeValue, KeyFieldValue, KeyValue, RecycleScrollerSlotProps, ScrollDirection, WindowScrollerExposed } from '../types'
 import { ref } from 'vue'
 import { useWindowScroller } from '../composables/useWindowScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
@@ -13,7 +13,7 @@ const props = withDefaults(defineProps<{
   direction?: ScrollDirection
   listTag?: string
   itemTag?: string
-  itemSize?: number | null
+  itemSize?: ItemSizeValue<TItem>
   gridItems?: number
   itemSecondarySize?: number
   minItemSize?: number | string | null

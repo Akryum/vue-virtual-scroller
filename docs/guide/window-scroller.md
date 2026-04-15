@@ -105,7 +105,9 @@ The most commonly used props are:
 - `listClass`
 - `itemClass`
 
-Use `itemSize: null` when each item already knows its size through `sizeField`. If the DOM needs to measure unknown item sizes after render, switch to [`DynamicScroller`](./dynamic-scroller).
+Use `itemSize: null` when each item already knows its size through `sizeField`. You can also pass `itemSize` as a resolver function `(item, index) => number` when sizes are already known in memory. If the DOM needs to measure unknown item sizes after render, switch to [`DynamicScroller`](./dynamic-scroller).
+
+`gridItems` still requires a fixed numeric `itemSize`. Function-based item sizes are not supported in grid mode.
 
 ## Slots
 

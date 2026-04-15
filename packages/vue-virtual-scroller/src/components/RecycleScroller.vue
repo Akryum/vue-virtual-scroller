@@ -1,9 +1,10 @@
 <script setup lang="ts" generic="TItem">
 import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from '../composables/useRecycleScroller'
-import type { CacheSnapshot, ClassValue, KeyFieldValue, KeyValue, RecycleScrollerExposed, RecycleScrollerSlotProps, ScrollDirection } from '../types'
+import type { CacheSnapshot, ClassValue, ItemSizeValue, KeyFieldValue, KeyValue, RecycleScrollerExposed, RecycleScrollerSlotProps, ScrollDirection } from '../types'
 import { computed, ref } from 'vue'
 import { useRecycleScroller } from '../composables/useRecycleScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
+import { getFixedItemSize } from '../utils/itemSize'
 import ItemView from './ItemView.vue'
 import ResizeObserver from './ResizeObserver.vue'
 
@@ -13,7 +14,7 @@ const props = withDefaults(defineProps<{
   direction?: ScrollDirection
   listTag?: string
   itemTag?: string
-  itemSize?: number | null
+  itemSize?: ItemSizeValue<TItem>
   gridItems?: number
   itemSecondarySize?: number
   minItemSize?: number | string | null
@@ -136,8 +137,9 @@ const itemWrapperStyle = computed(() => {
     [props.direction === 'vertical' ? 'minHeight' : 'minWidth']: `${totalSize.value}px`,
   }
 
-  if (props.gridItems && props.itemSize != null) {
-    const crossAxisSize = (props.itemSecondarySize || props.itemSize) * props.gridItems
+  const fixedItemSize = getFixedItemSize(props.itemSize)
+  if (props.gridItems && fixedItemSize != null) {
+    const crossAxisSize = (props.itemSecondarySize || fixedItemSize) * props.gridItems
     listStyle[props.direction === 'vertical' ? 'minWidth' : 'minHeight'] = `${crossAxisSize}px`
   }
 

@@ -57,6 +57,7 @@ export default defineConfig({
           items: [
             { text: 'Overview', link: '/demos/' },
             { text: 'RecycleScroller', link: '/demos/recycle-scroller' },
+            { text: 'Function itemSize', link: '/demos/function-item-size' },
             { text: 'DynamicScroller', link: '/demos/dynamic-scroller' },
             { text: 'Virtual vs Plain List', link: '/demos/virtual-vs-plain-list' },
             { text: 'WindowScroller', link: '/demos/window-scroller' },

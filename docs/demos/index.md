@@ -5,6 +5,7 @@ These demos show the main scrolling patterns supported by `vue-virtual-scroller`
 ## Pick a demo
 
 - [RecycleScroller demo](./recycle-scroller) — start here for large lists with known, fixed item sizes.
+- [Function `itemSize` demo](./function-item-size) — derive variable row sizes with `itemSize: (item, index) => number`.
 - [DynamicScroller demo](./dynamic-scroller) — see how unknown row heights are measured and updated over time.
 - [Virtual vs plain list demo](./virtual-vs-plain-list) — flip virtualization on and off on same fixed-height dataset.
 - [WindowScroller demo](./window-scroller) — follow page scrolling instead of rendering inside an inner scroll container.
