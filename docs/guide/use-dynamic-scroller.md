@@ -17,7 +17,8 @@ Use it when you need custom markup, but item size still has to be measured from 
   - `useRecycleScroller` for pooled rendering, scroll math, and virtualization state
   - `vDynamicScrollerItem` for per-item size measurement
 - You render from `pool`.
-- Each `view` inside `pool` wraps an internal `ItemWithSize`, so the original item lives at `view.item.item`.
+- Each `view` inside `pool` exposes the original item directly at `view.item`.
+- Advanced measured metadata still lives on `view.itemWithSize`.
 - `totalSize` still belongs on your inner wrapper.
 - `startSpacerSize` and `endSpacerSize` expose the spacer sizes needed by `flowMode`.
 - `getViewStyle(view)` exposes pooled positioning styles for custom integrations. Generic elements use transforms by default, `disableTransform` switches them to `top`/`left`, and `flowMode` keeps active views in native flow.
@@ -40,7 +41,8 @@ const dynamicScroller = useDynamicScroller<Message>({
   el: scrollerEl,
 })
 
-dynamicScroller.pool.value[0]?.item.item.text
+dynamicScroller.pool.value[0]?.item.text
+dynamicScroller.pool.value[0]?.itemWithSize.id
 dynamicScroller.getItemSize(messages.value[0])
 ```
 
@@ -103,7 +105,7 @@ When that headless path renders a semantic table, pair it with [`useTableColumnW
 - Forgetting `minItemSize` hurts the initial layout and scroll math.
 - Rendering from `visiblePool` instead of `pool` reduces the effectiveness of DOM reuse.
 - Forgetting `sizeDependencies` means content changes may not trigger remeasurement.
-- Reading `view.item` as if it were the original item can be confusing in headless mode. The original row lives at `view.item.item`.
+- `view.itemWithSize` is still available, but ordinary rendering should use `view.item`.
 - `watchData` works, but it is heavier than targeted `sizeDependencies`.
 - If you prepend into chat-style data, enable `shift` in the composable options so the viewport stays anchored.
 - Set `disableTransform` when generic pooled wrappers must avoid translate transforms.
@@ -144,14 +146,14 @@ const {
     <div :style="{ minHeight: `${totalSize}px`, position: 'relative' }">
       <article
         v-for="view in pool"
-        :key="view.nr.id"
+        :key="view.id"
         v-dynamic-scroller-item="{
           view,
-          sizeDependencies: [view.item.item.title, view.item.item.body],
+          sizeDependencies: [view.item.title, view.item.body],
         }"
       >
-        <h4>{{ view.item.item.title }}</h4>
-        <p>{{ view.item.item.body }}</p>
+        <h4>{{ view.item.title }}</h4>
+        <p>{{ view.item.body }}</p>
       </article>
     </div>
   </div>

@@ -72,6 +72,23 @@ export interface View<TItem = unknown, TKey = KeyValue> {
   nr: ViewNonReactive<TKey>
 }
 
+/**
+ * Public pooled-view shape exposed by `useDynamicScroller`.
+ * It flattens common render fields while still exposing measured metadata.
+ */
+export interface DynamicScrollerView<TItem = unknown, TKey = KeyValue> {
+  item: TItem
+  itemWithSize: ItemWithSize<TItem, TKey>
+  size: number | undefined
+  position: number
+  offset: number
+  id: number
+  index: number
+  used: boolean
+  key: TKey
+  type: unknown
+}
+
 export interface CacheSnapshot {
   keys: KeyValue[]
   sizes: Array<number | null>

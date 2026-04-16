@@ -112,9 +112,9 @@ const { columnWidths, tableStyle } = useTableColumnWidths({
 
         <HeadlessTableRow
           v-for="view in pool"
-          :key="view.nr.id"
+          :key="view.id"
           v-dynamic-scroller-item="{ view }"
-          :row="view.item.item"
+          :row="view.item"
         />
 
         <!-- Spacer row after the active pooled rows -->

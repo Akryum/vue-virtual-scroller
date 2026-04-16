@@ -191,11 +191,11 @@ function jump() {
 
           <HeadlessTableRow
             v-for="view in pool"
-            :key="view.nr.id"
+            :key="view.id"
             v-dynamic-scroller-item="{
               view,
             }"
-            :row="view.item.item"
+            :row="view.item"
           />
 
           <tr

@@ -1,5 +1,5 @@
-import type { ComputedRef, CSSProperties, Directive, MaybeRefOrGetter } from 'vue'
-import type { CacheSnapshot, DefaultKeyField, ItemKey, ItemWithSize, KeyFieldValue, KeyValue, ScrollDirection, ValidKeyField, View, VScrollData } from '../types'
+import type { ComputedRef, CSSProperties, Directive, MaybeRefOrGetter, Ref } from 'vue'
+import type { CacheSnapshot, DefaultKeyField, DynamicScrollerView, ItemKey, ItemWithSize, KeyFieldValue, KeyValue, ScrollDirection, ValidKeyField, View, VScrollData } from '../types'
 import type { DynamicScrollerItemControllerCallbacks, DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext, DynamicScrollerUpdatePayload } from './dynamicScrollerMeasurement'
 import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './useRecycleScroller'
 import mitt from 'mitt'
@@ -13,7 +13,7 @@ import { resolveScrollerOptions } from './scrollerOptions'
 import { useRecycleScroller } from './useRecycleScroller'
 
 export interface UseDynamicScrollerItemViewBindingOptions<TItem = unknown, TKey = KeyValue> {
-  view: View<ItemWithSize<TItem, TKey>, TKey>
+  view: DynamicScrollerView<TItem, TKey>
   watchData?: boolean
   sizeDependencies?: Record<string, unknown> | unknown[] | null
   emitResize?: boolean
@@ -57,8 +57,8 @@ export interface UseDynamicScrollerOptions<TItem = unknown> {
 type UseDynamicScrollerRecycleReturn<TItem, TKey> = UseRecycleScrollerReturn<ItemWithSize<TItem, TKey>, TKey>
 type UseDynamicScrollerSizes<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['sizes']
 type UseDynamicScrollerReady<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['ready']
-type UseDynamicScrollerPool<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['pool']
-type UseDynamicScrollerVisiblePool<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['visiblePool']
+type UseDynamicScrollerPool<TItem, TKey> = Ref<Array<DynamicScrollerView<TItem, TKey>>>
+type UseDynamicScrollerVisiblePool<TItem, TKey> = ComputedRef<Array<DynamicScrollerView<TItem, TKey>>>
 type UseDynamicScrollerHandleResize<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['handleResize']
 type UseDynamicScrollerHandleVisibilityChange<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['handleVisibilityChange']
 type UseDynamicScrollerGetScroll<TItem, TKey> = UseDynamicScrollerRecycleReturn<TItem, TKey>['getScroll']
@@ -105,7 +105,7 @@ export interface UseDynamicScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>
   cacheSnapshot: UseDynamicScrollerCacheSnapshot<TItem, TKey>
   restoreCache: UseDynamicScrollerRestoreCache<TItem, TKey>
   getItemSize: (item: TItem, index?: number) => number
-  getViewStyle: (view: View<ItemWithSize<TItem, TKey>, TKey>) => CSSProperties
+  getViewStyle: (view: DynamicScrollerView<TItem, TKey>) => CSSProperties
   scrollToBottom: () => void
   onScrollerResize: () => void
   onScrollerVisible: () => void
@@ -146,10 +146,86 @@ interface DynamicScrollerViewportAnchor<TKey = KeyValue> {
   offset: number
 }
 
+type RawDynamicScrollerView<TItem = unknown, TKey = KeyValue> = View<ItemWithSize<TItem, TKey>, TKey>
+
 const SCROLL_MEASURE_IDLE_MS = 120
 
-function viewItemWithSize<TItem, TKey>(view: View<ItemWithSize<TItem, TKey>, TKey>) {
+/**
+ * Resolve internal size-tracking state from raw recycle view.
+ */
+function rawViewItemWithSize<TItem, TKey>(view: RawDynamicScrollerView<TItem, TKey>) {
   return view.item
+}
+
+/**
+ * Resolve public dynamic view back to raw recycle view when internal helpers
+ * need recycler metadata such as `nr` or style stamps.
+ */
+function unwrapDynamicScrollerView<TItem, TKey>(
+  view: DynamicScrollerView<TItem, TKey>,
+  rawViews: WeakMap<DynamicScrollerView<any, any>, RawDynamicScrollerView<any, any>>,
+): RawDynamicScrollerView<TItem, TKey> {
+  const rawView = rawViews.get(view)
+  if (rawView) {
+    return rawView as RawDynamicScrollerView<TItem, TKey>
+  }
+
+  return view as unknown as RawDynamicScrollerView<TItem, TKey>
+}
+
+/**
+ * Build one stable public wrapper per raw pooled view so templates can render
+ * flattened fields without losing recycled-view identity.
+ */
+function createDynamicScrollerPublicView<TItem, TKey>(
+  rawView: RawDynamicScrollerView<TItem, TKey>,
+): DynamicScrollerView<TItem, TKey> {
+  const publicView = {} as DynamicScrollerView<TItem, TKey>
+
+  Object.defineProperties(publicView, {
+    item: {
+      enumerable: true,
+      get: () => rawView.item.item,
+    },
+    itemWithSize: {
+      enumerable: true,
+      get: () => rawView.item,
+    },
+    size: {
+      enumerable: true,
+      get: () => rawView.item.size,
+    },
+    position: {
+      enumerable: true,
+      get: () => rawView.position,
+    },
+    offset: {
+      enumerable: true,
+      get: () => rawView.offset,
+    },
+    id: {
+      enumerable: true,
+      get: () => rawView.nr.id,
+    },
+    index: {
+      enumerable: true,
+      get: () => rawView.nr.index,
+    },
+    used: {
+      enumerable: true,
+      get: () => rawView.nr.used,
+    },
+    key: {
+      enumerable: true,
+      get: () => rawView.nr.key,
+    },
+    type: {
+      enumerable: true,
+      get: () => rawView.nr.type,
+    },
+  })
+
+  return publicView
 }
 
 function getViewStyleStamp<TItem, TKey>(view: View<TItem, TKey>) {
@@ -198,6 +274,7 @@ function applyViewStyles(
   disableTransform: boolean,
   flowMode: boolean,
   snapshot: Record<string, string>,
+  rawViews: WeakMap<DynamicScrollerView<any, any>, RawDynamicScrollerView<any, any>>,
 ) {
   if (!('view' in binding)) {
     restoreManagedStyles(elValue, snapshot)
@@ -214,7 +291,7 @@ function applyViewStyles(
         direction,
         disableTransform: disableTransform || isTableRow,
       })
-  const style = getPooledViewStyle(binding.view, {
+  const style = getPooledViewStyle(unwrapDynamicScrollerView(binding.view, rawViews), {
     direction,
     mode,
   })
@@ -247,11 +324,13 @@ function getBindingAnchorState<TItem>(
   keyField: KeyFieldValue<TItem>,
   simpleArray: boolean,
   active: boolean,
+  rawViews: WeakMap<DynamicScrollerView<any, any>, RawDynamicScrollerView<any, any>>,
 ) {
   if ('view' in binding) {
+    const rawView = unwrapDynamicScrollerView(binding.view, rawViews)
     return {
-      active: binding.view.nr.used && active,
-      id: viewItemWithSize(binding.view).id,
+      active: rawView.nr.used && active,
+      id: rawViewItemWithSize(rawView).id,
     }
   }
 
@@ -273,6 +352,7 @@ function getBindingStyleState(
   binding: UseDynamicScrollerItemBindingOptions<any, any>,
   direction: ScrollDirection,
   flowMode: boolean,
+  rawViews: WeakMap<DynamicScrollerView<any, any>, RawDynamicScrollerView<any, any>>,
 ) {
   if (!('view' in binding)) {
     return {
@@ -283,6 +363,7 @@ function getBindingStyleState(
   }
 
   if (flowMode) {
+    const rawView = unwrapDynamicScrollerView(binding.view, rawViews)
     // Native-flow rows only need to wake the style watcher when their parked /
     // visible state changes. Tracking generic style stamps here caused many
     // pointless applyViewStyles runs during recycled rebinding.
@@ -290,28 +371,33 @@ function getBindingStyleState(
       direction,
       flowMode,
       legacy: false,
-      visibilityStamp: getViewVisibilityStamp(binding.view),
+      visibilityStamp: getViewVisibilityStamp(rawView),
     }
   }
 
+  const rawView = unwrapDynamicScrollerView(binding.view, rawViews)
   return {
-    active: binding.view.nr.used,
+    active: rawView.nr.used,
     direction,
     flowMode,
     legacy: false,
-    styleStamp: getViewStyleStamp(binding.view),
-    position: shouldTrackViewGeometry(binding, flowMode) ? binding.view.position : null,
-    offset: shouldTrackViewGeometry(binding, flowMode) ? binding.view.offset : null,
+    styleStamp: getViewStyleStamp(rawView),
+    position: shouldTrackViewGeometry(binding, flowMode) ? rawView.position : null,
+    offset: shouldTrackViewGeometry(binding, flowMode) ? rawView.offset : null,
   }
 }
 
-function normalizeBindingOptions<TItem, TKey>(options: UseDynamicScrollerItemBindingOptions<TItem, TKey>): BoundDynamicScrollerItemOptions<TItem> {
+function normalizeBindingOptions<TItem, TKey>(
+  options: UseDynamicScrollerItemBindingOptions<TItem, TKey>,
+  rawViews: WeakMap<DynamicScrollerView<any, any>, RawDynamicScrollerView<any, any>>,
+): BoundDynamicScrollerItemOptions<TItem> {
   if ('view' in options) {
-    const itemWithSize = viewItemWithSize(options.view)
+    const rawView = unwrapDynamicScrollerView(options.view, rawViews)
+    const itemWithSize = rawViewItemWithSize(rawView)
     return {
       item: itemWithSize.item,
-      active: options.view.nr.used,
-      index: options.view.nr.index,
+      active: rawView.nr.used,
+      index: rawView.nr.index,
       watchData: options.watchData ?? false,
       emitResize: options.emitResize ?? false,
       sizeDependencies: options.sizeDependencies ?? null,
@@ -696,14 +782,21 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     getOptions().onVisible?.()
   }
 
+  const recycleScroller = useRecycleScroller<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>, 'id', 'size'>(
+    recycleOptions,
+  )
+  const rawViews = new WeakMap<DynamicScrollerView<TItem, ItemKey<TItem, TKeyField>>, RawDynamicScrollerView<TItem, ItemKey<TItem, TKeyField>>>()
+  const publicViews = new WeakMap<RawDynamicScrollerView<TItem, ItemKey<TItem, TKeyField>>, DynamicScrollerView<TItem, ItemKey<TItem, TKeyField>>>()
+  const pool = shallowRef<Array<DynamicScrollerView<TItem, ItemKey<TItem, TKeyField>>>>([])
+
   /**
    * Build inline styles for a pooled dynamic view.
    */
   function getViewStyle(
-    view: View<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>, ItemKey<TItem, TKeyField>>,
+    view: DynamicScrollerView<TItem, ItemKey<TItem, TKeyField>>,
   ): CSSProperties {
     const opts = getOptions()
-    return getPooledViewStyle(view, {
+    return getPooledViewStyle(unwrapDynamicScrollerView(view, rawViews), {
       direction: direction.value,
       mode: resolvePooledViewMode({
         direction: direction.value,
@@ -713,9 +806,48 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     })
   }
 
-  const recycleScroller = useRecycleScroller<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>, 'id', 'size'>(
-    recycleOptions,
-  )
+  /**
+   * Resolve cached public wrapper for one raw pooled view.
+   */
+  function resolvePublicView(
+    rawView: RawDynamicScrollerView<TItem, ItemKey<TItem, TKeyField>>,
+  ): DynamicScrollerView<TItem, ItemKey<TItem, TKeyField>> {
+    let publicView = publicViews.get(rawView)
+    if (!publicView) {
+      publicView = createDynamicScrollerPublicView(rawView)
+      publicViews.set(rawView, publicView)
+      rawViews.set(publicView, rawView)
+    }
+    return publicView
+  }
+
+  watchEffect(() => {
+    const rawPool = recycleScroller.pool.value
+    const nextLength = rawPool.length
+    const currentPool = pool.value
+    let changed = currentPool.length !== nextLength
+
+    for (let index = 0; index < nextLength; index++) {
+      const publicView = resolvePublicView(rawPool[index])
+      if (currentPool[index] !== publicView) {
+        currentPool[index] = publicView
+        changed = true
+      }
+    }
+
+    if (currentPool.length !== nextLength) {
+      currentPool.length = nextLength
+      changed = true
+    }
+
+    if (changed) {
+      triggerRef(pool)
+    }
+  })
+
+  const visiblePool = computed(() =>
+    recycleScroller.visiblePool.value.map(resolvePublicView),
+  ) as ComputedRef<Array<DynamicScrollerView<TItem, ItemKey<TItem, TKeyField>>>>
 
   const bindings = new WeakMap<HTMLElement, DynamicScrollerItemBindingRecord<TItem, ItemKey<TItem, TKeyField>>>()
 
@@ -890,6 +1022,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
           getOptions().keyField,
           vscrollData.simpleArray,
           vscrollData.active,
+          rawViews,
         )
       }, () => {
         const currentEl = elRef.value
@@ -900,6 +1033,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
             getOptions().keyField,
             vscrollData.simpleArray,
             vscrollData.active,
+            rawViews,
           )
           const currentId = anchorState.id
           if (currentId != null) {
@@ -918,6 +1052,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
           binding.value,
           direction.value,
           getOptions().flowMode ?? false,
+          rawViews,
         )
       }, () => {
         const currentEl = elRef.value
@@ -929,6 +1064,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
             getOptions().disableTransform ?? false,
             getOptions().flowMode ?? false,
             restoreStyles,
+            rawViews,
           )
         }
       }, {
@@ -959,11 +1095,11 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   const vDynamicScrollerItem: Directive<HTMLElement, UseDynamicScrollerItemBindingOptions<TItem, ItemKey<TItem, TKeyField>>> = {
     mounted(elValue, binding) {
       const restoreStyles = captureManagedStyles(elValue)
-      mountBinding(elValue, binding.value, normalizeBindingOptions(binding.value), restoreStyles)
+      mountBinding(elValue, binding.value, normalizeBindingOptions(binding.value, rawViews), restoreStyles)
     },
     updated(elValue, binding) {
       const record = bindings.get(elValue)
-      const normalizedValue = normalizeBindingOptions(binding.value)
+      const normalizedValue = normalizeBindingOptions(binding.value, rawViews)
 
       if (!record) {
         const restoreStyles = captureManagedStyles(elValue)
@@ -988,6 +1124,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
           getOptions().disableTransform ?? false,
           getOptions().flowMode ?? false,
           record.restoreStyles,
+          rawViews,
         )
       }
     },
@@ -1197,6 +1334,8 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     measurementContext,
     vDynamicScrollerItem,
     ...recycleScroller,
+    pool,
+    visiblePool,
     simpleArray,
     forceUpdate,
     scrollToItem,

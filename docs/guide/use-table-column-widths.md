@@ -88,12 +88,12 @@ const {
       <tbody>
         <tr
           v-for="view in pool"
-          :key="view.nr.id"
+          :key="view.id"
           v-dynamic-scroller-item="{ view }"
         >
-          <td>{{ view.item.item.id }}</td>
-          <td>{{ view.item.item.name }}</td>
-          <td>{{ view.item.item.email }}</td>
+          <td>{{ view.item.id }}</td>
+          <td>{{ view.item.name }}</td>
+          <td>{{ view.item.email }}</td>
         </tr>
       </tbody>
     </table>

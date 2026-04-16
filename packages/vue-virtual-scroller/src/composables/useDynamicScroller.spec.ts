@@ -327,7 +327,14 @@ describe('useDynamicScroller', () => {
     expect(typeof vm.scrollToPosition).toBe('function')
     expect(typeof vm.getViewStyle).toBe('function')
     expect(typeof vm.vDynamicScrollerItem.mounted).toBe('function')
-    expect(vm.visiblePool.map((view: any) => view.nr.index)).toEqual([0, 1, 2])
+    expect(vm.visiblePool.map((view: any) => view.index)).toEqual([0, 1, 2])
+    expect(vm.pool[0].item.label).toBe('Alpha')
+    expect(vm.pool[0].itemWithSize).toBe(vm.itemsWithSize[0])
+    expect(vm.pool[0].itemWithSize.id).toBe('a')
+    expect(vm.pool[0].size).toBe(0)
+    expect(vm.pool[0].id).toBeTypeOf('number')
+    expect(vm.pool[0].key).toBe('a')
+    expect(vm.pool[0].used).toBe(true)
 
     vm.scrollToItem(2)
     expect(el.value.scrollTop).toBe(40)
@@ -453,6 +460,36 @@ describe('useDynamicScroller', () => {
     expect(vm.itemsWithSize[0]).toBe(firstEntry)
     expect(vm.itemsWithSize[1]).toBe(secondEntry)
     expect(vm.itemsWithSize[0].size).toBe(44)
+  })
+
+  it('reuses flat pooled view wrappers across size updates and recycling', async () => {
+    const items = Array.from({ length: 40 }, (_, index) => ({
+      id: `row-${index}`,
+      label: `Row ${index}`,
+    }))
+    const { vm } = mountHarness(items, {
+      buffer: 0,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const firstView = vm.pool[0]
+    const initialViewsById = new Map(vm.pool.map((view: any) => [view.id, view]))
+
+    vm.vscrollData.sizes['row-0'] = 44
+    await nextTick()
+
+    expect(vm.pool[0]).toBe(firstView)
+    expect(firstView.size).toBe(44)
+
+    vm.scrollToItem(20)
+    await nextTick()
+
+    expect(vm.pool).toContain(firstView)
+    expect(vm.pool.every((view: any) => initialViewsById.get(view.id) === view)).toBe(true)
+    expect(vm.pool.every((view: any) => typeof view.index === 'number')).toBe(true)
+    expect(vm.pool.every((view: any) => view.itemWithSize.item === view.item)).toBe(true)
   })
 
   it('forwards resize, visible, hidden, and update callbacks through the merged composable', async () => {

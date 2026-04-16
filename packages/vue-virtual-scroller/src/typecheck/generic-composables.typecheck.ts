@@ -212,10 +212,22 @@ const functionKeyDynamicScroller = useDynamicScroller<Message, typeof functionKe
 })
 
 dynamicScroller.itemsWithSize.value[0]?.item.text
+dynamicScroller.pool.value[0]?.item.text
+dynamicScroller.pool.value[0]?.itemWithSize.id
+dynamicScroller.pool.value[0]?.id
+dynamicScroller.pool.value[0]?.index
+dynamicScroller.pool.value[0]?.key
+dynamicScroller.pool.value[0]?.size
 dynamicScroller.getItemSize(messages[0])
 dynamicScroller.getViewStyle(dynamicScroller.pool.value[0]!)
 dynamicScrollerWithDefaultDirection.measurementContext.direction.value
 functionKeyDynamicScroller.itemsWithSize.value[0]?.id
+
+// @ts-expect-error Dynamic pooled views no longer expose recycle-scroller `nr`.
+dynamicScroller.pool.value[0]?.nr.index
+
+// @ts-expect-error Dynamic pooled views now expose original item directly.
+dynamicScroller.pool.value[0]?.item.item
 
 const tableColumnWidths = useTableColumnWidths({
   table: tableEl,

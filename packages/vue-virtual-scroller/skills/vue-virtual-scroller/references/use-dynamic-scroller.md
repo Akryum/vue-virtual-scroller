@@ -34,7 +34,8 @@ Documented mental model:
 
 - `useDynamicScroller` combines pooled virtualization with per-item measurement
 - render from `pool`
-- the original row lives at `view.item.item`
+- `view.item` is original row
+- `view.itemWithSize` keeps measured metadata
 - bind `vDynamicScrollerItem` with the pooled `view`
 
 Supported directive binding fields:
@@ -69,7 +70,7 @@ Returns used most often:
 - Rendering from `visiblePool` instead of `pool` reduces DOM reuse.
 - Forgetting `sizeDependencies` means content changes may not trigger remeasurement.
 - `watchData` is heavier than targeted dependencies.
-- `view.item` is an internal item-with-size wrapper, not the original item.
+- Use `view.item` for rendering. Reach for `view.itemWithSize` only when you need measured metadata.
 
 ## Example patterns
 
@@ -78,12 +79,12 @@ Wrapper-free dynamic rows:
 ```vue
 <article
   v-for="view in pool"
-  :key="view.nr.id"
+  :key="view.id"
   v-dynamic-scroller-item="{
     view,
-    sizeDependencies: [view.item.item.body],
+    sizeDependencies: [view.item.body],
   }"
 >
-  {{ view.item.item.body }}
+  {{ view.item.body }}
 </article>
 ```
