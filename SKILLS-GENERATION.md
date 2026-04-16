@@ -31,6 +31,7 @@ If implementation behavior appears to differ from docs, fix docs first, then reg
 - `docs/guide/use-recycle-scroller.md`
 - `docs/guide/use-dynamic-scroller.md`
 - `docs/guide/use-window-scroller.md`
+- `docs/guide/use-table-column-widths.md`
 
 ### Supporting examples
 
@@ -44,6 +45,7 @@ Use these to sharpen examples and workflow guidance, not to invent undocumented 
 - `docs/demos/horizontal.md`
 - `docs/demos/grid.md`
 - `docs/demos/test-chat.md`
+- `docs/demos/headless-table.md`
 - `packages/demo/src/**`
 
 ### Public-export verification
@@ -82,6 +84,7 @@ Expected initial reference set for this repo:
 - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-recycle-scroller.md`
 - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-dynamic-scroller.md`
 - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-window-scroller.md`
+- `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-table-column-widths.md`
 
 Optional reference files:
 
@@ -113,7 +116,7 @@ Each generated `SKILL.md` should include:
    - when to switch from `RecycleScroller` to `DynamicScroller`
    - required sizing/CSS constraints
    - performance guardrails and reuse pitfalls
-   - common layouts such as chat feeds, grids, and horizontal scrollers
+   - common layouts such as chat feeds, grids, horizontal scrollers, and semantic tables
 6. References section containing a table with `Topic`, `Description`, and `Reference`
 7. Further reading section linking only to shipped reference files and, if needed, stable package-level external URLs
 
@@ -150,7 +153,7 @@ Each reference file should:
 - Always mention the required CSS import when installation/setup is discussed.
 - Do not invent APIs, props, events, or helper functions that are not documented.
 - Do not describe Vue 2 usage in the generated skill for this repo.
-- Use demo pages to illustrate patterns such as chat streams, grids, horizontal scrolling, and stress-tested append flows.
+- Use demo pages to illustrate patterns such as chat streams, grids, horizontal scrolling, stress-tested append flows, and semantic tables.
 - Never reference repository-local files outside the published package from `SKILL.md` or `references/*.md`.
 - In shipped skill files, only link to other shipped skill files or stable external package URLs.
 - If the repo documents AI-agent consumption with `skills-npm`, keep that guidance in the VitePress docs, not in the shipped skill files.
@@ -162,7 +165,7 @@ Each reference file should:
 
 ```bash
 rg --files docs packages/vue-virtual-scroller
-rg -n "RecycleScroller|DynamicScroller|DynamicScrollerItem|WindowScroller|useRecycleScroller|useDynamicScroller|useDynamicScrollerItem|useWindowScroller|useIdState|installComponents|componentsPrefix|ESM" \
+rg -n "RecycleScroller|DynamicScroller|DynamicScrollerItem|WindowScroller|useRecycleScroller|useDynamicScroller|useDynamicScrollerItem|useWindowScroller|useTableColumnWidths|useIdState|installComponents|componentsPrefix|ESM|flowMode" \
   docs \
   packages/vue-virtual-scroller/src/index.ts \
   packages/vue-virtual-scroller/src/types.ts \
@@ -189,6 +192,7 @@ For the current repo baseline, the minimum covered surfaces should be:
 - `useRecycleScroller`
 - `useDynamicScroller`
 - `useWindowScroller`
+- `useTableColumnWidths`
 
 Only add `id-state`, `useDynamicScrollerItem`, or plugin option references after the docs clearly support them.
 
@@ -214,7 +218,7 @@ Checklist:
 - [ ] Setup guidance includes the ESM-only note and the CSS import.
 - [ ] The choose-the-right-surface guidance distinguishes `RecycleScroller`, `DynamicScroller`, and headless usage correctly.
 - [ ] `WindowScroller` and `useWindowScroller` are covered when window scrolling is documented.
-- [ ] Fixed-size, variable-size, page mode, and common performance pitfalls are grounded in current docs.
+- [ ] Fixed-size, variable-size, page mode, semantic table usage, and common performance pitfalls are grounded in current docs.
 - [ ] `references/index.md` exists and links to every reference file.
 - [ ] Each reference file covers one surface or one focused workflow only.
 - [ ] No shipped skill file links to repository-local paths outside the package.
@@ -248,11 +252,12 @@ Then:
 
 ## Current generation metadata
 
-- Last generation date: `2026-04-15T09:20:26+02:00`
-- Baseline commit SHA: `60950f2a0929cb5a3a3a95399810dd0da7939521`
-- Baseline short SHA: `60950f2`
-- Baseline commit date: `2026-04-15T09:17:35+02:00`
-- Baseline commit message: `feat: functiong etter for itemSize, closes #848`
+- Last generation date: `2026-04-16T16:23:23+02:00`
+- Baseline commit SHA: `90b17624d12848db5c88da4713a6b318f3ab0ca3`
+- Baseline short SHA: `90b1762`
+- Baseline commit date: `2026-04-16T16:17:31+02:00`
+- Baseline commit message: `refactor: simplified useDynamicScroller API`
+- Version notes: added public `useTableColumnWidths` coverage and refreshed headless `flowMode` / spacer guidance
 - Generated artifacts:
   - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/SKILL.md`
   - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/index.md`
@@ -264,6 +269,7 @@ Then:
   - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-recycle-scroller.md`
   - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-dynamic-scroller.md`
   - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-window-scroller.md`
+  - `packages/vue-virtual-scroller/skills/vue-virtual-scroller/references/use-table-column-widths.md`
 
 ## Notes
 

@@ -36,7 +36,7 @@ Common options:
 
 Documented behavior:
 
-- `useWindowScroller` is the headless `pageMode` path with window scrolling built in
+- `useWindowScroller` is the headless window-scrolling path for this package
 - render from `pool`
 - keep the outer root in normal page flow
 - put `totalSize` on an inner wrapper
@@ -63,9 +63,9 @@ Returns used most often:
 ## Pitfalls
 
 - Do not turn the root into its own scrolling container.
-- `pageMode` logic is already built in here; do not reimplement it.
 - Render from `pool`, not `visiblePool`, when you want normal recycling behavior.
 - If item size must be measured from the DOM, move to `useDynamicScroller`.
+- `before` and `after` refs matter when surrounding content inside the root changes the list's effective offset.
 
 ## Example patterns
 

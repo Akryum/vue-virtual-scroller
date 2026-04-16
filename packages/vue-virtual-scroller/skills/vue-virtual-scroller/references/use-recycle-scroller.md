@@ -36,6 +36,7 @@ Optional extras:
 - `shift`
 - `cache`
 - `disableTransform`
+- `flowMode`
 
 ## Core props/options
 
@@ -56,6 +57,8 @@ Returns used most often:
 - `pool`
 - `visiblePool`
 - `totalSize`
+- `startSpacerSize`
+- `endSpacerSize`
 - `scrollToItem`
 - `scrollToPosition`
 - `getScroll`
@@ -72,6 +75,8 @@ Returns used most often:
 - You must provide your own scrollable sizing styles.
 - Render from `pool` and hide inactive views instead of filtering them out when you want normal recycling behavior.
 - Without a stable key field, object-item reuse becomes unreliable.
+- `flowMode` only supports vertical single-axis layouts in v1. `gridItems`, horizontal mode, and `hiddenPosition` fall back to standard positioning.
+- If you render a semantic table, pair it with [`useTableColumnWidths`](./use-table-column-widths.md) so native auto layout does not shift between pooled rows.
 - If size must be measured from the DOM after render, move to `useDynamicScroller`.
 - If the browser window owns scrolling, move to `useWindowScroller`.
 
@@ -107,4 +112,22 @@ Resolver-based size:
 
 ```ts
 const itemSize = (item: Row, index: number) => item.compact ? 40 : 56
+```
+
+Flow-mode spacer layout:
+
+```vue
+<div ref="scrollerEl" class="scroller">
+  <div>
+    <div v-if="startSpacerSize > 0" :style="{ height: `${startSpacerSize}px` }" />
+    <article
+      v-for="view in pool"
+      :key="view.nr.id"
+      :style="getViewStyle(view)"
+    >
+      {{ view.item.title }}
+    </article>
+    <div v-if="endSpacerSize > 0" :style="{ height: `${endSpacerSize}px` }" />
+  </div>
+</div>
 ```

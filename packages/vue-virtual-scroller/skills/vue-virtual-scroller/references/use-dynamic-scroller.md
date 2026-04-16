@@ -20,13 +20,12 @@ Generated from the package's public headless dynamic-sizing documentation at ski
 - `minItemSize`
 - `el` for the scroll container
 
-`items`, `el`, `before`, and `after` can be refs/getters directly inside the single options object.
-
 Recommended dynamic inputs:
 
 - `sizeDependencies` through `vDynamicScrollerItem`
 - `shift` for prepend-heavy histories
 - `disableTransform` when pooled wrappers must avoid transforms
+- `flowMode` when active views should stay in native block or table flow
 
 ## Core props/options
 
@@ -34,9 +33,10 @@ Documented mental model:
 
 - `useDynamicScroller` combines pooled virtualization with per-item measurement
 - render from `pool`
-- `view.item` is original row
+- `view.item` is the original row for ordinary rendering
 - `view.itemWithSize` keeps measured metadata
-- bind `vDynamicScrollerItem` with the pooled `view`
+- `startSpacerSize` and `endSpacerSize` expose the spacer sizes needed by `flowMode`
+- `getViewStyle(view)` exposes pooled positioning styles for custom integrations
 
 Supported directive binding fields:
 
@@ -53,6 +53,8 @@ Returns used most often:
 - `pool`
 - `visiblePool`
 - `totalSize`
+- `startSpacerSize`
+- `endSpacerSize`
 - `scrollToItem`
 - `scrollToPosition`
 - `findItemIndex`
@@ -69,8 +71,10 @@ Returns used most often:
 - Forgetting `minItemSize` hurts initial layout and scroll math.
 - Rendering from `visiblePool` instead of `pool` reduces DOM reuse.
 - Forgetting `sizeDependencies` means content changes may not trigger remeasurement.
-- `watchData` is heavier than targeted dependencies.
+- `watchData` is heavier than targeted `sizeDependencies`.
 - Use `view.item` for rendering. Reach for `view.itemWithSize` only when you need measured metadata.
+- `flowMode` only supports vertical single-axis layouts in v1. It is meant for native block or table flow, not grids or horizontal virtualization.
+- If you render a semantic table in `flowMode`, pair it with [`useTableColumnWidths`](./use-table-column-widths.md) so column widths stay locked while pooled rows churn.
 
 ## Example patterns
 
@@ -87,4 +91,24 @@ Wrapper-free dynamic rows:
 >
   {{ view.item.body }}
 </article>
+```
+
+Flow-mode spacers for semantic tables:
+
+```vue
+<tbody>
+  <tr v-if="startSpacerSize > 0" aria-hidden="true">
+    <td :style="{ height: `${startSpacerSize}px` }" />
+  </tr>
+  <tr
+    v-for="view in pool"
+    :key="view.id"
+    v-dynamic-scroller-item="{ view }"
+  >
+    <td>{{ view.item.label }}</td>
+  </tr>
+  <tr v-if="endSpacerSize > 0" aria-hidden="true">
+    <td :style="{ height: `${endSpacerSize}px` }" />
+  </tr>
+</tbody>
 ```

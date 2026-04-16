@@ -24,7 +24,7 @@ Documented install paths:
 
 - `app.use(VueVirtualScroller)` for bundled components
 - direct imports for `RecycleScroller`, `DynamicScroller`, `DynamicScrollerItem`, and `WindowScroller`
-- direct imports for headless composables such as `useRecycleScroller`, `useDynamicScroller`, and `useWindowScroller`
+- direct imports for headless helpers such as `useRecycleScroller`, `useDynamicScroller`, `useWindowScroller`, and `useTableColumnWidths`
 
 Keep setup guidance to the documented install patterns. Plugin option details are still not fully documented.
 
@@ -65,5 +65,5 @@ app.component('WindowScroller', WindowScroller)
 Headless import:
 
 ```ts
-import { useDynamicScroller } from 'vue-virtual-scroller'
+import { useDynamicScroller, useTableColumnWidths } from 'vue-virtual-scroller'
 ```

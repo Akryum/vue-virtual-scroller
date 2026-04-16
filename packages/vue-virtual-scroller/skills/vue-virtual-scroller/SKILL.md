@@ -5,7 +5,7 @@ description: Use this skill for Vue 3 virtual scrolling with vue-virtual-scrolle
 
 # Vue Virtual Scroller
 
-Use this skill when a task involves large Vue lists, DOM reuse, windowed rendering, or choosing between `RecycleScroller`, `DynamicScroller`, `WindowScroller`, and the headless composables.
+Use this skill when a task involves large Vue lists, DOM reuse, windowed rendering, or choosing between `RecycleScroller`, `DynamicScroller`, `WindowScroller`, and the headless helpers.
 
 ## Quick choice
 
@@ -16,7 +16,7 @@ Use this skill when a task involves large Vue lists, DOM reuse, windowed renderi
 | `DynamicScrollerItem` | You are rendering children inside `DynamicScroller` and the wrapper fits the markup. | You need wrapper-free semantics such as table rows. |
 | `WindowScroller` | The browser window should drive scrolling for the component path. | The list should own its own scroll container. |
 | `useRecycleScroller` | You need the virtualization engine with custom markup for known-size or pre-sized items. | The slot-based components already fit the UI. |
-| `useDynamicScroller` | You need wrapper-free unknown-size measurement with custom markup. | `DynamicScroller` plus `DynamicScrollerItem` already fits the UI. |
+| `useDynamicScroller` | You need wrapper-free unknown-size measurement with custom markup or semantic table rows. | `DynamicScroller` plus `DynamicScrollerItem` already fits the UI. |
 | `useWindowScroller` | The page should keep scrolling, but you still need headless control over markup and wrappers. | An inner scroll container is acceptable. |
 
 ## Setup
@@ -57,7 +57,7 @@ app.component('WindowScroller', WindowScroller)
 1. Decide whether sizes are known before render.
 2. If sizes are fixed or already stored in data, start with `RecycleScroller` or `useRecycleScroller`.
 3. If sizes are unknown until the DOM renders, use `DynamicScroller` or `useDynamicScroller`.
-4. If the page owns scrolling, prefer `WindowScroller` or `useWindowScroller` over older `pageMode` patterns.
+4. If the page owns scrolling, prefer `WindowScroller` or `useWindowScroller`.
 5. Set explicit scroll sizing, item sizing, and keying before debugging performance.
 
 ## Sizing rules
@@ -67,6 +67,7 @@ app.component('WindowScroller', WindowScroller)
 - `DynamicScroller` and `useDynamicScroller` require `minItemSize` for initial layout.
 - `gridItems` only works with fixed numeric `itemSize`.
 - Horizontal lists follow the same rules, but sizing applies on width instead of height.
+- `flowMode` is a vertical single-axis native-flow path. Use spacer elements from `startSpacerSize` and `endSpacerSize` instead of an absolutely positioned inner wrapper.
 
 ## Practical guidance
 
@@ -74,7 +75,7 @@ app.component('WindowScroller', WindowScroller)
 
 - Prefer `RecycleScroller` for tables, simple rows, grids, and card lists where size is stable or already known in memory.
 - Use `DynamicScroller` for message feeds, cards, or rows whose rendered content changes height after filtering, editing, or streaming.
-- Use headless composables when the bundled wrapper markup gets in the way of semantics or design-system constraints.
+- Use headless helpers when the bundled wrapper markup gets in the way of semantics or design-system constraints.
 
 ### Component vs headless
 
@@ -88,6 +89,7 @@ app.component('WindowScroller', WindowScroller)
 - Reused views mean child components must react when `item` changes; do not assume a fresh instance per row.
 - Render from `pool`, not `visiblePool`, on headless paths when you want normal recycling behavior.
 - Prefer targeted `sizeDependencies` over deep `watchData`.
+- On headless dynamic paths, render from `view.item`. Reach for `view.itemWithSize` only when you need measured metadata.
 - Key nested images, but do not add unnecessary keys to the immediate recycled content.
 
 ### Performance guardrails
@@ -102,7 +104,8 @@ app.component('WindowScroller', WindowScroller)
 - Chat feeds and append-heavy timelines map well to `DynamicScroller` or `useDynamicScroller`.
 - Multi-column card galleries map to `RecycleScroller` grid mode.
 - Page-level search results or article feeds map to `WindowScroller` or `useWindowScroller`.
-- Custom tables and design-system row components map to the headless composables.
+- Semantic tables map to `useDynamicScroller` or `useRecycleScroller` with `flowMode`, plus `useTableColumnWidths` to lock columns after measurement.
+- Custom design-system row components map to the headless helpers.
 
 ## Scope limits
 
@@ -116,6 +119,7 @@ This skill intentionally focuses on documented public surfaces:
 - `useRecycleScroller`
 - `useDynamicScroller`
 - `useWindowScroller`
+- `useTableColumnWidths`
 
 Do not infer undocumented behavior for these exported surfaces without updating docs first:
 
@@ -135,6 +139,7 @@ Do not infer undocumented behavior for these exported surfaces without updating 
 | useRecycleScroller | Headless fixed-size and pre-sized virtualization. | [references/use-recycle-scroller.md](./references/use-recycle-scroller.md) |
 | useDynamicScroller | Headless unknown-size virtualization with wrapper-free measurement. | [references/use-dynamic-scroller.md](./references/use-dynamic-scroller.md) |
 | useWindowScroller | Headless window-based virtualization. | [references/use-window-scroller.md](./references/use-window-scroller.md) |
+| useTableColumnWidths | Semantic table helper that locks measured column widths. | [references/use-table-column-widths.md](./references/use-table-column-widths.md) |
 | Reference index | Overview of all shipped references. | [references/index.md](./references/index.md) |
 
 ## Further reading
@@ -147,3 +152,4 @@ Do not infer undocumented behavior for these exported surfaces without updating 
 - [references/use-recycle-scroller.md](./references/use-recycle-scroller.md)
 - [references/use-dynamic-scroller.md](./references/use-dynamic-scroller.md)
 - [references/use-window-scroller.md](./references/use-window-scroller.md)
+- [references/use-table-column-widths.md](./references/use-table-column-widths.md)

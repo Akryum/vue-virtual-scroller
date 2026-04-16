@@ -12,6 +12,7 @@ Focused reference map for the documented public surfaces covered by this skill.
 | useRecycleScroller | Headless virtualization for custom markup with known or pre-sized items. | [use-recycle-scroller.md](./use-recycle-scroller.md) |
 | useDynamicScroller | Headless dynamic measurement path with `vDynamicScrollerItem`. | [use-dynamic-scroller.md](./use-dynamic-scroller.md) |
 | useWindowScroller | Headless window-scrolling virtualization. | [use-window-scroller.md](./use-window-scroller.md) |
+| useTableColumnWidths | Helper for locking semantic table column widths after measurement. | [use-table-column-widths.md](./use-table-column-widths.md) |
 
 ## Coverage notes
 

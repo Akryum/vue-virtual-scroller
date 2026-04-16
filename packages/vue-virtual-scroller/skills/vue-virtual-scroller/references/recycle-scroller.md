@@ -1,6 +1,6 @@
 # RecycleScroller
 
-Scope: the main component for fixed-size and pre-sized virtualization, including grids, prepend anchoring, and cache restore.
+Scope: the main component for fixed-size and pre-sized virtualization, including grids, prepend anchoring, cache restore, and native-flow rendering.
 
 ## Provenance
 
@@ -12,6 +12,7 @@ Generated from the package's public component documentation and shipped demo pat
 - Each item already exposes a numeric size field.
 - Item size can be derived in memory through an `itemSize(item, index)` resolver.
 - You need grid rendering with fixed item dimensions.
+- You want component API ergonomics instead of a headless render loop.
 
 ## Required inputs
 
@@ -40,12 +41,14 @@ Mode-specific props:
 - `gridItems`
 - `itemSecondarySize`
 - `minItemSize` when some pre-sized values may be missing initially
+- `flowMode` for vertical single-axis native-flow rendering with spacer elements
 
 Documented behavior:
 
 - `itemSize` accepts a fixed number, `null`, or `(item, index) => number`
 - `gridItems` still requires a fixed numeric `itemSize`
 - `pageMode` still exists, but new code should prefer `WindowScroller` for page scrolling
+- `flowMode` keeps active pooled views in DOM order and inserts spacer elements before and after the active window
 
 ## Events/returns
 
@@ -62,7 +65,7 @@ Documented slot props and helpers:
 
 - default slot: `item`, `index`, `active`
 - named slots: `before`, `after`, `empty`
-- exposed helpers: `scrollToItem`, `scrollToPosition`, `findItemIndex`, `getItemOffset`, `getItemSize`, `cacheSnapshot`, `restoreCache`, `updateVisibleItems`
+- exposed helpers: `scrollToItem`, `scrollToPosition`, `findItemIndex`, `getItemOffset`, `getItemSize`, `startSpacerSize`, `endSpacerSize`, `cacheSnapshot`, `restoreCache`, `updateVisibleItems`
 
 ## Pitfalls
 
@@ -72,6 +75,7 @@ Documented slot props and helpers:
 - Key nested images, but not the immediate recycled row shell.
 - Use the provided `hover` class instead of raw `:hover` selectors on recycled nodes.
 - Variable-size mode is heavier than fixed-size mode.
+- `flowMode` is intentionally limited in v1 to vertical single-axis layouts. `gridItems`, horizontal mode, and `hiddenPosition` fall back to standard positioning.
 
 ## Example patterns
 
@@ -116,5 +120,21 @@ Grid layout:
   <template #default="{ item }">
     <article>{{ item.name }}</article>
   </template>
+</RecycleScroller>
+```
+
+Flow mode:
+
+```vue
+<RecycleScroller
+  v-slot="{ item }"
+  :items="rows"
+  :item-size="40"
+  :flow-mode="true"
+  key-field="id"
+>
+  <article class="row">
+    {{ item.label }}
+  </article>
 </RecycleScroller>
 ```
