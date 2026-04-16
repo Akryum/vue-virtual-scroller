@@ -50,6 +50,7 @@ async function jumpToMiddle() {
     ref="scroller"
     :items="rows"
     :min-item-size="62"
+    :disable-transform="true"
     :shift="shiftEnabled"
   >
     <template #default="{ item, active }">

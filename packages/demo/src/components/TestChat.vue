@@ -21,12 +21,14 @@ export default {
 
   methods: {
     addItems(count = 1) {
+      const nextItems = []
       for (let i = 0; i < count; i++) {
-        this.items.push({
+        nextItems.push({
           text: faker.lorem.lines(),
           id: this.items.length + 1,
         })
       }
+      this.items = [...this.items, ...nextItems]
       this.scrollToBottom()
     },
 
@@ -56,6 +58,7 @@ export default {
 
     <DynamicScroller
       ref="scroller"
+      :key="items.length"
       :items="items"
       :min-item-size="24"
       class="scroller"

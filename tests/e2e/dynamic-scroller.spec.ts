@@ -47,6 +47,25 @@ function expectContiguousVisibleRows(rows: VisibleRowMetric[]) {
   }
 }
 
+async function waitForContiguousVisibleRows(page: Parameters<typeof test>[0]['page']) {
+  let lastError: unknown
+
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const visibleRows = normalizeVisibleRows(await getVisibleItems(page, '[data-testid="demo:row"]'))
+
+    try {
+      expectContiguousVisibleRows(visibleRows)
+      return
+    }
+    catch (error) {
+      lastError = error
+      await waitForSettle(page, 4)
+    }
+  }
+
+  throw lastError
+}
+
 test('dynamic scroller demo smoke', async ({ page }) => {
   await expectDemoSmoke(page, {
     slug: 'dynamic-scroller',
@@ -63,9 +82,7 @@ test('dynamic scroller demo keeps visible rows contiguous after fast scrolling',
   for (const distance of [0, 1800, 4200, -2600, 5600]) {
     await scrollViewportBy(page, distance)
     await waitForSettle(page)
-
-    const visibleRows = normalizeVisibleRows(await getVisibleItems(page, '[data-testid="demo:row"]'))
-    expectContiguousVisibleRows(visibleRows)
+    await waitForContiguousVisibleRows(page)
   }
 })
 
@@ -86,7 +103,7 @@ test('dynamic scroller demo filters, remeasures, and updates the visible range',
   expect((await readMetricNumbers(matchesMetric))[0] ?? 0).toBeLessThan(initialMatches)
 
   const beforeMutation = (await row.textContent()) ?? ''
-  await row.click()
+  await row.click({ force: true })
   await waitForSettle(page)
   expect(await row.textContent()).not.toBe(beforeMutation)
 

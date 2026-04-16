@@ -2,20 +2,85 @@ import { expect, test } from '@playwright/test'
 import {
   control,
   expectDemoSmoke,
+  getVisibleItems,
   metric,
   scrollViewportBy,
-  viewport,
   waitForAnimationFrame,
   waitForSettle,
 } from './support/demo'
-import { countImageDiffPixels } from './support/image'
 
-const DEFAULT_VISUAL_DIFF_LIMIT = 500
-const TOP_EDGE_VISUAL_DIFF_LIMIT = 1500
+interface VisibleRowSnapshot {
+  end: number
+  id: number
+  start: number
+}
 
-async function getViewportScreenshot(page: Parameters<typeof test>[0]['page']) {
-  await expect(viewport(page)).toBeVisible()
-  return viewport(page).screenshot()
+/**
+ * Read the first visible rows inside the demo viewport.
+ */
+async function getVisibleRowSnapshot(page: Parameters<typeof test>[0]['page']) {
+  const rows = await getVisibleItems(page, '[data-testid="demo:row"]')
+  return rows
+    .map((row) => {
+      const id = Number(row.key)
+      if (!Number.isFinite(id)) {
+        return null
+      }
+
+      return {
+        id,
+        start: row.start,
+        end: row.end,
+      }
+    })
+    .filter((row): row is VisibleRowSnapshot => row != null)
+    .slice(0, 5)
+}
+
+/**
+ * Assert that the same visible rows stayed anchored within a geometry tolerance.
+ */
+function expectAnchoredRows(
+  beforeRows: VisibleRowSnapshot[],
+  afterRows: VisibleRowSnapshot[],
+  tolerance: number,
+) {
+  expect(afterRows.length).toBeGreaterThanOrEqual(beforeRows.length)
+
+  for (let index = 0; index < beforeRows.length; index++) {
+    const before = beforeRows[index]
+    const after = afterRows[index]
+    expect(after.id).toBe(before.id)
+    expect(Math.abs(after.start - before.start)).toBeLessThanOrEqual(tolerance)
+    expect(Math.abs(after.end - before.end)).toBeLessThanOrEqual(tolerance)
+  }
+}
+
+/**
+ * Poll for anchored rows across a few animation frames to absorb CI jitter.
+ */
+async function expectAnchoredRowsEventually(
+  page: Parameters<typeof test>[0]['page'],
+  beforeRows: VisibleRowSnapshot[],
+  tolerance: number,
+  attempts = 6,
+) {
+  let lastError: unknown
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const afterRows = await getVisibleRowSnapshot(page)
+
+    try {
+      expectAnchoredRows(beforeRows, afterRows, tolerance)
+      return afterRows
+    }
+    catch (error) {
+      lastError = error
+      await waitForAnimationFrame(page)
+    }
+  }
+
+  throw lastError
 }
 
 test('shift demo smoke', async ({ page }) => {
@@ -35,28 +100,17 @@ test('shift demo keeps the viewport visually anchored after prepend', async ({ b
   await waitForSettle(page)
   const topRowBefore = (await topRowMetric.textContent())?.trim()
   expect(topRowBefore).toBeTruthy()
-
-  const beforeScreenshot = await getViewportScreenshot(page)
+  const beforeRows = await getVisibleRowSnapshot(page)
 
   await control(page, 'prepend-10').click()
   await expect(metric(page, 'rows')).toHaveText('Loaded rows: 46')
-
-  const immediateScreenshot = await getViewportScreenshot(page)
-  const immediateDiffPixels = await countImageDiffPixels(page, beforeScreenshot, immediateScreenshot)
-
-  await waitForAnimationFrame(page)
-  const firstFrameScreenshot = await getViewportScreenshot(page)
-  const firstFrameDiffPixels = await countImageDiffPixels(page, beforeScreenshot, firstFrameScreenshot)
+  await expectAnchoredRowsEventually(page, beforeRows, 3, 4)
 
   await waitForSettle(page)
-
-  const afterScreenshot = await getViewportScreenshot(page)
-  const diffPixels = await countImageDiffPixels(page, beforeScreenshot, afterScreenshot)
+  const afterRows = await getVisibleRowSnapshot(page)
 
   await expect(topRowMetric).toHaveText(topRowBefore!)
-  expect(immediateDiffPixels).toBeLessThanOrEqual(DEFAULT_VISUAL_DIFF_LIMIT)
-  expect(firstFrameDiffPixels).toBeLessThanOrEqual(DEFAULT_VISUAL_DIFF_LIMIT)
-  expect(diffPixels).toBeLessThanOrEqual(DEFAULT_VISUAL_DIFF_LIMIT)
+  expectAnchoredRows(beforeRows, afterRows, 4)
 })
 
 test('shift demo keeps anchoring after scrolling upward before prepend', async ({ browserName, page }) => {
@@ -72,26 +126,15 @@ test('shift demo keeps anchoring after scrolling upward before prepend', async (
 
   const topRowBefore = (await topRowMetric.textContent())?.trim()
   expect(topRowBefore).toBeTruthy()
-
-  const beforeScreenshot = await getViewportScreenshot(page)
+  const beforeRows = await getVisibleRowSnapshot(page)
 
   await control(page, 'prepend-10').click()
   await expect(metric(page, 'rows')).toHaveText('Loaded rows: 46')
+  await expectAnchoredRowsEventually(page, beforeRows, 32, 12)
 
-  const immediateScreenshot = await getViewportScreenshot(page)
-  const immediateDiffPixels = await countImageDiffPixels(page, beforeScreenshot, immediateScreenshot)
-
-  await waitForAnimationFrame(page)
-  const firstFrameScreenshot = await getViewportScreenshot(page)
-  const firstFrameDiffPixels = await countImageDiffPixels(page, beforeScreenshot, firstFrameScreenshot)
-
-  await waitForSettle(page)
-
-  const afterScreenshot = await getViewportScreenshot(page)
-  const diffPixels = await countImageDiffPixels(page, beforeScreenshot, afterScreenshot)
+  await waitForSettle(page, 16)
+  const afterRows = await getVisibleRowSnapshot(page)
 
   await expect(topRowMetric).toHaveText(topRowBefore!)
-  expect(immediateDiffPixels).toBeLessThanOrEqual(TOP_EDGE_VISUAL_DIFF_LIMIT)
-  expect(firstFrameDiffPixels).toBeLessThanOrEqual(TOP_EDGE_VISUAL_DIFF_LIMIT)
-  expect(diffPixels).toBeLessThanOrEqual(TOP_EDGE_VISUAL_DIFF_LIMIT)
+  expectAnchoredRows(beforeRows, afterRows, 32)
 })

@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="TItem">
 import type { UseDynamicScrollerOptions, UseDynamicScrollerReturn } from '../composables/useDynamicScroller'
 import type { CacheSnapshot, DynamicScrollerExposed, DynamicScrollerSlotProps, ItemWithSize, KeyFieldValue, KeyValue, RecycleScrollerExposed, ScrollDirection } from '../types'
-import { computed, ref } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { useDynamicScroller } from '../composables/useDynamicScroller'
 import RecycleScroller from './RecycleScroller.vue'
 
@@ -47,6 +47,7 @@ defineSlots<{
 
 // Template refs
 const scroller = ref<RecycleScrollerExposed<ItemWithSize<TItem, KeyValue>, KeyValue>>()
+const items = toRef(props, 'items')
 
 // Derive the root DOM element from the scroller's exposed el ref
 const scrollerEl = computed(() => {
@@ -58,7 +59,7 @@ const scrollerEl = computed(() => {
 })
 
 const dynamicOptions = computed(() => ({
-  items: props.items,
+  items,
   keyField: props.keyField,
   direction: props.direction,
   minItemSize: props.minItemSize,

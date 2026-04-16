@@ -70,6 +70,17 @@ type ViewWithStyleStamp<TItem = unknown, TKey = ItemKey<TItem>> = View<TItem, TK
 let uid = 0
 const EMPTY_SIZES: never[] = []
 
+/**
+ * Touch array slots so computed wrappers react to shallow list mutations such as
+ * push, splice, reorder, or item replacement without deep-watching item fields.
+ */
+function trackArrayShallowMutations<TItem>(items: TItem[]) {
+  for (let index = 0; index < items.length; index++) {
+    // eslint-disable-next-line ts/no-unused-expressions
+    items[index]
+  }
+}
+
 function touchView<TItem, TKey>(view: View<TItem, TKey>) {
   const stampedView = view as ViewWithStyleStamp<TItem, TKey>
   stampedView._vs_styleStamp++
@@ -182,7 +193,11 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
   const resolvedOptions = resolveScrollerOptions(options)
   const normalizedInputs = normalizeScrollerInputs(resolvedOptions, el, before, after, callbacks)
-  const items = computed(() => toValue(getOptions().items))
+  const items = computed(() => {
+    const currentItems = toValue(getOptions().items)
+    trackArrayShallowMutations(currentItems)
+    return currentItems
+  })
 
   // Reactive state
   const pool = ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>([]) as Ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>
@@ -1565,7 +1580,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     updateVisibleItems(true)
   })
 
-  watch(items, (nextItems, previousItems) => {
+  watch(() => items.value.slice(), (nextItems, previousItems) => {
     const opts = getOptions()
     const keyField = simpleArray.value ? null : opts.keyField
     const nextKeys = getItemKeys(nextItems, keyField)

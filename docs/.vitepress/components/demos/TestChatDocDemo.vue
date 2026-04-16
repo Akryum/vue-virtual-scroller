@@ -12,13 +12,15 @@ const rows = ref<{ id: number, text: string }[]>([])
 let nextId = 1
 
 function addItems(count = 1) {
+  const appendedRows: Array<{ id: number, text: string }> = []
   for (let i = 0; i < count; i++) {
-    rows.value.push({
+    appendedRows.push({
       id: nextId,
       text: pool[nextId % pool.length],
     })
     nextId++
   }
+  rows.value = [...rows.value, ...appendedRows]
   requestAnimationFrame(() => scroller.value?.scrollToBottom())
 }
 </script>
@@ -66,6 +68,7 @@ function addItems(count = 1) {
 
     <DynamicScroller
       ref="scroller"
+      :key="rows.length"
       class="demo-viewport"
       data-testid="demo:viewport"
       :items="rows"

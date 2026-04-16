@@ -151,6 +151,17 @@ type RawDynamicScrollerView<TItem = unknown, TKey = KeyValue> = View<ItemWithSiz
 const SCROLL_MEASURE_IDLE_MS = 120
 
 /**
+ * Touch array slots so computed wrappers react to shallow list mutations such as
+ * push, splice, reorder, or item replacement without deep-watching item fields.
+ */
+function trackArrayShallowMutations<TItem>(items: TItem[]) {
+  for (let index = 0; index < items.length; index++) {
+    // eslint-disable-next-line ts/no-unused-expressions
+    items[index]
+  }
+}
+
+/**
  * Resolve internal size-tracking state from raw recycle view.
  */
 function rawViewItemWithSize<TItem, TKey>(view: RawDynamicScrollerView<TItem, TKey>) {
@@ -515,7 +526,11 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     simpleArray: false,
   })
 
-  const items = computed(() => toValue(getOptions().items))
+  const items = computed(() => {
+    const currentItems = toValue(getOptions().items)
+    trackArrayShallowMutations(currentItems)
+    return currentItems
+  })
   const direction = computed<ScrollDirection>(() => getOptions().direction ?? 'vertical')
   const el = computed(() => toValue(getOptions().el))
   const before = computed(() => toValue(getOptions().before))
@@ -941,6 +956,9 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
 
     _applyingShiftAnchor = true
     scrollerEl.scrollTop = target
+    // Keep the pooled window in sync immediately so prepend anchoring does not
+    // expose one-frame overlaps while the native scroll event is still queued.
+    recycleScroller.updateVisibleItems(true)
     scrollerEl.dispatchEvent(new Event('scroll'))
     requestFrame(() => {
       _applyingShiftAnchor = false
@@ -965,7 +983,16 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     const target = recycleScroller.getItemOffset(anchorIndex) + shiftAnchor.logicalOffset
     moved = setScrollTop(target) || moved
 
-    if (shiftAnchor.visualKey != null) {
+    // Visual correction: use the actual DOM position of the anchor element to
+    // fine-tune the scroll offset. This must only run when the logical scroll
+    // did NOT move this frame. setScrollTop → updateVisibleItems updates
+    // view.position reactively, but Vue flushes those changes in a microtask
+    // (after this synchronous callback returns). Reading getBoundingClientRect
+    // before that flush returns stale CSS transforms, which causes the visual
+    // delta to undo the logical scroll and oscillate each frame. Gating on
+    // !moved guarantees Vue has re-rendered since the last frame so the DOM
+    // positions match the current reactive state.
+    if (!moved && shiftAnchor.visualKey != null) {
       for (const [rowEl, record] of anchorRegistry.entries()) {
         if (!record.active || record.id !== shiftAnchor.visualKey || getComputedStyle(rowEl).visibility === 'hidden') {
           continue
@@ -1214,7 +1241,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   }
 
   // Watchers
-  watch(items, (nextItems, previousItems) => {
+  watch(() => items.value.slice(), (nextItems, previousItems) => {
     const opts = getOptions()
     const keyField = simpleArray.value ? null : opts.keyField
     const nextKeys = getItemKeys(nextItems, keyField)

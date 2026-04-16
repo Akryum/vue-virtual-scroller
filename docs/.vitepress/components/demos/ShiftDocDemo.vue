@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import DynamicScroller from '../../../../packages/vue-virtual-scroller/src/components/DynamicScroller.vue'
 import DynamicScrollerItem from '../../../../packages/vue-virtual-scroller/src/components/DynamicScrollerItem.vue'
 import { avatarStyle, createMessages } from './demo-data'
@@ -13,6 +13,7 @@ const shiftEnabled = ref(true)
 const visibleStart = ref(0)
 const rows = ref(createWindow(initialStart, initialStart + initialCount))
 const historyCursor = ref(initialStart)
+const displayedRowCount = ref(rows.value.length)
 
 const topRow = computed(() => rows.value[visibleStart.value] ?? null)
 
@@ -55,6 +56,15 @@ async function prepend(count: number) {
 function onUpdate(_startIndex: number, _endIndex: number, nextVisibleStart: number) {
   visibleStart.value = nextVisibleStart
 }
+
+watch(rows, async () => {
+  await nextTick()
+  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+  displayedRowCount.value = rows.value.length
+}, {
+  flush: 'post',
+})
 
 onMounted(() => {
   void jumpToMiddle()
@@ -109,7 +119,7 @@ onMounted(() => {
       <span
         class="demo-chip"
         data-testid="demo:metric:rows"
-      >Loaded rows: {{ rows.length }}</span>
+      >Loaded rows: {{ displayedRowCount }}</span>
       <span
         class="demo-chip"
         data-testid="demo:metric:top-row"
@@ -122,6 +132,7 @@ onMounted(() => {
       data-testid="demo:viewport"
       :items="rows"
       :min-item-size="62"
+      :disable-transform="true"
       :shift="shiftEnabled"
       :emit-update="true"
       @update="onUpdate"
