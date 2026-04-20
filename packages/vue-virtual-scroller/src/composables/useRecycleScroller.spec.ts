@@ -919,6 +919,29 @@ describe('useRecycleScroller', () => {
     cancelAnimationFrameSpy.mockRestore()
   })
 
+  it('recomputes visiblePool when a view is manually flipped to unused', async () => {
+    // Regression: `view.nr` is markRaw, so `visiblePool`'s `.filter(view => view.nr.used)`
+    // establishes no reactive dep on `.used`. Without tracking `_vs_visibilityStamp`,
+    // the computed stays stale when `used` flips without a pool mutation — external
+    // consumers rendering from `visiblePool` then see stale/duplicate rows.
+    const { vm } = mountHarness({
+      items: Array.from({ length: 3 }, (_, id) => ({ id })),
+      itemSize: 40,
+      clientHeight: 120,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => view.nr.index)).toEqual([0, 1, 2])
+
+    const target = vm.visiblePool[1]
+    target.nr.used = false
+    target._vs_visibilityStamp++
+
+    expect(vm.visiblePool.map((view: View) => view.nr.index)).toEqual([0, 2])
+  })
+
   it('clears pending timeouts on unmount', async () => {
     const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout')
     setTimeoutSpy.mockImplementation(() => 789 as unknown as ReturnType<typeof setTimeout>)

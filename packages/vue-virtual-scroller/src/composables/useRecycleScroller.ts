@@ -301,9 +301,31 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     return EMPTY_SIZES
   })
 
+  /**
+   * Computed list of pooled views that are currently assigned to visible items,
+   * sorted by index.
+   *
+   * Reactivity note: `view.nr` is `markRaw`, so reads of `view.nr.used` do NOT
+   * create a reactive dependency. If we only relied on `pool.value`, this
+   * computed would stay stale whenever a `used` flag flipped without a pool
+   * array mutation — e.g. on the `itemsChanged` path where
+   * `removeAndRecycleAllViews()` marks every view unused and the subsequent
+   * main loop reuses recycled views (no push/splice) and no new view is
+   * created. `touchViewVisibility` bumps `view._vs_visibilityStamp`
+   * (shallow-reactive) in exactly the two places `used` changes — recycling
+   * in and recycling out — so reading that stamp here is the tightest
+   * possible reactive hook: one dep per pooled view, invalidated only when
+   * visibility actually changes. The same stamp also dedupes any transient
+   * `used=true` duplicates by ensuring the filter always runs against
+   * fresh state.
+   */
   const visiblePool = computed(() =>
     pool.value
-      .filter(view => view.nr.used)
+      .filter((view) => {
+        // Establish reactive dep on visibility stamp; `nr` is markRaw.
+        void (view as ViewWithStyleStamp<TItem, ItemKey<TItem, TKeyField>>)._vs_visibilityStamp
+        return view.nr.used
+      })
       .sort((a, b) => a.nr.index - b.nr.index),
   )
 
