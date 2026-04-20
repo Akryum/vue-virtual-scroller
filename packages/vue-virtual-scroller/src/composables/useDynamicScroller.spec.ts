@@ -523,6 +523,33 @@ describe('useDynamicScroller', () => {
     expect(onHidden).toHaveBeenCalledTimes(1)
   })
 
+  it('does not leave duplicate used views after replacing skeleton list with a single entry in flow-mode', async () => {
+    // Regression: the content table renders ~25 placeholder rows keyed by their
+    // skeleton index, then swaps them for a single real row keyed by UUID. In
+    // flow-mode variable-size, two pooled views were kept `used: true` at the
+    // same rendered index, which surfaced as a duplicate row in the UI.
+    const skeletonItems = Array.from({ length: 25 }, (_, id) => ({
+      id: String(id),
+      $__skeletonRow: true,
+    }))
+    const { vm, options } = mountHarness(skeletonItems, {
+      flowMode: true,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    options.items = [{ id: 'b899c68c-350f-40e1-9018-17d1e8acd7d9', name: 'Big Tasty' }]
+    await nextTick()
+    await nextTick()
+
+    const usedIndices = vm.pool
+      .filter((view: any) => view.used)
+      .map((view: any) => view.index)
+    expect(usedIndices).toEqual([0])
+    expect(vm.visiblePool.map((view: any) => view.index)).toEqual([0])
+  })
+
   it('adjusts scroll position when measured sizes change above the viewport', async () => {
     const { vm, el } = mountHarness([
       { id: 'a', label: 'Alpha' },

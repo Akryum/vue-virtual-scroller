@@ -919,6 +919,31 @@ describe('useRecycleScroller', () => {
     cancelAnimationFrameSpy.mockRestore()
   })
 
+  it('does not leave duplicate used views after replacing a large list with a single entry of a new key in flow-mode variable size', async () => {
+    // Regression: skeleton→real transition swapped a 25-row placeholder list for
+    // one real row with a completely different key. In flow-mode variable-size,
+    // two pooled views ended up with `used: true` at the same index, surfacing
+    // as a duplicate row in the virtualized table.
+    const { vm, options } = mountHarness({
+      items: Array.from({ length: 25 }, (_, id) => ({ id: String(id) })),
+      itemSize: null,
+      minItemSize: 40,
+      flowMode: true,
+      clientHeight: 400,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    options.items = [{ id: 'b899c68c-350f-40e1-9018-17d1e8acd7d9' }]
+    await nextTick()
+    await nextTick()
+
+    const usedViews = vm.pool.filter((view: View) => view.nr.used)
+    expect(usedViews.map((view: View) => view.nr.index)).toEqual([0])
+    expect(vm.visiblePool.map((view: View) => view.nr.index)).toEqual([0])
+  })
+
   it('recomputes visiblePool when a view is manually flipped to unused', async () => {
     // Regression: `view.nr` is markRaw, so `visiblePool`'s `.filter(view => view.nr.used)`
     // establishes no reactive dep on `.used`. Without tracking `_vs_visibilityStamp`,

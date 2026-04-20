@@ -1602,7 +1602,14 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     updateVisibleItems(true)
   })
 
-  watch(() => items.value.slice(), (nextItems, previousItems) => {
+  // Read the raw items ref directly instead of going through the `items`
+  // computed. Upstream wrappers (e.g. `useDynamicScroller`) mutate their
+  // backing array in place and call `triggerRef` to notify subscribers. The
+  // `items` computed then re-evaluates and returns the same array reference,
+  // which Vue dedupes — so any watcher chained through that computed would
+  // never fire. Subscribing to the raw ref guarantees the items watcher runs
+  // on every upstream mutation, even when the array identity is preserved.
+  watch(() => toValue(getOptions().items).slice(), (nextItems, previousItems) => {
     const opts = getOptions()
     const keyField = simpleArray.value ? null : opts.keyField
     const nextKeys = getItemKeys(nextItems, keyField)
