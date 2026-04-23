@@ -62,10 +62,6 @@ importers:
         version: 3.2.11(@types/node@25.5.0)
 
   packages/vue-virtual-scroller:
-    dependencies:
-      mitt:
-        specifier: ^2.1.0
-        version: 2.1.0
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^5.0.0
@@ -2453,9 +2449,6 @@ packages:
 
   minisearch@7.2.0:
     resolution: {integrity: sha512-dqT2XBYUOZOiC5t2HRnwADjhNS2cecp9u+TJRiJ1Qp/f5qjkeT5APcGPjHw+bz89Ms8Jp+cG4AlE+QZ/QnDglg==}
-
-  mitt@2.1.0:
-    resolution: {integrity: sha512-ILj2TpLiysu2wkBbWjAmww7TkZb65aiQO+DkVdUTBpBXq+MHYiETENkKFMtsJZX1Lf4pe4QOrTSjIfUwN5lRdg==}
 
   mitt@3.0.1:
     resolution: {integrity: sha512-vKivATfr97l2/QBCYAkXYDbrIWPM2IIKEl7YPhjCvKlG3kE2gm+uBo6nEXK3M5/Ffh/FLpKExzOQ3JJoJGFKBw==}
@@ -5741,8 +5734,6 @@ snapshots:
   minipass@7.1.3: {}
 
   minisearch@7.2.0: {}
-
-  mitt@2.1.0: {}
 
   mitt@3.0.1: {}
 

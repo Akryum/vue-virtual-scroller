@@ -2,10 +2,10 @@ import type { ComputedRef, CSSProperties, Directive, MaybeRefOrGetter, Ref } fro
 import type { CacheSnapshot, DefaultKeyField, DynamicScrollerView, ItemKey, ItemWithSize, KeyFieldValue, KeyValue, ScrollDirection, ValidKeyField, View, VScrollData } from '../types'
 import type { DynamicScrollerItemControllerCallbacks, DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext, DynamicScrollerUpdatePayload } from './dynamicScrollerMeasurement'
 import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './useRecycleScroller'
-import mitt from 'mitt'
 import { computed, effectScope, nextTick, onActivated, onDeactivated, onUnmounted, provide, reactive, shallowReactive, shallowRef, toValue, triggerRef, watch, watchEffect } from 'vue'
 import { findPrependOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
 import { resolveItemKey, resolveItemKeyWithOptionalIndex } from '../engine/keyField'
+import { createEventEmitter } from '../utils/eventEmitter'
 import { getPooledViewStyle, resolvePooledViewMode } from '../utils/viewStyle'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
 import { createDynamicScrollerMeasureQueue } from './dynamicScrollerMeasureQueue'
@@ -126,6 +126,10 @@ interface DynamicScrollerItemBindingRecord<TItem = unknown, TKey = KeyValue> {
 }
 
 type VScrollUpdateHandler = (payload?: unknown) => void
+
+interface DynamicScrollerEvents {
+  'vscroll:update': DynamicScrollerUpdatePayload
+}
 
 interface DynamicScrollerAnchorRecord {
   active: boolean
@@ -506,7 +510,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   // Internal state (non-reactive)
   let _undefinedSizes = 0
   let _undefinedMap: Record<KeyValue, boolean | undefined> = {}
-  const _events = mitt()
+  const _events = createEventEmitter<DynamicScrollerEvents>()
   let _scrollingToBottom = false
   let _resizeObserver: ResizeObserver | undefined
   let _applyingShiftAnchor = false
@@ -1351,7 +1355,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     cancelPendingFrames()
     clearMeasureResumeTimer()
     el.value?.removeEventListener('scroll', onNativeScroll)
-    _events.all.clear()
+    _events.clear()
   })
 
   return {

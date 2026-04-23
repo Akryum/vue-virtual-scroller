@@ -14,7 +14,7 @@
     "typecheck": "pnpm --filter vue-virtual-scroller typecheck",
     "test:unit": "pnpm run -r --filter vue-virtual-scroller test",
     "test:e2e": "playwright test",
-    "test:ci": "pnpm build && pnpm docs:build && pnpm --filter vue-virtual-scroller exec npm pack --dry-run",
+    "test:ci": "pnpm build && pnpm --filter vue-virtual-scroller test:package && pnpm docs:build && pnpm --filter vue-virtual-scroller exec npm pack --dry-run",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"

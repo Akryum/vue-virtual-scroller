@@ -348,6 +348,36 @@ describe('useDynamicScroller', () => {
     expect(vm.getItemSize(items[0])).toBe(42)
   })
 
+  it('subscribes, unsubscribes, and clears vscroll update handlers on unmount', async () => {
+    const { vm, wrapper } = mountHarness([
+      { id: 'a', label: 'Alpha' },
+      { id: 'b', label: 'Beta' },
+    ])
+
+    await nextTick()
+    await nextTick()
+
+    const firstHandler = vi.fn()
+    const unsubscribe = vm.measurementContext.onVscrollUpdate(firstHandler)
+
+    vm.onScrollerVisible()
+    expect(firstHandler).toHaveBeenCalledTimes(1)
+    expect(firstHandler).toHaveBeenLastCalledWith({ force: false })
+
+    unsubscribe()
+    vm.forceUpdate()
+    expect(firstHandler).toHaveBeenCalledTimes(1)
+
+    const secondHandler = vi.fn()
+    vm.measurementContext.onVscrollUpdate(secondHandler)
+
+    const onScrollerVisible = vm.onScrollerVisible
+    wrapper.unmount()
+    onScrollerVisible()
+
+    expect(secondHandler).not.toHaveBeenCalled()
+  })
+
   it('supports single-object options with nested items and el refs', async () => {
     const { vm, items, onUpdate } = mountObjectHarness([
       { id: 'a', label: 'Alpha' },
