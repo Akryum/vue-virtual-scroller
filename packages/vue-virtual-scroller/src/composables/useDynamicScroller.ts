@@ -15,6 +15,10 @@ import { useRecycleScroller } from './useRecycleScroller'
 export interface UseDynamicScrollerItemViewBindingOptions<TItem = unknown, TKey = KeyValue> {
   view: DynamicScrollerView<TItem, TKey>
   watchData?: boolean
+  /**
+   * @deprecated `sizeDependencies` is a legacy fallback for environments without
+   * `ResizeObserver` and will be removed in the next major release.
+   */
   sizeDependencies?: Record<string, unknown> | unknown[] | null
   emitResize?: boolean
   onResize?: DynamicScrollerItemControllerCallbacks['onResize']

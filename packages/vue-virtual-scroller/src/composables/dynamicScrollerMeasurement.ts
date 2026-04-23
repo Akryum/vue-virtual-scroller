@@ -25,6 +25,10 @@ export interface DynamicScrollerItemControllerOptions<TItem = unknown> {
   watchData: boolean
   active: boolean
   index?: number
+  /**
+   * @deprecated `sizeDependencies` is a legacy fallback for environments without
+   * `ResizeObserver` and will be removed in the next major release.
+   */
   sizeDependencies?: Record<string, unknown> | unknown[] | null
   emitResize: boolean
 }
@@ -40,6 +44,19 @@ export interface DynamicScrollerItemController {
   updateSize: () => void
   mount: () => void
   unmount: () => void
+}
+
+const SIZE_DEPENDENCIES_DEPRECATION_MESSAGE = '[vue-virtual-scroller] `sizeDependencies` is deprecated and will be removed in the next major release. Dynamic item sizing uses ResizeObserver in modern browsers.'
+const SHOULD_WARN_ABOUT_SIZE_DEPENDENCIES = import.meta.env.MODE !== 'test'
+let hasWarnedAboutSizeDependenciesDeprecation = false
+
+function warnDeprecatedSizeDependencies(value: DynamicScrollerItemControllerOptions['sizeDependencies']) {
+  if (!SHOULD_WARN_ABOUT_SIZE_DEPENDENCIES || value == null || hasWarnedAboutSizeDependenciesDeprecation) {
+    return
+  }
+
+  hasWarnedAboutSizeDependenciesDeprecation = true
+  console.warn(SIZE_DEPENDENCIES_DEPRECATION_MESSAGE)
 }
 
 export function createDynamicScrollerItemController(
@@ -221,17 +238,21 @@ export function createDynamicScrollerItemController(
     }
   }
 
+  warnDeprecatedSizeDependencies(toValue(options).sizeDependencies)
+
   _cleanupStops.push(watch(() => toValue(options).watchData, () => {
     updateWatchData()
   }))
 
-  if (!context.resizeObserver) {
-    _cleanupStops.push(watch(() => toValue(options).sizeDependencies, () => {
+  _cleanupStops.push(watch(() => toValue(options).sizeDependencies, (value) => {
+    warnDeprecatedSizeDependencies(value)
+
+    if (!context.resizeObserver) {
       onDataUpdate()
-    }, {
-      deep: true,
-    }))
-  }
+    }
+  }, {
+    deep: true,
+  }))
 
   _cleanupStops.push(watch(id, (value, oldValue) => {
     const elValue = toValue(el)

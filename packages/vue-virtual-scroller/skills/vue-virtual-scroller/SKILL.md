@@ -88,7 +88,7 @@ app.component('WindowScroller', WindowScroller)
 
 - Reused views mean child components must react when `item` changes; do not assume a fresh instance per row.
 - Render from `pool`, not `visiblePool`, on headless paths when you want normal recycling behavior.
-- Prefer targeted `sizeDependencies` over deep `watchData`.
+- Only reach for `watchData` when a legacy no-`ResizeObserver` fallback matters.
 - On headless dynamic paths, render from `view.item`. Reach for `view.itemWithSize` only when you need measured metadata.
 - Key nested images, but do not add unnecessary keys to the immediate recycled content.
 

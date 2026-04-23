@@ -57,14 +57,12 @@ Use the directive with the pooled `view`:
 ```vue
 v-dynamic-scroller-item="{
   view,
-  sizeDependencies: [...],
 }"
 ```
 
 Supported binding fields:
 
 - `view`: required in the recommended headless path
-- `sizeDependencies`: values that can change rendered size
 - `watchData`: deep-watch fallback, usually not recommended
 - `emitResize`: emit resize callbacks when measurement changes
 - `onResize`: optional callback for resize notifications
@@ -94,7 +92,6 @@ In the recommended `view`-based path, you do not need to pass `item`, `active`, 
 - Add an inner wrapper with `position: relative` and `minHeight`/`minWidth` from `totalSize`.
 - Render every entry in `pool`.
 - Bind the pooled `view` into `v-dynamic-scroller-item`.
-- Pass `sizeDependencies` for data that can change layout after first render.
 
 If you enable `flowMode`, render start and end spacer elements from `startSpacerSize` and `endSpacerSize` instead of applying `totalSize` to an absolutely positioned inner wrapper. This is the path used by the [headless table demo](../demos/headless-table).
 
@@ -104,9 +101,8 @@ When that headless path renders a semantic table, pair it with [`useTableColumnW
 
 - Forgetting `minItemSize` hurts the initial layout and scroll math.
 - Rendering from `visiblePool` instead of `pool` reduces the effectiveness of DOM reuse.
-- Forgetting `sizeDependencies` means content changes may not trigger remeasurement.
 - `view.itemWithSize` is still available, but ordinary rendering should use `view.item`.
-- `watchData` works, but it is heavier than targeted `sizeDependencies`.
+- `watchData` only exists for legacy no-`ResizeObserver` fallbacks and is heavier than the default path.
 - If you prepend into chat-style data, enable `shift` in the composable options so the viewport stays anchored.
 - Set `disableTransform` when generic pooled wrappers must avoid translate transforms.
 - `flowMode` only supports vertical single-axis layouts in v1. It is meant for native block or table flow, not grids or horizontal virtualization.
@@ -147,10 +143,7 @@ const {
       <article
         v-for="view in pool"
         :key="view.id"
-        v-dynamic-scroller-item="{
-          view,
-          sizeDependencies: [view.item.title, view.item.body],
-        }"
+        v-dynamic-scroller-item="{ view }"
       >
         <h4>{{ view.item.title }}</h4>
         <p>{{ view.item.body }}</p>

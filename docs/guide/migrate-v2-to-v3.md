@@ -138,10 +138,7 @@ const {
       <article
         v-for="view in pool"
         :key="view.nr.id"
-        v-dynamic-scroller-item="{
-          view,
-          sizeDependencies: [view.item.item.title, view.item.item.body],
-        }"
+        v-dynamic-scroller-item="{ view }"
       >
         <h4>{{ view.item.item.title }}</h4>
         <p>{{ view.item.item.body }}</p>
@@ -170,10 +167,7 @@ const {
       <article
         v-for="view in pool"
         :key="view.id"
-        v-dynamic-scroller-item="{
-          view,
-          sizeDependencies: [view.item.title, view.item.body],
-        }"
+        v-dynamic-scroller-item="{ view }"
       >
         <h4>{{ view.item.title }}</h4>
         <p>{{ view.item.body }}</p>

@@ -50,7 +50,6 @@ const filteredRows = computed(() => {
       <DynamicScrollerItem
         :item="item"
         :active="active"
-        :size-dependencies="[item]"
       >
         {{ item }}
       </DynamicScrollerItem>

@@ -57,7 +57,6 @@ async function jumpToMiddle() {
       <DynamicScrollerItem
         :item="item"
         :active="active"
-        :size-dependencies="[item.message]"
       >
         {{ item.message }}
       </DynamicScrollerItem>

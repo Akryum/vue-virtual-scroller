@@ -48,7 +48,7 @@ Important exposed helpers:
 
 ## Pitfalls
 
-- `DynamicScroller` does not guess which data changes affect layout; pass them to `DynamicScrollerItem` through `sizeDependencies`.
+- `DynamicScroller` remeasures rows automatically as rendered size changes in modern browsers.
 - Pass slot `index` to `DynamicScrollerItem` when using simple-array mode or a function `keyField`.
 - Missing `minItemSize` hurts first render and scroll math.
 - Prefer `RecycleScroller` when sizes are already known because it is lighter.
@@ -67,7 +67,6 @@ Unknown-height rows:
       :item="item"
       :active="active"
       :index="index"
-      :size-dependencies="[item.message]"
     >
       {{ item.message }}
     </DynamicScrollerItem>
@@ -87,7 +86,6 @@ Append-heavy chat feed:
     <DynamicScrollerItem
       :item="item"
       :active="active"
-      :size-dependencies="[item.text]"
     >
       {{ item.text }}
     </DynamicScrollerItem>

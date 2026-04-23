@@ -57,7 +57,6 @@ function randomizeMessage(index: number) {
       <DynamicScrollerItem
         :item="item"
         :active="active"
-        :size-dependencies="[item.message]"
         @click="randomizeMessage(index)"
       >
         <strong>{{ item.user }}</strong>

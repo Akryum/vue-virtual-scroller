@@ -89,7 +89,6 @@ onBeforeUnmount(stopStream)
       <DynamicScrollerItem
         :item="item"
         :active="active"
-        :size-dependencies="[item.message]"
       >
         <strong>{{ item.user }}</strong>
         <p>{{ item.message }}</p>

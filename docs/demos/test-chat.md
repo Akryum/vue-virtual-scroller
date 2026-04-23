@@ -60,7 +60,6 @@ function addItems(count = 1) {
       <DynamicScrollerItem
         :item="item"
         :active="active"
-        :size-dependencies="[item.text]"
       >
         {{ item.text }}
       </DynamicScrollerItem>

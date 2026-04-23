@@ -22,7 +22,6 @@ Generated from the package's public headless dynamic-sizing documentation at ski
 
 Recommended dynamic inputs:
 
-- `sizeDependencies` through `vDynamicScrollerItem`
 - `shift` for prepend-heavy histories
 - `disableTransform` when pooled wrappers must avoid transforms
 - `flowMode` when active views should stay in native block or table flow
@@ -41,7 +40,6 @@ Documented mental model:
 Supported directive binding fields:
 
 - `view`
-- `sizeDependencies`
 - `watchData`
 - `emitResize`
 - `onResize`
@@ -70,8 +68,7 @@ Returns used most often:
 
 - Forgetting `minItemSize` hurts initial layout and scroll math.
 - Rendering from `visiblePool` instead of `pool` reduces DOM reuse.
-- Forgetting `sizeDependencies` means content changes may not trigger remeasurement.
-- `watchData` is heavier than targeted `sizeDependencies`.
+- `watchData` only exists for legacy no-`ResizeObserver` fallbacks and is heavier than the default path.
 - Use `view.item` for rendering. Reach for `view.itemWithSize` only when you need measured metadata.
 - `flowMode` only supports vertical single-axis layouts in v1. It is meant for native block or table flow, not grids or horizontal virtualization.
 - If you render a semantic table in `flowMode`, pair it with [`useTableColumnWidths`](./use-table-column-widths.md) so column widths stay locked while pooled rows churn.
@@ -84,10 +81,7 @@ Wrapper-free dynamic rows:
 <article
   v-for="view in pool"
   :key="view.id"
-  v-dynamic-scroller-item="{
-    view,
-    sizeDependencies: [view.item.body],
-  }"
+  v-dynamic-scroller-item="{ view }"
 >
   {{ view.item.body }}
 </article>

@@ -53,7 +53,6 @@ function cardWidth(message: string) {
       <DynamicScrollerItem
         :item="item"
         :active="active"
-        :size-dependencies="[item.message]"
         :style="{ width: `${cardWidth(item.message)}px` }"
       >
         {{ item.message }}

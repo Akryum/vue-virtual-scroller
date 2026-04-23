@@ -24,9 +24,6 @@ export default {
         :item="item"
         :active="active"
         :index="index"
-        :size-dependencies="[
-          item.message,
-        ]"
       >
         <div class="avatar">
           <img
@@ -82,7 +79,7 @@ For typed `getItemSize(item)` calls and other headless helpers, use [`useDynamic
 ## Important notes
 
 - `minItemSize` is required so the first render has a reasonable starting estimate.
-- `DynamicScroller` does not guess which data changes affect layout. Pass those values to [DynamicScrollerItem](./dynamic-scroller-item) so it knows when to measure again.
+- `DynamicScroller` remeasures rows automatically as rendered size changes in modern browsers.
 - Pass `:index="index"` to `DynamicScrollerItem` when you use simple-array mode or a function `keyField`. With object items and a string `keyField` such as the default `'id'`, `index` is optional.
 - You do not need a `size` field on each item.
 - `shift` and `cache` are available here as well because `DynamicScroller` extends `RecycleScroller`.

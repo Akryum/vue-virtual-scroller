@@ -8,6 +8,10 @@ const props = withDefaults(defineProps<{
   watchData?: boolean
   active: boolean
   index?: number
+  /**
+   * @deprecated `sizeDependencies` is a legacy fallback for environments without
+   * `ResizeObserver` and will be removed in the next major release.
+   */
   sizeDependencies?: Record<string, unknown> | unknown[] | null
   emitResize?: boolean
   tag?: string

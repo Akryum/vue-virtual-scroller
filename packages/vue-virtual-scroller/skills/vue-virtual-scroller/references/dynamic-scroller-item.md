@@ -22,7 +22,6 @@ Generated from the package's public dynamic-item documentation and shipped demo 
 
 Recommended dynamic inputs:
 
-- `sizeDependencies`
 - `emitResize` only when the parent UI needs resize callbacks
 
 ## Core props/options
@@ -30,16 +29,14 @@ Recommended dynamic inputs:
 - `item`
 - `active`
 - `index`
-- `sizeDependencies`
 - `watchData`
 - `tag`
 - `emitResize`
 
 Documented guidance:
 
-- prefer `sizeDependencies` over `watchData`
 - pass slot `index` directly when it is required
-- `watchData` deeply watches the item and is not recommended for performance-sensitive lists
+- `watchData` is only for legacy no-`ResizeObserver` fallbacks and is not recommended for performance-sensitive lists
 
 ## Events/returns
 
@@ -62,7 +59,6 @@ Track text-driven height changes:
 <DynamicScrollerItem
   :item="item"
   :active="active"
-  :size-dependencies="[item.message]"
 >
   <p>{{ item.message }}</p>
 </DynamicScrollerItem>
