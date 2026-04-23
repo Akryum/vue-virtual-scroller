@@ -24,6 +24,7 @@ export default defineConfig({
           text: 'Introduction',
           items: [
             { text: 'Getting Started', link: '/guide/' },
+            { text: 'Migrate from v2 to v3', link: '/guide/migrate-v2-to-v3' },
           ],
         },
         {

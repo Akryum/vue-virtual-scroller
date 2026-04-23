@@ -12,6 +12,8 @@
 
 If you are new to the package, start here, then explore the [demos](../demos/index.md) or the [video demo](https://www.youtube.com/watch?v=Uzq1KQV8f4k) when you want to see the behavior in motion.
 
+If you are upgrading from the latest release, read the [v2 to v3 migration guide](./migrate-v2-to-v3).
+
 If you need Vue 2 support, use the [v1 branch](https://github.com/Akryum/vue-virtual-scroller/tree/v1/packages/vue-virtual-scroller).
 
 ## Installation
