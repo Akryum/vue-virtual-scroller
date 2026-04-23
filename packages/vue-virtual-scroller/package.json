@@ -21,6 +21,9 @@
     "vuejs",
     "plugin"
   ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -72,9 +75,6 @@
   },
   "module": "dist/vue-virtual-scroller.js",
   "types": "dist/index.d.ts",
-  "sideEffects": [
-    "**/*.css"
-  ],
   "files": [
     "dist",
     "skills"

@@ -12,10 +12,10 @@ export type EventHandler<TEvent> = (event: TEvent) => void
  * Tiny typed emitter used for internal package coordination.
  */
 export interface EventEmitter<TEvents extends EventMap> {
-  on<TKey extends keyof TEvents>(type: TKey, handler: EventHandler<TEvents[TKey]>): void
-  off<TKey extends keyof TEvents>(type: TKey, handler: EventHandler<TEvents[TKey]>): void
-  emit<TKey extends keyof TEvents>(type: TKey, event: TEvents[TKey]): void
-  clear(): void
+  on: <TKey extends keyof TEvents>(type: TKey, handler: EventHandler<TEvents[TKey]>) => void
+  off: <TKey extends keyof TEvents>(type: TKey, handler: EventHandler<TEvents[TKey]>) => void
+  emit: <TKey extends keyof TEvents>(type: TKey, event: TEvents[TKey]) => void
+  clear: () => void
 }
 
 /**
