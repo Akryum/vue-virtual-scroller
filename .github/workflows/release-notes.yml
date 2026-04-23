@@ -11,15 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetch all tags
 
       - name: Create Release for Tag
         id: release_tag
-        uses: Akryum/release-tag@conventional
+        uses: Akryum/release-tag@v4.0.7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          preset: angular # Use conventional-changelog preset
