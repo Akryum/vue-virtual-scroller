@@ -1,3 +1,56 @@
+## v3.0.0
+
+[compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.1...v3.0.0)
+
+### 🚀 Enhancements
+
+- KeyField can be a function, closes #900 ([#900](https://github.com/Akryum/vue-virtual-scroller/issues/900))
+- DisableTransform, closes #891 ([#891](https://github.com/Akryum/vue-virtual-scroller/issues/891))
+- Functiong etter for itemSize, closes #848 ([#848](https://github.com/Akryum/vue-virtual-scroller/issues/848))
+- Regen skills ([640beb6](https://github.com/Akryum/vue-virtual-scroller/commit/640beb6))
+- Simplify headless usage, /!\ removed handleScroll from return ([820099e](https://github.com/Akryum/vue-virtual-scroller/commit/820099e))
+- Improve performance and shape of composable options ([33711fb](https://github.com/Akryum/vue-virtual-scroller/commit/33711fb))
+- FlowMode + useTableColumnWidths ([726721c](https://github.com/Akryum/vue-virtual-scroller/commit/726721c))
+- Add migration guide from v2 to v3 and link in documentation ([725a563](https://github.com/Akryum/vue-virtual-scroller/commit/725a563))
+
+### 🔥 Performance
+
+- General improvement + no major GC anymore ([36f0e1d](https://github.com/Akryum/vue-virtual-scroller/commit/36f0e1d))
+
+### 🩹 Fixes
+
+- Increase hidden view position, closes #855 ([#855](https://github.com/Akryum/vue-virtual-scroller/issues/855))
+- Add support for variable-size scroll window detection, closes #834 ([#834](https://github.com/Akryum/vue-virtual-scroller/issues/834))
+- More flexible key field type checking ([4ea0a68](https://github.com/Akryum/vue-virtual-scroller/commit/4ea0a68))
+- Duplicated views ([dd39816](https://github.com/Akryum/vue-virtual-scroller/commit/dd39816))
+- Items watcher not firing when upstream array mutates in place ([34b002a](https://github.com/Akryum/vue-virtual-scroller/commit/34b002a))
+
+### 💅 Refactors
+
+- Simplified useDynamicScroller API ([90b1762](https://github.com/Akryum/vue-virtual-scroller/commit/90b1762))
+
+### 📖 Documentation
+
+- Fix demo leaking background ([a20c863](https://github.com/Akryum/vue-virtual-scroller/commit/a20c863))
+- Improve index documentation ([f5e7254](https://github.com/Akryum/vue-virtual-scroller/commit/f5e7254))
+- With/without demo, closes #852 ([#852](https://github.com/Akryum/vue-virtual-scroller/issues/852))
+
+### 🏡 Chore
+
+- Regen skills ([db0a17d](https://github.com/Akryum/vue-virtual-scroller/commit/db0a17d))
+
+### ✅ Tests
+
+- Fix ([9b0e4ff](https://github.com/Akryum/vue-virtual-scroller/commit/9b0e4ff))
+
+### 🤖 CI
+
+- Fix release changelog ([cd575f9](https://github.com/Akryum/vue-virtual-scroller/commit/cd575f9))
+
+### ❤️ Contributors
+
+- Guillaume Chau ([@Akryum](http://github.com/Akryum))
+
 ## v2.0.1
 
 [compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.0...v2.0.1)
