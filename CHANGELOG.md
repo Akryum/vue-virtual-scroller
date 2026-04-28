@@ -1,3 +1,27 @@
+## v3.0.1
+
+[compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v3.0.0...v3.0.1)
+
+### 🩹 Fixes
+
+- Add stability checks for view ids in dynamic and recycle scrollers ([20e284f](https://github.com/Akryum/vue-virtual-scroller/commit/20e284f))
+
+### 💅 Refactors
+
+- Deprecate sizeDependencies prop and update related documentation ([e5e0550](https://github.com/Akryum/vue-virtual-scroller/commit/e5e0550))
+
+### 📦 Build
+
+- Improve package tree shaking ([29541d4](https://github.com/Akryum/vue-virtual-scroller/commit/29541d4))
+
+### ✅ Tests
+
+- Fix ([2fbb14c](https://github.com/Akryum/vue-virtual-scroller/commit/2fbb14c))
+
+### ❤️ Contributors
+
+- Guillaume Chau ([@Akryum](http://github.com/Akryum))
+
 ## v3.0.0
 
 [compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v2.0.1...v3.0.0)
