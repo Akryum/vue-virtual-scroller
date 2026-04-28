@@ -522,6 +522,31 @@ describe('useDynamicScroller', () => {
     expect(vm.pool.every((view: any) => view.itemWithSize.item === view.item)).toBe(true)
   })
 
+  it('keeps flow-mode view ids stable across measured size updates', async () => {
+    const items = Array.from({ length: 8 }, (_, index) => ({
+      id: `row-${index}`,
+      label: `Row ${index}`,
+    }))
+    const { vm } = mountHarness(items, {
+      buffer: 0,
+      flowMode: true,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const initialIdsByKey = new Map(vm.visiblePool.map((view: any) => [view.key, view.id]))
+
+    vm.vscrollData.sizes['row-1'] = 44
+    await nextTick()
+
+    const visibleIndices = vm.visiblePool.map((view: any) => view.index)
+    expect(visibleIndices).toEqual(visibleIndices.toSorted((a: number, b: number) => a - b))
+    for (const view of vm.visiblePool) {
+      expect(view.id).toBe(initialIdsByKey.get(view.key))
+    }
+  })
+
   it('forwards resize, visible, hidden, and update callbacks through the merged composable', async () => {
     const { vm, onResize, onVisible, onHidden, onUpdate } = mountHarness([
       { id: 'a' },

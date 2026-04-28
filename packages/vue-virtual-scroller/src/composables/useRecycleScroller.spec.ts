@@ -457,6 +457,52 @@ describe('useRecycleScroller', () => {
     expect(vm.el.scrollTop).toBe(20)
   })
 
+  it('keeps visible view ids stable when same-key items are replaced', async () => {
+    const { vm, options } = mountHarness({
+      items: Array.from({ length: 4 }, (_, id) => ({ id, label: `Row ${id}` })),
+      itemSize: 10,
+      clientHeight: 40,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const initialIdsByKey = new Map(vm.visiblePool.map((view: View) => [view.nr.key, view.nr.id]))
+
+    options.items = options.items.map((item, index) => ({
+      ...item,
+      label: `Updated ${index}`,
+    }))
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => view.nr.index)).toEqual([0, 1, 2, 3])
+    for (const view of vm.visiblePool) {
+      expect(view.nr.id).toBe(initialIdsByKey.get(view.nr.key))
+    }
+  })
+
+  it('recycles visible views when same-key item types change', async () => {
+    const { vm, options } = mountHarness({
+      items: Array.from({ length: 4 }, (_, id) => ({ id, type: 'row' })),
+      itemSize: 10,
+      clientHeight: 40,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const initialIds = vm.visiblePool.map((view: View) => view.nr.id)
+
+    options.items = options.items.map(item => ({
+      ...item,
+      type: 'detail',
+    }))
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => view.nr.id)).not.toEqual(initialIds)
+    expect(vm.visiblePool.every((view: View) => view.nr.type === 'detail')).toBe(true)
+  })
+
   it('supports function keyField for cache snapshots and shift anchoring', async () => {
     const keyField = (item: { threadId: string, id: number }) => `${item.threadId}:${item.id}`
     const { vm, options } = mountHarness({

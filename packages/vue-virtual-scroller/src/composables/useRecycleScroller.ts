@@ -81,6 +81,44 @@ function trackArrayShallowMutations<TItem>(items: TItem[]) {
   }
 }
 
+/**
+ * Resolve the recycler type bucket for one item.
+ */
+function getItemType<TItem>(item: TItem, typeField: string): unknown {
+  return item && typeof item === 'object'
+    ? (item as Record<string, unknown>)[typeField]
+    : undefined
+}
+
+/**
+ * Capture item type buckets so same-key content updates can avoid full recycling.
+ */
+function getItemTypes<TItem>(items: TItem[], typeField: string): unknown[] {
+  return items.map(item => getItemType(item, typeField))
+}
+
+/**
+ * Compare item identity that affects recycled view ownership.
+ */
+function hasSameItemIdentitySequence<TKey>(
+  nextKeys: TKey[],
+  nextTypes: unknown[],
+  previousKeys: TKey[],
+  previousTypes: unknown[],
+): boolean {
+  if (nextKeys.length !== previousKeys.length || nextTypes.length !== previousTypes.length) {
+    return false
+  }
+
+  for (let index = 0; index < nextKeys.length; index++) {
+    if (nextKeys[index] !== previousKeys[index] || nextTypes[index] !== previousTypes[index]) {
+      return false
+    }
+  }
+
+  return true
+}
+
 function touchView<TItem, TKey>(view: View<TItem, TKey>) {
   const stampedView = view as ViewWithStyleStamp<TItem, TKey>
   stampedView._vs_styleStamp++
@@ -225,6 +263,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   let _scrollListenerTarget: (Window | Element) | null = null
   let _resizeListenerTarget: (Window | Element) | null = null
   let _previousKeys: Array<ItemKey<TItem, TKeyField>> = []
+  let _previousTypes: unknown[] = []
   let _shiftAnchor: { key: ItemKey<TItem, TKeyField>, offset: number } | null = null
   let _shiftAnchorClearTimer: ReturnType<typeof setTimeout> | null = null
   let _itemsLimitWarnTimer: ReturnType<typeof setTimeout> | null = null
@@ -1559,6 +1598,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   const initialOpts = getOptions()
   const initialItems = items.value
   _previousKeys = getItemKeys(initialItems, initialItems.length > 0 && typeof initialItems[0] !== 'object' ? null : initialOpts.keyField) as Array<ItemKey<TItem, TKeyField>>
+  _previousTypes = getItemTypes(initialItems, initialOpts.typeField)
   if (initialOpts.cache) {
     restoreCache(initialOpts.cache)
   }
@@ -1613,12 +1653,18 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     const opts = getOptions()
     const keyField = simpleArray.value ? null : opts.keyField
     const nextKeys = getItemKeys(nextItems, keyField)
+    const nextTypes = getItemTypes(nextItems, opts.typeField)
+    const previousKeysSnapshot = _previousKeys
+    const previousTypesSnapshot = _previousTypes
+    const itemsChanged = !hasSameItemIdentitySequence(
+      nextKeys as Array<ItemKey<TItem, TKeyField>>,
+      nextTypes,
+      previousKeysSnapshot,
+      previousTypesSnapshot,
+    )
 
     if (opts.shift) {
-      const previousKeys = previousItems
-        ? getItemKeys(previousItems, keyField) as Array<ItemKey<TItem, TKeyField>>
-        : _previousKeys
-      const prependOffset = findPrependOffset(previousKeys, nextKeys as Array<ItemKey<TItem, TKeyField>>)
+      const prependOffset = findPrependOffset(previousKeysSnapshot, nextKeys as Array<ItemKey<TItem, TKeyField>>)
       if (prependOffset > 0) {
         captureShiftAnchor(previousItems ?? [], keyField)
       }
@@ -1631,14 +1677,23 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
 
     _previousKeys = nextKeys as Array<ItemKey<TItem, TKeyField>>
+    _previousTypes = nextTypes
     applyShiftAnchor(nextItems)
-    updateVisibleItems(true)
+    updateVisibleItems(itemsChanged)
   })
 
   watch(() => getOptions().keyField, () => {
     const opts = getOptions()
     const keyField = simpleArray.value ? null : opts.keyField
     _previousKeys = getItemKeys(items.value, keyField) as Array<ItemKey<TItem, TKeyField>>
+    _previousTypes = getItemTypes(items.value, opts.typeField)
+    clearShiftAnchor()
+    updateVisibleItems(true)
+  })
+
+  watch(() => getOptions().typeField, () => {
+    const opts = getOptions()
+    _previousTypes = getItemTypes(items.value, opts.typeField)
     clearShiftAnchor()
     updateVisibleItems(true)
   })
