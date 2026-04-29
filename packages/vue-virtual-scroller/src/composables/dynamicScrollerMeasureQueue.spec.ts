@@ -140,42 +140,4 @@ describe('dynamicScrollerMeasureQueue', () => {
       'done:b',
     ])
   })
-
-  it('holds pending work while paused and flushes after resume', () => {
-    const callbacks: Array<() => void> = []
-    const queue = createDynamicScrollerMeasureQueue({
-      queueFlush(flush) {
-        callbacks.push(flush)
-      },
-    })
-    const events: string[] = []
-
-    queue.pause()
-    queue.schedule('a', {
-      read() {
-        events.push('read:a')
-        return 'a'
-      },
-      write(value) {
-        events.push(`write:${value}`)
-      },
-      done() {
-        events.push('done:a')
-      },
-    })
-
-    expect(callbacks).toHaveLength(0)
-
-    queue.resume()
-
-    expect(callbacks).toHaveLength(1)
-
-    callbacks[0]()
-
-    expect(events).toEqual([
-      'read:a',
-      'write:a',
-      'done:a',
-    ])
-  })
 })

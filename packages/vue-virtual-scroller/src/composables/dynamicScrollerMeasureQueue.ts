@@ -10,14 +10,6 @@ export interface DynamicScrollerMeasureTask {
 export interface DynamicScrollerMeasureQueue {
   schedule: (id: KeyValue, task: DynamicScrollerMeasureTask) => void
   cancel: (id: KeyValue) => void
-  /**
-   * Pause queue draining while the scroller is in a latency-sensitive phase such as active scrolling.
-   */
-  pause: () => void
-  /**
-   * Resume draining and immediately schedule a flush when pending work exists.
-   */
-  resume: () => void
 }
 
 export interface DynamicScrollerMeasureQueueOptions {
@@ -36,14 +28,13 @@ export function createDynamicScrollerMeasureQueue(
   const overflowQueueFlush = options.overflowQueueFlush ?? queueFlush
   const maxTasksPerFlush = Math.max(1, options.maxTasksPerFlush ?? Number.POSITIVE_INFINITY)
   let flushQueued = false
-  let paused = false
   const pending = new Map<KeyValue, DynamicScrollerMeasureTask>()
 
   /**
    * Queue one flush if pending measurements exist and queue is runnable.
    */
   function queueFlushIfNeeded() {
-    if (paused || flushQueued || !pending.size) {
+    if (flushQueued || !pending.size) {
       return
     }
 
@@ -53,7 +44,7 @@ export function createDynamicScrollerMeasureQueue(
 
   function flush() {
     flushQueued = false
-    if (paused || !pending.size) {
+    if (!pending.size) {
       return
     }
 
@@ -95,23 +86,8 @@ export function createDynamicScrollerMeasureQueue(
     pending.delete(id)
   }
 
-  function pause() {
-    paused = true
-  }
-
-  function resume() {
-    if (!paused) {
-      return
-    }
-
-    paused = false
-    queueFlushIfNeeded()
-  }
-
   return {
     schedule,
     cancel,
-    pause,
-    resume,
   }
 }

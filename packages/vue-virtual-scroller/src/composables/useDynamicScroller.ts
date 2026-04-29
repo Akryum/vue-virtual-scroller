@@ -156,8 +156,6 @@ interface DynamicScrollerViewportAnchor<TKey = KeyValue> {
 
 type RawDynamicScrollerView<TItem = unknown, TKey = KeyValue> = View<ItemWithSize<TItem, TKey>, TKey>
 
-const SCROLL_MEASURE_IDLE_MS = 120
-
 /**
  * Touch array slots so computed wrappers react to shallow list mutations such as
  * push, splice, reorder, or item replacement without deep-watching item fields.
@@ -522,7 +520,6 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   let _pendingViewportAnchor: DynamicScrollerViewportAnchor<ItemKey<TItem, TKeyField>> | null = null
   let _shiftAnchor: DynamicScrollerShiftAnchor<ItemKey<TItem, TKeyField>> | null = null
   let _shiftAnchorRaf: number | null = null
-  let _measureResumeTimer: ReturnType<typeof setTimeout> | null = null
   const _rafIds = new Set<number>()
   const _itemsWithSizeEntries: Array<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>> = []
 
@@ -569,17 +566,8 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     _rafIds.clear()
   }
 
-  function clearMeasureResumeTimer() {
-    if (_measureResumeTimer != null) {
-      clearTimeout(_measureResumeTimer)
-      _measureResumeTimer = null
-    }
-  }
-
   const _measureQueue = createDynamicScrollerMeasureQueue({
     // Spread row measurement across frames so one huge flush cannot monopolize layout time.
-    // The queue is also paused while the user is actively scrolling, then resumed once
-    // the scroll stream goes idle, which kills the worst frame spikes.
     maxTasksPerFlush: 6,
     overflowQueueFlush(flush) {
       requestFrame(flush)
@@ -1232,20 +1220,6 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     if (_shiftAnchor && !_applyingShiftAnchor) {
       clearShiftAnchor()
     }
-
-    if (_applyingShiftAnchor) {
-      return
-    }
-
-    // Measuring offsetHeight/offsetWidth mid-scroll caused the largest dropped
-    // frames in the headless-table traces. Hold the queue during active scroll
-    // and drain it after a short idle window instead.
-    _measureQueue.pause()
-    clearMeasureResumeTimer()
-    _measureResumeTimer = setTimeout(() => {
-      _measureResumeTimer = null
-      _measureQueue.resume()
-    }, SCROLL_MEASURE_IDLE_MS)
   }
 
   // Watchers
@@ -1345,19 +1319,15 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   // Lifecycle
   onActivated(() => {
     vscrollData.active = true
-    _measureQueue.resume()
   })
 
   onDeactivated(() => {
     vscrollData.active = false
-    clearMeasureResumeTimer()
-    _measureQueue.pause()
   })
 
   onUnmounted(() => {
     cancelShiftAnchorFrame()
     cancelPendingFrames()
-    clearMeasureResumeTimer()
     el.value?.removeEventListener('scroll', onNativeScroll)
     _events.clear()
   })
