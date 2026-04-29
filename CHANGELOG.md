@@ -1,3 +1,19 @@
+## v3.0.2
+
+[compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v3.0.1...v3.0.2)
+
+### 🩹 Fixes
+
+- Revert size measurement freeze while scrolling ([8cea22d](https://github.com/Akryum/vue-virtual-scroller/commit/8cea22d))
+
+### 📖 Documentation
+
+- Demo style fix ([66f4109](https://github.com/Akryum/vue-virtual-scroller/commit/66f4109))
+
+### ❤️ Contributors
+
+- Guillaume Chau ([@Akryum](http://github.com/Akryum))
+
 ## v3.0.1
 
 [compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v3.0.0...v3.0.1)
