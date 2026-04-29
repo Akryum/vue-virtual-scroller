@@ -221,6 +221,10 @@
 .demo-message-body {
   color: #1f352a;
   line-height: 1.4;
+
+  .dark &  {
+    color: #dce8e1;
+  }
 }
 
 .demo-message-meta {
