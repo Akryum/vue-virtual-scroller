@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'vue'
+import type { ViewWithStyleStamp } from '../composables/useRecycleScroller'
 import type { ScrollDirection, View } from '../types'
 
 /**
@@ -35,11 +36,17 @@ export function resolvePooledViewMode(options: {
 
 /**
  * Build deterministic inline styles for a pooled view.
+ *
+ * Reactivity note: `view.nr` is `markRaw`, so reads of `view.nr.used` create
+ * no reactive dep when this is called inside a Vue render context. Read
+ * `_vs_visibilityStamp` first — it is bumped via `touchViewVisibility`
+ * whenever `used` flips, anchoring reactivity so the style binding refreshes.
  */
 export function getPooledViewStyle<TItem, TKey>(
   view: View<TItem, TKey>,
   options: PooledViewStyleOptions,
 ): CSSProperties {
+  void (view as ViewWithStyleStamp<TItem, TKey>)._vs_visibilityStamp
   const isVertical = options.direction === 'vertical'
   const mode = options.mode ?? 'transform'
   const style: CSSProperties = {

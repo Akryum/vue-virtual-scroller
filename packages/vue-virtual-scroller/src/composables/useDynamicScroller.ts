@@ -698,7 +698,12 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     if (changed) {
       _pendingViewportAnchor = viewportAnchor
       itemsWithSizeVersion.value++
-      triggerRef(itemsWithSize)
+      // Assign a new array reference rather than relying on triggerRef alone.
+      // Downstream consumers (e.g. <RecycleScroller>'s `props.items` via toRef)
+      // compare prop references with Object.is — an in-place mutation that keeps
+      // the same reference is invisible to prop reactivity, so their items
+      // watcher never fires on shrink.
+      itemsWithSize.value = _itemsWithSizeEntries.slice()
     }
   })
 
