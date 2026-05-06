@@ -1,3 +1,19 @@
+## v3.0.3
+
+[compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v3.0.2...v3.0.3)
+
+### 🚀 Enhancements
+
+- Add `enabled` option to all scroller composables and components ([fd592eb](https://github.com/Akryum/vue-virtual-scroller/commit/fd592eb))
+
+### 🩹 Fixes
+
+- **useRecycleScroller:** Guard accumulator reads against transient sparse size cache ([396e736](https://github.com/Akryum/vue-virtual-scroller/commit/396e736))
+
+### ❤️ Contributors
+
+- Guillaume Chau ([@Akryum](http://github.com/Akryum))
+
 ## v3.0.2
 
 [compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v3.0.1...v3.0.2)
