@@ -1033,4 +1033,53 @@ describe('useRecycleScroller', () => {
     setTimeoutSpy.mockRestore()
     clearTimeoutSpy.mockRestore()
   })
+
+  it('does not crash on 0 → 1 items transition in variable-size mode', async () => {
+    // Regression: in variable-size mode the size cache is computed lazily from
+    // `items`. When an empty list gains its first row, an upstream wrapper can
+    // synchronously trigger updateVisibleItems before the sizes computed has
+    // refreshed — leaving sizesValue[0] undefined. Walking it dereferenced
+    // `.accumulator` and crashed the consumer.
+    const items = ref<Array<{ id: number }>>([])
+    const Harness = defineComponent({
+      setup() {
+        const el = ref<HTMLElement>()
+        const state = useRecycleScroller(() => ({
+          items: items.value,
+          keyField: 'id' as const,
+          direction: 'vertical' as const,
+          itemSize: null,
+          minItemSize: 40,
+          sizeField: 'size' as const,
+          typeField: 'type',
+          buffer: 0,
+          pageMode: false,
+          shift: false,
+          prerender: 0,
+          emitUpdate: false,
+          disableTransform: false,
+          updateInterval: 0,
+        }), el)
+        return { ...state, el }
+      },
+      template: '<div ref="el" style="height: 100px; overflow-y: auto;" />',
+    })
+
+    const wrapper = mount(Harness)
+    const el = (wrapper.vm as any).el as HTMLElement
+    Object.defineProperty(el, 'clientHeight', { configurable: true, get: () => 100 })
+    Object.defineProperty(el, 'clientWidth', { configurable: true, get: () => 100 })
+
+    await nextTick()
+    await nextTick()
+
+    // Add the first item — this must not throw on the accumulator read path.
+    expect(() => {
+      items.value = [{ id: 0 }]
+    }).not.toThrow()
+    await nextTick()
+    await nextTick()
+
+    expect((wrapper.vm as any).pool.length).toBeGreaterThanOrEqual(0)
+  })
 })

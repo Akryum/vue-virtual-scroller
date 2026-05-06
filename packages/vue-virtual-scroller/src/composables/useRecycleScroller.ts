@@ -1136,7 +1136,18 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     let totalSizeValue: number
     let visibleStartIndex: number, visibleEndIndex: number
 
-    if (!count) {
+    // In variable-size mode the size cache is computed from `items`. When items
+    // change, the cache may be transiently sparse for one update tick (the size
+    // computed re-evaluates lazily, downstream wrappers like `useDynamicScroller`
+    // may run watchers on the upstream items array before our sizes computed has
+    // refreshed). Walking `sizesValue` while it's incomplete dereferences
+    // undefined slots and crashes the binary search below. A valid cache is
+    // signaled by the last slot being populated.
+    const isVariableSizeCacheReady = itemSize !== null
+      || count === 0
+      || sizesValue[count - 1] != null
+
+    if (!count || !isVariableSizeCacheReady) {
       startIndex = endIndex = visibleStartIndex = visibleEndIndex = totalSizeValue = 0
     }
     else if (_prerender) {
@@ -1216,13 +1227,16 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         let oldI: number
 
         // Searching for startIndex
+        // Optional chaining + sentinel fallbacks defend against transient sparse
+        // size caches that slip past the readiness check above (e.g. concurrent
+        // mutations during the binary search).
         do {
           oldI = i
-          h = sizesValue[i].accumulator
+          h = sizesValue[i]?.accumulator ?? 0
           if (h < scroll.start) {
             a = i
           }
-          else if (i < count - 1 && sizesValue[i + 1].accumulator > scroll.start) {
+          else if (i < count - 1 && (sizesValue[i + 1]?.accumulator ?? Number.POSITIVE_INFINITY) > scroll.start) {
             b = i
           }
           i = ~~((a + b) / 2)
@@ -1232,10 +1246,10 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         startIndex = i
 
         // For container style
-        totalSizeValue = sizesValue[count - 1].accumulator
+        totalSizeValue = sizesValue[count - 1]?.accumulator ?? 0
 
         // Searching for endIndex
-        for (endIndex = i; endIndex < count && sizesValue[endIndex].accumulator < scroll.end; endIndex++);
+        for (endIndex = i; endIndex < count && (sizesValue[endIndex]?.accumulator ?? Number.POSITIVE_INFINITY) < scroll.end; endIndex++);
         if (endIndex === -1) {
           endIndex = currentItems.length - 1
         }
@@ -1247,10 +1261,10 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         }
 
         // search visible startIndex
-        for (visibleStartIndex = startIndex; visibleStartIndex < count && (beforeSize + sizesValue[visibleStartIndex].accumulator) < scroll.start; visibleStartIndex++);
+        for (visibleStartIndex = startIndex; visibleStartIndex < count && (beforeSize + (sizesValue[visibleStartIndex]?.accumulator ?? Number.POSITIVE_INFINITY)) < scroll.start; visibleStartIndex++);
 
         // search visible endIndex
-        for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeSize + sizesValue[visibleEndIndex].accumulator) < scroll.end; visibleEndIndex++);
+        for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeSize + (sizesValue[visibleEndIndex]?.accumulator ?? Number.POSITIVE_INFINITY)) < scroll.end; visibleEndIndex++);
 
         if (shouldStabilizeIdleFlowWindow) {
           const stabilizedRange = stabilizeFlowWindow({
