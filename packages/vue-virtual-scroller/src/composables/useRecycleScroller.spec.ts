@@ -990,6 +990,29 @@ describe('useRecycleScroller', () => {
     expect(vm.visiblePool.map((view: View) => view.nr.index)).toEqual([0])
   })
 
+  it('does not leave a stale used view after filtering a 2-item list down to 1 (variable size, no flow-mode)', async () => {
+    // Variable-height pool (minItemSize set, no flowMode). When the items
+    // array shrinks from [A, B] to [A], the dropped view must be released —
+    // otherwise the pool keeps both views `used: true` and the DOM still
+    // renders two rows.
+    const { vm, options } = mountHarness({
+      items: [{ id: 'A' }, { id: 'B' }],
+      itemSize: null,
+      minItemSize: 40,
+      clientHeight: 400,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    options.items = [{ id: 'A' }]
+    await nextTick()
+    await nextTick()
+
+    const usedViews = vm.pool.filter((view: View) => view.nr.used)
+    expect(usedViews.map((view: View) => view.nr.key)).toEqual(['A'])
+  })
+
   it('recomputes visiblePool when a view is manually flipped to unused', async () => {
     // Regression: `view.nr` is markRaw, so `visiblePool`'s `.filter(view => view.nr.used)`
     // establishes no reactive dep on `.used`. Without tracking `_vs_visibilityStamp`,

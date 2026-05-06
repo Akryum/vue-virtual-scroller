@@ -62,7 +62,7 @@ export interface UseRecycleScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>
   sortViews: () => void
 }
 
-type ViewWithStyleStamp<TItem = unknown, TKey = ItemKey<TItem>> = View<TItem, TKey> & {
+export type ViewWithStyleStamp<TItem = unknown, TKey = ItemKey<TItem>> = View<TItem, TKey> & {
   _vs_styleStamp: number
   _vs_visibilityStamp: number
 }
