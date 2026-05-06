@@ -14,12 +14,14 @@ const props = withDefaults(defineProps<{
    */
   sizeDependencies?: Record<string, unknown> | unknown[] | null
   emitResize?: boolean
+  enabled?: boolean
   tag?: string
 }>(), {
   watchData: false,
   index: undefined,
   sizeDependencies: null,
   emitResize: false,
+  enabled: true,
   tag: 'div',
 })
 

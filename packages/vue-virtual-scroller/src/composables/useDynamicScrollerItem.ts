@@ -1,15 +1,16 @@
 import type { MaybeRefOrGetter } from 'vue'
 import type { KeyValue } from '../types'
 import type { DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext } from './dynamicScrollerMeasurement'
+import type { ScrollerOptionEnabled } from './scrollerOptions'
 import { computed, inject, onBeforeUnmount, onMounted, toValue, watch } from 'vue'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
 
-export interface UseDynamicScrollerItemOptions<TItem = unknown> extends DynamicScrollerItemControllerOptions<TItem> {
+export interface UseDynamicScrollerItemOptions<TItem = unknown> extends DynamicScrollerItemControllerOptions<TItem>, ScrollerOptionEnabled {
   el: MaybeRefOrGetter<HTMLElement | undefined>
   onResize?: (id: KeyValue) => void
 }
 
-export interface UseDynamicScrollerItemLegacyOptions<TItem = unknown> extends DynamicScrollerItemControllerOptions<TItem> {}
+export interface UseDynamicScrollerItemLegacyOptions<TItem = unknown> extends DynamicScrollerItemControllerOptions<TItem>, ScrollerOptionEnabled {}
 
 export interface UseDynamicScrollerItemReturn {
   id: ReturnType<typeof createDynamicScrollerItemController>['id']
@@ -47,18 +48,64 @@ export function useDynamicScrollerItem<TItem>(
   const resolvedCallbacks = {
     onResize: (id: KeyValue) => (callbacks?.onResize ?? (toValue(options) as Partial<UseDynamicScrollerItemOptions<TItem>>).onResize)?.(id),
   }
+  /**
+   * Resolve the `enabled` flag (defaults to `true` when omitted). When `false`
+   * the controller is never mounted: no resize observation, no measurement,
+   * no anchor registration. Toggling back to `true` re-arms it.
+   */
+  const isEnabled = computed(() => toValue(
+    (toValue(options) as Partial<UseDynamicScrollerItemOptions<TItem>>).enabled ?? true,
+  ))
   const controller = createDynamicScrollerItemController(options, resolvedEl, measurementContext, resolvedCallbacks)
 
-  onMounted(() => {
+  let mounted = false
+
+  function mountController() {
+    if (mounted) {
+      return
+    }
     controller.mount()
+    mounted = true
+  }
+
+  function unmountController() {
+    if (!mounted) {
+      return
+    }
+    controller.unmount()
+    mounted = false
+  }
+
+  onMounted(() => {
+    if (!isEnabled.value) {
+      return
+    }
+    mountController()
+  })
+
+  watch(isEnabled, (enabled) => {
+    if (enabled) {
+      mountController()
+    }
+    else {
+      const elValue = resolvedEl.value
+      if (anchorRegistry && elValue) {
+        anchorRegistry.delete(elValue as HTMLElement)
+      }
+      unmountController()
+    }
   })
 
   if (anchorRegistry) {
     watch(
-      [controller.id, controller.finalActive, resolvedEl],
-      ([id, active, elValue], [_oldId, _oldActive, oldElValue]) => {
+      [controller.id, controller.finalActive, resolvedEl, isEnabled],
+      ([id, active, elValue, enabled], [_oldId, _oldActive, oldElValue]) => {
         if (oldElValue && oldElValue !== elValue) {
           anchorRegistry.delete(oldElValue as HTMLElement)
+        }
+
+        if (!enabled) {
+          return
         }
 
         if (elValue) {
@@ -79,7 +126,7 @@ export function useDynamicScrollerItem<TItem>(
     if (anchorRegistry && elValue) {
       anchorRegistry.delete(elValue as HTMLElement)
     }
-    controller.unmount()
+    unmountController()
   })
 
   return {

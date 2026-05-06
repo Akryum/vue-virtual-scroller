@@ -30,6 +30,7 @@ const props = withDefaults(defineProps<{
   flowMode?: boolean
   hiddenPosition?: number
   updateInterval?: number
+  enabled?: boolean
   listClass?: ClassValue
   itemClass?: ClassValue
 }>(), {
@@ -52,6 +53,7 @@ const props = withDefaults(defineProps<{
   flowMode: false,
   hiddenPosition: undefined,
   updateInterval: 0,
+  enabled: true,
   listClass: '',
   itemClass: '',
 })
@@ -97,6 +99,7 @@ const windowScrollerOptions = computed(() => ({
   flowMode: props.flowMode,
   hiddenPosition: props.hiddenPosition,
   updateInterval: props.updateInterval,
+  enabled: props.enabled,
   onResize: () => emit('resize'),
   onVisible: () => emit('visible'),
   onHidden: () => emit('hidden'),

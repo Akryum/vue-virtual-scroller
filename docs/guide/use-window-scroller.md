@@ -67,6 +67,10 @@ Common options:
 - `prerender`
 - `emitUpdate`
 - `updateInterval`
+- `enabled` (default `true`) — passive mount switch, same semantics as
+  [`useRecycleScroller`](./use-recycle-scroller#disabling-the-scroller-with-enabled).
+  When `false`, no window scroll listener, no observers, no watchers; the
+  exposed pool and sizes stay at inert defaults.
 
 `gridItems` still requires a numeric fixed `itemSize`. Function-based sizes are not supported in grid mode.
 

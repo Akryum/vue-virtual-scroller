@@ -42,6 +42,9 @@ Mode-specific props:
 - `itemSecondarySize`
 - `minItemSize` when some pre-sized values may be missing initially
 - `flowMode` for vertical single-axis native-flow rendering with spacer elements
+- `enabled` (default `true`): pass `:enabled="false"` to mount the scroller
+  passively. No watchers, observers, scroll/resize listeners, or RAFs run; the
+  pool stays empty. Toggle back to `true` to re-arm without remounting.
 
 Documented behavior:
 

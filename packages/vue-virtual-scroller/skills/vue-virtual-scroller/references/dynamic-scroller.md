@@ -29,6 +29,10 @@ Important documented guidance:
 - you do not need a `size` field on each item
 - keep `sizeField` on the default path because size management is internal
 - `shift`, `cache`, and `disableTransform` still apply here
+- `enabled` (default `true`) mirrors the `RecycleScroller` flag: pass
+  `:enabled="false"` to mount the scroller passively. No measurement,
+  observers, or watchers run while disabled; toggling back to `true` re-arms
+  without remounting.
 
 ## Events/returns
 

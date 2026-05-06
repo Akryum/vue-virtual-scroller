@@ -12,6 +12,7 @@
 | `watchData` | `false` | Deeply watch `item` for legacy environments without `ResizeObserver` (not recommended, can impact performance). |
 | `tag` | `'div'` | Element used to render the component. |
 | `emitResize` | `false` | Emit the `resize` event each time the size is recomputed (can impact performance). |
+| `enabled` | `true` | When `false`, the item controller is never mounted: no resize observation, no anchor registration, no measurement. Toggling back to `true` re-arms it. Useful when the parent scroller is also disabled and you want to skip per-item setup work. |
 
 ## Usage notes
 

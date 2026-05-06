@@ -1,5 +1,6 @@
+import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, createSSRApp, defineComponent, h, ref } from 'vue'
+import { computed, createSSRApp, defineComponent, h, nextTick, ref } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { useDynamicScrollerItem } from './useDynamicScrollerItem'
 
@@ -101,5 +102,64 @@ describe('useDynamicScrollerItem', () => {
 
     callbacksArg.onResize('row-1')
     expect(onResize).toHaveBeenCalledWith('row-1')
+  })
+
+  it('skips controller.mount when enabled is false and re-arms when flipped true', async () => {
+    const mountFn = vi.fn()
+    const unmountFn = vi.fn()
+    mocks.createDynamicScrollerItemController.mockReturnValue({
+      id: computed(() => 'row-1'),
+      size: computed(() => 0),
+      finalActive: computed(() => true),
+      updateSize: vi.fn(),
+      mount: mountFn,
+      unmount: unmountFn,
+    })
+
+    const el = ref(document.createElement('div'))
+    const enabled = ref(false)
+
+    const Harness = defineComponent({
+      setup() {
+        useDynamicScrollerItem(() => ({
+          item: { id: 'row-1' },
+          active: true,
+          watchData: false,
+          emitResize: false,
+          el: el.value,
+          enabled: enabled.value,
+        }) as any)
+        return () => h('div')
+      },
+    })
+
+    const app = mount(Harness, {
+      global: {
+        provide: {
+          vscrollMeasurementContext: {
+            vscrollData: { active: true, sizes: {}, keyField: 'id', simpleArray: false },
+            resizeObserver: undefined,
+            direction: computed(() => 'vertical'),
+            undefinedMap: {},
+            undefinedSizeCount: { value: 0 },
+            onVscrollUpdate: () => () => {},
+          },
+          vscrollAnchorRegistry: null,
+        },
+      },
+    })
+
+    await nextTick()
+    expect(mountFn).not.toHaveBeenCalled()
+
+    enabled.value = true
+    await nextTick()
+    expect(mountFn).toHaveBeenCalledTimes(1)
+
+    enabled.value = false
+    await nextTick()
+    expect(unmountFn).toHaveBeenCalledTimes(1)
+
+    app.unmount()
   })
 })

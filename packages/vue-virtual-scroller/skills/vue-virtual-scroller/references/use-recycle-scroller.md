@@ -37,6 +37,11 @@ Optional extras:
 - `cache`
 - `disableTransform`
 - `flowMode`
+- `enabled` (default `true`): passive-mount switch. When `false`, no
+  watchers/observers/listeners/RAFs/timers run, exposed values stay at inert
+  defaults (`pool` empty, `totalSize` 0, `ready` false, `sizes` empty),
+  exported methods become no-ops. Toggle to `true` to re-arm without
+  remounting the consumer.
 
 ## Core props/options
 
@@ -112,6 +117,27 @@ Resolver-based size:
 
 ```ts
 const itemSize = (item: Row, index: number) => item.compact ? 40 : 56
+```
+
+Conditional virtualization with `enabled`:
+
+```ts
+const isVirtualized = computed(() => props.virtualize)
+
+const scroller = useRecycleScroller(() => ({
+  items: rows.value,
+  keyField: 'id',
+  itemSize: 40,
+  minItemSize: null,
+  sizeField: 'size',
+  typeField: 'type',
+  buffer: 200,
+  pageMode: false,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+  enabled: isVirtualized.value,
+}), scrollerEl)
 ```
 
 Flow-mode spacer layout:

@@ -36,6 +36,9 @@ Most-used props:
 - `shift`
 - `cache`
 - `disableTransform`
+- `enabled` (default `true`): pass `:enabled="false"` for a passive mount.
+  No window scroll listener, no observers, no watchers, empty pool. Toggle
+  to `true` to re-arm without remounting.
 
 Documented behavior:
 

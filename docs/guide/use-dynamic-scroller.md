@@ -97,6 +97,30 @@ If you enable `flowMode`, render start and end spacer elements from `startSpacer
 
 When that headless path renders a semantic table, pair it with [`useTableColumnWidths`](./use-table-column-widths) so column widths stay locked while pooled rows churn.
 
+## Disabling the scroller with `enabled`
+
+The dynamic scroller accepts the same `enabled` flag as
+[`useRecycleScroller`](./use-recycle-scroller#disabling-the-scroller-with-enabled).
+Pass `enabled: false` to mount the composable passively: no resize observer,
+no measurement queue, no items-with-size effect, no inner scroller listeners,
+and the `vDynamicScrollerItem` directive becomes a no-op.
+
+```ts
+const isVirtualized = computed(() => props.virtualize)
+
+const dynamicScroller = useDynamicScroller(() => ({
+  items: rows.value,
+  keyField: 'id',
+  minItemSize: 48,
+  el: scrollerEl,
+  enabled: isVirtualized.value,
+}))
+```
+
+The exported `pool`, `visiblePool`, `itemsWithSize`, and spacer sizes stay at
+their inert defaults while disabled. Toggling `enabled` back to `true`
+re-arms the scroller and starts measuring again — no remount needed.
+
 ## Common pitfalls
 
 - Forgetting `minItemSize` hurts the initial layout and scroll math.

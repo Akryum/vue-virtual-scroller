@@ -25,6 +25,10 @@ Recommended dynamic inputs:
 - `shift` for prepend-heavy histories
 - `disableTransform` when pooled wrappers must avoid transforms
 - `flowMode` when active views should stay in native block or table flow
+- `enabled` (default `true`): pass `enabled: false` for a passive mount. No
+  ResizeObserver, no measurement queue, no items-with-size effect, no inner
+  scroller listeners; the `vDynamicScrollerItem` directive becomes a no-op
+  while disabled. Toggle to `true` to re-arm without remounting.
 
 ## Core props/options
 

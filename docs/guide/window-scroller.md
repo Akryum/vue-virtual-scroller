@@ -100,6 +100,7 @@ The most commonly used props are:
 - `prerender`
 - `emitUpdate`
 - `updateInterval`
+- `enabled` (default `true`) — set to `false` to mount the component passively. No window scroll listener, no resize observer, no watchers, no measurement. Toggle back to `true` to re-arm without remounting.
 - `listTag`
 - `itemTag`
 - `listClass`

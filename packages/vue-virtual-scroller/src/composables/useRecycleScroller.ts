@@ -1,7 +1,7 @@
 import type { ComputedRef, CSSProperties, MaybeRefOrGetter, Ref } from 'vue'
 import type { CacheSnapshot, DefaultKeyField, ItemKey, ItemSizeValue, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, SizeEntry, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
 import type { PooledViewPositionMode } from '../utils/viewStyle'
-import type { ScrollerCallbacks, ScrollerOptionCallbacks, ScrollerOptionElements } from './scrollerOptions'
+import type { ScrollerCallbacks, ScrollerOptionCallbacks, ScrollerOptionElements, ScrollerOptionEnabled } from './scrollerOptions'
 import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
 import config from '../config'
 import { buildCacheSnapshot, findPrependOffset, getAlignedScrollOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
@@ -13,7 +13,7 @@ import { getFixedItemSize, resolveSnapshotItemSize, resolveVariableItemSize } fr
 import { getPooledViewStyle, resolvePooledViewMode } from '../utils/viewStyle'
 import { normalizeScrollerInputs, resolveScrollerOptions } from './scrollerOptions'
 
-export interface UseRecycleScrollerOptions<TItem = unknown, TSizeField extends string = 'size'> extends ScrollerOptionElements, ScrollerOptionCallbacks {
+export interface UseRecycleScrollerOptions<TItem = unknown, TSizeField extends string = 'size'> extends ScrollerOptionElements, ScrollerOptionCallbacks, ScrollerOptionEnabled {
   items: MaybeRefOrGetter<TItem[]>
   keyField: KeyFieldValue<TItem>
   direction?: ScrollDirection
@@ -290,6 +290,11 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   function getPageMode() {
     return overrides?.pageMode ?? getOptions().pageMode
   }
+
+  /**
+   * Resolve the `enabled` flag (defaults to `true` when omitted).
+   */
+  const isEnabled = computed(() => toValue(getOptions().enabled ?? true))
 
   // Computed
   const simpleArray = computed(() => {
@@ -627,12 +632,18 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   }
 
   function handleResize() {
+    if (!isEnabled.value) {
+      return
+    }
     normalizedInputs.callbacks.onResize?.()
     if (ready.value)
       updateVisibleItems(false)
   }
 
   function handleScroll() {
+    if (!isEnabled.value) {
+      return
+    }
     if (_shiftAnchor && !_applyingShiftAnchor) {
       clearShiftAnchor()
     }
@@ -670,6 +681,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   }
 
   function handleVisibilityChange(isVisible: boolean, entry: IntersectionObserverEntry) {
+    if (!isEnabled.value) {
+      return
+    }
     if (ready.value) {
       if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {
         normalizedInputs.callbacks.onVisible?.()
@@ -954,6 +968,10 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   function addListeners() {
     removeListeners()
 
+    if (!isEnabled.value) {
+      return
+    }
+
     const scrollTarget = getPageMode()
       ? getListenerTarget()
       : normalizedInputs.el.value
@@ -1118,6 +1136,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   }
 
   function updateVisibleItems(itemsChanged: boolean, checkPositionDiff = false): { continuous: boolean } {
+    if (!isEnabled.value) {
+      return { continuous: true }
+    }
     const opts = getOptions()
     const itemSize = getFixedItemSize(opts.itemSize)
     const gridItems = opts.gridItems || 1
@@ -1505,6 +1526,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   }
 
   function sortViews() {
+    if (!isEnabled.value) {
+      return
+    }
     if (getViewPositionMode() === 'flow') {
       sortFlowModePool()
       return
@@ -1520,6 +1544,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   }
 
   function scrollToItem(index: number, scrollOptions?: ScrollToOptions) {
+    if (!isEnabled.value) {
+      return
+    }
     const opts = getOptions()
     const direction = getDirection(opts)
     const elValue = normalizedInputs.el.value
@@ -1579,6 +1606,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   }
 
   function scrollToPosition(position: number, scrollOptions?: ScrollToOptions) {
+    if (!isEnabled.value) {
+      return
+    }
     const opts = getOptions()
     const direction = getDirection(opts)
     const elValue = normalizedInputs.el.value
@@ -1616,7 +1646,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   if (initialOpts.cache) {
     restoreCache(initialOpts.cache)
   }
-  if (initialOpts.prerender) {
+  if (isEnabled.value && initialOpts.prerender) {
     _prerender = true
     updateVisibleItems(false)
   }
@@ -1626,6 +1656,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   }
 
   onMounted(() => {
+    if (!isEnabled.value) {
+      return
+    }
     addListeners()
     nextTick(() => {
       // In SSR mode, render the number of visible items
@@ -1636,6 +1669,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   })
 
   onActivated(() => {
+    if (!isEnabled.value) {
+      return
+    }
     const lastPosition = _lastUpdateScrollPosition
     if (typeof lastPosition === 'number') {
       nextTick(() => {
@@ -1650,8 +1686,30 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     removeListeners()
   })
 
+  // React to runtime `enabled` flips: when re-armed, attach listeners and
+  // perform a full update; when disarmed, tear listeners down and cancel any
+  // pending RAFs/timers so the composable becomes a true no-op.
+  watch(isEnabled, (enabled) => {
+    if (enabled) {
+      addListeners()
+      nextTick(() => {
+        updateVisibleItems(true)
+        ready.value = true
+      })
+    }
+    else {
+      removeListeners()
+      clearPendingTimeouts()
+      cancelPendingFrames()
+      ready.value = false
+    }
+  })
+
   // Watchers
   watch(() => getOptions().cache, (snapshot) => {
+    if (!isEnabled.value) {
+      return
+    }
     restoreCache(snapshot)
     updateVisibleItems(true)
   })
@@ -1664,6 +1722,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   // never fire. Subscribing to the raw ref guarantees the items watcher runs
   // on every upstream mutation, even when the array identity is preserved.
   watch(() => toValue(getOptions().items).slice(), (nextItems, previousItems) => {
+    if (!isEnabled.value) {
+      return
+    }
     const opts = getOptions()
     const keyField = simpleArray.value ? null : opts.keyField
     const nextKeys = getItemKeys(nextItems, keyField)
@@ -1697,6 +1758,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   })
 
   watch(() => getOptions().keyField, () => {
+    if (!isEnabled.value) {
+      return
+    }
     const opts = getOptions()
     const keyField = simpleArray.value ? null : opts.keyField
     _previousKeys = getItemKeys(items.value, keyField) as Array<ItemKey<TItem, TKeyField>>
@@ -1706,6 +1770,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   })
 
   watch(() => getOptions().typeField, () => {
+    if (!isEnabled.value) {
+      return
+    }
     const opts = getOptions()
     _previousTypes = getItemTypes(items.value, opts.typeField)
     clearShiftAnchor()
@@ -1713,18 +1780,27 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   })
 
   watch(getPageMode, () => {
+    if (!isEnabled.value) {
+      return
+    }
     removeListeners()
     addListeners()
     updateVisibleItems(false)
   })
 
   watch(normalizedInputs.el, () => {
+    if (!isEnabled.value) {
+      return
+    }
     removeListeners()
     addListeners()
     updateVisibleItems(false)
   })
 
   watch(sizes, () => {
+    if (!isEnabled.value) {
+      return
+    }
     if (applyShiftAnchor()) {
       scheduleShiftAnchorClear()
     }
@@ -1732,10 +1808,16 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   })
 
   watch(() => getOptions().gridItems, () => {
+    if (!isEnabled.value) {
+      return
+    }
     updateVisibleItems(true)
   })
 
   watch(() => getOptions().itemSecondarySize, () => {
+    if (!isEnabled.value) {
+      return
+    }
     updateVisibleItems(true)
   })
 

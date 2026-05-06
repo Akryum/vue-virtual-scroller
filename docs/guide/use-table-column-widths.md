@@ -23,7 +23,10 @@ Use it when native table auto layout keeps changing as virtualized rows enter an
 
 - `table`: ref or getter for target `<table>`.
 - `dependencies`: values that should trigger a fresh measurement after content changes.
-- `disabled`: turn helper off and clear locked widths.
+- `enabled`: turn helper off and clear locked widths. Defaults to `true`. Either
+  `enabled: false` or the legacy `disabled: true` short-circuits measurement.
+- `disabled`: legacy alias for `enabled: false`. Either flag works; they OR
+  together so `disabled: true` always wins.
 
 ## Return values
 

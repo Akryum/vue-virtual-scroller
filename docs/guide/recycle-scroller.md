@@ -149,6 +149,7 @@ As you scroll, most views are simply moved to new positions and receive updated 
 | `disableTransform` | `false` | Use absolute `top`/`left` positioning instead of CSS transforms for pooled item wrappers. This also keeps fixed-grid cross-axis placement in `left`/`top`. |
 | `flowMode` | `false` | Keep active pooled views in native document flow and use spacer elements before/after them instead of absolute positioning. v1 only supports vertical single-axis lists. `gridItems`, horizontal mode, and `hiddenPosition` fall back to standard positioning. |
 | `updateInterval` | `0` | The interval in ms at which the view will be checked for updates after scrolling. When set to `0`, check happens during the next animation frame. |
+| `enabled` | `true` | When `false`, the scroller mounts in a passive state: no watchers, observers, scroll/resize listeners, RAFs, or timers are attached, and `pool`, `totalSize`, and the spacer sizes stay at their inert defaults. Useful when a wrapper component conditionally renders virtualized output but wants to keep the scroller invocation stable. Toggling back to `true` re-arms the scroller without remounting. |
 | `listClass` | `''` | Custom classes added to the item list wrapper. |
 | `itemClass` | `''` | Custom classes added to each item. |
 | `listTag` | `'div'` | The element to render as the list's wrapper. |
@@ -305,6 +306,28 @@ The default value is `200`.
 ```html
 <RecycleScroller :buffer="200" />
 ```
+
+## Conditional virtualization with `enabled`
+
+Set `:enabled="false"` when the scroller call site is stable but you only want
+virtualization to run in some scenarios — for example, a generic data-table
+component that opts into virtualization through a parent prop.
+
+```vue
+<RecycleScroller
+  :items="rows"
+  :item-size="40"
+  :enabled="virtualize"
+>
+  <template #default="{ item }">…</template>
+</RecycleScroller>
+```
+
+While disabled, the scroller attaches no scroll or resize listeners, runs no
+watchers, and exposes an empty pool. Flipping `enabled` to `true` later
+re-arms it (no remount needed). This is how host components can keep the
+composable mounted unconditionally without paying for it when the user has
+not opted in. See [`useRecycleScroller` for the headless equivalent](./use-recycle-scroller#disabling-the-scroller-with-enabled).
 
 ## Server-Side Rendering
 

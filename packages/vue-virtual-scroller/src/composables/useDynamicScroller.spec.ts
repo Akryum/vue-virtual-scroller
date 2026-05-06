@@ -1307,3 +1307,82 @@ describe('useDynamicScroller', () => {
     cancelAnimationFrameSpy.mockRestore()
   })
 })
+
+describe('useDynamicScroller enabled option', () => {
+  it('renders nothing when enabled is false', async () => {
+    const items = ref<Array<{ id: string }>>([{ id: 'a' }, { id: 'b' }])
+    const enabled = ref(false)
+    const el = ref(createScrollerElement())
+
+    const Harness = defineComponent({
+      setup() {
+        const state = useDynamicScroller(() => ({
+          items: items.value,
+          keyField: 'id',
+          direction: 'vertical',
+          minItemSize: 20,
+          el: el.value,
+          buffer: 200,
+          emitUpdate: true,
+          pageMode: false,
+          shift: false,
+          disableTransform: false,
+          prerender: 0,
+          updateInterval: 0,
+          enabled: enabled.value,
+        }) as any)
+        return { ...state, el }
+      },
+      template: '<div />',
+    })
+
+    const wrapper = mount(Harness)
+    await nextTick()
+    await nextTick()
+
+    expect((wrapper.vm as any).pool.length).toBe(0)
+    expect((wrapper.vm as any).visiblePool.length).toBe(0)
+  })
+
+  it('does not crash when items go from empty to one row while disabled then enabled', async () => {
+    // Simulates the directus-next-2 InputPolicyDocument flow: a host that calls
+    // the composable unconditionally but only opts into virtualization later.
+    // Going 0 → 1 must not crash and must populate the pool once enabled flips.
+    const items = ref<Array<{ id: string }>>([])
+    const enabled = ref(true)
+    const el = ref(createScrollerElement())
+
+    const Harness = defineComponent({
+      setup() {
+        const state = useDynamicScroller(() => ({
+          items: items.value,
+          keyField: 'id',
+          direction: 'vertical',
+          minItemSize: 20,
+          el: el.value,
+          buffer: 200,
+          emitUpdate: false,
+          pageMode: false,
+          shift: false,
+          disableTransform: false,
+          prerender: 0,
+          updateInterval: 0,
+          enabled: enabled.value,
+        }) as any)
+        return { ...state, el }
+      },
+      template: '<div />',
+    })
+
+    const wrapper = mount(Harness)
+    await nextTick()
+
+    expect(() => {
+      items.value = [{ id: 'a' }]
+    }).not.toThrow()
+    await nextTick()
+    await nextTick()
+
+    expect((wrapper.vm as any).itemsWithSize.length).toBe(1)
+  })
+})

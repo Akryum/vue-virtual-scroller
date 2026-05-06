@@ -31,6 +31,9 @@ Common options:
 - `shift`
 - `cache`
 - `disableTransform`
+- `enabled` (default `true`): pass `enabled: false` for a passive mount,
+  same semantics as `useRecycleScroller`. While disabled, no window scroll
+  listener, no observers, and an empty pool. Toggle to `true` to re-arm.
 
 ## Core props/options
 

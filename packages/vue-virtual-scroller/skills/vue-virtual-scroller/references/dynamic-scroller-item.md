@@ -32,6 +32,10 @@ Recommended dynamic inputs:
 - `watchData`
 - `tag`
 - `emitResize`
+- `enabled` (default `true`): pass `:enabled="false"` to skip the per-item
+  controller mount entirely (no resize observation, no anchor registration,
+  no measurement). Toggle to `true` to re-arm. Useful when the parent
+  `DynamicScroller` is also disabled.
 
 Documented guidance:
 

@@ -1,6 +1,7 @@
 import type { ComputedRef, CSSProperties, Directive, MaybeRefOrGetter, Ref } from 'vue'
 import type { CacheSnapshot, DefaultKeyField, DynamicScrollerView, ItemKey, ItemWithSize, KeyFieldValue, KeyValue, ScrollDirection, ValidKeyField, View, VScrollData } from '../types'
 import type { DynamicScrollerItemControllerCallbacks, DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext, DynamicScrollerUpdatePayload } from './dynamicScrollerMeasurement'
+import type { ScrollerOptionEnabled } from './scrollerOptions'
 import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './useRecycleScroller'
 import { computed, effectScope, nextTick, onActivated, onDeactivated, onUnmounted, provide, reactive, shallowReactive, shallowRef, toValue, triggerRef, watch, watchEffect } from 'vue'
 import { findPrependOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
@@ -34,7 +35,7 @@ export type UseDynamicScrollerItemBindingOptions<TItem = unknown, TKey = KeyValu
   = | UseDynamicScrollerItemViewBindingOptions<TItem, TKey>
     | UseDynamicScrollerItemLegacyBindingOptions<TItem>
 
-export interface UseDynamicScrollerOptions<TItem = unknown> {
+export interface UseDynamicScrollerOptions<TItem = unknown> extends ScrollerOptionEnabled {
   items: MaybeRefOrGetter<TItem[]>
   keyField: KeyFieldValue<TItem>
   direction?: ScrollDirection
@@ -549,6 +550,11 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     return resolvedOptions.value
   }
 
+  /**
+   * Resolve the `enabled` flag (defaults to `true` when omitted).
+   */
+  const isEnabled = computed(() => toValue(getOptions().enabled ?? true))
+
   function requestFrame(cb: () => void): number {
     let frameId = -1
     frameId = requestAnimationFrame(() => {
@@ -650,6 +656,9 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   const itemsWithSize = shallowRef<Array<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>>>(_itemsWithSizeEntries)
 
   watchEffect(() => {
+    if (!isEnabled.value) {
+      return
+    }
     const viewportAnchor = _shiftAnchor || !el.value
       ? null
       : captureViewportAnchor(el.value.scrollTop, _itemsWithSizeEntries)
@@ -753,6 +762,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   }
 
   const recycleOptions = reactive({
+    get enabled() { return isEnabled.value },
     get items() { return itemsWithSize.value },
     get keyField() { return 'id' as const },
     get direction() { return direction.value },
@@ -1117,10 +1127,16 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
 
   const vDynamicScrollerItem: Directive<HTMLElement, UseDynamicScrollerItemBindingOptions<TItem, ItemKey<TItem, TKeyField>>> = {
     mounted(elValue, binding) {
+      if (!isEnabled.value) {
+        return
+      }
       const restoreStyles = captureManagedStyles(elValue)
       mountBinding(elValue, binding.value, normalizeBindingOptions(binding.value, rawViews), restoreStyles)
     },
     updated(elValue, binding) {
+      if (!isEnabled.value) {
+        return
+      }
       const record = bindings.get(elValue)
       const normalizedValue = normalizeBindingOptions(binding.value, rawViews)
 
@@ -1166,6 +1182,9 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
 
   // Methods
   function forceUpdate(clear = false) {
+    if (!isEnabled.value) {
+      return
+    }
     if (clear || simpleArray.value) {
       vscrollData.sizes = {}
     }
@@ -1192,6 +1211,9 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   }
 
   function scrollToBottom() {
+    if (!isEnabled.value) {
+      return
+    }
     const elValue = el.value
     if (!elValue)
       return
@@ -1224,6 +1246,9 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
 
   // Watchers
   watch(() => items.value.slice(), (nextItems, previousItems) => {
+    if (!isEnabled.value) {
+      return
+    }
     const opts = getOptions()
     const keyField = simpleArray.value ? null : opts.keyField
     const nextKeys = getItemKeys(nextItems, keyField)
@@ -1258,12 +1283,18 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   }, { flush: 'sync' })
 
   watch(() => getOptions().cache, (snapshot) => {
+    if (!isEnabled.value) {
+      return
+    }
     if (snapshot) {
       restoreCache(snapshot)
     }
   })
 
   watch(() => getOptions().keyField, (keyField) => {
+    if (!isEnabled.value) {
+      return
+    }
     vscrollData.keyField = keyField
     _previousKeys = getItemKeys(items.value, simpleArray.value ? null : keyField) as Array<ItemKey<TItem, TKeyField>>
     clearShiftAnchor()
@@ -1275,18 +1306,45 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   }, { immediate: true })
 
   watch(() => getOptions().direction, () => {
+    if (!isEnabled.value) {
+      return
+    }
     clearShiftAnchor()
     forceUpdate(true)
   })
 
   watch(el, (nextEl, previousEl) => {
     previousEl?.removeEventListener('scroll', onNativeScroll)
+    if (!isEnabled.value) {
+      return
+    }
     nextEl?.addEventListener('scroll', onNativeScroll)
   }, {
     immediate: true,
   })
 
+  // React to runtime `enabled` flips: re-arm the native scroll listener and
+  // resync size entries when re-enabled; tear listener down when disabled.
+  watch(isEnabled, (enabled) => {
+    const elValue = el.value
+    if (enabled) {
+      elValue?.addEventListener('scroll', onNativeScroll)
+      // Re-run the size entries effect by touching items.value through
+      // `forceUpdate`, which the inner recycle scroller observes.
+      forceUpdate()
+    }
+    else {
+      elValue?.removeEventListener('scroll', onNativeScroll)
+      cancelShiftAnchorFrame()
+      cancelPendingFrames()
+      clearShiftAnchor()
+    }
+  })
+
   watch(itemsWithSizeVersion, () => {
+    if (!isEnabled.value) {
+      return
+    }
     const elValue = el.value
     if (!elValue)
       return

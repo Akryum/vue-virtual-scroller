@@ -12,6 +12,25 @@ export interface ScrollerCallbacks {
 }
 
 /**
+ * Shared activation flag for headless scroller composables.
+ */
+export interface ScrollerOptionEnabled {
+  /**
+   * When `false`, the composable mounts in a passive state: no watchers,
+   * observers, scroll/resize listeners, RAFs, or timers are attached, and
+   * exported reactive sources stay at their inert defaults. Toggling back
+   * to `true` re-arms the scroller without remounting the consumer.
+   *
+   * Useful for call sites that want a stable composable invocation but
+   * conditionally render virtualized output (e.g. an opt-in `virtualize`
+   * prop on a wrapping component).
+   *
+   * @default true
+   */
+  enabled?: MaybeRefOrGetter<boolean>
+}
+
+/**
  * Common single-object inputs for headless scroller composables.
  */
 export interface ScrollerOptionElements {

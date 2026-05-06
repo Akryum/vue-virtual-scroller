@@ -1083,3 +1083,129 @@ describe('useRecycleScroller', () => {
     expect((wrapper.vm as any).pool.length).toBeGreaterThanOrEqual(0)
   })
 })
+
+describe('useRecycleScroller enabled option', () => {
+  it('does not attach scroll listeners when enabled is false', async () => {
+    const items = ref<Array<{ id: number }>>(Array.from({ length: 6 }, (_, id) => ({ id })))
+    const enabled = ref(false)
+    const Harness = defineComponent({
+      setup() {
+        const el = ref<HTMLElement>()
+        const state = useRecycleScroller(() => ({
+          items: items.value,
+          keyField: 'id' as const,
+          direction: 'vertical' as const,
+          itemSize: 10,
+          minItemSize: null,
+          sizeField: 'size' as const,
+          typeField: 'type',
+          buffer: 0,
+          pageMode: false,
+          shift: false,
+          prerender: 0,
+          emitUpdate: true,
+          disableTransform: false,
+          updateInterval: 0,
+          enabled: enabled.value,
+        }), el)
+        return { ...state, el }
+      },
+      template: '<div ref="el" style="height: 100px; overflow-y: auto;" />',
+    })
+
+    const wrapper = mount(Harness)
+    const el = (wrapper.vm as any).el as HTMLElement
+    Object.defineProperty(el, 'clientHeight', { configurable: true, get: () => 100 })
+    Object.defineProperty(el, 'clientWidth', { configurable: true, get: () => 100 })
+
+    const addEventListenerSpy = vi.spyOn(el, 'addEventListener')
+
+    await nextTick()
+    await nextTick()
+
+    // No scroll listener attached, pool empty, ready stays false.
+    expect(addEventListenerSpy).not.toHaveBeenCalledWith('scroll', expect.any(Function), expect.anything())
+    expect((wrapper.vm as any).pool.length).toBe(0)
+    expect((wrapper.vm as any).ready).toBe(false)
+
+    addEventListenerSpy.mockRestore()
+  })
+
+  it('re-arms listeners and renders pool when enabled flips to true', async () => {
+    const items = ref<Array<{ id: number }>>(Array.from({ length: 6 }, (_, id) => ({ id })))
+    const enabled = ref(false)
+    const Harness = defineComponent({
+      setup() {
+        const el = ref<HTMLElement>()
+        const state = useRecycleScroller(() => ({
+          items: items.value,
+          keyField: 'id' as const,
+          direction: 'vertical' as const,
+          itemSize: 10,
+          minItemSize: null,
+          sizeField: 'size' as const,
+          typeField: 'type',
+          buffer: 0,
+          pageMode: false,
+          shift: false,
+          prerender: 0,
+          emitUpdate: true,
+          disableTransform: false,
+          updateInterval: 0,
+          enabled: enabled.value,
+        }), el)
+        return { ...state, el }
+      },
+      template: '<div ref="el" style="height: 100px; overflow-y: auto;" />',
+    })
+
+    const wrapper = mount(Harness)
+    const el = (wrapper.vm as any).el as HTMLElement
+    Object.defineProperty(el, 'clientHeight', { configurable: true, get: () => 100 })
+    Object.defineProperty(el, 'clientWidth', { configurable: true, get: () => 100 })
+
+    await nextTick()
+    expect((wrapper.vm as any).pool.length).toBe(0)
+
+    enabled.value = true
+    await nextTick()
+    await nextTick()
+
+    expect((wrapper.vm as any).pool.length).toBeGreaterThan(0)
+    expect((wrapper.vm as any).ready).toBe(true)
+  })
+
+  it('updateVisibleItems is a no-op when disabled', async () => {
+    const items = ref<Array<{ id: number }>>(Array.from({ length: 6 }, (_, id) => ({ id })))
+    const Harness = defineComponent({
+      setup() {
+        const el = ref<HTMLElement>()
+        const state = useRecycleScroller(() => ({
+          items: items.value,
+          keyField: 'id' as const,
+          direction: 'vertical' as const,
+          itemSize: 10,
+          minItemSize: null,
+          sizeField: 'size' as const,
+          typeField: 'type',
+          buffer: 0,
+          pageMode: false,
+          shift: false,
+          prerender: 0,
+          emitUpdate: true,
+          disableTransform: false,
+          updateInterval: 0,
+          enabled: false,
+        }), el)
+        return { ...state, el }
+      },
+      template: '<div ref="el" style="height: 100px; overflow-y: auto;" />',
+    })
+
+    const wrapper = mount(Harness)
+    await nextTick()
+    const result = (wrapper.vm as any).updateVisibleItems(true)
+    expect(result).toEqual({ continuous: true })
+    expect((wrapper.vm as any).pool.length).toBe(0)
+  })
+})

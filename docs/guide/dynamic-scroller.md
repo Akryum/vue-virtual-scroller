@@ -96,6 +96,12 @@ The additions that matter most on the dynamic path are:
 
 - `shift`: keep the viewport anchored during prepends
 - `cache`: restore previously known measured sizes
+- `enabled` (default `true`): set to `false` to mount the scroller passively. No
+  observers, watchers, listeners, or measurement work runs while disabled, and
+  `pool` / `itemsWithSize` / spacer sizes stay at their inert defaults. Toggle
+  back to `true` to re-arm without remounting. Useful when a wrapper component
+  needs a stable scroller invocation but only opts into virtualization
+  conditionally.
 
 ## Events
 

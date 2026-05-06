@@ -73,6 +73,7 @@ Additional scroll-system options:
 - `cache`
 - `disableTransform`
 - `flowMode`
+- `enabled` (default `true`) — passive mount switch. See [Disabling the scroller with `enabled`](#disabling-the-scroller-with-enabled).
 
 `keyField` can also be a resolver function when your data needs a derived key. The callback always receives `(item, index)`:
 
@@ -137,6 +138,38 @@ Example flow-mode spacer pattern:
     <div v-if="endSpacerSize > 0" :style="{ height: `${endSpacerSize}px` }" />
   </div>
 </div>
+```
+
+## Disabling the scroller with `enabled`
+
+`enabled` (default `true`) puts the composable into a passive mode. While
+disabled it attaches no scroll/resize listeners, runs no watchers, schedules
+no RAFs or timers, and exposes inert defaults: `pool` and `visiblePool` stay
+empty, `totalSize` / `startSpacerSize` / `endSpacerSize` stay at `0`, `ready`
+stays `false`, and `sizes` stays empty. Toggling `enabled` back to `true`
+re-arms the scroller without remounting the consumer.
+
+```ts
+const isVirtualized = computed(() => props.virtualize)
+
+const scroller = useRecycleScroller(() => ({
+  items: rows.value,
+  keyField: 'id',
+  itemSize: null,
+  minItemSize: 40,
+  // …
+  enabled: isVirtualized.value,
+}), scrollerEl)
+```
+
+This pattern is useful in design-system wrappers that always invoke the
+composable but only opt into virtualization for some call sites — keep the
+hook order stable, pay only when needed.
+
+```ts
+// Disabled methods are no-ops; safe to call.
+scroller.scrollToItem(0)
+scroller.updateVisibleItems(true) // returns { continuous: true }
 ```
 
 ## Common pitfalls

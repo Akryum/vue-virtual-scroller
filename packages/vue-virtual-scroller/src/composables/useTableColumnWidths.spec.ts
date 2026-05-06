@@ -391,6 +391,46 @@ describe('useTableColumnWidths', () => {
     wrapper.unmount()
   })
 
+  it('treats enabled: false the same as disabled: true', async () => {
+    const enabled = ref(false)
+
+    const Harness = defineComponent({
+      setup() {
+        const table = ref<HTMLTableElement>()
+        const widthState = useTableColumnWidths({
+          table,
+          enabled: enabled.value,
+        } as any)
+
+        return {
+          table,
+          ...widthState,
+          enabled,
+        }
+      },
+      template: `
+        <table ref="table">
+          <thead>
+            <tr><th data-width="80">Name</th><th data-width="120">Email</th></tr>
+          </thead>
+          <tbody>
+            <tr><td data-width="100">Ada</td><td data-width="110">ada@example.com</td></tr>
+          </tbody>
+        </table>
+      `,
+    })
+
+    const wrapper = mount(Harness, { attachTo: document.body })
+    syncTableRects(wrapper.element as HTMLTableElement)
+
+    await flushMeasurement()
+    const vm = wrapper.vm as unknown as { columnWidths: number[], hasLockedWidths: boolean }
+    expect(vm.columnWidths).toEqual([])
+    expect(vm.hasLockedWidths).toBe(false)
+
+    wrapper.unmount()
+  })
+
   it('clears widths and disconnects observer on unmount', async () => {
     const { wrapper, vm } = mountHarness({
       header: [

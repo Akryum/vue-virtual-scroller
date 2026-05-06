@@ -21,6 +21,7 @@ const props = withDefaults(defineProps<{
   disableTransform?: boolean
   flowMode?: boolean
   hiddenPosition?: number
+  enabled?: boolean
 }>(), {
   keyField: 'id',
   direction: 'vertical',
@@ -31,6 +32,7 @@ const props = withDefaults(defineProps<{
   disableTransform: false,
   flowMode: false,
   hiddenPosition: undefined,
+  enabled: true,
 })
 
 const emit = defineEmits<{
@@ -67,6 +69,7 @@ const dynamicOptions = computed(() => ({
   cache: props.cache,
   flowMode: props.flowMode,
   hiddenPosition: props.hiddenPosition,
+  enabled: props.enabled,
   el: scrollerEl.value,
   onResize: () => emit('resize'),
   onVisible: () => emit('visible'),
@@ -134,6 +137,7 @@ defineExpose(exposed)
     :disable-transform="props.disableTransform"
     :flow-mode="props.flowMode"
     :hidden-position="props.hiddenPosition"
+    :enabled="props.enabled"
     key-field="id"
     :list-tag="props.listTag"
     :item-tag="props.itemTag"

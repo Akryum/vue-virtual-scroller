@@ -1,12 +1,17 @@
 import type { ComputedRef, CSSProperties, MaybeRefOrGetter } from 'vue'
+import type { ScrollerOptionEnabled } from './scrollerOptions'
 import { computed, nextTick, onBeforeUnmount, shallowRef, toValue, watch } from 'vue'
 
 /**
  * Options for table column width locking.
  */
-export interface UseTableColumnWidthsOptions {
+export interface UseTableColumnWidthsOptions extends ScrollerOptionEnabled {
   table: MaybeRefOrGetter<HTMLTableElement | undefined>
   dependencies?: MaybeRefOrGetter<unknown[] | Record<string, unknown> | null>
+  /**
+   * @deprecated Use `enabled: false` (the inverse) for parity with sibling
+   * scroller composables. `disabled` continues to work for backward compat.
+   */
   disabled?: MaybeRefOrGetter<boolean>
 }
 
@@ -155,6 +160,14 @@ export function useTableColumnWidths(options: UseTableColumnWidthsOptions): UseT
     return widths.value.length > 0 ? { tableLayout: 'fixed' } : undefined
   })
 
+  /**
+   * Resolve the effective disabled state from either `disabled` (legacy) or
+   * `enabled: false`. Either flag short-circuits measurement.
+   */
+  function isDisabled() {
+    return toValue(options.disabled) || toValue(options.enabled ?? true) === false
+  }
+
   let active = true
   let observedTable: HTMLTableElement | null = null
   let lastObservedWidth: number | null = null
@@ -200,7 +213,7 @@ export function useTableColumnWidths(options: UseTableColumnWidthsOptions): UseT
     scheduled = false
 
     const table = toValue(options.table)
-    if (active && table && !toValue(options.disabled)) {
+    if (active && table && !isDisabled()) {
       widths.value = measureTable(table)
     }
 
@@ -219,7 +232,7 @@ export function useTableColumnWidths(options: UseTableColumnWidthsOptions): UseT
       return
     }
 
-    if (toValue(options.disabled) || !toValue(options.table)) {
+    if (isDisabled() || !toValue(options.table)) {
       clear()
       return
     }
@@ -234,7 +247,7 @@ export function useTableColumnWidths(options: UseTableColumnWidthsOptions): UseT
   }
 
   watch(
-    () => [toValue(options.table), toValue(options.disabled)] as const,
+    () => [toValue(options.table), isDisabled()] as const,
     ([table, disabled], previousValue) => {
       const previousTable = previousValue?.[0]
       if (previousTable && resizeObserver) {
@@ -261,7 +274,7 @@ export function useTableColumnWidths(options: UseTableColumnWidthsOptions): UseT
   watch(
     () => toValue(options.dependencies) ?? null,
     () => {
-      if (!toValue(options.disabled) && toValue(options.table)) {
+      if (!isDisabled() && toValue(options.table)) {
         scheduleMeasure()
       }
     },

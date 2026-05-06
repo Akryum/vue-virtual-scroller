@@ -17,7 +17,11 @@ Generated from the package's public semantic-table documentation at skill genera
 
 - `table`: ref or getter for the target `<table>`
 - optional `dependencies`: values that should trigger a fresh measurement after content changes
-- optional `disabled`: clear the current lock and stop measuring
+- optional `enabled` (default `true`): set to `false` to clear the current lock
+  and stop measuring; either `enabled: false` or the legacy `disabled: true`
+  short-circuits measurement
+- optional `disabled` (legacy alias): kept for backward compat. Either flag works,
+  they OR together so `disabled: true` always wins.
 
 ## Core props/options
 
