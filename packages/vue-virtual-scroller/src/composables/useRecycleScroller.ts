@@ -1168,8 +1168,25 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       || count === 0
       || sizesValue[count - 1] != null
 
-    if (!count || !isVariableSizeCacheReady) {
+    if (!count) {
       startIndex = endIndex = visibleStartIndex = visibleEndIndex = totalSizeValue = 0
+    }
+    else if (!isVariableSizeCacheReady) {
+      if (_hasWindowState) {
+        // Cache is transiently stale (e.g. `items` mutated in place; the `sizes`
+        // computed has not yet re-evaluated). Keep the previous tick's render
+        // window so we don't blank the viewport — the next update will reconcile
+        // against the fresh cache. Without this fallback, every `items.push()`
+        // flickers the viewport empty for one or more ticks.
+        startIndex = _startIndex
+        endIndex = _endIndex
+        visibleStartIndex = _visibleStartIndex
+        visibleEndIndex = _visibleEndIndex
+        totalSizeValue = totalSize.value
+      }
+      else {
+        startIndex = endIndex = visibleStartIndex = visibleEndIndex = totalSizeValue = 0
+      }
     }
     else if (_prerender) {
       startIndex = visibleStartIndex = 0
@@ -1269,8 +1286,11 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         // For container style
         totalSizeValue = sizesValue[count - 1]?.accumulator ?? 0
 
-        // Searching for endIndex
-        for (endIndex = i; endIndex < count && (sizesValue[endIndex]?.accumulator ?? Number.POSITIVE_INFINITY) < scroll.end; endIndex++);
+        // Searching for endIndex.
+        // Fallback for missing entries is `0` (not `+∞`) so the loop scans past
+        // a sparse slot rather than terminating early — terminating would yield
+        // `endIndex == startIndex` and an empty render window.
+        for (endIndex = i; endIndex < count && (sizesValue[endIndex]?.accumulator ?? 0) < scroll.end; endIndex++);
         if (endIndex === -1) {
           endIndex = currentItems.length - 1
         }
@@ -1284,8 +1304,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         // search visible startIndex
         for (visibleStartIndex = startIndex; visibleStartIndex < count && (beforeSize + (sizesValue[visibleStartIndex]?.accumulator ?? Number.POSITIVE_INFINITY)) < scroll.start; visibleStartIndex++);
 
-        // search visible endIndex
-        for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeSize + (sizesValue[visibleEndIndex]?.accumulator ?? Number.POSITIVE_INFINITY)) < scroll.end; visibleEndIndex++);
+        // search visible endIndex (same fallback rationale as endIndex above)
+        for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeSize + (sizesValue[visibleEndIndex]?.accumulator ?? 0)) < scroll.end; visibleEndIndex++);
 
         if (shouldStabilizeIdleFlowWindow) {
           const stabilizedRange = stabilizeFlowWindow({
