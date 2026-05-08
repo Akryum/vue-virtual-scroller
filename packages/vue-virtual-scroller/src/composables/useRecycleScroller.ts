@@ -1178,10 +1178,14 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         // window so we don't blank the viewport — the next update will reconcile
         // against the fresh cache. Without this fallback, every `items.push()`
         // flickers the viewport empty for one or more ticks.
-        startIndex = _startIndex
-        endIndex = _endIndex
-        visibleStartIndex = _visibleStartIndex
-        visibleEndIndex = _visibleEndIndex
+        //
+        // Clamp to `count` in case items shrunk in the same tick the cache went
+        // stale: reusing previous indices unclamped would point past the end of
+        // the new array.
+        startIndex = Math.min(_startIndex, count)
+        endIndex = Math.min(_endIndex, count)
+        visibleStartIndex = Math.min(_visibleStartIndex, count)
+        visibleEndIndex = Math.min(_visibleEndIndex, count)
         totalSizeValue = totalSize.value
       }
       else {

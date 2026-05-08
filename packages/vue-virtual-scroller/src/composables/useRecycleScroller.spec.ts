@@ -1146,6 +1146,68 @@ describe('useRecycleScroller', () => {
     // reused while the cache catches up.
     expect((wrapper.vm as any).pool.length).toBeGreaterThanOrEqual(baselinePool)
   })
+
+  it('clamps the reused render window when items shrink in the same stale-cache tick', async () => {
+    // Defense for the symmetric case of the regression above: if `items`
+    // shrinks while the cache is mid-recompute, blindly reusing the previous
+    // tick's `_startIndex / _endIndex` would point past the new array. Clamp
+    // to the current `count` so downstream pool walking stays in-bounds.
+    const items = ref<Array<{ id: number, size: number }>>(
+      Array.from({ length: 6 }, (_, id) => ({ id, size: 30 })),
+    )
+    const Harness = defineComponent({
+      setup() {
+        const el = ref<HTMLElement>()
+        const state = useRecycleScroller(() => ({
+          items: items.value,
+          keyField: 'id' as const,
+          direction: 'vertical' as const,
+          itemSize: null,
+          minItemSize: 30,
+          sizeField: 'size' as const,
+          typeField: 'type',
+          buffer: 0,
+          pageMode: false,
+          shift: false,
+          prerender: 0,
+          emitUpdate: false,
+          disableTransform: false,
+          updateInterval: 0,
+        }), el)
+        return { ...state, el }
+      },
+      template: '<div ref="el" style="height: 100px; overflow-y: auto;" />',
+    })
+
+    const wrapper = mount(Harness)
+    const el = (wrapper.vm as any).el as HTMLElement
+    Object.defineProperty(el, 'clientHeight', { configurable: true, get: () => 100 })
+    Object.defineProperty(el, 'clientWidth', { configurable: true, get: () => 100 })
+
+    await nextTick()
+    await nextTick()
+
+    expect((wrapper.vm as any).pool.length).toBeGreaterThan(0)
+
+    // Items shrink to a single entry, but stub `sizes` to be stale (length
+    // matches the old longer array, last slot undefined).
+    const sizesRef = (wrapper.vm as any).sizes as Array<{ accumulator: number, size: number } | undefined>
+    items.value = [{ id: 0, size: 30 }]
+    sizesRef.length = 6
+    sizesRef[5] = undefined as any
+
+    expect(() => {
+      ;(wrapper.vm as any).updateVisibleItems(true)
+    }).not.toThrow()
+
+    // No out-of-bounds index should leak into rendered views.
+    const renderedIndices = ((wrapper.vm as any).pool as Array<{ nr: { index: number, used: boolean } }>)
+      .filter(view => view.nr.used)
+      .map(view => view.nr.index)
+    for (const idx of renderedIndices) {
+      expect(idx).toBeLessThanOrEqual(items.value.length)
+    }
+  })
 })
 
 describe('useRecycleScroller enabled option', () => {
