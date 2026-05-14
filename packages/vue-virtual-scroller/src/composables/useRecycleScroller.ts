@@ -1393,7 +1393,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
             const expectedKey = (keyField
               ? resolveItemKey(currentItems[viewIndex], viewIndex, keyField)
               : viewIndex) as ItemKey<TItem, TKeyField>
-            const expectedType = (currentItems[viewIndex] as any)[typeField]
+            const expectedType = getItemType(currentItems[viewIndex], typeField)
             if (view.nr.key !== expectedKey || view.nr.type !== expectedType) {
               viewStale = true
             }
