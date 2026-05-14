@@ -1208,4 +1208,201 @@ describe('useRecycleScroller enabled option', () => {
     expect(result).toEqual({ continuous: true })
     expect((wrapper.vm as any).pool.length).toBe(0)
   })
+
+  it('recycles stale views when updateVisibleItems(false) is called after items swap at overlapping indices', async () => {
+    // Reproduces the DynamicScroller race: when the sizes watcher fires before
+    // the items-identity watcher, updateVisibleItems runs with itemsChanged=false.
+    // Views from the old list whose index is still in the visible range AND
+    // whose size slot is valid (populated by the new item at that index) survived
+    // the Step 1 recycling check — even though their key belonged to the OLD item.
+    // This caused duplicate visible views and overlapping positions.
+    const { vm, options } = mountHarness({
+      items: [
+        { id: 'a', size: 20 },
+        { id: 'b', size: 30 },
+        { id: 'c', size: 25 },
+        { id: 'd', size: 35 },
+        { id: 'e', size: 20 },
+      ],
+      itemSize: null,
+      minItemSize: 10,
+      sizeField: 'size',
+      clientHeight: 200,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.length).toBe(5)
+
+    // Directly swap items and call updateVisibleItems(false) BEFORE the items
+    // watcher fires — this is the exact race condition that occurs when the
+    // sizes watcher fires ahead of the items-identity watcher.
+    options.items = [
+      { id: 'c', size: 25 },
+      { id: 'a', size: 20 },
+      { id: 'e', size: 20 },
+    ]
+
+    // Simulate the sizes watcher: call updateVisibleItems WITHOUT itemsChanged
+    vm.updateVisibleItems(false)
+
+    // After this call, no two used views should share the same key,
+    // and no view should have a key that doesn't match its item's key
+    const usedViews = vm.pool.filter((v: View) => v.nr.used)
+    const usedKeys = usedViews.map((v: View) => v.nr.key)
+    expect(new Set(usedKeys).size).toBe(usedKeys.length)
+
+    // Every used view's key must match the item at its index
+    for (const v of usedViews) {
+      const expectedId = (options.items[v.nr.index] as { id: string }).id
+      expect(v.nr.key).toBe(expectedId)
+    }
+  })
+
+  it('recycles stale views in fixed-size mode when updateVisibleItems(false) is called after items swap', async () => {
+    const { vm, options } = mountHarness({
+      items: [
+        { id: 'x' },
+        { id: 'y' },
+        { id: 'z' },
+        { id: 'w' },
+      ],
+      itemSize: 10,
+      clientHeight: 100,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.map((v: View) => v.nr.key)).toEqual(['x', 'y', 'z', 'w'])
+
+    // Swap items — keys at indices 0-2 change
+    options.items = [
+      { id: 'z' },
+      { id: 'x' },
+      { id: 'w' },
+    ]
+
+    // Simulate sizes watcher race
+    vm.updateVisibleItems(false)
+
+    const usedViews = vm.pool.filter((v: View) => v.nr.used)
+    const usedKeys = usedViews.map((v: View) => v.nr.key)
+
+    // No duplicate keys among used views
+    expect(new Set(usedKeys).size).toBe(usedKeys.length)
+
+    // Every used view's key must match its item
+    for (const v of usedViews) {
+      const expectedId = (options.items[v.nr.index] as { id: string }).id
+      expect(v.nr.key).toBe(expectedId)
+    }
+  })
+
+  it('handles rapid swaps without stale views accumulating via sizes watcher race', async () => {
+    const { vm, options } = mountHarness({
+      items: [
+        { id: '1', size: 20 },
+        { id: '2', size: 20 },
+        { id: '3', size: 15 },
+        { id: '4', size: 25 },
+        { id: '5', size: 20 },
+      ],
+      itemSize: null,
+      minItemSize: 10,
+      sizeField: 'size',
+      clientHeight: 200,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    // Swap 1: simulate sizes watcher race
+    options.items = [
+      { id: '3', size: 15 },
+      { id: '1', size: 20 },
+      { id: '5', size: 20 },
+    ]
+    vm.updateVisibleItems(false)
+
+    let usedViews = vm.pool.filter((v: View) => v.nr.used)
+    let usedKeys = usedViews.map((v: View) => v.nr.key)
+    expect(new Set(usedKeys).size).toBe(usedKeys.length)
+
+    // Now let the items watcher catch up
+    await nextTick()
+    await nextTick()
+
+    // Swap 2: back to full list, then sizes race again
+    options.items = [
+      { id: '1', size: 20 },
+      { id: '2', size: 20 },
+      { id: '3', size: 15 },
+      { id: '4', size: 25 },
+      { id: '5', size: 20 },
+    ]
+    vm.updateVisibleItems(false)
+
+    usedViews = vm.pool.filter((v: View) => v.nr.used)
+    usedKeys = usedViews.map((v: View) => v.nr.key)
+    expect(new Set(usedKeys).size).toBe(usedKeys.length)
+
+    await nextTick()
+    await nextTick()
+
+    // Swap 3: down to 2
+    options.items = [
+      { id: '2', size: 20 },
+      { id: '4', size: 25 },
+    ]
+    vm.updateVisibleItems(false)
+
+    usedViews = vm.pool.filter((v: View) => v.nr.used)
+    usedKeys = usedViews.map((v: View) => v.nr.key)
+    expect(new Set(usedKeys).size).toBe(usedKeys.length)
+  })
+
+  it('recycles views whose type changed at the same index during sizes watcher race', async () => {
+    // When an item keeps the same key but changes typeField during the race,
+    // the view must be recycled so it enters the correct type bucket.
+    const { vm, options } = mountHarness({
+      items: [
+        { id: 'a', type: 'alpha', size: 20 },
+        { id: 'b', type: 'beta', size: 30 },
+      ],
+      itemSize: null,
+      minItemSize: 10,
+      sizeField: 'size',
+      clientHeight: 200,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.length).toBe(2)
+    expect(vm.visiblePool.map((v: View) => v.nr.type)).toEqual(['alpha', 'beta'])
+
+    // Same keys, same order, but types swapped
+    options.items = [
+      { id: 'a', type: 'beta', size: 20 },
+      { id: 'b', type: 'alpha', size: 30 },
+    ]
+
+    vm.updateVisibleItems(false)
+
+    const usedViews = vm.pool.filter((v: View) => v.nr.used)
+    const usedKeys = usedViews.map((v: View) => v.nr.key)
+    expect(new Set(usedKeys).size).toBe(usedKeys.length)
+
+    // After the items watcher catches up, types must match
+    await nextTick()
+    await nextTick()
+
+    const finalViews = vm.pool.filter((v: View) => v.nr.used)
+    for (const v of finalViews) {
+      const item = options.items[v.nr.index] as { id: string, type: string }
+      expect(v.nr.key).toBe(item.id)
+    }
+  })
 })

@@ -1376,11 +1376,30 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         }
         view = currentView
         if (view.nr.used) {
+          const viewIndex = view.nr.index
           const viewVisible = renderedIndexSet
-            ? renderedIndexSet.has(view.nr.index)
-            : (view.nr.index >= startIndex && view.nr.index < endIndex)
-          const viewSize = itemSize || (sizesValue[view.nr.index] && sizesValue[view.nr.index].size)
-          if (!viewVisible || !viewSize) {
+            ? renderedIndexSet.has(viewIndex)
+            : (viewIndex >= startIndex && viewIndex < endIndex)
+          const viewSize = itemSize || (sizesValue[viewIndex] && sizesValue[viewIndex].size)
+
+          // Guard against stale views: when a reactive size update fires before
+          // the items-identity watcher, the pool still holds views keyed to the
+          // previous item list. A view whose key or type no longer matches the
+          // item at its index must be recycled even if the index is in the
+          // visible range. This mirrors the key+type identity check used by the
+          // items watcher (hasSameItemIdentitySequence).
+          let viewStale = false
+          if (viewVisible && viewSize && viewIndex < count) {
+            const expectedKey = (keyField
+              ? resolveItemKey(currentItems[viewIndex], viewIndex, keyField)
+              : viewIndex) as ItemKey<TItem, TKeyField>
+            const expectedType = (currentItems[viewIndex] as any)[typeField]
+            if (view.nr.key !== expectedKey || view.nr.type !== expectedType) {
+              viewStale = true
+            }
+          }
+
+          if (!viewVisible || !viewSize || viewStale) {
             removeAndRecycleView(view, keepFlowModeOrderIncrementally)
           }
         }
