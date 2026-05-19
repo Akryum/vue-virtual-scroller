@@ -1082,6 +1082,132 @@ describe('useRecycleScroller', () => {
 
     expect((wrapper.vm as any).pool.length).toBeGreaterThanOrEqual(0)
   })
+
+  it('preserves the previous render window when the size cache is transiently stale', async () => {
+    // Regression: in 3.0.3 the readiness gate added for the 0 → 1 crash also
+    // fires whenever an in-place push leaves `sizesValue[count - 1]` undefined
+    // for one tick. The early-return zeroed every range index, blanking the
+    // viewport for that tick. Streaming-chat consumers that mutate `items` on
+    // every token observed this as the entire list disappearing for the
+    // duration of the stream.
+    //
+    // Stub `sizes` to be deliberately stale (length matches old items, the
+    // newly-pushed slot is undefined) and confirm `updateVisibleItems` keeps
+    // the previous render window instead of zeroing it.
+    const items = ref<Array<{ id: number, size: number }>>(
+      Array.from({ length: 4 }, (_, id) => ({ id, size: 30 })),
+    )
+    const Harness = defineComponent({
+      setup() {
+        const el = ref<HTMLElement>()
+        const state = useRecycleScroller(() => ({
+          items: items.value,
+          keyField: 'id' as const,
+          direction: 'vertical' as const,
+          itemSize: null,
+          minItemSize: 30,
+          sizeField: 'size' as const,
+          typeField: 'type',
+          buffer: 0,
+          pageMode: false,
+          shift: false,
+          prerender: 0,
+          emitUpdate: false,
+          disableTransform: false,
+          updateInterval: 0,
+        }), el)
+        return { ...state, el }
+      },
+      template: '<div ref="el" style="height: 100px; overflow-y: auto;" />',
+    })
+
+    const wrapper = mount(Harness)
+    const el = (wrapper.vm as any).el as HTMLElement
+    Object.defineProperty(el, 'clientHeight', { configurable: true, get: () => 100 })
+    Object.defineProperty(el, 'clientWidth', { configurable: true, get: () => 100 })
+
+    await nextTick()
+    await nextTick()
+
+    const baselinePool = (wrapper.vm as any).pool.length
+    expect(baselinePool).toBeGreaterThan(0)
+
+    // Force the stale-cache path: replace `sizes.value` so the new last slot
+    // is undefined when `updateVisibleItems` runs.
+    const sizesRef = (wrapper.vm as any).sizes as Array<{ accumulator: number, size: number } | undefined>
+    items.value = [...items.value, { id: 4, size: 30 }]
+    sizesRef.length = 5
+    // intentionally do NOT populate sizesRef[4]
+    sizesRef[4] = undefined as any
+
+    ;(wrapper.vm as any).updateVisibleItems(true)
+
+    // Pool must not collapse to zero — the previous render window should be
+    // reused while the cache catches up.
+    expect((wrapper.vm as any).pool.length).toBeGreaterThanOrEqual(baselinePool)
+  })
+
+  it('clamps the reused render window when items shrink in the same stale-cache tick', async () => {
+    // Defense for the symmetric case of the regression above: if `items`
+    // shrinks while the cache is mid-recompute, blindly reusing the previous
+    // tick's `_startIndex / _endIndex` would point past the new array. Clamp
+    // to the current `count` so downstream pool walking stays in-bounds.
+    const items = ref<Array<{ id: number, size: number }>>(
+      Array.from({ length: 6 }, (_, id) => ({ id, size: 30 })),
+    )
+    const Harness = defineComponent({
+      setup() {
+        const el = ref<HTMLElement>()
+        const state = useRecycleScroller(() => ({
+          items: items.value,
+          keyField: 'id' as const,
+          direction: 'vertical' as const,
+          itemSize: null,
+          minItemSize: 30,
+          sizeField: 'size' as const,
+          typeField: 'type',
+          buffer: 0,
+          pageMode: false,
+          shift: false,
+          prerender: 0,
+          emitUpdate: false,
+          disableTransform: false,
+          updateInterval: 0,
+        }), el)
+        return { ...state, el }
+      },
+      template: '<div ref="el" style="height: 100px; overflow-y: auto;" />',
+    })
+
+    const wrapper = mount(Harness)
+    const el = (wrapper.vm as any).el as HTMLElement
+    Object.defineProperty(el, 'clientHeight', { configurable: true, get: () => 100 })
+    Object.defineProperty(el, 'clientWidth', { configurable: true, get: () => 100 })
+
+    await nextTick()
+    await nextTick()
+
+    expect((wrapper.vm as any).pool.length).toBeGreaterThan(0)
+
+    // Items shrink to a single entry, but stub `sizes` to be stale (length
+    // matches the old longer array, last slot undefined).
+    const sizesRef = (wrapper.vm as any).sizes as Array<{ accumulator: number, size: number } | undefined>
+    items.value = [{ id: 0, size: 30 }]
+    sizesRef.length = 6
+    sizesRef[5] = undefined as any
+
+    expect(() => {
+      ;(wrapper.vm as any).updateVisibleItems(true)
+    }).not.toThrow()
+
+    // No out-of-bounds index should leak into rendered views.
+    const renderedIndices = ((wrapper.vm as any).pool as Array<{ nr: { index: number, used: boolean } }>)
+      .filter(view => view.nr.used)
+      .map(view => view.nr.index)
+    for (const idx of renderedIndices) {
+      expect(idx).toBeLessThanOrEqual(items.value.length)
+    }
+  })
 })
 
 describe('useRecycleScroller enabled option', () => {
