@@ -669,6 +669,11 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     const currentItems = items.value
     const l = currentItems.length
     let changed = _itemsWithSizeEntries.length !== l
+    // Track identity-affecting changes separately from size-only mutations:
+    // when keys/items/length shift, the child <RecycleScroller> must remap its
+    // pool (its items watcher only fires on a fresh array reference), whereas
+    // size-only updates already propagate through the shallow-reactive entries.
+    let identityChanged = _itemsWithSizeEntries.length !== l
     for (let i = 0; i < l; i++) {
       const item = currentItems[i]
       const id = (simple ? i : resolveItemKey(item, i, keyField)) as ItemKey<TItem, TKeyField>
@@ -685,15 +690,18 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
         }) as ItemWithSize<TItem, ItemKey<TItem, TKeyField>>
         _itemsWithSizeEntries[i] = entry
         changed = true
+        identityChanged = true
         continue
       }
       if (entry.item !== item) {
         entry.item = item
         changed = true
+        identityChanged = true
       }
       if (entry.id !== id) {
         entry.id = id
         changed = true
+        identityChanged = true
       }
       if (entry.size !== size) {
         entry.size = size
@@ -703,11 +711,23 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     if (_itemsWithSizeEntries.length !== l) {
       _itemsWithSizeEntries.length = l
       changed = true
+      identityChanged = true
     }
     if (changed) {
       _pendingViewportAnchor = viewportAnchor
       itemsWithSizeVersion.value++
-      triggerRef(itemsWithSize)
+      if (identityChanged) {
+        // Replace the shallowRef value with a fresh slice so Vue's prop
+        // reactivity at the <DynamicScroller> -> <RecycleScroller> boundary
+        // sees a new reference. Reusing the same array reference would let
+        // Vue's `shouldUpdateComponent` short-circuit the child update and
+        // prevent the inner scroller from remapping its pool — see
+        // https://github.com/Akryum/vue-virtual-scroller/issues/924.
+        itemsWithSize.value = _itemsWithSizeEntries.slice()
+      }
+      else {
+        triggerRef(itemsWithSize)
+      }
     }
   })
 

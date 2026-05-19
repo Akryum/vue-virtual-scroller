@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import DynamicScroller from './DynamicScroller.vue'
 
 const RecycleScrollerStub = defineComponent({
@@ -227,5 +227,55 @@ describe('dynamicScroller', () => {
     expect(rows).toHaveLength(2)
     expect(rows[0].text()).toBe('Gamma|0|active|c')
     expect(rows[1].text()).toBe('Delta|1|inactive|d')
+  })
+})
+
+describe('dynamicScroller integration with real RecycleScroller', () => {
+  /**
+   * Regression test for https://github.com/Akryum/vue-virtual-scroller/issues/924
+   *
+   * `useDynamicScroller` keeps `itemsWithSize.value` as a stable array
+   * reference and only triggers it via `triggerRef`. Vue's prop reactivity at
+   * the `<DynamicScroller> -> <RecycleScroller>` boundary dedupes props by
+   * reference, so an in-place mutation does not propagate to the inner
+   * scroller. When the list starts empty and then becomes non-empty, the
+   * child's items watcher therefore never runs and no rows are ever rendered.
+   */
+  it('renders rows when items go from empty to non-empty', async () => {
+    const items = ref<Array<{ id: string, label: string }>>([])
+    const Harness = defineComponent({
+      components: { DynamicScroller },
+      setup() {
+        return { items }
+      },
+      template: `
+        <DynamicScroller :items="items" :min-item-size="20" key-field="id">
+          <template #default="{ item, index }">
+            <div class="row">{{ item.label }}|{{ index }}</div>
+          </template>
+        </DynamicScroller>
+      `,
+    })
+
+    const wrapper = mount(Harness)
+
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findAll('.row')).toHaveLength(0)
+
+    items.value = [
+      { id: 'a', label: 'Alpha' },
+      { id: 'b', label: 'Beta' },
+    ]
+
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+
+    const rows = wrapper.findAll('.row')
+    expect(rows).toHaveLength(2)
+    expect(rows[0].text()).toBe('Alpha|0')
+    expect(rows[1].text()).toBe('Beta|1')
   })
 })
