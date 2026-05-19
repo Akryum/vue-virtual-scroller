@@ -7,7 +7,7 @@ import config from '../config'
 import { buildCacheSnapshot, findPrependOffset, getAlignedScrollOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
 import { resolveItemKey } from '../engine/keyField'
 import { getViewportSize, normalizeOffset, scrollElementTo } from '../engine/scroll'
-import { getScrollParent } from '../scrollparent'
+import { getScrollParent, resolveScrollParent } from '../scrollparent'
 import { supportsPassive } from '../utils'
 import { getFixedItemSize, resolveSnapshotItemSize, resolveVariableItemSize } from '../utils/itemSize'
 import { getPooledViewStyle, resolvePooledViewMode } from '../utils/viewStyle'
@@ -310,6 +310,20 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
    * Resolve the `enabled` flag (defaults to `true` when omitted).
    */
   const isEnabled = computed(() => toValue(getOptions().enabled ?? true))
+
+  /**
+   * Resolve the page-mode scroll-parent target as a single source of truth
+   * for the listener target, viewport size, and scroll-position math (issue
+   * #928). Honors an explicit `scrollParent` override, otherwise walks the
+   * DOM for the nearest scrollable ancestor and normalizes html/body to
+   * `window`.
+   */
+  const scrollParentTarget = computed<Window | HTMLElement | undefined>(() => {
+    return resolveScrollParent(
+      normalizedInputs.el.value,
+      normalizedInputs.scrollParent.value,
+    )
+  })
 
   // Computed
   const simpleArray = computed(() => {
@@ -712,14 +726,13 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
   }
 
+  /**
+   * Resolve the page-mode scroll listener target. Reads from the shared
+   * `scrollParentTarget` computed so listener-attachment, geometry math, and
+   * imperative scrolling cannot drift apart.
+   */
   function getListenerTarget(): Window | Element {
-    const elValue = normalizedInputs.el.value
-    const target: Element | undefined = elValue ? getScrollParent(elValue) : undefined
-    // Fix global scroll target for Chrome and Safari
-    if (window.document && (target === window.document.documentElement || target === window.document.body)) {
-      return window
-    }
-    return target || window
+    return (scrollParentTarget.value as Window | Element | undefined) ?? window
   }
 
   function getLeadingSlotSize(): number {
@@ -745,10 +758,31 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     let scrollState: ScrollState
 
     if (getPageMode()) {
+      // Page mode measures the scroller against the resolved scroll-parent
+      // viewport — `window` by default, or a custom element when supplied
+      // (issue #928). For a div parent, `start` is the offset of the
+      // scroller's top relative to the PARENT's clip box (not the viewport)
+      // and `size` is the parent's clientHeight/Width.
       const bounds = elValue.getBoundingClientRect()
       const boundsSize = isVertical ? bounds.height : bounds.width
-      let start = -(isVertical ? bounds.top : bounds.left)
-      let size = isVertical ? window.innerHeight : window.innerWidth
+      const parent = scrollParentTarget.value
+      const isWindowParent = !parent || parent === window
+      const parentTop = isWindowParent
+        ? 0
+        : (parent as HTMLElement).getBoundingClientRect().top
+      const parentLeft = isWindowParent
+        ? 0
+        : (parent as HTMLElement).getBoundingClientRect().left
+      const parentHeight = isWindowParent
+        ? window.innerHeight
+        : (parent as HTMLElement).clientHeight
+      const parentWidth = isWindowParent
+        ? window.innerWidth
+        : (parent as HTMLElement).clientWidth
+      let start = isVertical
+        ? -(bounds.top - parentTop)
+        : -(bounds.left - parentLeft)
+      let size = isVertical ? parentHeight : parentWidth
       if (start < 0) {
         size += start
         start = 0
@@ -999,7 +1033,10 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       ? { passive: true }
       : false)
 
-    if (getPageMode()) {
+    // Only `window` dispatches `resize`; DOM elements don't. The scroller's
+    // own ResizeObserver already catches root-element size changes, so for
+    // a div scroll parent we skip the redundant element listener (#928).
+    if (getPageMode() && scrollTarget === window) {
       _resizeListenerTarget = scrollTarget
       _resizeListenerTarget.addEventListener('resize', handleResize as EventListener)
     }
@@ -1607,7 +1644,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
     const targetIndex = Math.max(0, Math.min(index, items.value.length - 1))
     const viewportStart = getScroll().start
-    const viewportSize = getViewportSize(elValue, direction, opts.pageMode)
+    const viewportSize = getViewportSize(elValue, direction, opts.pageMode, scrollParentTarget.value)
     const itemStart = getItemOffset(targetIndex)
     const itemSize = getItemSize(targetIndex)
     const target = getAlignedScrollOffset(
@@ -1669,11 +1706,18 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
 
     if (getPageMode()) {
-      const viewportEl = getScrollParent(elValue) as HTMLElement
+      // Page-mode scroll-to: targets the resolved scroll parent (window or a
+      // custom element). Reads from the shared `scrollParentTarget` so the
+      // imperative scroll lands in the same coordinate space as `getScroll`.
+      const target = scrollParentTarget.value ?? window
+      const startProp = direction === 'vertical' ? 'top' : 'left'
+      const isWindowParent = target === window
+      const viewportEl = isWindowParent
+        ? (document.scrollingElement || document.documentElement) as HTMLElement
+        : target as HTMLElement
       const bounds = viewportEl.getBoundingClientRect()
       const scroller = elValue.getBoundingClientRect()
-      const startProp = direction === 'vertical' ? 'top' : 'left'
-      const currentScroll = getScrollParent(elValue) === document.documentElement || getScrollParent(elValue) === document.body
+      const currentScroll = isWindowParent
         ? (direction === 'vertical' ? window.scrollY : window.scrollX)
         : normalizeOffset(
             direction === 'vertical'
@@ -1683,7 +1727,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
             viewportEl,
           )
       const scrollerPosition = (scroller as any)[startProp] - (bounds as any)[startProp]
-      scrollElementTo(viewportEl.tagName === 'HTML' ? window : viewportEl, direction, position + currentScroll + scrollerPosition, scrollOptions)
+      scrollElementTo(isWindowParent ? window : viewportEl, direction, position + currentScroll + scrollerPosition, scrollOptions)
     }
     else {
       scrollElementTo(elValue, direction, position, scrollOptions)
@@ -1842,6 +1886,18 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
   watch(normalizedInputs.el, () => {
     if (!isEnabled.value) {
+      return
+    }
+    removeListeners()
+    addListeners()
+    updateVisibleItems(false)
+  })
+
+  // Move the scroll listener when the user supplies a reactive `scrollParent`
+  // and its identity changes — keeps the listener target in sync with where
+  // geometry is measured (issue #928).
+  watch(scrollParentTarget, () => {
+    if (!isEnabled.value || !getPageMode()) {
       return
     }
     removeListeners()

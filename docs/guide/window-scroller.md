@@ -147,4 +147,4 @@ With a template ref created via `useTemplateRef`, `WindowScroller` exposes the s
 ## `WindowScroller` vs `pageMode`
 
 - Prefer `WindowScroller` for new code when window scrolling is intentional.
-- Keep using `pageMode` on `RecycleScroller` when you only need the older compatibility behavior and do not want to switch components yet.
+- Use [`RecycleScroller` with `pageMode`](./recycle-scroller#page-mode) when an *element* (not the window) owns the scrollbar — for example, an `overflow:auto` `<div>` somewhere up the tree. `RecycleScroller` will auto-detect that ancestor, or you can pass it explicitly via the `scrollParent` prop. `WindowScroller` is intentionally window-only.

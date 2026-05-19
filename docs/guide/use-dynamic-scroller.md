@@ -97,6 +97,28 @@ If you enable `flowMode`, render start and end spacer elements from `startSpacer
 
 When that headless path renders a semantic table, pair it with [`useTableColumnWidths`](./use-table-column-widths) so column widths stay locked while pooled rows churn.
 
+## Page mode and `scrollParent`
+
+`useDynamicScroller` accepts the same `pageMode` and `scrollParent` options as
+[`useRecycleScroller`](./use-recycle-scroller). Set `pageMode: true` when an
+outer container owns the scrollbar (the page, or an `overflow:auto` ancestor
+of `el`); pass `scrollParent` to override the closest-scrollable-ancestor
+auto-detection with an explicit `HTMLElement` or `Window`. See
+[issue #928](https://github.com/Akryum/vue-virtual-scroller/issues/928).
+
+```ts
+const parentEl = ref<HTMLElement | null>(null)
+
+const dynamicScroller = useDynamicScroller(() => ({
+  items: rows.value,
+  keyField: 'id',
+  minItemSize: 48,
+  el: scrollerEl.value,
+  pageMode: true,
+  scrollParent: parentEl.value,
+}))
+```
+
 ## Disabling the scroller with `enabled`
 
 The dynamic scroller accepts the same `enabled` flag as

@@ -5,6 +5,7 @@ import Dynamic from './components/DynamicScrollerDemo.vue'
 import GridDemo from './components/GridDemo.vue'
 import Home from './components/Home.vue'
 import HorizontalDemo from './components/HorizontalDemo.vue'
+import PageModeDivParent from './components/PageModeDivParentDemo.vue'
 import Recycle from './components/RecycleScrollerDemo.vue'
 import SimpleList from './components/SimpleList.vue'
 import TestChat from './components/TestChat.vue'
@@ -15,6 +16,7 @@ const router = createRouter({
     { path: '/', name: 'home', component: Home },
     { path: '/recycle', name: 'recycle', component: Recycle },
     { path: '/dynamic', name: 'dynamic', component: Dynamic },
+    { path: '/page-mode-div', name: 'page-mode-div', component: PageModeDivParent },
     { path: '/test-chat', name: 'test-chat', component: TestChat },
     { path: '/simple-list', name: 'simple-list', component: SimpleList },
     { path: '/horizontal', name: 'horizontal', component: HorizontalDemo },

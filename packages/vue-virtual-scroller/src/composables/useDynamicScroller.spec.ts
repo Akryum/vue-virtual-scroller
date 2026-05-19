@@ -1386,3 +1386,69 @@ describe('useDynamicScroller enabled option', () => {
     expect((wrapper.vm as any).itemsWithSize.length).toBe(1)
   })
 })
+
+describe('useDynamicScroller pageMode scrollParent forwarding', () => {
+  it('forwards pageMode and an explicit scrollParent through to the underlying recycle scroller', async () => {
+    // Regression for issue #928: an explicit scrollParent option supplied to
+    // useDynamicScroller must propagate to the inner useRecycleScroller and
+    // shape `getScroll().end - start` accordingly. The auto-detected ancestor
+    // here is 320px tall but the explicit override is 600px — the test asserts
+    // the override wins, which proves the option passes through.
+    const autoDetectedParent = document.createElement('div')
+    autoDetectedParent.style.height = '320px'
+    autoDetectedParent.style.overflow = 'auto'
+    document.body.appendChild(autoDetectedParent)
+    Object.defineProperty(autoDetectedParent, 'clientHeight', { configurable: true, get: () => 320 })
+    Object.defineProperty(autoDetectedParent, 'clientWidth', { configurable: true, get: () => 400 })
+    autoDetectedParent.getBoundingClientRect = vi.fn(() => ({
+      top: 0, left: 0, bottom: 320, right: 400, width: 400, height: 320, x: 0, y: 0, toJSON: () => ({}),
+    }))
+
+    const customParent = document.createElement('div')
+    Object.defineProperty(customParent, 'clientHeight', { configurable: true, get: () => 600 })
+    Object.defineProperty(customParent, 'clientWidth', { configurable: true, get: () => 400 })
+    customParent.getBoundingClientRect = vi.fn(() => ({
+      top: 0, left: 0, bottom: 600, right: 400, width: 400, height: 600, x: 0, y: 0, toJSON: () => ({}),
+    }))
+
+    const el = document.createElement('div')
+    autoDetectedParent.appendChild(el)
+    Object.defineProperty(el, 'clientHeight', { configurable: true, get: () => 320 })
+    Object.defineProperty(el, 'clientWidth', { configurable: true, get: () => 400 })
+    el.getBoundingClientRect = vi.fn(() => ({
+      top: 0, left: 0, bottom: 5000, right: 400, width: 400, height: 5000, x: 0, y: 0, toJSON: () => ({}),
+    }))
+
+    const items = ref<Array<{ id: number }>>(Array.from({ length: 50 }, (_, id) => ({ id })))
+    const Harness = defineComponent({
+      setup() {
+        const state = useDynamicScroller(() => ({
+          items: items.value,
+          keyField: 'id' as const,
+          direction: 'vertical' as const,
+          minItemSize: 50,
+          el,
+          buffer: 0,
+          emitUpdate: true,
+          pageMode: true,
+          shift: false,
+          disableTransform: false,
+          prerender: 0,
+          updateInterval: 0,
+          scrollParent: customParent,
+        }) as any)
+        return { ...state }
+      },
+      template: '<div />',
+    })
+
+    const wrapper = mount(Harness)
+    await nextTick()
+    await nextTick()
+
+    const scroll = (wrapper.vm as any).getScroll()
+    expect(scroll.end - scroll.start).toBe(600)
+
+    document.body.removeChild(autoDetectedParent)
+  })
+})

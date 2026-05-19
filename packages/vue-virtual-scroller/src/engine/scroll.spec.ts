@@ -94,4 +94,28 @@ describe('scroll helpers', () => {
     expect(getViewportSize(element, 'vertical', true)).toBe(720)
     expect(getViewportSize(element, 'horizontal', true)).toBe(1280)
   })
+
+  it('reads viewport size from an explicit scroll parent element in page mode', () => {
+    // Regression for issue #928: when pageMode is on and a non-window scroll
+    // parent is supplied (e.g. an overflow:auto div), the viewport size must
+    // match the parent's clip box, not window.innerHeight/Width.
+    const element = document.createElement('div')
+    const scrollParent = document.createElement('div')
+    Object.defineProperty(scrollParent, 'clientHeight', {
+      configurable: true,
+      get: () => 300,
+    })
+    Object.defineProperty(scrollParent, 'clientWidth', {
+      configurable: true,
+      get: () => 500,
+    })
+    vi.stubGlobal('innerHeight', 720)
+    vi.stubGlobal('innerWidth', 1280)
+
+    expect(getViewportSize(element, 'vertical', true, scrollParent)).toBe(300)
+    expect(getViewportSize(element, 'horizontal', true, scrollParent)).toBe(500)
+    // Window short-circuit keeps the legacy behavior.
+    expect(getViewportSize(element, 'vertical', true, window)).toBe(720)
+    expect(getViewportSize(element, 'horizontal', true, window)).toBe(1280)
+  })
 })

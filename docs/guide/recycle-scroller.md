@@ -150,6 +150,8 @@ As you scroll, most views are simply moved to new positions and receive updated 
 | `flowMode` | `false` | Keep active pooled views in native document flow and use spacer elements before/after them instead of absolute positioning. v1 only supports vertical single-axis lists. `gridItems`, horizontal mode, and `hiddenPosition` fall back to standard positioning. |
 | `updateInterval` | `0` | The interval in ms at which the view will be checked for updates after scrolling. When set to `0`, check happens during the next animation frame. |
 | `enabled` | `true` | When `false`, the scroller mounts in a passive state: no watchers, observers, scroll/resize listeners, RAFs, or timers are attached, and `pool`, `totalSize`, and the spacer sizes stay at their inert defaults. Useful when a wrapper component conditionally renders virtualized output but wants to keep the scroller invocation stable. Toggling back to `true` re-arms the scroller without remounting. |
+| `pageMode` | `false` | Use an outer scroll container — the closest `overflow:auto/scroll` ancestor, or `window` — to drive virtualization instead of letting the scroller own its own scroll box. See [Page mode](#page-mode). |
+| `scrollParent` | `undefined` | Override the scroll-parent auto-detection used when `pageMode` is enabled. Accepts an `HTMLElement` (typically a ref to an `overflow:auto` ancestor) or `Window`. When omitted, the scroller walks the DOM for the nearest scrollable ancestor. See [issue #928](https://github.com/Akryum/vue-virtual-scroller/issues/928). |
 | `listClass` | `''` | Custom classes added to the item list wrapper. |
 | `itemClass` | `''` | Custom classes added to each item. |
 | `listTag` | `'div'` | The element to render as the list's wrapper. |
@@ -245,7 +247,48 @@ The optional `options` object for scrolling accepts:
 
 ## Page mode
 
-If the list should always follow window scrolling, prefer [`WindowScroller`](./window-scroller).
+Set `:page-mode="true"` when the scroller should virtualize against an *outer* scrollable container instead of giving the list its own scroll box. Two cases are supported:
+
+- **Window scrolling** — the page itself owns the scrollbar. For new code, prefer [`WindowScroller`](./window-scroller), which is a dedicated wrapper with a stable public API.
+- **A scrollable `<div>` ancestor** — `RecycleScroller` walks the DOM and picks the nearest `overflow:auto/scroll` parent. Useful when an existing pane already provides scrolling (sidebars, modal bodies, dashboard cards).
+
+```vue
+<div style="height: 300px; overflow: auto">
+  <RecycleScroller
+    :items="list"
+    :item-size="32"
+    :page-mode="true"
+  >
+    <template #default="{ item }">
+      <div class="row">{{ item.name }}</div>
+    </template>
+  </RecycleScroller>
+</div>
+```
+
+If your layout has multiple scroll boundaries or you want to skip the DOM walk, pass the parent explicitly through `scrollParent`:
+
+```vue
+<script setup>
+import { ref } from 'vue'
+
+const parentEl = ref(null)
+const list = ref(/* ... */)
+</script>
+
+<template>
+  <div ref="parentEl" style="height: 300px; overflow: auto">
+    <RecycleScroller
+      :items="list"
+      :item-size="32"
+      :page-mode="true"
+      :scroll-parent="parentEl"
+    />
+  </div>
+</template>
+```
+
+See the [Page-mode + div scroll-parent demo](../demos/page-mode-div-parent) for a live example covering [issue #928](https://github.com/Akryum/vue-virtual-scroller/issues/928).
 
 ## Prepend anchoring and cache restore
 

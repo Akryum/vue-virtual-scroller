@@ -93,8 +93,26 @@ export function scrollElementTo(
   }
 }
 
-export function getViewportSize(el: HTMLElement, direction: ScrollDirection, pageMode: boolean): number {
+/**
+ * Resolve the viewport size used to decide which items should be rendered.
+ *
+ * In page mode the viewport is the scroll parent (typically `window`, or a
+ * scrollable ancestor element when supplied). Outside page mode it is the
+ * scroller's own root element. The `scrollParent` argument lets callers opt
+ * into a custom HTMLElement viewport (issue #928) — without it page mode
+ * keeps its legacy `window.innerHeight/Width` reading.
+ */
+export function getViewportSize(
+  el: HTMLElement,
+  direction: ScrollDirection,
+  pageMode: boolean,
+  scrollParent?: HTMLElement | Window,
+): number {
   if (pageMode) {
+    if (scrollParent && scrollParent !== window) {
+      const parentEl = scrollParent as HTMLElement
+      return direction === 'vertical' ? parentEl.clientHeight : parentEl.clientWidth
+    }
     return direction === 'vertical' ? window.innerHeight : window.innerWidth
   }
 

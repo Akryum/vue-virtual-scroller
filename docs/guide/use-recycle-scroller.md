@@ -74,6 +74,7 @@ Additional scroll-system options:
 - `disableTransform`
 - `flowMode`
 - `enabled` (default `true`) — passive mount switch. See [Disabling the scroller with `enabled`](#disabling-the-scroller-with-enabled).
+- `scrollParent` (default `undefined`) — `MaybeRefOrGetter<HTMLElement | Window | undefined>` override for the page-mode scroll-parent. When omitted, the closest `overflow:auto/scroll` ancestor is auto-detected via DOM walk; html/body normalize to `window`. Use this to skip the walk when you already hold a ref to the parent, or when multiple scroll boundaries make auto-detection ambiguous. See [issue #928](https://github.com/Akryum/vue-virtual-scroller/issues/928).
 
 `keyField` can also be a resolver function when your data needs a derived key. The callback always receives `(item, index)`:
 

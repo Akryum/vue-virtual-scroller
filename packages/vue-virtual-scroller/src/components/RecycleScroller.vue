@@ -24,6 +24,13 @@ const props = withDefaults(defineProps<{
   typeField?: string
   buffer?: number
   pageMode?: boolean
+  /**
+   * Override the auto-detected scroll-parent used when `pageMode` is on.
+   * Accepts an HTMLElement (typically an `overflow:auto` ancestor) or
+   * `Window`. When omitted, the scroller walks the DOM for the nearest
+   * scrollable ancestor. See issue #928.
+   */
+  scrollParent?: HTMLElement | Window
   shift?: boolean
   cache?: CacheSnapshot
   prerender?: number
@@ -49,6 +56,7 @@ const props = withDefaults(defineProps<{
   typeField: 'type',
   buffer: 200,
   pageMode: false,
+  scrollParent: undefined,
   shift: false,
   cache: undefined,
   prerender: 0,
@@ -112,6 +120,7 @@ const recycleScrollerOptions = computed(() => ({
   typeField: props.typeField,
   buffer: props.buffer,
   pageMode: props.pageMode,
+  scrollParent: props.scrollParent,
   shift: props.shift,
   cache: props.cache,
   prerender: props.prerender,

@@ -16,6 +16,9 @@
     <router-link :to="{ name: 'dynamic' }">
       Dynamic scroller
     </router-link>
+    <router-link :to="{ name: 'page-mode-div' }">
+      Page-mode + div parent
+    </router-link>
     <router-link :to="{ name: 'horizontal' }">
       Horizontal
     </router-link>

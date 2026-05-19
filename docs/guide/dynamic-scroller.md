@@ -102,6 +102,12 @@ The additions that matter most on the dynamic path are:
   back to `true` to re-arm without remounting. Useful when a wrapper component
   needs a stable scroller invocation but only opts into virtualization
   conditionally.
+- `pageMode` (default `false`): virtualize against an outer scroll container
+  instead of giving the scroller its own scroll box. See
+  [RecycleScroller — Page mode](./recycle-scroller#page-mode).
+- `scrollParent` (default `undefined`): explicit `HTMLElement` or `Window`
+  override for the page-mode scroll-parent. When omitted, the closest
+  scrollable ancestor is used. See [issue #928](https://github.com/Akryum/vue-virtual-scroller/issues/928).
 
 ## Events
 

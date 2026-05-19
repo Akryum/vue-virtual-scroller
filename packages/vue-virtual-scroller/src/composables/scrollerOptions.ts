@@ -32,11 +32,18 @@ export interface ScrollerOptionEnabled {
 
 /**
  * Common single-object inputs for headless scroller composables.
+ *
+ * `scrollParent` overrides the auto-detected scroll parent used by page mode
+ * (issue #928). Accepts an `HTMLElement` to listen and measure against, or
+ * `Window` to force the page itself as the viewport. When omitted, the
+ * scroller walks the DOM via `getScrollParent` for the nearest overflow:auto
+ * ancestor and falls back to `window`.
  */
 export interface ScrollerOptionElements {
   el?: MaybeRefOrGetter<HTMLElement | undefined>
   before?: MaybeRefOrGetter<HTMLElement | undefined>
   after?: MaybeRefOrGetter<HTMLElement | undefined>
+  scrollParent?: MaybeRefOrGetter<HTMLElement | Window | undefined>
 }
 
 /**
@@ -51,6 +58,7 @@ export interface NormalizedScrollerInputs {
   el: ComputedRef<HTMLElement | undefined>
   before: ComputedRef<HTMLElement | undefined>
   after: ComputedRef<HTMLElement | undefined>
+  scrollParent: ComputedRef<HTMLElement | Window | undefined>
   callbacks: ScrollerCallbacks
 }
 
@@ -87,6 +95,10 @@ export function normalizeScrollerInputs<TOptions extends ScrollerOptionElements 
     after: computed(() => {
       const optionAfter = resolvedOptions.value.after
       return toValue(after ?? optionAfter)
+    }),
+    scrollParent: computed(() => {
+      const optionScrollParent = resolvedOptions.value.scrollParent
+      return toValue(optionScrollParent)
     }),
     callbacks: {
       onResize: () => (callbacks?.onResize ?? resolvedOptions.value.onResize)?.(),

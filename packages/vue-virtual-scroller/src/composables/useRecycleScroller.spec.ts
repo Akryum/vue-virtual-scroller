@@ -1204,6 +1204,211 @@ describe('useRecycleScroller', () => {
   })
 })
 
+/**
+ * Mount a RecycleScroller harness in page mode, with the scroller's root
+ * element nested inside a wrapping div that acts as the scroll parent.
+ *
+ * The wrapper is attached to `document.body` so `getScrollParent` can walk
+ * the real DOM hierarchy. `clientHeight` and `getBoundingClientRect` of both
+ * the wrapper and the scroller's element are stubbed because jsdom layouts
+ * are zero-sized by default.
+ */
+function mountPageModeHarness(overrides: {
+  parentHeight?: number
+  parentWidth?: number
+  itemCount?: number
+  itemSize?: number | null
+  minItemSize?: number | null
+  scrollParent?: HTMLElement | Window
+  parentBoundsTop?: number
+} = {}) {
+  const parentHeight = overrides.parentHeight ?? 300
+  const parentWidth = overrides.parentWidth ?? 400
+  const itemCount = overrides.itemCount ?? 200
+  const itemSize = overrides.itemSize ?? 50
+  const minItemSize = overrides.minItemSize ?? null
+  const explicitScrollParent = overrides.scrollParent
+  const parentBoundsTop = overrides.parentBoundsTop ?? 0
+  const onUpdate = vi.fn()
+
+  const Harness = defineComponent({
+    setup() {
+      const parent = ref<HTMLElement>()
+      const el = ref<HTMLElement>()
+      const state = useRecycleScroller(() => ({
+        items: Array.from({ length: itemCount }, (_, id) => ({ id })),
+        keyField: 'id' as const,
+        direction: 'vertical' as const,
+        itemSize,
+        minItemSize,
+        sizeField: 'size' as const,
+        typeField: 'type',
+        buffer: 0,
+        pageMode: true,
+        shift: false,
+        prerender: 0,
+        emitUpdate: true,
+        disableTransform: false,
+        updateInterval: 0,
+        scrollParent: explicitScrollParent,
+        onUpdate,
+      }) as any, el)
+      return { ...state, parent, el }
+    },
+    template: '<div ref="parent" style="height: 300px; overflow-y: auto;"><div ref="el" /></div>',
+  })
+
+  const wrapper = mount(Harness, { attachTo: document.body })
+  const vm = wrapper.vm as any
+  const parentEl: HTMLElement = vm.parent
+  const el: HTMLElement = vm.el
+
+  // Stub layout on the resolved scroll parent.
+  Object.defineProperty(parentEl, 'clientHeight', { configurable: true, get: () => parentHeight })
+  Object.defineProperty(parentEl, 'clientWidth', { configurable: true, get: () => parentWidth })
+  parentEl.getBoundingClientRect = vi.fn(() => ({
+    top: parentBoundsTop,
+    left: 0,
+    bottom: parentBoundsTop + parentHeight,
+    right: parentWidth,
+    width: parentWidth,
+    height: parentHeight,
+    x: 0,
+    y: parentBoundsTop,
+    toJSON: () => ({}),
+  }))
+
+  // Stub the scroller element's bounding rect — assume aligned with parent top
+  // initially, total content size = itemCount * itemSize.
+  const totalSize = itemCount * (itemSize ?? minItemSize ?? 50)
+  el.getBoundingClientRect = vi.fn(() => ({
+    top: parentBoundsTop - parentEl.scrollTop,
+    left: 0,
+    bottom: parentBoundsTop - parentEl.scrollTop + totalSize,
+    right: parentWidth,
+    width: parentWidth,
+    height: totalSize,
+    x: 0,
+    y: parentBoundsTop - parentEl.scrollTop,
+    toJSON: () => ({}),
+  }))
+
+  return { wrapper, vm, onUpdate, parent: parentEl, el }
+}
+
+describe('useRecycleScroller pageMode with div scroll parent', () => {
+  it('uses the auto-detected div scroll parent for getScroll viewport size', async () => {
+    // Regression for issue #928: when pageMode is on and the closest
+    // overflow:auto ancestor is a div, `getScroll().end - start` must match
+    // the div's clientHeight rather than `window.innerHeight`.
+    const { vm } = mountPageModeHarness({ parentHeight: 300 })
+
+    await nextTick()
+    await nextTick()
+
+    const scroll = vm.getScroll()
+    expect(scroll.end - scroll.start).toBe(300)
+  })
+
+  it('attaches the scroll listener to the resolved div parent', async () => {
+    const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame')
+    requestAnimationFrameSpy.mockImplementation((callback: FrameRequestCallback) => {
+      callback(0)
+      return 321
+    })
+
+    const { vm, parent, onUpdate } = mountPageModeHarness({ parentHeight: 300 })
+
+    await nextTick()
+    await nextTick()
+    onUpdate.mockClear()
+
+    parent.scrollTop = 120
+    parent.dispatchEvent(new Event('scroll'))
+
+    expect(onUpdate).toHaveBeenCalled()
+    // After scrolling 120px into the parent, getScroll().start reflects that.
+    const scroll = vm.getScroll()
+    expect(scroll.start).toBe(120)
+    expect(scroll.end - scroll.start).toBe(300)
+
+    requestAnimationFrameSpy.mockRestore()
+  })
+
+  it('does not attach a resize listener to a non-window scroll parent', async () => {
+    // DOM elements don't fire `resize`; only window does. The existing
+    // ResizeObserver on the scroller's root catches size changes.
+    const parentSpy = vi.fn()
+    const Harness = defineComponent({
+      setup() {
+        const parent = ref<HTMLElement>()
+        const el = ref<HTMLElement>()
+        const state = useRecycleScroller(() => ({
+          items: Array.from({ length: 50 }, (_, id) => ({ id })),
+          keyField: 'id' as const,
+          direction: 'vertical' as const,
+          itemSize: 20,
+          minItemSize: null,
+          sizeField: 'size' as const,
+          typeField: 'type',
+          buffer: 0,
+          pageMode: true,
+          shift: false,
+          prerender: 0,
+          emitUpdate: true,
+          disableTransform: false,
+          updateInterval: 0,
+        }) as any, el)
+        return { ...state, parent, el }
+      },
+      template: '<div ref="parent" style="height: 200px; overflow-y: auto;"><div ref="el" /></div>',
+    })
+    const wrapper = mount(Harness, { attachTo: document.body })
+    const vm = wrapper.vm as any
+    const parent: HTMLElement = vm.parent
+    const originalAdd = parent.addEventListener.bind(parent)
+    parent.addEventListener = vi.fn((type: string, listener: any, opts?: any) => {
+      parentSpy(type)
+      originalAdd(type, listener, opts)
+    }) as any
+    Object.defineProperty(parent, 'clientHeight', { configurable: true, get: () => 200 })
+    Object.defineProperty(parent, 'clientWidth', { configurable: true, get: () => 200 })
+
+    await nextTick()
+    await nextTick()
+
+    // No resize listener should have been registered on the parent div.
+    expect(parentSpy).not.toHaveBeenCalledWith('resize')
+  })
+
+  it('honors an explicit scrollParent option over auto-detection', async () => {
+    // The user can pass a specific HTMLElement to bypass the DOM walk.
+    const customParent = document.createElement('div')
+    customParent.style.height = '500px'
+    customParent.style.overflow = 'auto'
+    Object.defineProperty(customParent, 'clientHeight', { configurable: true, get: () => 500 })
+    Object.defineProperty(customParent, 'clientWidth', { configurable: true, get: () => 400 })
+    customParent.getBoundingClientRect = vi.fn(() => ({
+      top: 0, left: 0, bottom: 500, right: 400, width: 400, height: 500, x: 0, y: 0, toJSON: () => ({}),
+    }))
+
+    const { vm, parent } = mountPageModeHarness({
+      parentHeight: 300,
+      scrollParent: customParent,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    // Even though the auto-detected ancestor is 300px, the explicit override
+    // (500px) is what `getScroll` measures against.
+    const scroll = vm.getScroll()
+    expect(scroll.end - scroll.start).toBe(500)
+    // Sanity: the auto-detected parent is NOT what we resolved to.
+    expect(parent.clientHeight).toBe(300)
+  })
+})
+
 describe('useRecycleScroller enabled option', () => {
   it('does not attach scroll listeners when enabled is false', async () => {
     const items = ref<Array<{ id: number }>>(Array.from({ length: 6 }, (_, id) => ({ id })))

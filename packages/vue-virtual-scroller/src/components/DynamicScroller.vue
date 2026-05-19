@@ -22,6 +22,18 @@ const props = withDefaults(defineProps<{
   flowMode?: boolean
   hiddenPosition?: number
   enabled?: boolean
+  /**
+   * Mirror of `RecycleScroller`'s `pageMode`: render against an outer scroll
+   * parent (page or ancestor) instead of giving the scroller its own
+   * scrollable box.
+   */
+  pageMode?: boolean
+  /**
+   * Override the auto-detected scroll-parent used when `pageMode` is on.
+   * Accepts an HTMLElement or `Window`. When omitted, the closest scrollable
+   * ancestor is used. See issue #928.
+   */
+  scrollParent?: HTMLElement | Window
 }>(), {
   keyField: 'id',
   direction: 'vertical',
@@ -33,6 +45,8 @@ const props = withDefaults(defineProps<{
   flowMode: false,
   hiddenPosition: undefined,
   enabled: true,
+  pageMode: false,
+  scrollParent: undefined,
 })
 
 const emit = defineEmits<{
@@ -70,6 +84,8 @@ const dynamicOptions = computed(() => ({
   flowMode: props.flowMode,
   hiddenPosition: props.hiddenPosition,
   enabled: props.enabled,
+  pageMode: props.pageMode,
+  scrollParent: props.scrollParent,
   el: scrollerEl.value,
   onResize: () => emit('resize'),
   onVisible: () => emit('visible'),
@@ -138,6 +154,8 @@ defineExpose(exposed)
     :flow-mode="props.flowMode"
     :hidden-position="props.hiddenPosition"
     :enabled="props.enabled"
+    :page-mode="props.pageMode"
+    :scroll-parent="props.scrollParent"
     key-field="id"
     :list-tag="props.listTag"
     :item-tag="props.itemTag"

@@ -43,6 +43,13 @@ export interface UseDynamicScrollerOptions<TItem = unknown> extends ScrollerOpti
   el: MaybeRefOrGetter<HTMLElement | undefined>
   before?: MaybeRefOrGetter<HTMLElement | undefined>
   after?: MaybeRefOrGetter<HTMLElement | undefined>
+  /**
+   * Override the auto-detected scroll-parent used by page mode. Accepts an
+   * `HTMLElement` (typically an `overflow:auto` ancestor) or `Window`. When
+   * omitted, the scroller walks the DOM for the nearest scrollable ancestor.
+   * See issue #928.
+   */
+  scrollParent?: MaybeRefOrGetter<HTMLElement | Window | undefined>
   buffer?: number
   pageMode?: boolean
   shift?: boolean
@@ -805,6 +812,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     get el() { return el.value },
     get before() { return before.value },
     get after() { return after.value },
+    get scrollParent() { return getOptions().scrollParent },
     get onResize() { return onScrollerResize },
     get onVisible() { return onScrollerVisible },
     get onHidden() { return onScrollerHidden },
