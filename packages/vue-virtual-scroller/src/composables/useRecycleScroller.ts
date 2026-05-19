@@ -250,6 +250,21 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   let _visibleStartIndex = 0
   let _visibleEndIndex = 0
   let _hasWindowState = false
+  /**
+   * Last successfully computed render range in variable-size mode. Used as a
+   * fallback when the readiness gate trips on a transiently sparse `sizes`
+   * cache (items mutated in place faster than the `sizes` computed can
+   * re-evaluate), so the viewport doesn't blank for the affected tick.
+   * Skipped in fixed-size mode (the gate cannot trip there) and during
+   * prerender (its range is synthetic, not scroll-anchored).
+   */
+  let _lastGoodRange: {
+    startIndex: number
+    endIndex: number
+    visibleStartIndex: number
+    visibleEndIndex: number
+    totalSizeValue: number
+  } | null = null
   const _views = new Map<ItemKey<TItem, TKeyField>, View<TItem, ItemKey<TItem, TKeyField>>>()
   const _recycledPools = new Map<unknown, Array<View<TItem, ItemKey<TItem, TKeyField>>>>()
   let _scrollDirty = false
@@ -1164,12 +1179,29 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     // refreshed). Walking `sizesValue` while it's incomplete dereferences
     // undefined slots and crashes the binary search below. A valid cache is
     // signaled by the last slot being populated.
+    //
+    // When the gate trips and we have a previously good range we reuse it
+    // (clamped to current `count`) so the viewport doesn't blank for the
+    // affected tick — the next reconciliation will replace it with a fresh
+    // range. See issue #925 for the streaming-chat scenario this addresses.
     const isVariableSizeCacheReady = itemSize !== null
       || count === 0
       || sizesValue[count - 1] != null
 
     if (!count || !isVariableSizeCacheReady) {
-      startIndex = endIndex = visibleStartIndex = visibleEndIndex = totalSizeValue = 0
+      if (!count || !_lastGoodRange) {
+        startIndex = endIndex = visibleStartIndex = visibleEndIndex = totalSizeValue = 0
+      }
+      else {
+        // Clamp the saved indices to current `count` so a wholesale shrink
+        // (N → smaller N) can't leave indices pointing past `currentItems`,
+        // and re-derive `totalSizeValue` from the live cache when possible.
+        startIndex = Math.min(_lastGoodRange.startIndex, count)
+        endIndex = Math.min(_lastGoodRange.endIndex, count)
+        visibleStartIndex = Math.min(_lastGoodRange.visibleStartIndex, count)
+        visibleEndIndex = Math.min(_lastGoodRange.visibleEndIndex, count)
+        totalSizeValue = sizesValue[count - 1]?.accumulator ?? _lastGoodRange.totalSizeValue
+      }
     }
     else if (_prerender) {
       startIndex = visibleStartIndex = 0
@@ -1269,8 +1301,11 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         // For container style
         totalSizeValue = sizesValue[count - 1]?.accumulator ?? 0
 
-        // Searching for endIndex
-        for (endIndex = i; endIndex < count && (sizesValue[endIndex]?.accumulator ?? Number.POSITIVE_INFINITY) < scroll.end; endIndex++);
+        // Searching for endIndex. The fallback is `0` (not `+∞`) so a missing
+        // accumulator doesn't terminate the scan on the first sparse slot —
+        // for end-of-range search the right direction is "include the missing
+        // item optimistically and keep scanning" (see issue #925 part B).
+        for (endIndex = i; endIndex < count && (sizesValue[endIndex]?.accumulator ?? 0) < scroll.end; endIndex++);
         if (endIndex === -1) {
           endIndex = currentItems.length - 1
         }
@@ -1284,8 +1319,12 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         // search visible startIndex
         for (visibleStartIndex = startIndex; visibleStartIndex < count && (beforeSize + (sizesValue[visibleStartIndex]?.accumulator ?? Number.POSITIVE_INFINITY)) < scroll.start; visibleStartIndex++);
 
-        // search visible endIndex
-        for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeSize + (sizesValue[visibleEndIndex]?.accumulator ?? Number.POSITIVE_INFINITY)) < scroll.end; visibleEndIndex++);
+        // search visible endIndex. Same direction rationale as the endIndex
+        // search above — fall back to `0` so a sparse slot doesn't collapse
+        // the visible window. The visibleStartIndex search above intentionally
+        // keeps `+∞` because terminating on a missing entry there is the
+        // correct direction (keeps the missing item inside the visible range).
+        for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeSize + (sizesValue[visibleEndIndex]?.accumulator ?? 0)) < scroll.end; visibleEndIndex++);
 
         if (shouldStabilizeIdleFlowWindow) {
           const stabilizedRange = stabilizeFlowWindow({
@@ -1304,6 +1343,19 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
           endIndex = stabilizedRange.endIndex
           visibleStartIndex = stabilizedRange.visibleStartIndex
           visibleEndIndex = stabilizedRange.visibleEndIndex
+        }
+
+        // Persist this tick's range as the fallback for the next transient
+        // readiness-gate trip. Only meaningful in variable-size mode — the
+        // gate cannot trip in fixed-size mode and the `_prerender` branch
+        // sets a synthetic, non-scroll-anchored range that must not be
+        // reused as a fallback.
+        _lastGoodRange = {
+          startIndex,
+          endIndex,
+          visibleStartIndex,
+          visibleEndIndex,
+          totalSizeValue,
         }
       }
       else {

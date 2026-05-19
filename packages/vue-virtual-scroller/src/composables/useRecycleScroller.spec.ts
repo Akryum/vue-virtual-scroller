@@ -1034,6 +1034,126 @@ describe('useRecycleScroller', () => {
     clearTimeoutSpy.mockRestore()
   })
 
+  it('keeps prior items rendered when the variable-size cache trips the readiness gate on append', async () => {
+    // Regression for issue #925: 3.0.3's readiness gate (commit 396e736) zeroed
+    // all render indices whenever `sizesValue[count - 1] == null`, which blanked
+    // the viewport during in-place item appends (e.g. streaming chat). The fix
+    // preserves the last good range so the viewport stays populated for one
+    // tick until the sizes computed reconciles.
+    const { vm, onUpdate } = mountHarness({
+      items: Array.from({ length: 5 }, (_, id) => ({ id, size: 20 })),
+      itemSize: null,
+      minItemSize: 20,
+      clientHeight: 100,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const initialIndices = vm.visiblePool.map((view: View) => view.nr.index)
+    expect(initialIndices.length).toBeGreaterThan(0)
+    const baselineCall = onUpdate.mock.lastCall as [number, number, number, number]
+    expect(baselineCall).not.toEqual([0, 0, 0, 0])
+
+    // Force the readiness gate to trip by punching a hole at the last index of
+    // the cached `sizes` array. The `sizes` computed is lazy and only
+    // re-evaluates when its dependencies change, so a direct mutation persists
+    // for the next `updateVisibleItems` call that doesn't itself touch deps.
+    const sizesRef = vm.sizes as Array<{ accumulator: number, size: number | undefined } | undefined>
+    const lastIndex = sizesRef.length - 1
+    const savedLast = sizesRef[lastIndex]
+    sizesRef[lastIndex] = undefined
+
+    onUpdate.mockClear()
+    vm.updateVisibleItems(true)
+
+    // Restore so harness teardown is clean.
+    sizesRef[lastIndex] = savedLast
+
+    // With the fix the gate trip restores the previously computed range; the
+    // current `master` zeroes everything instead.
+    expect(onUpdate).toHaveBeenCalled()
+    const recoveryCall = onUpdate.mock.lastCall as [number, number, number, number]
+    expect(recoveryCall).not.toEqual([0, 0, 0, 0])
+    expect(recoveryCall).toEqual(baselineCall)
+  })
+
+  it('clamps the restored range to current count on wholesale shrinkage', async () => {
+    // Regression for issue #925: after the gate restores from `_lastGoodRange`,
+    // the restored indices must be clamped to the current `count` so a
+    // wholesale shrink (e.g. N=10 → N=3) can't leave `endIndex` pointing past
+    // `currentItems` and crash `forEachRenderedIndex` on `currentItems[i]`.
+    const { vm, options, onUpdate } = mountHarness({
+      items: Array.from({ length: 10 }, (_, id) => ({ id, size: 20 })),
+      itemSize: null,
+      minItemSize: 20,
+      clientHeight: 200,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.length).toBeGreaterThan(0)
+
+    options.items = Array.from({ length: 3 }, (_, id) => ({ id, size: 20 }))
+    // Punch a hole before the recompute lands. This trips the gate on the
+    // synchronous `updateVisibleItems` path before the fresh `sizes` settles.
+    const sizesRef = vm.sizes as Array<{ accumulator: number, size: number | undefined } | undefined>
+    if (sizesRef.length > 0) {
+      sizesRef[sizesRef.length - 1] = undefined
+    }
+
+    onUpdate.mockClear()
+    expect(() => vm.updateVisibleItems(true)).not.toThrow()
+
+    await nextTick()
+    await nextTick()
+
+    // All visible indices must lie within the new 3-item array.
+    for (const view of vm.visiblePool as View[]) {
+      expect(view.nr.index).toBeLessThan(3)
+      expect(view.nr.index).toBeGreaterThanOrEqual(0)
+    }
+  })
+
+  it('does not truncate the end-of-range search on a mid-array sparse slot', async () => {
+    // Regression for issue #925 part B: end-search loops at L1273/L1288 used to
+    // fall back to `Number.POSITIVE_INFINITY` for missing accumulator entries.
+    // For an end-of-range scan (loop while `accumulator < scroll.end`), that
+    // terminated the loop on the first sparse slot, collapsing the range to
+    // empty. The fix flips the fallback to `0` so the scan continues past
+    // sparse entries.
+    const { vm, onUpdate } = mountHarness({
+      items: Array.from({ length: 4 }, (_, id) => ({ id, size: 20 })),
+      itemSize: null,
+      minItemSize: 20,
+      clientHeight: 80,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const baselineRange = onUpdate.mock.lastCall as [number, number, number, number]
+    expect(baselineRange[1]).toBeGreaterThan(0)
+
+    // Punch a hole mid-array (index 1) but keep the last index populated so
+    // the readiness gate does NOT trip — we want to exercise the end-search
+    // loop directly.
+    const sizesRef = vm.sizes as Array<{ accumulator: number, size: number | undefined } | undefined>
+    const saved = sizesRef[1]
+    sizesRef[1] = undefined
+
+    onUpdate.mockClear()
+    vm.updateVisibleItems(true)
+
+    sizesRef[1] = saved
+
+    // The end-search must scan past the sparse slot rather than terminate on
+    // it. The recovery range's endIndex must reach at least the baseline.
+    const recoveryRange = onUpdate.mock.lastCall as [number, number, number, number]
+    expect(recoveryRange[1]).toBeGreaterThanOrEqual(baselineRange[1])
+  })
+
   it('does not crash on 0 → 1 items transition in variable-size mode', async () => {
     // Regression: in variable-size mode the size cache is computed lazily from
     // `items`. When an empty list gains its first row, an upstream wrapper can
