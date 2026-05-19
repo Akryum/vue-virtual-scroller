@@ -1468,8 +1468,13 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
           const viewVisible = renderedIndexSet
             ? renderedIndexSet.has(view.nr.index)
             : (view.nr.index >= startIndex && view.nr.index < endIndex)
-          const viewSize = itemSize || (sizesValue[view.nr.index] && sizesValue[view.nr.index].size)
-          if (!viewVisible || !viewSize) {
+          // Recycle only when the view's index has left the visible range.
+          // A 0 / undefined cached size for a still-visible row is a
+          // transient state (e.g. an item that hasn't been measured yet);
+          // recycling on it would force step 2 to immediately re-claim the
+          // slot, and any per-tick gap visible to the browser shows up as
+          // a blank row. See issue #906.
+          if (!viewVisible) {
             removeAndRecycleView(view, keepFlowModeOrderIncrementally)
           }
         }
@@ -1493,9 +1498,15 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     let firstVisiblePosition: number | null = null
     let renderedVisibleSize = 0
     forEachRenderedIndex(startIndex, endIndex, renderedIndices, (i) => {
-      const elementSize = itemSize || (sizesValue[i] && sizesValue[i].size)
-      if (!elementSize)
-        return
+      // Fall back to `_computedMinItemSize` (and ultimately `1`) so every
+      // index in the resolved range claims a pooled view even when the
+      // cache is transiently sparse or reports `size: 0` for an unmeasured
+      // row. Returning early here would leave the DOM slot blank until
+      // the next reconciliation tick — exactly the "blank rows" symptom
+      // reported in issue #906, made worse by `scrollToItem` jumps which
+      // recycle every view in step 1 and rely on this loop to repopulate.
+      const cachedSize = sizesValue[i] && sizesValue[i].size
+      const elementSize = itemSize || cachedSize || _computedMinItemSize || 1
       item = currentItems[i]
       const key = (keyField ? resolveItemKey(item, i, keyField) : i) as ItemKey<TItem, TKeyField>
       view = views.get(key)

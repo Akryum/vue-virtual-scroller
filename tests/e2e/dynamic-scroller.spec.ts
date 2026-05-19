@@ -6,6 +6,7 @@ import {
   metric,
   readMetricNumbers,
   scrollViewportBy,
+  viewport,
   waitForSettle,
 } from './support/demo'
 
@@ -84,6 +85,34 @@ test('dynamic scroller demo keeps visible rows contiguous after fast scrolling',
     await waitForSettle(page)
     await waitForContiguousVisibleRows(page)
   }
+})
+
+test('dynamic scroller demo keeps visible rows contiguous after a far absolute jump', async ({ browserName, page }) => {
+  test.skip(browserName !== 'chromium')
+
+  // Regression for issue #906: a single large jump (the same code path
+  // `scrollToItem` uses internally) recycles every visible view in
+  // updateVisibleItems step 1 and must repopulate the slots in step 2,
+  // even for rows whose size cache hasn't measured yet. A skipped index
+  // would surface here as a non-contiguous row gap.
+  await page.goto('/demos/dynamic-scroller')
+  await waitForSettle(page)
+
+  await viewport(page).evaluate((element) => {
+    const target = element as HTMLElement
+    target.scrollTop = Math.max(0, Math.floor((target.scrollHeight - target.clientHeight) * 0.5))
+    target.dispatchEvent(new Event('scroll'))
+  })
+  await waitForSettle(page)
+  await waitForContiguousVisibleRows(page)
+
+  await viewport(page).evaluate((element) => {
+    const target = element as HTMLElement
+    target.scrollTop = Math.max(0, target.scrollHeight - target.clientHeight - 100)
+    target.dispatchEvent(new Event('scroll'))
+  })
+  await waitForSettle(page)
+  await waitForContiguousVisibleRows(page)
 })
 
 test('dynamic scroller demo filters, remeasures, and updates the visible range', async ({ browserName, page }) => {

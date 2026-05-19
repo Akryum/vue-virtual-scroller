@@ -1154,6 +1154,70 @@ describe('useRecycleScroller', () => {
     expect(recoveryRange[1]).toBeGreaterThanOrEqual(baselineRange[1])
   })
 
+  it('still assigns a view for an in-range index whose cached size is 0', async () => {
+    // Regression for issue #906: the step-2 loop in updateVisibleItems used
+    // to early-return when `sizesValue[i].size` was 0 (or `sizesValue[i]`
+    // was undefined), skipping view assignment for that index. Combined
+    // with step 1 having already recycled every prior view (on the
+    // itemsChanged / non-continuous paths), the DOM slot was left blank
+    // until the next reconciliation tick. The fix falls back to
+    // `_computedMinItemSize` so every index in the resolved range claims
+    // a pooled view regardless of cache transients.
+    const { vm } = mountHarness({
+      items: Array.from({ length: 5 }, (_, id) => ({ id, size: 20 })),
+      itemSize: null,
+      minItemSize: 20,
+      clientHeight: 100,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    // Sanity: all five items should be in the visible pool to start with.
+    const initialIndices = vm.visiblePool.map((view: View) => view.nr.index)
+    expect(initialIndices).toEqual([0, 1, 2, 3, 4])
+
+    // Punch size=0 into the middle of the cache. The accumulators stay
+    // populated so the binary search still includes index 2 in the range —
+    // we want to exercise the per-index assignment loop, not the gate.
+    const sizesRef = vm.sizes as Array<{ accumulator: number, size: number | undefined } | undefined>
+    const savedSize = sizesRef[2]!.size
+    sizesRef[2]!.size = 0
+
+    vm.updateVisibleItems(true)
+
+    sizesRef[2]!.size = savedSize
+
+    const recoveryIndices = vm.visiblePool.map((view: View) => view.nr.index)
+    expect(recoveryIndices).toContain(2)
+  })
+
+  it('still assigns a view when an in-range sizesValue entry is undefined', async () => {
+    // Same regression as the size=0 case (issue #906), but exercising the
+    // `sizesValue[i] && ...` branch. The fallback must catch undefined
+    // entries too — a sparse cache slot would otherwise also skip the slot.
+    const { vm } = mountHarness({
+      items: Array.from({ length: 5 }, (_, id) => ({ id, size: 20 })),
+      itemSize: null,
+      minItemSize: 20,
+      clientHeight: 100,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    const sizesRef = vm.sizes as Array<{ accumulator: number, size: number | undefined } | undefined>
+    const saved = sizesRef[2]
+    sizesRef[2] = undefined
+
+    vm.updateVisibleItems(true)
+
+    sizesRef[2] = saved
+
+    const recoveryIndices = vm.visiblePool.map((view: View) => view.nr.index)
+    expect(recoveryIndices).toContain(2)
+  })
+
   it('does not crash on 0 → 1 items transition in variable-size mode', async () => {
     // Regression: in variable-size mode the size cache is computed lazily from
     // `items`. When an empty list gains its first row, an upstream wrapper can
