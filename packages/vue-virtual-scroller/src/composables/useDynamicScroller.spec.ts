@@ -1401,14 +1401,30 @@ describe('useDynamicScroller pageMode scrollParent forwarding', () => {
     Object.defineProperty(autoDetectedParent, 'clientHeight', { configurable: true, get: () => 320 })
     Object.defineProperty(autoDetectedParent, 'clientWidth', { configurable: true, get: () => 400 })
     autoDetectedParent.getBoundingClientRect = vi.fn(() => ({
-      top: 0, left: 0, bottom: 320, right: 400, width: 400, height: 320, x: 0, y: 0, toJSON: () => ({}),
+      top: 0,
+      left: 0,
+      bottom: 320,
+      right: 400,
+      width: 400,
+      height: 320,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
     }))
 
     const customParent = document.createElement('div')
     Object.defineProperty(customParent, 'clientHeight', { configurable: true, get: () => 600 })
     Object.defineProperty(customParent, 'clientWidth', { configurable: true, get: () => 400 })
     customParent.getBoundingClientRect = vi.fn(() => ({
-      top: 0, left: 0, bottom: 600, right: 400, width: 400, height: 600, x: 0, y: 0, toJSON: () => ({}),
+      top: 0,
+      left: 0,
+      bottom: 600,
+      right: 400,
+      width: 400,
+      height: 600,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
     }))
 
     const el = document.createElement('div')
@@ -1416,7 +1432,15 @@ describe('useDynamicScroller pageMode scrollParent forwarding', () => {
     Object.defineProperty(el, 'clientHeight', { configurable: true, get: () => 320 })
     Object.defineProperty(el, 'clientWidth', { configurable: true, get: () => 400 })
     el.getBoundingClientRect = vi.fn(() => ({
-      top: 0, left: 0, bottom: 5000, right: 400, width: 400, height: 5000, x: 0, y: 0, toJSON: () => ({}),
+      top: 0,
+      left: 0,
+      bottom: 5000,
+      right: 400,
+      width: 400,
+      height: 5000,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
     }))
 
     const items = ref<Array<{ id: number }>>(Array.from({ length: 50 }, (_, id) => ({ id })))

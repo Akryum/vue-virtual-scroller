@@ -260,7 +260,8 @@ Set `:page-mode="true"` when the scroller should virtualize against an *outer* s
     :page-mode="true"
   >
     <template #default="{ item }">
-      <div class="row">{{ item.name }}</div>
+      <div class="row">{{ item.name }}
+</div>
     </template>
   </RecycleScroller>
 </div>

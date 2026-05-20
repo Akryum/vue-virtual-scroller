@@ -1453,7 +1453,15 @@ describe('useRecycleScroller pageMode with div scroll parent', () => {
     Object.defineProperty(customParent, 'clientHeight', { configurable: true, get: () => 500 })
     Object.defineProperty(customParent, 'clientWidth', { configurable: true, get: () => 400 })
     customParent.getBoundingClientRect = vi.fn(() => ({
-      top: 0, left: 0, bottom: 500, right: 400, width: 400, height: 500, x: 0, y: 0, toJSON: () => ({}),
+      top: 0,
+      left: 0,
+      bottom: 500,
+      right: 400,
+      width: 400,
+      height: 500,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
     }))
 
     const { vm, parent } = mountPageModeHarness({
