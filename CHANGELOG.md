@@ -1,3 +1,25 @@
+## v3.0.4
+
+[compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v3.0.3...v3.0.4)
+
+### 🚀 Enhancements
+
+- Add support for explicit scroll parent in page mode + find nearest parent scroller, fix #928 ([#928](https://github.com/Akryum/vue-virtual-scroller/issues/928))
+
+### 🩹 Fixes
+
+- Better handle identity change  in dynamic scroller, fix #924 ([#924](https://github.com/Akryum/vue-virtual-scroller/issues/924))
+- **useRecycleScroller:** Preserve last good range during transient sparse cache states to prevent viewport blanking, fix #925 ([#925](https://github.com/Akryum/vue-virtual-scroller/issues/925))
+- **useRecycleScroller:** Prevent blank rows during transient cache states, fix #906 ([#906](https://github.com/Akryum/vue-virtual-scroller/issues/906))
+
+### ✅ Tests
+
+- **lint:** Fix ([f52e916](https://github.com/Akryum/vue-virtual-scroller/commit/f52e916))
+
+### ❤️ Contributors
+
+- Guillaume Chau ([@Akryum](http://github.com/Akryum))
+
 ## v3.0.3
 
 [compare changes](https://github.com/Akryum/vue-virtual-scroller/compare/v3.0.2...v3.0.3)
