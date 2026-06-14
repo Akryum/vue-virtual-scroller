@@ -130,9 +130,33 @@ const functionItemSizeRecycleScroller = useRecycleScroller<Message>({
 
 functionItemSizeRecycleScroller.getItemSize(0)
 
+const dataSourceRecycleScroller = useRecycleScroller({
+  dataSource: {
+    getItems: (_startIndex: number, _endIndex: number, _signal?: AbortSignal): Message[] => messages,
+    getItemKey: (index: number) => messages[index]?.id ?? index,
+  },
+  count: messages.length,
+  direction: 'vertical',
+  itemSize: 32,
+  minItemSize: 32,
+  typeField: 'type',
+  buffer: 200,
+  pageMode: false,
+  shift: false,
+  disableTransform: true,
+  hiddenPosition: -100,
+  prerender: 0,
+  emitUpdate: false,
+  updateInterval: 0,
+}, scrollerEl)
+
+dataSourceRecycleScroller.pool.value[0]?.item.text
+// @ts-expect-error Data source item type should not expose missing properties.
+dataSourceRecycleScroller.pool.value[0]?.item.missing
+
+// @ts-expect-error Invalid object-item key fields should be rejected.
 useRecycleScroller<Message>({
   items: messages,
-  // @ts-expect-error Invalid object-item key fields should be rejected.
   keyField: 'missing',
   direction: 'vertical',
   itemSize: 32,

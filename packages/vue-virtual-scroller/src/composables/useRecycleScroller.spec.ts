@@ -21,6 +21,13 @@ function createView(index: number, used = true): View {
 
 function mountHarness(overrides: Partial<{
   items: Array<Record<string, unknown>>
+  dataSource: {
+    getItems: (startIndex: number, endIndex: number, signal?: AbortSignal) => unknown[] | Promise<unknown[]>
+    getItemKey: (index: number) => string | number
+  }
+  count: number
+  dataSourceCacheSize: number
+  dataSourceKey: unknown
   keyField: string | ((item: Record<string, unknown>, index: number) => string | number)
   direction: 'vertical' | 'horizontal' | undefined
   itemSize: number | null | ((item: Record<string, unknown>, index: number) => number)
@@ -30,18 +37,24 @@ function mountHarness(overrides: Partial<{
   sizeField: string
   shift: boolean
   cache: any
+  buffer: number
   disableTransform: boolean
   flowMode: boolean
   hiddenPosition: number
   updateInterval: number
   clientHeight: number
   clientWidth: number
+  onDataSourceError: (error: unknown, startIndex: number, endIndex: number) => void
 }> = {}) {
   const onUpdate = vi.fn()
   const clientHeight = overrides.clientHeight ?? 100
   const clientWidth = overrides.clientWidth ?? 100
   const options = reactive({
     items: Array.from({ length: 6 }, (_, id) => ({ id })),
+    dataSource: undefined,
+    count: undefined,
+    dataSourceCacheSize: undefined,
+    dataSourceKey: undefined,
     keyField: 'id',
     direction: 'vertical' as const,
     itemSize: 10,
@@ -60,6 +73,7 @@ function mountHarness(overrides: Partial<{
     flowMode: false,
     hiddenPosition: undefined,
     updateInterval: 0,
+    onDataSourceError: undefined,
     ...overrides,
   })
 
@@ -233,6 +247,385 @@ function mountFactoryHarness(initialItems: Array<Record<string, unknown>>) {
 }
 
 describe('useRecycleScroller', () => {
+  it('uses dataSource ranges without materializing the full fixed-size list', async () => {
+    const getItems = vi.fn((startIndex: number, endIndex: number) =>
+      Array.from({ length: endIndex - startIndex }, (_, offset) => {
+        const id = startIndex + offset
+        return { id, type: 'row' }
+      }),
+    )
+    const getItemKey = vi.fn((index: number) => index)
+    const dataSource = {
+      getItems,
+      getItemKey,
+    }
+    const { vm } = mountHarness({
+      items: undefined as any,
+      dataSource,
+      count: 1000,
+      itemSize: 10,
+      buffer: 0,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    expect(getItems).toHaveBeenCalledWith(0, 10, expect.any(AbortSignal))
+    expect(getItems).not.toHaveBeenCalledWith(0, 1000)
+    expect(getItemKey).not.toHaveBeenCalledWith(999)
+    getItems.mockClear()
+    vm.updateVisibleItems(true)
+
+    expect(getItems).not.toHaveBeenCalled()
+    expect(vm.visiblePool.map((view: View) => (view.item as { id: number }).id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+  })
+
+  it('does not re-enter visible item updates for synchronous dataSource ranges', async () => {
+    const getItems = vi.fn((startIndex: number, endIndex: number) =>
+      Array.from({ length: endIndex - startIndex }, (_, offset) => ({ id: startIndex + offset })),
+    )
+    const { vm, onUpdate } = mountHarness({
+      items: undefined as any,
+      dataSource: {
+        getItems,
+        getItemKey: (index: number) => index,
+      },
+      count: 1000,
+      itemSize: 10,
+      buffer: 0,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    onUpdate.mockClear()
+    vm.el.scrollTop = 100
+    vm.updateVisibleItems(true)
+
+    expect(onUpdate).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders falsy dataSource items', async () => {
+    const getItems = vi.fn((startIndex: number, endIndex: number) =>
+      Array.from({ length: endIndex - startIndex }, (_, offset) => startIndex + offset),
+    )
+    const { vm } = mountHarness({
+      items: undefined as any,
+      dataSource: {
+        getItems,
+        getItemKey: (index: number) => index,
+      },
+      count: 3,
+      itemSize: 10,
+      buffer: 0,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => view.item)).toEqual([0, 1, 2])
+  })
+
+  it('renders nullish dataSource items once they are loaded', async () => {
+    const { vm } = mountHarness({
+      items: undefined as any,
+      dataSource: {
+        getItems: () => [null, undefined],
+        getItemKey: (index: number) => index,
+      },
+      count: 2,
+      itemSize: 10,
+      buffer: 0,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => view.item)).toEqual([null, undefined])
+  })
+
+  it('fills visible dataSource rows after async range loads resolve', async () => {
+    let resolveRange: (items: unknown[]) => void = () => {}
+    const getItems = vi.fn((_startIndex: number, _endIndex: number) =>
+      new Promise<unknown[]>((resolve) => {
+        resolveRange = resolve
+      }),
+    )
+    const { vm } = mountHarness({
+      items: undefined as any,
+      dataSource: {
+        getItems,
+        getItemKey: (index: number) => index,
+      },
+      count: 1000,
+      itemSize: 10,
+      buffer: 0,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    expect(getItems).toHaveBeenCalledWith(0, 10, expect.any(AbortSignal))
+    expect(vm.visiblePool).toEqual([])
+
+    resolveRange(Array.from({ length: 10 }, (_, id) => ({ id })))
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => (view.item as { id: number }).id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+  })
+
+  it('dedupes overlapping async dataSource requests by pending index', async () => {
+    const resolvers: Array<(items: unknown[]) => void> = []
+    const getItems = vi.fn((_startIndex: number, _endIndex: number) =>
+      new Promise<unknown[]>((resolve) => {
+        resolvers.push(resolve)
+      }),
+    )
+    const { vm } = mountHarness({
+      items: undefined as any,
+      dataSource: {
+        getItems,
+        getItemKey: (index: number) => index,
+      },
+      count: 1000,
+      itemSize: 10,
+      buffer: 0,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    vm.el.scrollTop = 50
+    vm.updateVisibleItems(true)
+
+    expect(getItems).toHaveBeenCalledWith(0, 10, expect.any(AbortSignal))
+    expect(getItems).toHaveBeenCalledWith(10, 15, expect.any(AbortSignal))
+    expect(getItems).not.toHaveBeenCalledWith(5, 15)
+
+    resolvers[0](Array.from({ length: 10 }, (_, id) => ({ id })))
+    resolvers[1](Array.from({ length: 5 }, (_, offset) => ({ id: 10 + offset })))
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => (view.item as { id: number }).id)).toEqual([5, 6, 7, 8, 9, 10, 11, 12, 13, 14])
+  })
+
+  it('passes an AbortSignal to dataSource requests', async () => {
+    const getItems = vi.fn((startIndex: number, endIndex: number, _signal?: AbortSignal) =>
+      Array.from({ length: endIndex - startIndex }, (_, offset) => ({ id: startIndex + offset })),
+    )
+    mountHarness({
+      items: undefined as any,
+      dataSource: {
+        getItems,
+        getItemKey: (index: number) => index,
+      },
+      count: 1000,
+      itemSize: 10,
+      buffer: 0,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    const signal = getItems.mock.calls[0][2]
+    expect(signal).toBeInstanceOf(AbortSignal)
+    expect(signal?.aborted).toBe(false)
+  })
+
+  it('aborts obsolete async dataSource requests without reporting an error', async () => {
+    const onDataSourceError = vi.fn()
+    const signals: AbortSignal[] = []
+    const resolvers: Array<(items: unknown[]) => void> = []
+    const getItems = vi.fn((_startIndex: number, _endIndex: number, signal?: AbortSignal) => {
+      signals.push(signal!)
+      return new Promise<unknown[]>((resolve) => {
+        resolvers.push(resolve)
+      })
+    })
+    const { vm } = mountHarness({
+      items: undefined as any,
+      dataSource: {
+        getItems,
+        getItemKey: (index: number) => index,
+      },
+      count: 1000,
+      itemSize: 10,
+      buffer: 0,
+      onDataSourceError,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    vm.el.scrollTop = 500
+    vm.updateVisibleItems(true)
+
+    expect(getItems).toHaveBeenCalledWith(0, 10, expect.any(AbortSignal))
+    expect(getItems).toHaveBeenCalledWith(50, 60, expect.any(AbortSignal))
+    expect(signals[0].aborted).toBe(true)
+    expect(signals[1].aborted).toBe(false)
+
+    resolvers[0](Array.from({ length: 10 }, (_, id) => ({ id })))
+    resolvers[1](Array.from({ length: 10 }, (_, offset) => ({ id: 50 + offset })))
+    await nextTick()
+    await nextTick()
+
+    expect(onDataSourceError).not.toHaveBeenCalled()
+    expect(vm.visiblePool.map((view: View) => (view.item as { id: number }).id)).toEqual([50, 51, 52, 53, 54, 55, 56, 57, 58, 59])
+  })
+
+  it('evicts least-recently used dataSource rows beyond dataSourceCacheSize', async () => {
+    const getItems = vi.fn((startIndex: number, endIndex: number) =>
+      Array.from({ length: endIndex - startIndex }, (_, offset) => ({ id: startIndex + offset })),
+    )
+    const { vm } = mountHarness({
+      items: undefined as any,
+      dataSource: {
+        getItems,
+        getItemKey: (index: number) => index,
+      },
+      count: 1000,
+      dataSourceCacheSize: 10,
+      itemSize: 10,
+      buffer: 0,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    vm.el.scrollTop = 100
+    vm.updateVisibleItems(true)
+
+    vm.el.scrollTop = 0
+    vm.updateVisibleItems(true)
+
+    expect(getItems.mock.calls.map(call => call.slice(0, 2))).toEqual([
+      [0, 10],
+      [10, 20],
+      [0, 10],
+    ])
+  })
+
+  it('clears cached dataSource rows when dataSourceKey changes', async () => {
+    let generation = 'a'
+    const getItems = vi.fn((startIndex: number, endIndex: number) =>
+      Array.from({ length: endIndex - startIndex }, (_, offset) => ({ id: startIndex + offset, generation })),
+    )
+    const { vm, options } = mountHarness({
+      items: undefined as any,
+      dataSource: {
+        getItems,
+        getItemKey: (index: number) => index,
+      },
+      count: 1000,
+      dataSourceKey: generation,
+      itemSize: 10,
+      buffer: 0,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => (view.item as { generation: string }).generation)).toEqual(Array.from({ length: 10 }).fill('a'))
+
+    getItems.mockClear()
+    generation = 'b'
+    options.dataSourceKey = generation
+    await nextTick()
+    await nextTick()
+
+    expect(getItems).toHaveBeenCalledWith(0, 10, expect.any(AbortSignal))
+    expect(vm.visiblePool.map((view: View) => (view.item as { generation: string }).generation)).toEqual(Array.from({ length: 10 }).fill('b'))
+  })
+
+  it('reports dataSource load errors', async () => {
+    const error = new Error('load failed')
+    const onDataSourceError = vi.fn()
+    mountHarness({
+      items: undefined as any,
+      dataSource: {
+        getItems: () => Promise.reject(error),
+        getItemKey: (index: number) => index,
+      },
+      count: 1000,
+      itemSize: 10,
+      buffer: 0,
+      onDataSourceError,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+    await Promise.resolve()
+
+    expect(onDataSourceError).toHaveBeenCalledWith(error, 0, 10)
+  })
+
+  it('does not materialize dataSource keys for cache snapshots', async () => {
+    const getItemKey = vi.fn((index: number) => index)
+    const { vm } = mountHarness({
+      items: undefined as any,
+      dataSource: {
+        getItems: (startIndex: number, endIndex: number) =>
+          Array.from({ length: endIndex - startIndex }, (_, offset) => ({ id: startIndex + offset })),
+        getItemKey,
+      },
+      count: 1000,
+      itemSize: 10,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    getItemKey.mockClear()
+    expect(vm.cacheSnapshot).toEqual({ keys: [], sizes: [] })
+    expect(vm.restoreCache({ keys: [0], sizes: [10] })).toBe(false)
+    expect(getItemKey).not.toHaveBeenCalledWith(999)
+  })
+
+  it('treats missing initial items as an empty list', async () => {
+    const { vm } = mountHarness({
+      items: undefined as any,
+    } as any)
+
+    await nextTick()
+    await nextTick()
+
+    expect(vm.visiblePool).toEqual([])
+    expect(vm.totalSize).toBe(0)
+  })
+
+  it('requires fixed itemSize in dataSource mode', () => {
+    expect(() => {
+      mountHarness({
+        items: undefined as any,
+        dataSource: {
+          getItems: (startIndex: number, endIndex: number) =>
+            Array.from({ length: endIndex - startIndex }, (_, offset) => ({ id: startIndex + offset })),
+          getItemKey: (index: number) => index,
+        },
+        count: 100,
+        itemSize: null,
+      } as any)
+    }).toThrow('DataSource mode requires a fixed numeric itemSize')
+  })
+
+  it('rejects function itemSize in dataSource mode', () => {
+    expect(() => {
+      mountHarness({
+        items: undefined as any,
+        dataSource: {
+          getItems: (startIndex: number, endIndex: number) =>
+            Array.from({ length: endIndex - startIndex }, (_, offset) => ({ id: startIndex + offset })),
+          getItemKey: (index: number) => index,
+        },
+        count: 100,
+        itemSize: (item: Record<string, unknown>) => Number(item.id),
+      } as any)
+    }).toThrow('DataSource mode requires a fixed numeric itemSize')
+  })
+
   it('does not refresh when visible views remain contiguous after sorting', async () => {
     const { vm, onUpdate } = mountHarness()
 

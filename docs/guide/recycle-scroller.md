@@ -133,6 +133,10 @@ As you scroll, most views are simply moved to new positions and receive updated 
 | Prop | Default | Description |
 |------|---------|-------------|
 | `items` | — | List of items you want to display in the scroller. |
+| `dataSource` | — | Range-based item source used instead of `items`. Must implement `getItems(startIndex, endIndex, signal?)` and `getItemKey(index)`. `getItems` may return an array or a promise for an array. |
+| `count` | — | Total number of rows when `dataSource` is used. |
+| `dataSourceCacheSize` | `1000` | Target maximum number of loaded data source rows to keep in the internal least-recently-used cache. The current rendered range is protected from eviction, so the cache may temporarily exceed this value. |
+| `dataSourceKey` | — | Optional identity key for the current data-source contents. Change it to clear cached rows when the same `dataSource` object is reused for different backing data. |
 | `direction` | `'vertical'` | Scrolling direction, either `'vertical'` or `'horizontal'`. |
 | `itemSize` | `null` | Display height (or width in horizontal mode) of the items in pixels used to calculate the scroll size and position. Accepts a fixed number, `null` for `sizeField`-based [variable size mode](#variable-size-mode), or a resolver function `(item, index) => number`. |
 | `gridItems` | — | Display that many items on the same line to create a grid. You must set `itemSize` to a fixed number to use this prop (dynamic sizes are not supported). |
@@ -165,6 +169,7 @@ As you scroll, most views are simply moved to new positions and receive updated 
 | `visible` | Emitted when the scroller considers itself to be visible in the page. |
 | `hidden` | Emitted when the scroller is hidden in the page. |
 | `update(startIndex, endIndex, visibleStartIndex, visibleEndIndex)` | Emitted each time the views are updated, only if `emitUpdate` prop is `true`. |
+| `data-source-error(error, startIndex, endIndex)` | Emitted when `dataSource.getItems(startIndex, endIndex, signal?)` throws or rejects. |
 | `scroll-start` | Emitted when the first item is rendered. |
 | `scroll-end` | Emitted when the last item is rendered. |
 
@@ -295,7 +300,7 @@ See the [Page-mode + div scroll-parent demo](../demos/page-mode-div-parent) for 
 
 Use `shift` when items are inserted at the beginning of the list and you want the current content to stay visually anchored.
 
-Use `cacheSnapshot` together with the `cache` prop or `restoreCache(snapshot)` when the same list is remounted and you want to reuse previously known item sizes instead of measuring them again.
+Use `cacheSnapshot` together with the `cache` prop or `restoreCache(snapshot)` when the same list is remounted and you want to reuse previously known item sizes instead of measuring them again. Data source mode does not currently snapshot or restore sizes, because doing so would require walking the full data source.
 
 See the dedicated [Shift demo](../demos/shift) for a prepend-history example.
 
@@ -340,6 +345,74 @@ const items = [
   },
 ]
 ```
+
+## Data Source Mode
+
+Use `dataSource` when a fixed-size list is random-access and too large to keep
+as one Vue array. The data source owns item retrieval and key lookup; `keyField`
+is ignored in this mode.
+
+```vue
+<RecycleScroller
+  :data-source="people"
+  :count="totalPeople"
+  :item-size="42"
+>
+  <template #default="{ item }">
+    <PersonRow :person="item" />
+  </template>
+</RecycleScroller>
+```
+
+```ts
+const people = {
+  getItems(startIndex: number, endIndex: number) {
+    return cache.readRange(startIndex, endIndex)
+  },
+  getItemKey(index: number) {
+    return cache.readId(index)
+  },
+}
+```
+
+`getItems` may also return a promise. Pending async ranges keep the scroll
+geometry stable and render after the promise resolves. Pending rows do not
+render default slot content until their items are loaded.
+
+```ts
+const people = {
+  async getItems(startIndex: number, endIndex: number, signal?: AbortSignal) {
+    return api.fetchPeople({ startIndex, endIndex, signal })
+  },
+  getItemKey(index: number) {
+    return index
+  },
+}
+```
+
+Data source mode requires a fixed numeric `itemSize`. Variable-size rows,
+function `itemSize`, and `DynamicScroller` are not supported because they
+require item sizes from the full rendered item list.
+
+Loaded rows are cached by item index. Overlapping visible ranges only request
+indexes that are neither cached nor already pending. The internal cache keeps up
+to `dataSourceCacheSize` recently used rows where possible and evicts older rows
+outside the current rendered range first. If the rendered range is larger than
+`dataSourceCacheSize`, the cache can grow beyond that target.
+
+When the same `dataSource` object is reused for different backing data, change
+`dataSourceKey` to clear loaded rows and request visible indexes again. If the
+data source object itself changes, the cache is also cleared automatically.
+
+The third `getItems` argument is an `AbortSignal`. The scroller aborts pending
+requests when their entire range is no longer rendered, when the data source is
+reset, and when the scroller unmounts. Aborted requests are ignored and do not
+emit `data-source-error`.
+
+If a request fails, the scroller emits
+`data-source-error(error, startIndex, endIndex)`. It does not retry
+automatically, but a future visibility update that needs the same unloaded
+indexes will request them again.
 
 ## Buffer
 

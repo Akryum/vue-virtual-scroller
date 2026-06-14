@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="TItem">
 import type { ScrollerCallbacks } from '../composables/scrollerOptions'
 import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from '../composables/useRecycleScroller'
-import type { CacheSnapshot, ClassValue, ItemSizeValue, KeyFieldValue, KeyValue, RecycleScrollerExposed, RecycleScrollerSlotProps, ScrollDirection } from '../types'
+import type { CacheSnapshot, ClassValue, DataSource, ItemSizeValue, KeyFieldValue, KeyValue, RecycleScrollerExposed, RecycleScrollerSlotProps, ScrollDirection } from '../types'
 import { computed, ref, toRef } from 'vue'
 import { useRecycleScroller } from '../composables/useRecycleScroller'
 import { ObserveVisibility } from '../directives/observeVisibility'
@@ -11,7 +11,11 @@ import ItemView from './ItemView.vue'
 import ResizeObserver from './ResizeObserver.vue'
 
 const props = withDefaults(defineProps<{
-  items: TItem[]
+  items?: TItem[]
+  dataSource?: DataSource<TItem>
+  count?: number | null
+  dataSourceCacheSize?: number | null
+  dataSourceKey?: unknown
   keyField?: KeyFieldValue<any>
   direction?: ScrollDirection
   listTag?: string
@@ -44,6 +48,11 @@ const props = withDefaults(defineProps<{
   listClass?: ClassValue
   itemClass?: ClassValue
 }>(), {
+  items: undefined,
+  dataSource: undefined,
+  count: null,
+  dataSourceCacheSize: undefined,
+  dataSourceKey: undefined,
   keyField: 'id',
   direction: 'vertical',
   listTag: 'div',
@@ -76,6 +85,7 @@ const emit = defineEmits<{
   visible: []
   hidden: []
   update: [startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number]
+  dataSourceError: [error: unknown, startIndex: number, endIndex: number]
   scrollStart: []
   scrollEnd: []
 }>()
@@ -107,6 +117,10 @@ const items = toRef(props, 'items')
  */
 const recycleScrollerOptions = computed(() => ({
   items,
+  dataSource: props.dataSource,
+  count: props.count,
+  dataSourceCacheSize: props.dataSourceCacheSize,
+  dataSourceKey: props.dataSourceKey,
   el,
   before,
   after,
@@ -133,12 +147,16 @@ const recycleScrollerOptions = computed(() => ({
   onResize: () => emit('resize'),
   onVisible: () => emit('visible'),
   onHidden: () => emit('hidden'),
+  onDataSourceError: (error: unknown, startIndex: number, endIndex: number) => {
+    emit('dataSourceError', error, startIndex, endIndex)
+  },
   onUpdate: (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => {
     emit('update', startIndex, endIndex, visibleStartIndex, visibleEndIndex)
     if (visibleStartIndex <= 0) {
       emit('scrollStart')
     }
-    if (visibleEndIndex >= props.items.length - 1) {
+    const itemCount = props.dataSource ? props.count ?? 0 : props.items?.length ?? 0
+    if (visibleEndIndex >= itemCount - 1) {
       emit('scrollEnd')
     }
   },
@@ -207,6 +225,8 @@ const itemWrapperStyle = computed(() => {
 
   return listStyle
 })
+
+const itemCount = computed(() => props.dataSource ? props.count ?? 0 : props.items?.length ?? 0)
 
 // Expose public methods and el ref
 const exposed: RecycleScrollerExposed<TItem, KeyValue> = {
@@ -297,7 +317,7 @@ defineExpose(exposed)
       />
 
       <slot
-        v-if="props.items.length === 0"
+        v-if="itemCount === 0"
         name="empty"
       />
     </component>

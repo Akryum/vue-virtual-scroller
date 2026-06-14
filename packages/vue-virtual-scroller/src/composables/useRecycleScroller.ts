@@ -1,5 +1,5 @@
 import type { ComputedRef, CSSProperties, MaybeRefOrGetter, Ref } from 'vue'
-import type { CacheSnapshot, DefaultKeyField, ItemKey, ItemSizeValue, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, SizeEntry, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
+import type { CacheSnapshot, DataSource, DefaultKeyField, ItemKey, ItemSizeValue, KeyFieldValue, KeyValue, ScrollDirection, ScrollState, ScrollToOptions, SizeEntry, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
 import type { PooledViewPositionMode } from '../utils/viewStyle'
 import type { ScrollerCallbacks, ScrollerOptionCallbacks, ScrollerOptionElements, ScrollerOptionEnabled } from './scrollerOptions'
 import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
@@ -9,13 +9,19 @@ import { resolveItemKey } from '../engine/keyField'
 import { getViewportSize, normalizeOffset, scrollElementTo } from '../engine/scroll'
 import { resolveScrollParent } from '../scrollparent'
 import { supportsPassive } from '../utils'
+import { getDataSource, getDataSourceItemCount, getDataSourceItemKey, getDataSourceItems, getDataSourceSnapshot, validateRecycleDataSourceOptions } from '../utils/datasource'
 import { getFixedItemSize, resolveSnapshotItemSize, resolveVariableItemSize } from '../utils/itemSize'
 import { getPooledViewStyle, resolvePooledViewMode } from '../utils/viewStyle'
+import { createRecycleDataSourceController } from './recycleDataSourceController'
 import { normalizeScrollerInputs, resolveScrollerOptions } from './scrollerOptions'
 
 export interface UseRecycleScrollerOptions<TItem = unknown, TSizeField extends string = 'size'> extends ScrollerOptionElements, ScrollerOptionCallbacks, ScrollerOptionEnabled {
-  items: MaybeRefOrGetter<TItem[]>
-  keyField: KeyFieldValue<TItem>
+  items?: MaybeRefOrGetter<TItem[] | null | undefined>
+  dataSource?: MaybeRefOrGetter<DataSource<TItem> | null | undefined>
+  count?: MaybeRefOrGetter<number | null | undefined>
+  dataSourceCacheSize?: MaybeRefOrGetter<number | null | undefined>
+  dataSourceKey?: MaybeRefOrGetter<unknown>
+  keyField?: KeyFieldValue<TItem>
   direction?: ScrollDirection
   itemSize: ItemSizeValue<TItem>
   gridItems?: number
@@ -36,6 +42,19 @@ export interface UseRecycleScrollerOptions<TItem = unknown, TSizeField extends s
    */
   hiddenPosition?: number
   updateInterval: number
+  onDataSourceError?: (error: unknown, startIndex: number, endIndex: number) => void
+}
+
+export interface UseRecycleScrollerItemsOptions<TItem = unknown, TSizeField extends string = 'size'> extends UseRecycleScrollerOptions<TItem, TSizeField> {
+  items?: MaybeRefOrGetter<TItem[] | null | undefined>
+  dataSource?: undefined
+  keyField: KeyFieldValue<TItem>
+}
+
+export interface UseRecycleScrollerDataSourceOptions<TItem = unknown, TSizeField extends string = 'size'> extends UseRecycleScrollerOptions<TItem, TSizeField> {
+  items?: MaybeRefOrGetter<null | undefined>
+  dataSource?: MaybeRefOrGetter<DataSource<TItem> | null | undefined>
+  keyField?: KeyFieldValue<TItem>
 }
 
 export interface UseRecycleScrollerReturn<TItem = unknown, TKey = ItemKey<TItem>> {
@@ -189,10 +208,12 @@ const FLOW_IDLE_HYSTERESIS_PX = 8
 const FLOW_IDLE_SCROLL_EPSILON_PX = 1
 
 type ResolvedRecycleScrollerItems<TOptions extends UseRecycleScrollerOptions<any, any>>
-  = TOptions['items'] extends MaybeRefOrGetter<infer TItems extends any[]> ? TItems : never
+  = NonNullable<TOptions['items']> extends MaybeRefOrGetter<infer TItems extends any[]> ? TItems
+    : NonNullable<TOptions['dataSource']> extends MaybeRefOrGetter<DataSource<infer TItem> | null | undefined> ? TItem[]
+      : any[]
 type InferredRecycleScrollerItem<TOptions extends UseRecycleScrollerOptions<any, any>> = ResolvedRecycleScrollerItems<TOptions>[number]
 type InferredRecycleScrollerKeyField<TOptions extends UseRecycleScrollerOptions<any, any>>
-  = Extract<TOptions['keyField'], KeyFieldValue<InferredRecycleScrollerItem<TOptions>>>
+  = Extract<NonNullable<TOptions['keyField']>, KeyFieldValue<InferredRecycleScrollerItem<TOptions>>>
 
 export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem> = DefaultKeyField<TItem>, TSizeField extends string = 'size'>(
   options: MaybeRefOrGetter<UseRecycleScrollerOptions<TItem, TSizeField> & {
@@ -203,6 +224,13 @@ export function useRecycleScroller<TItem, TKeyField extends KeyFieldValue<TItem>
   after?: MaybeRefOrGetter<HTMLElement | undefined>,
   callbacks?: ScrollerCallbacks,
 ): UseRecycleScrollerReturn<TItem, ItemKey<TItem, TKeyField>>
+export function useRecycleScroller<TItem, TSizeField extends string = 'size'>(
+  options: MaybeRefOrGetter<UseRecycleScrollerDataSourceOptions<TItem, TSizeField>>,
+  el?: MaybeRefOrGetter<HTMLElement | undefined>,
+  before?: MaybeRefOrGetter<HTMLElement | undefined>,
+  after?: MaybeRefOrGetter<HTMLElement | undefined>,
+  callbacks?: ScrollerCallbacks,
+): UseRecycleScrollerReturn<TItem, KeyValue>
 export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<any, any>>(
   options: MaybeRefOrGetter<TOptions>,
   el?: MaybeRefOrGetter<HTMLElement | undefined>,
@@ -232,10 +260,13 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   const resolvedOptions = resolveScrollerOptions(options)
   const normalizedInputs = normalizeScrollerInputs(resolvedOptions, el, before, after, callbacks)
   const items = computed(() => {
-    const currentItems = toValue(getOptions().items)
+    const currentItems = toValue(getOptions().items) ?? []
     trackArrayShallowMutations(currentItems)
     return currentItems
   })
+  const itemCount = computed(() => getDataSourceItemCount(getOptions()))
+
+  validateRecycleDataSourceOptions(getOptions())
 
   // Reactive state
   const pool = ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>([]) as Ref<Array<View<TItem, ItemKey<TItem, TKeyField>>>>
@@ -299,6 +330,15 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     return resolvedOptions.value
   }
 
+  function getKeyField(opts = getOptions()): KeyFieldValue<TItem> {
+    return (opts.keyField ?? 'id') as KeyFieldValue<TItem>
+  }
+
+  const dataSourceController = createRecycleDataSourceController(
+    getOptions,
+    (itemsChanged: boolean) => updateVisibleItems(itemsChanged),
+  )
+
   /**
    * Resolve effective page mode, including wrapper overrides such as `useWindowScroller`.
    */
@@ -327,6 +367,9 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
   // Computed
   const simpleArray = computed(() => {
+    if (getDataSource(getOptions())) {
+      return false
+    }
     const currentItems = items.value
     return currentItems.length > 0 && typeof currentItems[0] !== 'object'
   })
@@ -335,8 +378,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     const opts = getOptions()
     const fixedItemSize = getFixedItemSize(opts.itemSize)
     if (fixedItemSize === null) {
-      const currentItems = items.value
-      const sizes = Array.from({ length: currentItems.length }) as unknown as Sizes
+      const count = itemCount.value
+      const sizes = Array.from({ length: count }) as unknown as Sizes
       _variableSizeBaseEntry.accumulator = 0
       sizes[-1] = _variableSizeBaseEntry
       const minItemSize = opts.minItemSize as number
@@ -345,10 +388,12 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       let computedMinSize = 10000
       let accumulator = 0
       let current: number
-      for (let i = 0, l = currentItems.length; i < l; i++) {
-        const key = isSimpleArray ? i : resolveItemKey(currentItems[i], i, opts.keyField)
+      const currentItems = getDataSourceItems(getOptions(), 0, count) as TItem[]
+      for (let i = 0; i < count; i++) {
+        const item = currentItems[i]
+        const key = isSimpleArray ? i : resolveItemKey(item, i, getKeyField(opts))
         current = resolveVariableItemSize(
-          currentItems[i],
+          item,
           i,
           opts.itemSize,
           restoredSizes[key],
@@ -367,7 +412,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         entry.size = current
         sizes[i] = entry
       }
-      _variableSizeEntries.length = currentItems.length
+      _variableSizeEntries.length = count
       _computedMinItemSize = computedMinSize
       return sizes
     }
@@ -404,8 +449,12 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
   const cacheSnapshot = computed<CacheSnapshot>(() => {
     const opts = getOptions()
-    const keyField = simpleArray.value ? null : opts.keyField
-    return buildCacheSnapshot(items.value, keyField, (item, index, key) => {
+    const keyField = simpleArray.value ? null : getKeyField(opts)
+    if (getDataSource(opts)) {
+      return { keys: [], sizes: [] }
+    }
+
+    return buildCacheSnapshot(getDataSourceSnapshot(getOptions()), keyField, (item, index, key) => {
       return resolveSnapshotItemSize(
         item as TItem,
         index,
@@ -471,7 +520,12 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   // Methods
   function restoreCache(snapshot: CacheSnapshot | null | undefined): boolean {
     const opts = getOptions()
-    _restoredSizes.value = restoreCacheMap(snapshot, items.value, simpleArray.value ? null : opts.keyField)
+    if (getDataSource(opts)) {
+      _restoredSizes.value = {} as Record<ItemKey<TItem, TKeyField>, number>
+      return false
+    }
+
+    _restoredSizes.value = restoreCacheMap(snapshot, getDataSourceSnapshot(getOptions()), simpleArray.value ? null : getKeyField(opts))
     return Object.keys(_restoredSizes.value).length > 0
   }
 
@@ -913,7 +967,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
   function findItemIndex(offset: number): number {
     const opts = getOptions()
-    const count = items.value.length
+    const count = itemCount.value
     const gridItems = opts.gridItems || 1
     const fixedItemSize = getFixedItemSize(opts.itemSize)
 
@@ -989,9 +1043,14 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
 
     const opts = getOptions()
-    const nextResolvedItems = nextItems ?? items.value
-    const keyField = simpleArray.value ? null : opts.keyField
-    const keys = getItemKeys(nextResolvedItems, keyField)
+    const keyField = simpleArray.value ? null : getKeyField(opts)
+    if (!nextItems && getDataSource(getOptions())) {
+      clearShiftAnchor()
+      return false
+    }
+    const keys = nextItems
+      ? getItemKeys(nextItems, keyField)
+      : []
     const anchorIndex = keys.indexOf(_shiftAnchor.key)
 
     if (anchorIndex === -1) {
@@ -1197,9 +1256,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     const itemSecondarySize = opts.itemSecondarySize || itemSize || 0
     const minItemSize = _computedMinItemSize
     const typeField = opts.typeField
-    const keyField = simpleArray.value ? null : opts.keyField
-    const currentItems = items.value
-    const count = currentItems.length
+    const keyField = simpleArray.value ? null : getKeyField(opts)
+    const count = itemCount.value
     const sizesValue = sizes.value as Sizes
     const views = _views
     const poolValue = pool.value
@@ -1242,7 +1300,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
     else if (_prerender) {
       startIndex = visibleStartIndex = 0
-      endIndex = visibleEndIndex = Math.min(opts.prerender, currentItems.length)
+      endIndex = visibleEndIndex = Math.min(opts.prerender, count)
       totalSizeValue = 0
     }
     else {
@@ -1344,7 +1402,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         // item optimistically and keep scanning" (see issue #925 part B).
         for (endIndex = i; endIndex < count && (sizesValue[endIndex]?.accumulator ?? 0) < scroll.end; endIndex++);
         if (endIndex === -1) {
-          endIndex = currentItems.length - 1
+          endIndex = count - 1
         }
         else {
           endIndex++
@@ -1497,6 +1555,10 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     let item: TItem, type: unknown
     let firstVisiblePosition: number | null = null
     let renderedVisibleSize = 0
+    const dataSource = getDataSource(opts)
+    const visibleItems = dataSource
+      ? dataSourceController.getVisibleItems(startIndex, endIndex)
+      : getDataSourceItems(opts, startIndex, endIndex) as TItem[]
     forEachRenderedIndex(startIndex, endIndex, renderedIndices, (i) => {
       // Fall back to `_computedMinItemSize` (and ultimately `1`) so every
       // index in the resolved range claims a pooled view even when the
@@ -1507,14 +1569,20 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       // recycle every view in step 1 and rely on this loop to repopulate.
       const cachedSize = sizesValue[i] && sizesValue[i].size
       const elementSize = itemSize || cachedSize || _computedMinItemSize || 1
-      item = currentItems[i]
-      const key = (keyField ? resolveItemKey(item, i, keyField) : i) as ItemKey<TItem, TKeyField>
+      const itemForIndex = visibleItems[i - startIndex]
+      if (dataSource && !dataSourceController.hasItem(i)) {
+        return
+      }
+      item = itemForIndex as TItem
+      const key = (dataSource ? getDataSourceItemKey(getOptions(), i, keyField) : keyField ? resolveItemKey(item, i, keyField) : i) as ItemKey<TItem, TKeyField>
       view = views.get(key)
       let isNewVisibleView = false
 
       if (!view) {
         // Item just became visible
-        type = (item as any)[typeField]
+        type = item != null && typeof item === 'object'
+          ? (item as any)[typeField]
+          : undefined
         view = getRecycledView(type)
 
         if (view) {
@@ -1653,7 +1721,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     if (!elValue) {
       return
     }
-    const targetIndex = Math.max(0, Math.min(index, items.value.length - 1))
+    const targetIndex = Math.max(0, Math.min(index, itemCount.value - 1))
     const viewportStart = getScroll().start
     const viewportSize = getViewportSize(elValue, direction, opts.pageMode, scrollParentTarget.value)
     const itemStart = getItemOffset(targetIndex)
@@ -1747,9 +1815,12 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
   // In SSR mode, we also prerender the same number of item for the first render
   const initialOpts = getOptions()
-  const initialItems = items.value
-  _previousKeys = getItemKeys(initialItems, initialItems.length > 0 && typeof initialItems[0] !== 'object' ? null : initialOpts.keyField) as Array<ItemKey<TItem, TKeyField>>
-  _previousTypes = getItemTypes(initialItems, initialOpts.typeField)
+  const initialDataSource = getDataSource(initialOpts)
+  const initialItems = initialDataSource ? [] : getDataSourceSnapshot(getOptions())
+  _previousKeys = initialDataSource
+    ? []
+    : getItemKeys(initialItems, initialItems.length > 0 && typeof initialItems[0] !== 'object' ? null : getKeyField(initialOpts)) as Array<ItemKey<TItem, TKeyField>>
+  _previousTypes = initialDataSource ? [] : getItemTypes(initialItems, initialOpts.typeField)
   if (initialOpts.cache) {
     restoreCache(initialOpts.cache)
   }
@@ -1788,6 +1859,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   })
 
   onBeforeUnmount(() => {
+    dataSourceController.clearCache()
     clearPendingTimeouts()
     cancelPendingFrames()
     removeListeners()
@@ -1808,11 +1880,21 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       removeListeners()
       clearPendingTimeouts()
       cancelPendingFrames()
+      dataSourceController.abortAllRequests()
       ready.value = false
     }
   })
 
   // Watchers
+  watch(() => [
+    getDataSource(getOptions()),
+    itemCount.value,
+    getOptions().itemSize,
+    toValue(getOptions().items),
+  ], () => {
+    validateRecycleDataSourceOptions(getOptions())
+  })
+
   watch(() => getOptions().cache, (snapshot) => {
     if (!isEnabled.value) {
       return
@@ -1828,14 +1910,33 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   // which Vue dedupes — so any watcher chained through that computed would
   // never fire. Subscribing to the raw ref guarantees the items watcher runs
   // on every upstream mutation, even when the array identity is preserved.
-  watch(() => toValue(getOptions().items).slice(), (nextItems, previousItems) => {
+  watch(() => [
+    itemCount.value,
+    toValue(getOptions().items)?.slice(),
+    getDataSource(getOptions()),
+    toValue(getOptions().dataSourceKey),
+  ] as const, ([, nextItems, nextDataSource, nextDataSourceKey], [, previousItems, previousDataSource, previousDataSourceKey]) => {
     if (!isEnabled.value) {
       return
     }
     const opts = getOptions()
-    const keyField = simpleArray.value ? null : opts.keyField
-    const nextKeys = getItemKeys(nextItems, keyField)
-    const nextTypes = getItemTypes(nextItems, opts.typeField)
+    const keyField = simpleArray.value ? null : getKeyField(opts)
+    const dataSource = getDataSource(opts)
+    if (dataSource) {
+      if (nextDataSource !== previousDataSource || nextDataSourceKey !== previousDataSourceKey) {
+        dataSourceController.clearCache()
+      }
+      clearShiftAnchor()
+      _previousKeys = []
+      _previousTypes = []
+      updateVisibleItems(true)
+      return
+    }
+
+    const resolvedNextItems = nextItems ?? []
+    const resolvedPreviousItems = previousItems ?? []
+    const nextKeys = getItemKeys(resolvedNextItems, keyField)
+    const nextTypes = getItemTypes(resolvedNextItems, opts.typeField)
     const previousKeysSnapshot = _previousKeys
     const previousTypesSnapshot = _previousTypes
     const itemsChanged = !hasSameItemIdentitySequence(
@@ -1848,7 +1949,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     if (opts.shift) {
       const prependOffset = findPrependOffset(previousKeysSnapshot, nextKeys as Array<ItemKey<TItem, TKeyField>>)
       if (prependOffset > 0) {
-        captureShiftAnchor(previousItems ?? [], keyField)
+        captureShiftAnchor(resolvedPreviousItems, keyField)
       }
       else {
         clearShiftAnchor()
@@ -1860,7 +1961,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
     _previousKeys = nextKeys as Array<ItemKey<TItem, TKeyField>>
     _previousTypes = nextTypes
-    applyShiftAnchor(nextItems)
+    applyShiftAnchor(resolvedNextItems)
     updateVisibleItems(itemsChanged)
   })
 
@@ -1869,9 +1970,19 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       return
     }
     const opts = getOptions()
-    const keyField = simpleArray.value ? null : opts.keyField
-    _previousKeys = getItemKeys(items.value, keyField) as Array<ItemKey<TItem, TKeyField>>
-    _previousTypes = getItemTypes(items.value, opts.typeField)
+    const keyField = simpleArray.value ? null : getKeyField(opts)
+    const dataSource = getDataSource(opts)
+    if (dataSource) {
+      _previousKeys = []
+      _previousTypes = []
+      clearShiftAnchor()
+      updateVisibleItems(true)
+      return
+    }
+
+    const currentItems = dataSource ? [] : getDataSourceSnapshot(getOptions())
+    _previousKeys = getItemKeys(currentItems, keyField) as Array<ItemKey<TItem, TKeyField>>
+    _previousTypes = getItemTypes(currentItems, opts.typeField)
     clearShiftAnchor()
     updateVisibleItems(true)
   })
@@ -1881,7 +1992,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       return
     }
     const opts = getOptions()
-    _previousTypes = getItemTypes(items.value, opts.typeField)
+    _previousTypes = getDataSource(opts) ? [] : getItemTypes(getDataSourceSnapshot(getOptions()), opts.typeField)
     clearShiftAnchor()
     updateVisibleItems(true)
   })

@@ -9,6 +9,12 @@ export type KeyFieldResolver<TItem = unknown> = (item: TItem, index: number) => 
 export type KeyFieldValue<TItem = unknown> = string | KeyFieldResolver<TItem>
 export type ItemSizeResolver<TItem = unknown> = (item: TItem, index: number) => number
 export type ItemSizeValue<TItem = unknown> = number | null | ItemSizeResolver<TItem>
+export type MaybePromise<T> = T | Promise<T>
+
+export interface DataSource<TItem = unknown> {
+  getItems: (startIndex: number, endIndex: number, signal?: AbortSignal) => MaybePromise<TItem[]>
+  getItemKey: (index: number) => KeyValue
+}
 
 export type StringKeyOf<T> = Extract<keyof T, string>
 

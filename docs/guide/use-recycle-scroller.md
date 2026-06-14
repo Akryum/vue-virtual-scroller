@@ -43,14 +43,14 @@ const recycleScroller = useRecycleScroller<User>({
 recycleScroller.pool.value[0]?.item.name
 ```
 
-When `TItem` is an object type, `keyField` can be either a string key on that type or a resolver function with the signature `(item, index) => string | number`. `itemSize` can be a fixed number, `null` plus `sizeField`, or a resolver function with the signature `(item, index) => number`. `sizeField` must still be a numeric field when `itemSize` is `null`.
+When `TItem` is an object type and `items` is used, `keyField` can be either a string key on that type or a resolver function with the signature `(item, index) => string | number`. Data source mode uses `dataSource.getItemKey(index)` instead, so `keyField` is not required there. `itemSize` can be a fixed number, `null` plus `sizeField`, or a resolver function with the signature `(item, index) => number`. `sizeField` must still be a numeric field when `itemSize` is `null`.
 
 ## Required options
 
 `useRecycleScroller` expects the same core options used internally by `RecycleScroller`:
 
 - `items`
-- `keyField`
+- `keyField` when using `items`
 - `direction`
 - `itemSize`
 - `minItemSize`
@@ -75,8 +75,9 @@ Additional scroll-system options:
 - `flowMode`
 - `enabled` (default `true`) — passive mount switch. See [Disabling the scroller with `enabled`](#disabling-the-scroller-with-enabled).
 - `scrollParent` (default `undefined`) — `MaybeRefOrGetter<HTMLElement | Window | undefined>` override for the page-mode scroll-parent. When omitted, the closest `overflow:auto/scroll` ancestor is auto-detected via DOM walk; html/body normalize to `window`. Use this to skip the walk when you already hold a ref to the parent, or when multiple scroll boundaries make auto-detection ambiguous. See [issue #928](https://github.com/Akryum/vue-virtual-scroller/issues/928).
+- `dataSourceKey` (default `undefined`) — `MaybeRefOrGetter<unknown>` identity key for data-source contents. Change it to clear cached rows when the same `dataSource` object is reused for different backing data.
 
-`keyField` can also be a resolver function when your data needs a derived key. The callback always receives `(item, index)`:
+`keyField` can also be a resolver function when item-array data needs a derived key. The callback always receives `(item, index)`:
 
 ```ts
 const compositeKey = (item: Message, index: number) => `${item.threadId}:${item.id}:${index}`

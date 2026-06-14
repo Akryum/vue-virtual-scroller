@@ -257,6 +257,62 @@ describe('recycleScroller', () => {
     expect(resolvedOptions.hiddenPosition).toBe(-321)
   })
 
+  it('passes dataSource options to useRecycleScroller', () => {
+    const dataSource = {
+      getItems: vi.fn(() => [{ id: 'a' }]),
+      getItemKey: vi.fn((index: number) => index),
+    }
+    mount(RecycleScroller, {
+      props: {
+        dataSource,
+        count: 100,
+        dataSourceCacheSize: 50,
+        dataSourceKey: 'query-a',
+        itemSize: 30,
+      },
+      global: {
+        stubs: {
+          ResizeObserver: ResizeObserverStub,
+        },
+      },
+    })
+
+    const [optionsArg] = mocks.useRecycleScroller.mock.calls[0]
+    const resolvedOptions = toValue(optionsArg)
+    expect(resolvedOptions.items.value).toBeUndefined()
+    expect(resolvedOptions.dataSource.getItems(0, 1)).toEqual([{ id: 'a' }])
+    expect(resolvedOptions.dataSource.getItemKey(4)).toBe(4)
+    expect(resolvedOptions.count).toBe(100)
+    expect(resolvedOptions.dataSourceCacheSize).toBe(50)
+    expect(resolvedOptions.dataSourceKey).toBe('query-a')
+  })
+
+  it('emits data source errors from useRecycleScroller', () => {
+    const dataSource = {
+      getItems: vi.fn(() => [{ id: 'a' }]),
+      getItemKey: vi.fn((index: number) => index),
+    }
+    const wrapper = mount(RecycleScroller, {
+      props: {
+        dataSource,
+        count: 100,
+        itemSize: 30,
+      },
+      global: {
+        stubs: {
+          ResizeObserver: ResizeObserverStub,
+        },
+      },
+    })
+
+    const [optionsArg] = mocks.useRecycleScroller.mock.calls[0]
+    const resolvedOptions = toValue(optionsArg)
+    const error = new Error('load failed')
+    resolvedOptions.onDataSourceError(error, 0, 10)
+
+    expect(wrapper.emitted('dataSourceError')).toEqual([[error, 0, 10]])
+  })
+
   it('renders flow-mode spacers and exposes spacer refs', async () => {
     const wrapper = mount(RecycleScroller, {
       props: {
