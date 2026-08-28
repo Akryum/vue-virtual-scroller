@@ -984,12 +984,19 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
 
   function setScrollTop(target: number) {
     const scrollerEl = el.value
-    if (!scrollerEl || Math.abs(scrollerEl.scrollTop - target) < 0.5) {
+    if (!scrollerEl) {
+      return false
+    }
+
+    const maxScrollTop = Math.max(0, scrollerEl.scrollHeight - scrollerEl.clientHeight)
+    const clamped = Math.min(Math.max(target, 0), maxScrollTop)
+
+    if (Math.abs(scrollerEl.scrollTop - clamped) < 0.5) {
       return false
     }
 
     _applyingShiftAnchor = true
-    scrollerEl.scrollTop = target
+    scrollerEl.scrollTop = clamped
     // Keep the pooled window in sync immediately so prepend anchoring does not
     // expose one-frame overlaps while the native scroll event is still queued.
     recycleScroller.updateVisibleItems(true)
