@@ -1341,6 +1341,13 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     forceUpdate(true)
   })
 
+  watch(() => getOptions().minItemSize, () => {
+    if (!isEnabled.value) {
+      return
+    }
+    forceUpdate(true)
+  })
+
   watch(el, (nextEl, previousEl) => {
     previousEl?.removeEventListener('scroll', onNativeScroll)
     if (!isEnabled.value) {
