@@ -555,6 +555,34 @@ describe('useRecycleScroller', () => {
     }
   })
 
+  it('keeps visible view ids stable when items are appended', async () => {
+    const { vm, options } = mountHarness({
+      items: Array.from({ length: 10 }, (_, id) => ({ id })),
+      itemSize: 10,
+      clientHeight: 40,
+    })
+
+    await nextTick()
+    await nextTick()
+
+    // Scroll so recycled views sit in the pool, like after real scrolling.
+    vm.el.scrollTop = 30
+    vm.updateVisibleItems(false, true)
+
+    const initialIdsByKey = new Map(vm.visiblePool.map((view: View) => [view.nr.key, view.nr.id]))
+    const initialIndexes = vm.visiblePool.map((view: View) => view.nr.index)
+
+    // Infinite loading: existing keys keep their order and indexes, so their
+    // views must stay mounted instead of being released and reassigned.
+    options.items = [...options.items, ...Array.from({ length: 10 }, (_, index) => ({ id: 10 + index }))]
+    await nextTick()
+
+    expect(vm.visiblePool.map((view: View) => view.nr.index)).toEqual(initialIndexes)
+    for (const view of vm.visiblePool) {
+      expect(view.nr.id).toBe(initialIdsByKey.get(view.nr.key))
+    }
+  })
+
   it('recycles visible views when same-key item types change', async () => {
     const { vm, options } = mountHarness({
       items: Array.from({ length: 4 }, (_, id) => ({ id, type: 'row' })),

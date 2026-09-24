@@ -103,6 +103,31 @@ function getItemTypes<TItem>(items: TItem[], typeField: string): unknown[] {
 }
 
 /**
+ * Whether the next key/type sequence only appends items after the previous
+ * one. Existing items then keep their indexes, so their views stay valid and
+ * must not be recycled (infinite loading would otherwise remount every
+ * visible view on each page).
+ */
+function isAppendedItemIdentitySequence<TKey>(
+  nextKeys: TKey[],
+  nextTypes: unknown[],
+  previousKeys: TKey[],
+  previousTypes: unknown[],
+): boolean {
+  if (nextKeys.length <= previousKeys.length || nextTypes.length <= previousTypes.length) {
+    return false
+  }
+
+  for (let index = 0; index < previousKeys.length; index++) {
+    if (nextKeys[index] !== previousKeys[index] || nextTypes[index] !== previousTypes[index]) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
  * Compare item identity that affects recycled view ownership.
  */
 function hasSameItemIdentitySequence<TKey>(
@@ -1848,6 +1873,11 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     const previousKeysSnapshot = _previousKeys
     const previousTypesSnapshot = _previousTypes
     const itemsChanged = !hasSameItemIdentitySequence(
+      nextKeys as Array<ItemKey<TItem, TKeyField>>,
+      nextTypes,
+      previousKeysSnapshot,
+      previousTypesSnapshot,
+    ) && !isAppendedItemIdentitySequence(
       nextKeys as Array<ItemKey<TItem, TKeyField>>,
       nextTypes,
       previousKeysSnapshot,
