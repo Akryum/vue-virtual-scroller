@@ -1316,13 +1316,10 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       secondaryScroll.start -= buffer
       secondaryScroll.end += buffer
 
-      // account for leading slot
-      let beforeSize = 0
-      const beforeEl = normalizedInputs.before.value
-      if (beforeEl) {
-        beforeSize = beforeEl.scrollHeight
-        scroll.start -= beforeSize
-      }
+      // account for leading slot (both ends move into item-relative coords)
+      const beforeSize = getLeadingSlotSize()
+      scroll.start -= beforeSize
+      scroll.end -= beforeSize
 
       // account for trailing slot
       const afterEl = normalizedInputs.after.value
@@ -1384,14 +1381,14 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         }
 
         // search visible startIndex
-        for (visibleStartIndex = startIndex; visibleStartIndex < count && (beforeSize + (sizesValue[visibleStartIndex]?.accumulator ?? Number.POSITIVE_INFINITY)) < scroll.start; visibleStartIndex++);
+        for (visibleStartIndex = startIndex; visibleStartIndex < count && (sizesValue[visibleStartIndex]?.accumulator ?? Number.POSITIVE_INFINITY) < scroll.start; visibleStartIndex++);
 
         // search visible endIndex. Same direction rationale as the endIndex
         // search above — fall back to `0` so a sparse slot doesn't collapse
         // the visible window. The visibleStartIndex search above intentionally
         // keeps `+∞` because terminating on a missing entry there is the
         // correct direction (keeps the missing item inside the visible range).
-        for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (beforeSize + (sizesValue[visibleEndIndex]?.accumulator ?? 0)) < scroll.end; visibleEndIndex++);
+        for (visibleEndIndex = visibleStartIndex; visibleEndIndex < count && (sizesValue[visibleEndIndex]?.accumulator ?? 0) < scroll.end; visibleEndIndex++);
 
         if (shouldStabilizeIdleFlowWindow) {
           const stabilizedRange = stabilizeFlowWindow({
@@ -1450,8 +1447,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
           const remainer = startIndex % gridItems
           startIndex -= remainer
           endIndex = Math.ceil(scroll.end / itemSize * gridItems)
-          visibleStartIndex = Math.max(0, Math.floor((scroll.start - beforeSize) / itemSize * gridItems))
-          visibleEndIndex = Math.floor((scroll.end - beforeSize) / itemSize * gridItems)
+          visibleStartIndex = Math.max(0, Math.floor(scroll.start / itemSize * gridItems))
+          visibleEndIndex = Math.floor(scroll.end / itemSize * gridItems)
 
           // Bounds
           if (startIndex < 0)
