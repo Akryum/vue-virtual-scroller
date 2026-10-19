@@ -7,17 +7,23 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "pnpm run -r --filter=!demo build",
+    "build": "pnpm run -r --filter=!demo --filter=!@vue-virtual-scroller/benchmarks build",
     "release": "pnpm run lint && pnpm run typecheck && pnpm run build && sheep release -b main --force",
     "lint": "eslint --cache",
     "test": "pnpm run lint && pnpm run typecheck && pnpm run test:unit && pnpm run test:e2e",
-    "typecheck": "pnpm --filter vue-virtual-scroller typecheck",
-    "test:unit": "pnpm run -r --filter vue-virtual-scroller test",
+    "typecheck": "pnpm --filter vue-virtual-scroller typecheck && pnpm --filter @vue-virtual-scroller/benchmarks typecheck",
+    "test:unit": "pnpm run -r --filter vue-virtual-scroller --filter @vue-virtual-scroller/benchmarks test",
     "test:e2e": "playwright test",
     "test:ci": "pnpm build && pnpm --filter vue-virtual-scroller test:package && pnpm docs:build && pnpm --filter vue-virtual-scroller exec npm pack --dry-run",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "benchmark:dev": "pnpm --filter vue-virtual-scroller build && pnpm --filter @vue-virtual-scroller/benchmarks dev",
+    "benchmark:preview": "pnpm --filter vue-virtual-scroller build && pnpm --filter @vue-virtual-scroller/benchmarks build && pnpm --filter @vue-virtual-scroller/benchmarks preview",
+    "benchmark": "pnpm --filter @vue-virtual-scroller/benchmarks benchmark",
+    "benchmark:full": "pnpm benchmark --profile full",
+    "benchmark:stress": "pnpm benchmark --profile stress",
+    "benchmark:test": "pnpm --filter @vue-virtual-scroller/benchmarks exec node scripts/check.mjs"
   },
   "devDependencies": {
     "@akryum/sheep": "^0.5.2",

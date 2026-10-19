@@ -1,0 +1,25 @@
+{
+  "name": "@vue-virtual-scroller/benchmarks",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "benchmark": "node scripts/entry.mjs",
+    "test": "vitest run",
+    "test:browser": "playwright test",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "vue": "^3.5.0",
+    "vue-virtual-scroller": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.2",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "playwright": "1.58.2",
+    "vite": "^6.0.0",
+    "vitest": "4.0.16"
+  }
+}

@@ -33,5 +33,8 @@ jobs:
           PLAYWRIGHT_ENABLE_WEBKIT: '1'
         run: pnpm test:e2e
 
+      - name: Validate benchmark workloads
+        run: pnpm benchmark:test
+
       - name: Validate release build
         run: pnpm test:ci

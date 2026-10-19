@@ -1,3 +1,5 @@
+import { createRng } from '../../../../packages/shared/random'
+
 export interface PersonRow {
   id: number
   index: number
@@ -133,14 +135,6 @@ const EMAIL_DOMAINS = [
 
 const SLUG_SEPARATOR_RE = /[^a-z0-9]+/g
 const SLUG_TRIM_RE = /^-|-$/g
-
-function createRng(seed = 1) {
-  let value = seed >>> 0
-  return () => {
-    value = (Math.imul(1664525, value) + 1013904223) >>> 0
-    return value / 4294967296
-  }
-}
 
 function pick<T>(rng: () => number, values: T[]) {
   return values[Math.floor(rng() * values.length)]

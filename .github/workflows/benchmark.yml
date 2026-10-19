@@ -1,0 +1,32 @@
+name: Benchmarks
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Benchmark profile
+        type: choice
+        options: [quick, full, stress]
+        default: quick
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium firefox
+      - name: Run paired production benchmarks
+        env:
+          BENCHMARK_PROFILE: ${{ inputs.profile }}
+        run: pnpm benchmark --profile "$BENCHMARK_PROFILE" --output benchmark-results/ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-${{ inputs.profile }}-${{ github.sha }}
+          path: benchmark-results/ci/
+          if-no-files-found: warn

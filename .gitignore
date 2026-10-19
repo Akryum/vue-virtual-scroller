@@ -8,3 +8,4 @@ docs/.vitepress/dist
 playwright-report/
 test-results/
 tests-results/
+benchmark-results/
