@@ -131,9 +131,6 @@ async function main() {
 
     assertNoMittImport(results.get('composable-recycle'))
   }
-  catch (err) {
-    console.error('WTF', err)
-  }
   finally {
     rmSync(tempRoot, { recursive: true, force: true })
   }
