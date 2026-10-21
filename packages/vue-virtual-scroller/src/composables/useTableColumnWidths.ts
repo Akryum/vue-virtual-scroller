@@ -1,5 +1,5 @@
 import type { ComputedRef, CSSProperties, MaybeRefOrGetter } from 'vue'
-import type { ScrollerOptionEnabled } from './scrollerOptions'
+import type { ScrollerOptionEnabled } from './scrollerOptions.js'
 import { computed, nextTick, onBeforeUnmount, shallowRef, toValue, watch } from 'vue'
 
 /**

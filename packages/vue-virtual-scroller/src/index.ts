@@ -1,23 +1,23 @@
 import type { App } from 'vue'
-import type { PluginOptions } from './types'
+import type { PluginOptions } from './types.js'
 import DynamicScroller from './components/DynamicScroller.vue'
 import DynamicScrollerItem from './components/DynamicScrollerItem.vue'
 import RecycleScroller from './components/RecycleScroller.vue'
 import WindowScroller from './components/WindowScroller.vue'
-import config from './config'
+import config from './config.js'
 
-export { useDynamicScroller } from './composables/useDynamicScroller'
-export type { UseDynamicScrollerItemBindingOptions, UseDynamicScrollerOptions, UseDynamicScrollerReturn } from './composables/useDynamicScroller'
-export { useDynamicScrollerItem } from './composables/useDynamicScrollerItem'
-export type { UseDynamicScrollerItemOptions, UseDynamicScrollerItemReturn } from './composables/useDynamicScrollerItem'
+export { useDynamicScroller } from './composables/useDynamicScroller.js'
+export type { UseDynamicScrollerItemBindingOptions, UseDynamicScrollerOptions, UseDynamicScrollerReturn } from './composables/useDynamicScroller.js'
+export { useDynamicScrollerItem } from './composables/useDynamicScrollerItem.js'
+export type { UseDynamicScrollerItemOptions, UseDynamicScrollerItemReturn } from './composables/useDynamicScrollerItem.js'
 
-export { useIdState } from './composables/useIdState'
-export { useRecycleScroller } from './composables/useRecycleScroller'
-export type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './composables/useRecycleScroller'
-export { useTableColumnWidths } from './composables/useTableColumnWidths'
-export type { UseTableColumnWidthsOptions, UseTableColumnWidthsReturn } from './composables/useTableColumnWidths'
-export { useWindowScroller } from './composables/useWindowScroller'
-export type { UseWindowScrollerOptions, UseWindowScrollerReturn } from './composables/useWindowScroller'
+export { useIdState } from './composables/useIdState.js'
+export { useRecycleScroller } from './composables/useRecycleScroller.js'
+export type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './composables/useRecycleScroller.js'
+export { useTableColumnWidths } from './composables/useTableColumnWidths.js'
+export type { UseTableColumnWidthsOptions, UseTableColumnWidthsReturn } from './composables/useTableColumnWidths.js'
+export { useWindowScroller } from './composables/useWindowScroller.js'
+export type { UseWindowScrollerOptions, UseWindowScrollerReturn } from './composables/useWindowScroller.js'
 
 export {
   DynamicScroller,
@@ -26,7 +26,7 @@ export {
   WindowScroller,
 }
 
-export type * from './types'
+export type * from './types.js'
 
 function registerComponents(app: App, prefix: string) {
   app.component(`${prefix}recycle-scroller`, RecycleScroller)

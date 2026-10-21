@@ -1,8 +1,8 @@
 import type { ComputedRef, MaybeRefOrGetter } from 'vue'
-import type { KeyValue, ScrollDirection, VScrollData } from '../types'
-import type { DynamicScrollerMeasureQueue } from './dynamicScrollerMeasureQueue'
+import type { KeyValue, ScrollDirection, VScrollData } from '../types.js'
+import type { DynamicScrollerMeasureQueue } from './dynamicScrollerMeasureQueue.js'
 import { computed, toValue, watch } from 'vue'
-import { resolveItemKeyWithOptionalIndex } from '../engine/keyField'
+import { resolveItemKeyWithOptionalIndex } from '../engine/keyField.js'
 
 export interface DynamicScrollerUpdatePayload {
   force: boolean

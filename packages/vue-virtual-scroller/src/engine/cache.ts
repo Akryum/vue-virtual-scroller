@@ -1,5 +1,5 @@
-import type { CacheSnapshot, KeyFieldValue, ScrollAlign } from '../types'
-import { resolveItemKey } from './keyField'
+import type { CacheSnapshot, KeyFieldValue, ScrollAlign } from '../types.js'
+import { resolveItemKey } from './keyField.js'
 
 export function getItemKey(item: unknown, index: number, keyField: KeyFieldValue<any> | null): string | number {
   return resolveItemKey(item, index, keyField)

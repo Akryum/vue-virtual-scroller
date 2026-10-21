@@ -1,8 +1,8 @@
 <script setup lang="ts" generic="TItem">
-import type { UseDynamicScrollerOptions, UseDynamicScrollerReturn } from '../composables/useDynamicScroller'
-import type { CacheSnapshot, DynamicScrollerExposed, DynamicScrollerSlotProps, ItemWithSize, KeyFieldValue, KeyValue, RecycleScrollerExposed, ScrollDirection } from '../types'
+import type { UseDynamicScrollerOptions, UseDynamicScrollerReturn } from '../composables/useDynamicScroller.js'
+import type { CacheSnapshot, DynamicScrollerExposed, DynamicScrollerSlotProps, ItemWithSize, KeyFieldValue, KeyValue, RecycleScrollerExposed, ScrollDirection } from '../types.js'
 import { computed, ref, toRef } from 'vue'
-import { useDynamicScroller } from '../composables/useDynamicScroller'
+import { useDynamicScroller } from '../composables/useDynamicScroller.js'
 import RecycleScroller from './RecycleScroller.vue'
 
 defineOptions({

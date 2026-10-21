@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { DynamicScroller, RecycleScroller } from '../index'
+import { DynamicScroller, RecycleScroller } from '../index.ts'
 
 interface Message {
   id: string

@@ -1,4 +1,4 @@
-import type { ItemSizeValue } from '../types'
+import type { ItemSizeValue } from '../types.js'
 
 /**
  * Return numeric fixed item size when scroller runs in fixed-size mode.

@@ -1,4 +1,4 @@
-import type { ScrollDirection, ScrollToOptions } from '../types'
+import type { ScrollDirection, ScrollToOptions } from '../types.js'
 
 function isWindowTarget(target: HTMLElement | Window | null | undefined): target is Window {
   return typeof window !== 'undefined' && target === window

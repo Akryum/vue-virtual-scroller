@@ -1,4 +1,4 @@
-import type { KeyValue } from '../types'
+import type { KeyValue } from '../types.js'
 import { nextTick } from 'vue'
 
 export interface DynamicScrollerMeasureTask {

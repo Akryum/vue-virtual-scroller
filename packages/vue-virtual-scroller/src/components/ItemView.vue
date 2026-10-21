@@ -1,7 +1,7 @@
 <!-- Avoid re-renders of slots -->
 
 <script setup lang="ts" generic="TItem, TKey">
-import type { RecycleScrollerSlotProps, View } from '../types'
+import type { RecycleScrollerSlotProps, View } from '../types.ts'
 
 const props = defineProps<{
   view: View<TItem, TKey>

@@ -30,48 +30,28 @@
       "import": "./dist/vue-virtual-scroller.js",
       "default": "./dist/vue-virtual-scroller.js"
     },
-    "./components/DynamicScroller": {
-      "types": "./dist/components/DynamicScroller.vue.d.ts",
-      "import": "./dist/components/DynamicScroller.js"
+    "./components/DynamicScroller": "./dist/components/DynamicScroller.js",
+    "./components/DynamicScrollerItem": "./dist/components/DynamicScrollerItem.js",
+    "./components/RecycleScroller": "./dist/components/RecycleScroller.js",
+    "./components/WindowScroller": "./dist/components/WindowScroller.js",
+    "./composables/useDynamicScroller": "./dist/composables/useDynamicScroller.js",
+    "./composables/useDynamicScrollerItem": "./dist/composables/useDynamicScrollerItem.js",
+    "./composables/useIdState": "./dist/composables/useIdState.js",
+    "./composables/useRecycleScroller": "./dist/composables/useRecycleScroller.js",
+    "./composables/useTableColumnWidths": "./dist/composables/useTableColumnWidths.js",
+    "./composables/useWindowScroller": "./dist/composables/useWindowScroller.js",
+    "./utils": "./dist/utils.js",
+    "./types": {
+      "types": "./dist/types.d.ts"
     },
-    "./components/DynamicScrollerItem": {
-      "types": "./dist/components/DynamicScrollerItem.vue.d.ts",
-      "import": "./dist/components/DynamicScrollerItem.js"
+    "./dist/vue-virtual-scroller.css": {
+      "style": "./dist/vue-virtual-scroller.css",
+      "default": "./dist/vue-virtual-scroller.css"
     },
-    "./components/RecycleScroller": {
-      "types": "./dist/components/RecycleScroller.vue.d.ts",
-      "import": "./dist/components/RecycleScroller.js"
-    },
-    "./components/WindowScroller": {
-      "types": "./dist/components/WindowScroller.vue.d.ts",
-      "import": "./dist/components/WindowScroller.js"
-    },
-    "./composables/useDynamicScroller": {
-      "types": "./dist/composables/useDynamicScroller.d.ts",
-      "import": "./dist/composables/useDynamicScroller.js"
-    },
-    "./composables/useDynamicScrollerItem": {
-      "types": "./dist/composables/useDynamicScrollerItem.d.ts",
-      "import": "./dist/composables/useDynamicScrollerItem.js"
-    },
-    "./composables/useIdState": {
-      "types": "./dist/composables/useIdState.d.ts",
-      "import": "./dist/composables/useIdState.js"
-    },
-    "./composables/useRecycleScroller": {
-      "types": "./dist/composables/useRecycleScroller.d.ts",
-      "import": "./dist/composables/useRecycleScroller.js"
-    },
-    "./composables/useTableColumnWidths": {
-      "types": "./dist/composables/useTableColumnWidths.d.ts",
-      "import": "./dist/composables/useTableColumnWidths.js"
-    },
-    "./composables/useWindowScroller": {
-      "types": "./dist/composables/useWindowScroller.d.ts",
-      "import": "./dist/composables/useWindowScroller.js"
-    },
-    "./dist/vue-virtual-scroller.css": "./dist/vue-virtual-scroller.css",
-    "./index.css": "./dist/vue-virtual-scroller.css"
+    "./index.css": {
+      "style": "./dist/vue-virtual-scroller.css",
+      "default": "./dist/vue-virtual-scroller.css"
+    }
   },
   "module": "dist/vue-virtual-scroller.js",
   "types": "dist/index.d.ts",
@@ -80,7 +60,7 @@
     "skills"
   ],
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && node scripts/post-build.mjs",
     "dev": "vite build --watch",
     "test": "vitest run",
     "test:watch": "vitest",

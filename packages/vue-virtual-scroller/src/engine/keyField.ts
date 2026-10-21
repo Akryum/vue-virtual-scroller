@@ -1,4 +1,4 @@
-import type { KeyFieldValue, KeyValue } from '../types'
+import type { KeyFieldValue, KeyValue } from '../types.js'
 
 /**
  * Formats a keyField value for human-readable error messages.

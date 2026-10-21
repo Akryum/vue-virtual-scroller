@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'vue'
-import type { ScrollDirection, View } from '../types'
+import type { ScrollDirection, View } from '../types.js'
 
 /**
  * Supported pooled-view positioning modes.

@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="TItem">
-import type { KeyValue } from '../types'
+import type { KeyValue } from '../types.js'
 import { ref } from 'vue'
-import { useDynamicScrollerItem } from '../composables/useDynamicScrollerItem'
+import { useDynamicScrollerItem } from '../composables/useDynamicScrollerItem.js'
 
 const props = withDefaults(defineProps<{
   item: TItem

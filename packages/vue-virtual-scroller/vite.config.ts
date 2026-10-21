@@ -9,6 +9,8 @@ const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
 const isTest = process.env.VITEST === 'true'
 const libraryEntries = {
   'vue-virtual-scroller': resolve('src/index.ts'),
+  'types': resolve('src/types.ts'),
+  'utils': resolve('src/utils.ts'),
   'components/DynamicScroller': resolve('src/components/DynamicScroller.vue'),
   'components/DynamicScrollerItem': resolve('src/components/DynamicScrollerItem.vue'),
   'components/RecycleScroller': resolve('src/components/RecycleScroller.vue'),
@@ -29,6 +31,11 @@ export default defineConfig({
           tsconfigPath: './tsconfig.build.json',
           entryRoot: 'src',
           strictOutput: true,
+          // Remove .vue from the generated d.ts files,
+          // so that they can be imported without the .vue extension
+          // using .js instead.
+          // Check scripts/post-build.mjs module
+          cleanVueFileName: true,
         })]
       : []),
   ],

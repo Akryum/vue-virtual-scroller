@@ -1,8 +1,8 @@
 import type { MaybeRefOrGetter } from 'vue'
-import type { DefaultKeyField, ItemKey, KeyFieldValue, ValidKeyField } from '../types'
-import type { ScrollerCallbacks } from './scrollerOptions'
-import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './useRecycleScroller'
-import { useRecycleScroller } from './useRecycleScroller'
+import type { DefaultKeyField, ItemKey, KeyFieldValue, ValidKeyField } from '../types.js'
+import type { ScrollerCallbacks } from './scrollerOptions.js'
+import type { UseRecycleScrollerOptions, UseRecycleScrollerReturn } from './useRecycleScroller.js'
+import { useRecycleScroller } from './useRecycleScroller.js'
 
 export interface UseWindowScrollerOptions<TItem = unknown, TSizeField extends string = 'size'> extends Omit<UseRecycleScrollerOptions<TItem, TSizeField>, 'pageMode'> {
   pageMode?: boolean

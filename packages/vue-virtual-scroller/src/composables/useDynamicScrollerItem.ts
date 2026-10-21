@@ -1,9 +1,9 @@
 import type { MaybeRefOrGetter } from 'vue'
-import type { KeyValue } from '../types'
-import type { DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext } from './dynamicScrollerMeasurement'
-import type { ScrollerOptionEnabled } from './scrollerOptions'
+import type { KeyValue } from '../types.js'
+import type { DynamicScrollerItemControllerOptions, DynamicScrollerMeasurementContext } from './dynamicScrollerMeasurement.js'
+import type { ScrollerOptionEnabled } from './scrollerOptions.js'
 import { computed, inject, onBeforeUnmount, onMounted, toValue, watch } from 'vue'
-import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
+import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement.js'
 
 export interface UseDynamicScrollerItemOptions<TItem = unknown> extends DynamicScrollerItemControllerOptions<TItem>, ScrollerOptionEnabled {
   el: MaybeRefOrGetter<HTMLElement | undefined>

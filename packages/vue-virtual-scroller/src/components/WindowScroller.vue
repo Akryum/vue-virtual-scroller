@@ -1,11 +1,11 @@
 <script setup lang="ts" generic="TItem">
-import type { ScrollerCallbacks } from '../composables/scrollerOptions'
-import type { UseWindowScrollerOptions, UseWindowScrollerReturn } from '../composables/useWindowScroller'
-import type { CacheSnapshot, ClassValue, ItemSizeValue, KeyFieldValue, KeyValue, RecycleScrollerSlotProps, ScrollDirection, WindowScrollerExposed } from '../types'
+import type { ScrollerCallbacks } from '../composables/scrollerOptions.ts'
+import type { UseWindowScrollerOptions, UseWindowScrollerReturn } from '../composables/useWindowScroller.ts'
+import type { CacheSnapshot, ClassValue, ItemSizeValue, KeyFieldValue, KeyValue, RecycleScrollerSlotProps, ScrollDirection, WindowScrollerExposed } from '../types.ts'
 import { computed, ref, toRef } from 'vue'
-import { useWindowScroller } from '../composables/useWindowScroller'
-import { ObserveVisibility } from '../directives/observeVisibility'
-import { resolvePooledViewMode } from '../utils/viewStyle'
+import { useWindowScroller } from '../composables/useWindowScroller.ts'
+import { ObserveVisibility } from '../directives/observeVisibility.ts'
+import { resolvePooledViewMode } from '../utils/viewStyle.ts'
 import ItemView from './ItemView.vue'
 import ResizeObserver from './ResizeObserver.vue'
 
