@@ -4,6 +4,13 @@ export default defineConfig({
   title: 'Vue Virtual Scroller',
   description: 'Virtual scrolling for large Vue lists and dynamic layouts.',
 
+  markdown: {
+    theme: {
+      light: 'github-light-high-contrast',
+      dark: 'github-dark-high-contrast',
+    },
+  },
+
   themeConfig: {
     nav: [
       { text: 'Guide', link: '/guide/' },

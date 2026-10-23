@@ -103,7 +103,8 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
 .demo-page-mode-parent {
   height: 300px;
   overflow: auto;
-  border: 2px solid #42b983;
+  border: 2px solid var(--demo-border);
+  background: var(--demo-viewport-bg);
   border-radius: 4px;
 }
 
@@ -116,7 +117,7 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
   align-items: center;
   gap: 12px;
   padding: 12px;
-  border-bottom: 1px solid #eef;
+  border-bottom: 1px solid var(--demo-divider-soft);
   min-height: 32px;
   box-sizing: border-box;
 }
@@ -142,7 +143,7 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
 }
 
 .demo-page-mode-preview {
-  color: #555;
+  color: var(--demo-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -151,7 +152,7 @@ function onUpdate(_viewStart: number, _viewEnd: number, start: number, end: numb
 .demo-page-mode-meta {
   flex: 0 0 80px;
   text-align: right;
-  color: #999;
+  color: var(--demo-muted);
   font-size: 0.85em;
 }
 </style>

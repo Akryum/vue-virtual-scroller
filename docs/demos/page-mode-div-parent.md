@@ -13,7 +13,7 @@ This demo reproduces [issue #928](https://github.com/Akryum/vue-virtual-scroller
 
 ## Try it yourself
 
-- Scroll inside the green-bordered area — items rendered should match the visible region, not the full window.
+- Scroll inside the demo viewport — items rendered should match the visible region, not the full window.
 - Toggle the explicit `scrollParent` prop checkbox. The component first relies on auto-detection (the nearest `overflow:auto` ancestor); flipping the toggle passes the parent ref explicitly so consumers can bypass the DOM walk in templates with multiple scroll boundaries.
 
 <PageModeDivParentDocDemo />

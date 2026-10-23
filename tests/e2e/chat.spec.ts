@@ -27,14 +27,16 @@ test('chat demo streams, filters, and stays pinned near the bottom', async ({ br
   await control(page, 'start-stream').click()
   await expect.poll(async () => (await readMetricNumbers(rowsMetric))[0] ?? 0).toBeGreaterThan(initialRows)
 
-  const startedRows = (await readMetricNumbers(rowsMetric))[0] ?? 0
   await control(page, 'stop-stream').click()
+  await expect(control(page, 'start-stream')).toBeVisible()
+  // Messages can arrive while Playwright is completing the Stop click.
+  const stoppedRows = (await readMetricNumbers(rowsMetric))[0] ?? 0
   await page.waitForTimeout(700)
-  expect((await readMetricNumbers(rowsMetric))[0] ?? 0).toBe(startedRows)
+  expect((await readMetricNumbers(rowsMetric))[0] ?? 0).toBe(stoppedRows)
 
   await control(page, 'append-20').click()
   await waitForSettle(page)
-  expect((await readMetricNumbers(rowsMetric))[0] ?? 0).toBeGreaterThanOrEqual(startedRows + 20)
+  expect((await readMetricNumbers(rowsMetric))[0] ?? 0).toBeGreaterThanOrEqual(stoppedRows + 20)
   expect(await getViewportEdgeDistance(page)).toBeLessThan(140)
 
   const firstRowText = await page.locator('[data-testid="demo:row"] strong').first().textContent()
@@ -42,6 +44,6 @@ test('chat demo streams, filters, and stays pinned near the bottom', async ({ br
   await control(page, 'filter').fill(filterTerm)
   await waitForSettle(page)
 
-  expect((await readMetricNumbers(rowsMetric))[0] ?? 0).toBeLessThanOrEqual(startedRows + 20)
+  expect((await readMetricNumbers(rowsMetric))[0] ?? 0).toBeLessThanOrEqual(stoppedRows + 20)
   await expect(viewport(page)).toBeVisible()
 })

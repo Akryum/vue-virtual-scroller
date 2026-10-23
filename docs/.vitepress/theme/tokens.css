@@ -1,0 +1,81 @@
+:root {
+  --vp-c-brand-1: #1b774e;
+  --vp-c-brand-2: #16633f;
+  --vp-c-brand-3: #14532d;
+  --vp-c-brand-soft: rgba(65, 184, 131, 0.12);
+  --vp-code-lang-color: var(--vp-c-text-2);
+  --vp-code-line-number-color: var(--vp-c-text-2);
+
+  /* Keep white button text on dark greens in both themes. */
+  --vp-button-brand-text: #fff;
+  --vp-button-brand-hover-text: #fff;
+  --vp-button-brand-active-text: #fff;
+  --vp-button-brand-bg: #1b774e;
+  --vp-button-brand-hover-bg: #16633f;
+  --vp-button-brand-active-bg: #14532d;
+
+  --demo-bg: linear-gradient(145deg, #f4f8f2 0%, #edf7f6 48%, #f8f2e9 100%);
+  --demo-surface: rgba(255, 255, 255, 0.86);
+  --demo-border: rgba(0, 0, 0, 0.16);
+  --demo-accent: #2f7a52;
+  --demo-accent-soft: rgba(47, 122, 82, 0.12);
+  --demo-text: #173224;
+  --demo-muted: #4c6a5c;
+  --demo-shadow: 0 12px 35px rgba(13, 42, 29, 0.12);
+  --demo-panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.55));
+  --demo-toolbar-bg: rgba(255, 255, 255, 0.52);
+  --demo-viewport-bg: rgba(255, 255, 255, 0.6);
+  --demo-divider-soft: rgba(0, 0, 0, 0.06);
+  --demo-divider-strong: rgba(0, 0, 0, 0.08);
+  --demo-table-head-bg: rgba(244, 248, 242, 0.96);
+  --demo-table-row-bg: rgba(255, 255, 255, 0.78);
+  --demo-table-row-hover-bg: rgba(255, 255, 255, 0.94);
+  --demo-table-grid: rgba(47, 73, 59, 0.12);
+  --demo-table-head-text: #335845;
+  --demo-table-body-text: #1d3528;
+  --demo-table-primary-text: #173224;
+  --demo-table-secondary-text: var(--demo-muted);
+  --demo-table-mono-text: #355645;
+  --demo-status-active-text: #165f3b;
+  --demo-status-active-bg: rgba(47, 122, 82, 0.12);
+  --demo-status-review-text: #8a5a00;
+  --demo-status-review-bg: rgba(245, 158, 11, 0.14);
+  --demo-status-paused-text: #8b1e3f;
+  --demo-status-paused-bg: rgba(225, 29, 72, 0.12);
+}
+
+.dark {
+  --vp-c-brand-1: #6ed1a5;
+  --vp-c-brand-2: #8be1b8;
+  --vp-c-brand-3: #a4edca;
+  --vp-c-brand-soft: rgba(110, 209, 165, 0.14);
+
+  --demo-bg: linear-gradient(145deg, #16211c 0%, #111914 48%, #1a1f1b 100%);
+  --demo-surface: rgba(22, 31, 26, 0.88);
+  --demo-border: rgba(255, 255, 255, 0.18);
+  --demo-accent: #5cba7f;
+  --demo-accent-soft: rgba(92, 186, 127, 0.16);
+  --demo-text: #edf6f0;
+  --demo-muted: #a8beb0;
+  --demo-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+  --demo-panel-bg: linear-gradient(180deg, rgba(27, 39, 33, 0.88), rgba(20, 29, 24, 0.78));
+  --demo-toolbar-bg: rgba(20, 29, 24, 0.72);
+  --demo-viewport-bg: rgba(18, 26, 22, 0.9);
+  --demo-divider-soft: rgba(164, 201, 181, 0.12);
+  --demo-divider-strong: rgba(164, 201, 181, 0.18);
+  --demo-table-head-bg: rgba(22, 31, 26, 0.96);
+  --demo-table-row-bg: rgba(28, 39, 33, 0.88);
+  --demo-table-row-hover-bg: rgba(38, 52, 44, 0.96);
+  --demo-table-grid: rgba(164, 201, 181, 0.16);
+  --demo-table-head-text: #91c8a6;
+  --demo-table-body-text: #e4efe8;
+  --demo-table-primary-text: #f3f9f5;
+  --demo-table-secondary-text: #a6bbb0;
+  --demo-table-mono-text: #bdd5c7;
+  --demo-status-active-text: #9be0b5;
+  --demo-status-active-bg: rgba(52, 211, 153, 0.14);
+  --demo-status-review-text: #f3c56d;
+  --demo-status-review-bg: rgba(245, 158, 11, 0.16);
+  --demo-status-paused-text: #f4a4b8;
+  --demo-status-paused-bg: rgba(244, 63, 94, 0.14);
+}

@@ -1,5 +1,7 @@
 import { createRng } from '../../../../packages/shared/random'
 
+export { avatarStyle, gradientAt } from './demo-colors'
+
 export interface PersonRow {
   id: number
   index: number
@@ -170,12 +172,6 @@ function hueFromText(text: string, salt = 0) {
   return (hash + 360) % 360
 }
 
-export function avatarStyle(hue: number) {
-  return {
-    background: `linear-gradient(145deg, hsl(${hue} 68% 44%), hsl(${(hue + 32) % 360} 70% 36%))`,
-  }
-}
-
 export function createPeopleRows(count: number, withLetters = true, seed = 42) {
   const rng = createRng(seed)
   const byLetter = new Map<string, Person[]>()
@@ -284,17 +280,4 @@ export function createTableRows(count: number, seed = 314) {
   }
 
   return list
-}
-
-const GRADIENTS = [
-  'linear-gradient(145deg, #57cc99, #2d6a4f)',
-  'linear-gradient(145deg, #ff8fa3, #7b2cbf)',
-  'linear-gradient(145deg, #56cfe1, #4361ee)',
-  'linear-gradient(145deg, #ffd166, #f77f00)',
-  'linear-gradient(145deg, #52b788, #1b4332)',
-  'linear-gradient(145deg, #f8961e, #f94144)',
-]
-
-export function gradientAt(index: number) {
-  return GRADIENTS[index % GRADIENTS.length]
 }
