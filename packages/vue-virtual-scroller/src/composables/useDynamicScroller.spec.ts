@@ -55,6 +55,89 @@ function createScrollerElement() {
   return el
 }
 
+function createClampingScrollerElement({
+  clientHeight = 180,
+  scrollHeight = 600,
+}: {
+  clientHeight?: number
+  scrollHeight?: number
+} = {}) {
+  const el = document.createElement('div')
+  let scrollTop = 0
+
+  Object.defineProperty(el, 'clientHeight', {
+    configurable: true,
+    get() {
+      return clientHeight
+    },
+  })
+
+  Object.defineProperty(el, 'clientWidth', {
+    configurable: true,
+    get() {
+      return clientHeight
+    },
+  })
+
+  Object.defineProperty(el, 'scrollHeight', {
+    configurable: true,
+    get() {
+      return scrollHeight
+    },
+  })
+
+  // jsdom stores `scrollTop` verbatim, but real browsers silently clamp writes
+  // to the reachable range. The clamping is what makes an unreachable anchor
+  // target observable.
+  Object.defineProperty(el, 'scrollTop', {
+    configurable: true,
+    get() {
+      return scrollTop
+    },
+    set(value: number) {
+      scrollTop = Math.min(Math.max(value, 0), Math.max(0, scrollHeight - clientHeight))
+    },
+  })
+
+  el.scrollLeft = 0
+
+  return el
+}
+
+function createFrameRunner() {
+  const callbacks = new Map<number, FrameRequestCallback>()
+  const originalRequest = globalThis.requestAnimationFrame
+  const originalCancel = globalThis.cancelAnimationFrame
+  let nextId = 1
+
+  globalThis.requestAnimationFrame = ((cb: FrameRequestCallback) => {
+    const id = nextId++
+    callbacks.set(id, cb)
+    return id
+  }) as typeof globalThis.requestAnimationFrame
+
+  globalThis.cancelAnimationFrame = ((id: number) => {
+    callbacks.delete(id)
+  }) as typeof globalThis.cancelAnimationFrame
+
+  return {
+    get pending() {
+      return callbacks.size
+    },
+    runFrame() {
+      const scheduled = [...callbacks.entries()]
+      callbacks.clear()
+      for (const [, cb] of scheduled) {
+        cb(0)
+      }
+    },
+    restore() {
+      globalThis.requestAnimationFrame = originalRequest
+      globalThis.cancelAnimationFrame = originalCancel
+    },
+  }
+}
+
 function createSlotElement(scrollHeight: number) {
   const el = document.createElement('div')
 
@@ -119,6 +202,7 @@ function mountHarness(
     shift = false,
     disableTransform = false,
     flowMode = false,
+    scrollerEl,
   }: {
     beforeEl?: HTMLElement
     afterEl?: HTMLElement
@@ -128,6 +212,7 @@ function mountHarness(
     shift?: boolean
     disableTransform?: boolean
     flowMode?: boolean
+    scrollerEl?: HTMLElement
   } = {},
 ) {
   const onResize = vi.fn()
@@ -150,7 +235,7 @@ function mountHarness(
     updateInterval: 0,
   })
 
-  const el = ref(createScrollerElement())
+  const el = ref(scrollerEl ?? createScrollerElement())
   const before = ref(beforeEl)
   const after = ref(afterEl)
 
@@ -661,6 +746,55 @@ describe('useDynamicScroller', () => {
     expect(el.value.scrollTop).toBe(90)
     expect(vm.itemsWithSize[vm.findItemIndex(el.value.scrollTop)].id).toBe(initialAnchorId)
     expect(el.value.scrollTop - vm.getItemOffset(vm.findItemIndex(el.value.scrollTop))).toBe(initialAnchorOffset)
+  })
+
+  it('stops shift anchoring when the anchor target is past the maximum scroll offset', async () => {
+    const frames = createFrameRunner()
+
+    try {
+      // 30 rows of `minItemSize` fill the scroller exactly, so the reachable
+      // range is 600 - 180 = 420 and the viewport sits near the bottom.
+      const initialItems = Array.from({ length: 30 }, (_, index) => ({ id: `row-${index}` }))
+      const { vm, el, options } = mountHarness(initialItems, {
+        shift: true,
+        scrollerEl: createClampingScrollerElement(),
+      })
+
+      await nextTick()
+      await nextTick()
+
+      el.value.scrollTop = 410
+      vm.updateVisibleItems(false)
+
+      options.items = [
+        { id: 'prepended-x' },
+        { id: 'prepended-y' },
+        ...initialItems,
+      ]
+      await nextTick()
+
+      // The prepended rows report their size, so the only thing that could keep
+      // the alignment running is the scroll offset itself.
+      vm.vscrollData.sizes['prepended-x'] = 20
+      vm.vscrollData.sizes['prepended-y'] = 20
+      await nextTick()
+
+      // Holding the anchor row in place would need a scroll offset past the end
+      // of the container, which the browser refuses. The alignment must give up
+      // instead of rescheduling forever.
+      let executedFrames = 0
+      while (frames.pending > 0 && executedFrames < 50) {
+        frames.runFrame()
+        executedFrames++
+        await nextTick()
+      }
+
+      expect(frames.pending).toBe(0)
+      expect(el.value.scrollTop).toBe(420)
+    }
+    finally {
+      frames.restore()
+    }
   })
 
   it('handles simple-array mode and clears sizes on direction change', async () => {
