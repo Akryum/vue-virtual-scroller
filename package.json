@@ -29,10 +29,10 @@
   "devDependencies": {
     "@akryum/sheep": "^0.5.2",
     "@antfu/eslint-config": "^7.7.0",
-    "@playwright/test": "1.58.2",
+    "@playwright/test": "1.60.0",
     "@types/node": "^25.5.0",
     "eslint": "^10.0.2",
-    "playwright": "1.58.2",
+    "playwright": "1.60.0",
     "typescript": "^5.3.3",
     "vitepress": "^1.6.4",
     "vue": "^3.5.0",
