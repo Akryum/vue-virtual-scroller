@@ -9,7 +9,7 @@
     "benchmark": "node scripts/entry.mjs",
     "test": "vitest run",
     "test:browser": "playwright test",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "pnpm --filter vue-virtual-scroller build && vue-tsc --noEmit"
   },
   "dependencies": {
     "vue": "^3.5.0",
