@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import vue from '@vitejs/plugin-vue'
@@ -7,6 +7,8 @@ import dts from 'vite-plugin-dts'
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
 const isTest = process.env.VITEST === 'true'
+/** Relative static imports, re-exports, and import types in emitted declarations. */
+const relativeDeclarationImport = /((?:\bfrom\s+|\bimport\s*\(\s*)['"])(\.\.?\/[^'"]+)(['"])/g
 const libraryEntries = {
   'vue-virtual-scroller': resolve('src/index.ts'),
   'components/DynamicScroller': resolve('src/components/DynamicScroller.vue'),
@@ -29,6 +31,27 @@ export default defineConfig({
           tsconfigPath: './tsconfig.build.json',
           entryRoot: 'src',
           strictOutput: true,
+          cleanVueFileName: true,
+          /** Add ESM extensions to generated declarations without changing source imports. */
+          beforeWriteFile(filePath, content) {
+            return {
+              filePath,
+              content: content.replace(
+                relativeDeclarationImport,
+                (_match, prefix, specifier, quote) =>
+                  `${prefix}${specifier.endsWith('.js') ? specifier : `${specifier}.js`}${quote}`,
+              ),
+            }
+          },
+          /** Support both legacy and arbitrary-extension CSS declaration resolution. */
+          afterBuild() {
+            for (const suffix of ['css.d.ts', 'd.css.ts']) {
+              writeFileSync(
+                resolve(`dist/vue-virtual-scroller.${suffix}`),
+                'declare const css: string;\nexport default css;\n',
+              )
+            }
+          },
         })]
       : []),
   ],

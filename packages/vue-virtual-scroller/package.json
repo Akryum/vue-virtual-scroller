@@ -31,19 +31,19 @@
       "default": "./dist/vue-virtual-scroller.js"
     },
     "./components/DynamicScroller": {
-      "types": "./dist/components/DynamicScroller.vue.d.ts",
+      "types": "./dist/components/DynamicScroller.d.ts",
       "import": "./dist/components/DynamicScroller.js"
     },
     "./components/DynamicScrollerItem": {
-      "types": "./dist/components/DynamicScrollerItem.vue.d.ts",
+      "types": "./dist/components/DynamicScrollerItem.d.ts",
       "import": "./dist/components/DynamicScrollerItem.js"
     },
     "./components/RecycleScroller": {
-      "types": "./dist/components/RecycleScroller.vue.d.ts",
+      "types": "./dist/components/RecycleScroller.d.ts",
       "import": "./dist/components/RecycleScroller.js"
     },
     "./components/WindowScroller": {
-      "types": "./dist/components/WindowScroller.vue.d.ts",
+      "types": "./dist/components/WindowScroller.d.ts",
       "import": "./dist/components/WindowScroller.js"
     },
     "./composables/useDynamicScroller": {

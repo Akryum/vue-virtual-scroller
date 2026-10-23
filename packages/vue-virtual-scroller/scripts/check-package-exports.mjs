@@ -4,6 +4,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { build } from 'vite'
+import { checkPackageTypes } from './check-package-types.mjs'
 
 const packageDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const distEntryPath = path.join(packageDir, 'dist/vue-virtual-scroller.js')
@@ -47,6 +48,7 @@ function createTempConsumerRoot() {
 
   mkdirSync(nodeModulesDir, { recursive: true })
   symlinkSync(packageDir, path.join(nodeModulesDir, 'vue-virtual-scroller'), 'dir')
+  symlinkSync(path.join(packageDir, 'node_modules/vue'), path.join(nodeModulesDir, 'vue'), 'dir')
 
   return tempRoot
 }
@@ -123,6 +125,8 @@ async function main() {
   const tempRoot = createTempConsumerRoot()
 
   try {
+    checkPackageTypes(tempRoot, packageDir)
+
     const results = new Map()
 
     for (const smokeCase of smokeCases) {

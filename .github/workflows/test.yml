@@ -44,3 +44,8 @@ jobs:
 
       - name: Validate release build
         run: pnpm test:ci
+
+      - name: Validate published types
+        run: |
+          pnpm --dir packages/vue-virtual-scroller pack --out "$RUNNER_TEMP/vue-virtual-scroller.tgz"
+          pnpm exec attw "$RUNNER_TEMP/vue-virtual-scroller.tgz" --profile esm-only
