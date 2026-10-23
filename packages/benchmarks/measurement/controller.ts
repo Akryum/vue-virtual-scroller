@@ -6,6 +6,7 @@ import { nextTick } from 'vue'
 import { generateRecords } from '../data/generate'
 import { createWorkloadState } from '../workloads/state'
 import { inspect, scrollElement, settle } from './layout'
+import { recordPhase } from './phase'
 import { runTrial } from './trial'
 import { verifyAction, verifyContent } from './verify'
 
@@ -41,14 +42,14 @@ export function createController(
     const start = performance.now()
     show(true)
     await settle(owner.signal)
-    return performance.now() - start
+    return recordPhase('mount', start, performance.now())
   }
   /** Actual unmount, including Vue cleanup and settled DOM removal. */
   async function unmount() {
     const start = performance.now()
     show(false)
     await settle(owner.signal, false)
-    return performance.now() - start
+    return recordPhase('unmount', start, performance.now())
   }
   /** Native/public package jump, repeatedly correcting estimates for unknown dynamic sizes. */
   async function jumpTo(index: number) {
@@ -117,7 +118,7 @@ export function createController(
         break
     }
     await settle(owner.signal)
-    const duration = performance.now() - start
+    const duration = recordPhase(action, start, performance.now())
     // Anchor assertions are correctness work and deliberately outside the measured operation.
     if (action === 'prepend' && anchor) {
       const after = inspect(active).visible.find(row => row.id === anchor.id)

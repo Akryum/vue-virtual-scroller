@@ -5,23 +5,22 @@ import { RecycleScroller } from 'vue-virtual-scroller'
 import InventoryCell from '../components/InventoryCell.vue'
 import IssueRow from '../components/IssueRow.vue'
 import ProductCard from '../components/ProductCard.vue'
+import MatrixHeaders from './MatrixHeaders.vue'
 import { matrixSide } from './registry'
 /** Fixed rows, product grid, and genuinely two-axis matrix. */
 const props = defineProps<{ model: WorkloadState }>()
 const scroller = ref<{ scrollToItem: (index: number) => void }>()
-const offset = ref({ x: 0, y: 0 })
+const headers = ref<InstanceType<typeof MatrixHeaders>>()
 const matrix = computed(() => props.model.config.workload === 'inventory-matrix')
 const grid = computed(() => props.model.config.workload === 'product-grid')
 const columns = computed(() => matrix.value ? matrixSide(props.model.config.count) : props.model.state.columns)
 const height = computed(() => matrix.value ? 88 : grid.value ? 320 : 112)
 const width = computed(() => matrix.value ? 140 : 240)
 const rows = props.model.rows
-// Header identities change with data order, not with each scroll event.
-const matrixRows = computed(() => rows.value.filter((_, index) => index % columns.value === 0))
-/** Mirror labels in both modes without adding work to record components. */
+/** Keep hot header offsets in their own component so scrolling cannot rerender cells. */
 function trackScroll(event: Event) {
   const target = event.target as HTMLElement
-  offset.value = { x: target.scrollLeft, y: target.scrollTop }
+  headers.value?.syncScroll(target.scrollLeft, target.scrollTop)
 }
 /** Public package jump for virtual mode; native DOM jump for plain mode. */
 function jump(index: number) {
@@ -34,21 +33,7 @@ defineExpose({ jump })
 
 <template>
   <div :class="{ 'matrix-layout': matrix }">
-    <template v-if="matrix">
-      <div class="matrix-corner">
-        Product / warehouse
-      </div>
-      <div class="matrix-columns" :style="{ width: `${model.state.width}px` }">
-        <div :style="{ width: `${columns * 140}px`, transform: `translateX(${-offset.x}px)` }">
-          <span v-for="column in columns" :key="column">Warehouse {{ column }}</span>
-        </div>
-      </div>
-      <div class="matrix-rows">
-        <div :style="{ transform: `translateY(${-offset.y}px)` }">
-          <span v-for="(row, index) in matrixRows" :key="row.id">{{ row.name }}<small>Product {{ row.row + 1 }} · row {{ index + 1 }}</small></span>
-        </div>
-      </div>
-    </template>
+    <MatrixHeaders v-if="matrix" ref="headers" :rows="rows" :columns="columns" :width="model.state.width" />
     <RecycleScroller
       v-if="model.config.mode === 'virtual'" ref="scroller" class="viewport" data-viewport
       :style="{ width: `${model.state.width}px` }" :items="rows" :item-size="height"

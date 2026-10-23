@@ -19,6 +19,7 @@
     "@playwright/test": "1.58.2",
     "@vitejs/plugin-vue": "^5.0.0",
     "playwright": "1.58.2",
+    "source-map-js": "1.2.1",
     "vite": "^6.0.0",
     "vitest": "4.0.16"
   }

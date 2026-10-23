@@ -38,6 +38,12 @@ Supported options: `--profile quick|full|stress`, `--browser chromium|firefox|al
 
 Fixtures use shared deterministic RNG, stable IDs, authored domain templates, fixed dates, explicit English currency formatting, and bundled SVG illustrations. No remote images, APIs, fonts, Faker requests, or wall-clock-derived data. Plain mode renders every matching record; no pagination or hidden virtualization.
 
+## Customer table column policy
+
+Both table renderers use the same native-measure-and-lock column policy. Mount, region filter, revenue sort, viewport width, and account-content revision invalidate widths. The actual record update publishes one revision after replacing changed records. Selection and pooled-row scroll churn retain locked widths. Future account edits/imports/replacements must publish the content revision; arbitrary nested mutations are not automatically watched by this benchmark. Library consumers can still pass deep dependencies to `useTableColumnWidths`.
+
+This explicit dependency policy replaces the original full-dataset deep dependency. Compare performance using a newly matched baseline; historical table timings from the earlier policy measure different invalidation overhead. The production-built `table-width-policy.html` consumer fixture verifies update-driven column growth against real native auto layout in both modes.
+
 ## Measurement contract
 
 CLI runs Chromium and Firefox serially. Every trial has fresh browser context at 1440×1000, device scale 1, English locale, UTC; workload scrollport is 960×640. Window workload uses document viewport. Interactive iframe runs are labelled separately and should not be compared directly against CLI runs.
@@ -61,3 +67,11 @@ Status is `complete`, `partial`, or `cancelled`. Reports are saved after each tr
 ## Adding a workload
 
 Add seeded domain data, shared content component, renderer, registry entry, controller action, and independent correctness assertions. Keep runtime files below 300 lines. Do not add artificial nested markup to inflate virtual/plain differences. Browser tests must consume production bundle and public library exports. Use failure probes in isolated source copies, never edit shared production code to inject defects.
+
+## CPU tracing
+
+```sh
+pnpm benchmark:trace --browser chromium --workload activity-feed --count 10000 --trials 1
+```
+
+Builds production library/app with source maps, then captures real controller phases through the same runner. Output includes raw Chrome timeline/CPU profiles, exact phase evidence, captured assets, provenance, and standalone flamecharts. Traced durations are diagnostic; compare uninstrumented reports separately. CPU tracing supports Chromium; normal benchmarks continue to support both engines. See [tracing options and limits](./scripts/tracing/README.md).

@@ -69,6 +69,8 @@ export function createDynamicScrollerItemController(
   let _pendingSizeUpdate: KeyValue | null = null
   let _pendingVScrollUpdate: KeyValue | null = null
   let _sizeObserved = false
+  let _disposed = false
+  let _bindingGeneration = 0
   let _watchDataStop: (() => void) | null = null
   const _cleanupStops: Array<() => void> = []
   const unsubscribeVscrollUpdate = context.resizeObserver
@@ -165,9 +167,10 @@ export function createDynamicScrollerItemController(
   }
 
   function computeSize(targetId: KeyValue) {
+    const generation = _bindingGeneration
     context.measureQueue.schedule(targetId, {
       read() {
-        if (id.value !== targetId) {
+        if (_disposed || generation !== _bindingGeneration || id.value !== targetId || !finalActive.value) {
           return null
         }
 
@@ -182,11 +185,25 @@ export function createDynamicScrollerItemController(
         }
       },
       write(value) {
+        // A prior task can rebind/dispose this controller during the read phase.
+        // Captured ID alone cannot reject an A -> B -> A ownership change.
+        if (_disposed || generation !== _bindingGeneration || id.value !== targetId || !finalActive.value)
+          return
         const { width, height } = value as { width: number, height: number }
         applyWidthHeight(width, height)
       },
       done() {
-        _pendingSizeUpdate = null
+        if (generation === _bindingGeneration) {
+          _pendingSizeUpdate = null
+        }
+        // Same-tick ID/active round-trips can bypass batched watchers. The old
+        // task stays rejected, but its final active binding still needs a read.
+        else if (!_disposed) {
+          if (finalActive.value)
+            updateSize()
+          else
+            _pendingVScrollUpdate = id.value
+        }
       },
     })
   }
@@ -215,8 +232,17 @@ export function createDynamicScrollerItemController(
       return
     context.resizeObserver.observe(elValue)
     ;(elValue as any).$_vs_id = id.value
-    ;(elValue as any).$_vs_onResize = onResize
     _sizeObserved = true
+    bindResizeCallback(elValue)
+  }
+
+  /** A captured observer delivery cannot cross a recycled binding generation. */
+  function bindResizeCallback(elValue: HTMLElement) {
+    const generation = _bindingGeneration
+    ;(elValue as any).$_vs_onResize = (targetId: KeyValue, width: number, height: number) => {
+      if (generation === _bindingGeneration)
+        onResize(targetId, width, height)
+    }
   }
 
   function unobserveSize() {
@@ -233,7 +259,7 @@ export function createDynamicScrollerItemController(
   }
 
   function onResize(targetId: KeyValue, width: number, height: number) {
-    if (id.value === targetId) {
+    if (!_disposed && finalActive.value && id.value === targetId) {
       applyWidthHeight(width, height)
     }
   }
@@ -253,6 +279,14 @@ export function createDynamicScrollerItemController(
   }, {
     deep: true,
   }))
+
+  _cleanupStops.push(watch([id, finalActive], () => {
+    _bindingGeneration++
+    _pendingSizeUpdate = null
+    const elValue = toValue(el)
+    if (_sizeObserved && elValue)
+      bindResizeCallback(elValue)
+  }, { flush: 'sync' }))
 
   _cleanupStops.push(watch(id, (value, oldValue) => {
     const elValue = toValue(el)
@@ -288,7 +322,9 @@ export function createDynamicScrollerItemController(
         unobserveSize()
       }
     }
-    else if (value && _pendingVScrollUpdate === id.value) {
+    else if (value && (_pendingVScrollUpdate === id.value || _forceNextVScrollUpdate === id.value || !size.value)) {
+      // Inactive bindings retain queued/explicit measurement requests, including
+      // rows with a known old size. A missing initial size also needs a first read.
       updateSize()
     }
   }))
@@ -296,6 +332,7 @@ export function createDynamicScrollerItemController(
   updateWatchData()
 
   function mount() {
+    _disposed = false
     if (finalActive.value) {
       updateSize()
       observeSize()
@@ -303,6 +340,8 @@ export function createDynamicScrollerItemController(
   }
 
   function unmount() {
+    _disposed = true
+    _bindingGeneration++
     context.measureQueue.cancel(id.value)
     unsubscribeVscrollUpdate()
     unobserveSize()

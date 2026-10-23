@@ -18,7 +18,16 @@ const { pool, startSpacerSize, endSpacerSize, scrollToItem, vDynamicScrollerItem
       flowMode: true,
     })
   : { pool: undefined, startSpacerSize: undefined, endSpacerSize: undefined, scrollToItem: undefined, vDynamicScrollerItem: undefined }
-const { columnWidths, tableStyle } = useTableColumnWidths({ table, dependencies: () => [rows.value, props.model.state.width] })
+// Lock across scroll churn; only explicit layout/content actions remeasure columns.
+const { columnWidths, tableStyle } = useTableColumnWidths({
+  table,
+  dependencies: () => [
+    props.model.state.width,
+    props.model.state.filtered,
+    props.model.state.sorted,
+    props.model.state.contentRevision,
+  ],
+})
 /** Resolve deep jumps through the appropriate actual rendering strategy. */
 function jump(index: number) {
   if (virtual)

@@ -10,6 +10,8 @@ import { createEventEmitter } from '../utils/eventEmitter'
 import { getPooledViewStyle, resolvePooledViewMode } from '../utils/viewStyle'
 import { createDynamicScrollerItemController } from './dynamicScrollerMeasurement'
 import { createDynamicScrollerMeasureQueue } from './dynamicScrollerMeasureQueue'
+import { createDynamicScrollerSequence } from './dynamicScrollerSequence'
+import { createDynamicScrollerSizeStore } from './dynamicScrollerSizeStore'
 import { resolveScrollerOptions } from './scrollerOptions'
 import { useRecycleScroller } from './useRecycleScroller'
 
@@ -522,6 +524,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   let _undefinedMap: Record<KeyValue, boolean | undefined> = {}
   const _events = createEventEmitter<DynamicScrollerEvents>()
   let _scrollingToBottom = false
+  let _activated = true
   let _resizeObserver: ResizeObserver | undefined
   let _applyingShiftAnchor = false
   let _previousKeys: Array<ItemKey<TItem, TKeyField>> = []
@@ -561,6 +564,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
    * Resolve the `enabled` flag (defaults to `true` when omitted).
    */
   const isEnabled = computed(() => toValue(getOptions().enabled ?? true))
+  vscrollData.active = isEnabled.value
 
   function requestFrame(cb: () => void): number {
     let frameId = -1
@@ -590,25 +594,25 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   // ResizeObserver setup
   if (typeof ResizeObserver !== 'undefined') {
     _resizeObserver = new ResizeObserver((entries) => {
+      if (!Array.isArray(entries))
+        return
+      // Capture binding ownership at delivery time. Reading the recycled node's
+      // current ID in the next frame can apply old geometry to a different row.
+      const deliveries = entries.flatMap((entry) => {
+        const target = entry.target as any
+        if (!target?.$_vs_onResize)
+          return []
+        const borderBox = entry.borderBoxSize?.[0]
+        return [{
+          callback: target.$_vs_onResize,
+          id: target.$_vs_id,
+          width: borderBox ? borderBox.inlineSize : entry.contentRect.width,
+          height: borderBox ? borderBox.blockSize : entry.contentRect.height,
+        }]
+      })
       requestFrame(() => {
-        if (!Array.isArray(entries)) {
-          return
-        }
-        for (const entry of entries) {
-          if (entry.target && (entry.target as any).$_vs_onResize) {
-            let width: number, height: number
-            if (entry.borderBoxSize) {
-              const resizeObserverSize = entry.borderBoxSize[0]
-              width = resizeObserverSize.inlineSize
-              height = resizeObserverSize.blockSize
-            }
-            else {
-              width = entry.contentRect.width
-              height = entry.contentRect.height
-            }
-            ;(entry.target as any).$_vs_onResize((entry.target as any).$_vs_id, width, height)
-          }
-        }
+        for (const delivery of deliveries)
+          delivery.callback(delivery.id, delivery.width, delivery.height)
       })
     })
   }
@@ -662,81 +666,110 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   const itemsWithSizeVersion = shallowRef(0)
   const itemsWithSize = shallowRef<Array<ItemWithSize<TItem, ItemKey<TItem, TKeyField>>>>(_itemsWithSizeEntries)
 
-  watchEffect(() => {
-    if (!isEnabled.value) {
+  const sizeStore = createDynamicScrollerSizeStore(() => {
+    if (!_pendingViewportAnchor && !_shiftAnchor && el.value && isEnabled.value)
+      _pendingViewportAnchor = captureViewportAnchor(el.value.scrollTop, _itemsWithSizeEntries)
+  }, currentSizeKeys)
+  const sequenceOwner = createDynamicScrollerSequence(flushSizeChanges, sizeStore.revision)
+  /** Reuse structural keys; only external records subscribe to membership changes. */
+  function currentSizeKeys(): readonly KeyValue[] {
+    return sequenceOwner.sequence.structure.value.keys
+  }
+  vscrollData.sizes = sizeStore.createRecord()
+  // A reference watcher covers public replacement/reset/cache writes as well as
+  // measurements. The record Proxy sees set/delete before wrappers are changed.
+  watch(() => vscrollData.sizes, (record) => {
+    const observed = sizeStore.adopt(record)
+    if (record !== observed)
+      vscrollData.sizes = observed
+  }, { immediate: true, flush: 'sync' })
+
+  /** Apply only dirty records; no collection/key walk for a measured-size batch. */
+  function flushSizeChanges() {
+    if (!isEnabled.value)
       return
+    const changes = sizeStore.take()
+    const positions = changes.reset
+      ? _itemsWithSizeEntries.map((_, index) => index)
+      : [...changes.keys].flatMap(key => sequenceOwner.indicesFor(key))
+    let changed = false
+    for (const index of positions) {
+      const entry = _itemsWithSizeEntries[index]
+      let size: number | undefined = vscrollData.sizes[entry.id]
+      if (typeof size === 'undefined' && !_undefinedMap[entry.id])
+        size = 0
+      if (entry.size !== size) {
+        entry.size = size
+        sequenceOwner.sequence.measuredSizes[index] = size
+        changed = true
+      }
     }
+    if (changed) {
+      sequenceOwner.publish()
+      itemsWithSizeVersion.value++
+      triggerRef(itemsWithSize)
+    }
+  }
+
+  watch(sizeStore.revision, flushSizeChanges)
+
+  // Only this source reads membership and key dependencies. The callback's size
+  // reads are deliberately untracked, so measurements cannot invalidate structure.
+  watch(() => {
+    const enabled = isEnabled.value
+    if (!enabled)
+      return { enabled, items: [] as TItem[], keys: [] as Array<ItemKey<TItem, TKeyField>> }
+    const current = items.value
+    const keyField = getOptions().keyField
+    const simple = simpleArray.value
+    return {
+      enabled,
+      items: current.slice(),
+      keys: current.map((item, index) => (simple ? index : resolveItemKey(item, index, keyField)) as ItemKey<TItem, TKeyField>),
+    }
+  }, ({ enabled, items: currentItems, keys }) => {
+    if (!enabled)
+      return
     const viewportAnchor = _shiftAnchor || !el.value
       ? null
       : captureViewportAnchor(el.value.scrollTop, _itemsWithSizeEntries)
-    const opts = getOptions()
-    const keyField = opts.keyField
-    const simple = simpleArray.value
-    const sizes = vscrollData.sizes
-    const currentItems = items.value
-    const l = currentItems.length
-    let changed = _itemsWithSizeEntries.length !== l
-    // Track identity-affecting changes separately from size-only mutations:
-    // when keys/items/length shift, the child <RecycleScroller> must remap its
-    // pool (its items watcher only fires on a fresh array reference), whereas
-    // size-only updates already propagate through the shallow-reactive entries.
-    let identityChanged = _itemsWithSizeEntries.length !== l
-    for (let i = 0; i < l; i++) {
-      const item = currentItems[i]
-      const id = (simple ? i : resolveItemKey(item, i, keyField)) as ItemKey<TItem, TKeyField>
-      let size: number | undefined = sizes[id]
-      if (typeof size === 'undefined' && !_undefinedMap[id]) {
+    let changed = _itemsWithSizeEntries.length !== currentItems.length
+    for (let index = 0; index < currentItems.length; index++) {
+      const item = currentItems[index]
+      const id = keys[index]
+      let size: number | undefined = vscrollData.sizes[id]
+      if (typeof size === 'undefined' && !_undefinedMap[id])
         size = 0
-      }
-      let entry = _itemsWithSizeEntries[i]
+      let entry = _itemsWithSizeEntries[index]
       if (!entry) {
-        entry = shallowReactive({
-          item,
-          id,
-          size,
-        }) as ItemWithSize<TItem, ItemKey<TItem, TKeyField>>
-        _itemsWithSizeEntries[i] = entry
+        entry = shallowReactive({ item, id, size }) as ItemWithSize<TItem, ItemKey<TItem, TKeyField>>
+        _itemsWithSizeEntries[index] = entry
         changed = true
-        identityChanged = true
-        continue
-      }
-      if (entry.item !== item) {
-        entry.item = item
-        changed = true
-        identityChanged = true
-      }
-      if (entry.id !== id) {
-        entry.id = id
-        changed = true
-        identityChanged = true
-      }
-      if (entry.size !== size) {
-        entry.size = size
-        changed = true
-      }
-    }
-    if (_itemsWithSizeEntries.length !== l) {
-      _itemsWithSizeEntries.length = l
-      changed = true
-      identityChanged = true
-    }
-    if (changed) {
-      _pendingViewportAnchor = viewportAnchor
-      itemsWithSizeVersion.value++
-      if (identityChanged) {
-        // Replace the shallowRef value with a fresh slice so Vue's prop
-        // reactivity at the <DynamicScroller> -> <RecycleScroller> boundary
-        // sees a new reference. Reusing the same array reference would let
-        // Vue's `shouldUpdateComponent` short-circuit the child update and
-        // prevent the inner scroller from remapping its pool — see
-        // https://github.com/Akryum/vue-virtual-scroller/issues/924.
-        itemsWithSize.value = _itemsWithSizeEntries.slice()
       }
       else {
-        triggerRef(itemsWithSize)
+        if (entry.item !== item || entry.id !== id || entry.size !== size)
+          changed = true
+        entry.item = item
+        entry.id = id
+        entry.size = size
       }
     }
-  })
+    _itemsWithSizeEntries.length = currentItems.length
+    // Even an unchanged key sequence may have new object references. Publish a
+    // fresh exact array so component prop updates preserve same-key content.
+    if (changed || !getDynamicSequenceRegistered()) {
+      _pendingViewportAnchor ??= viewportAnchor
+      const next = _itemsWithSizeEntries.slice()
+      sequenceOwner.replace(next, keys, _itemsWithSizeEntries.map(entry => entry.size))
+      itemsWithSize.value = next
+      itemsWithSizeVersion.value++
+    }
+  }, { immediate: true })
+
+  /** Whether initial structural publication has already registered this owner. */
+  function getDynamicSequenceRegistered() {
+    return sequenceOwner.sequence.structure.value.items === itemsWithSize.value
+  }
 
   /**
    * Resolve the row that currently owns the viewport top without cloning the whole list.
@@ -777,7 +810,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   const initialOpts = getOptions()
   _previousKeys = getItemKeys(items.value, simpleArray.value ? null : initialOpts.keyField) as Array<ItemKey<TItem, TKeyField>>
   if (initialOpts.cache) {
-    vscrollData.sizes = restoreCacheMap(initialOpts.cache, items.value, simpleArray.value ? null : initialOpts.keyField)
+    vscrollData.sizes = sizeStore.createRecord(restoreCacheMap(initialOpts.cache, items.value, simpleArray.value ? null : initialOpts.keyField))
   }
 
   function onScrollerHidden() {
@@ -1007,7 +1040,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
       return
     }
 
-    const anchorIndex = itemsWithSize.value.findIndex(item => item.id === shiftAnchor.logicalKey)
+    const anchorIndex = sequenceOwner.sequence.indexOf(shiftAnchor.logicalKey)
     if (anchorIndex === -1) {
       clearShiftAnchor()
       return
@@ -1214,18 +1247,28 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
       return
     }
     if (clear || simpleArray.value) {
-      vscrollData.sizes = {}
+      vscrollData.sizes = sizeStore.createRecord()
     }
     _events.emit('vscroll:update', { force: true })
   }
 
   function scrollToItem(index: number, scrollOptions?: Parameters<UseRecycleScrollerReturn['scrollToItem']>[1]) {
+    // Explicit navigation supersedes automatic preservation from an earlier size batch.
+    _pendingViewportAnchor = null
+    clearShiftAnchor()
     recycleScroller.scrollToItem(index, scrollOptions)
+  }
+
+  /** Preserve explicit offset requests across a queued automatic anchor update. */
+  function scrollToPosition(position: number, scrollOptions?: Parameters<UseRecycleScrollerReturn['scrollToPosition']>[1]) {
+    _pendingViewportAnchor = null
+    clearShiftAnchor()
+    recycleScroller.scrollToPosition(position, scrollOptions)
   }
 
   function restoreCache(snapshot: CacheSnapshot | null | undefined) {
     const opts = getOptions()
-    vscrollData.sizes = restoreCacheMap(snapshot, items.value, simpleArray.value ? null : opts.keyField)
+    vscrollData.sizes = sizeStore.createRecord(restoreCacheMap(snapshot, items.value, simpleArray.value ? null : opts.keyField))
     return recycleScroller.restoreCache(snapshot)
   }
 
@@ -1354,6 +1397,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
   // React to runtime `enabled` flips: re-arm the native scroll listener and
   // resync size entries when re-enabled; tear listener down when disabled.
   watch(isEnabled, (enabled) => {
+    vscrollData.active = enabled && _activated
     const elValue = el.value
     if (enabled) {
       elValue?.addEventListener('scroll', onNativeScroll)
@@ -1362,6 +1406,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
       forceUpdate()
     }
     else {
+      _pendingViewportAnchor = null
       elValue?.removeEventListener('scroll', onNativeScroll)
       cancelShiftAnchorFrame()
       cancelPendingFrames()
@@ -1388,7 +1433,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
       return
     }
 
-    const anchorIndex = itemsWithSize.value.findIndex(item => item.id === viewportAnchor.key)
+    const anchorIndex = sequenceOwner.sequence.indexOf(viewportAnchor.key)
     if (anchorIndex === -1) {
       return
     }
@@ -1404,14 +1449,18 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
 
   // Lifecycle
   onActivated(() => {
-    vscrollData.active = true
+    _activated = true
+    vscrollData.active = isEnabled.value
   })
 
   onDeactivated(() => {
+    _activated = false
     vscrollData.active = false
   })
 
   onUnmounted(() => {
+    sizeStore.dispose()
+    sequenceOwner.dispose()
     cancelShiftAnchorFrame()
     cancelPendingFrames()
     el.value?.removeEventListener('scroll', onNativeScroll)
@@ -1430,6 +1479,7 @@ export function useDynamicScroller<TOptions extends UseDynamicScrollerOptions<an
     simpleArray,
     forceUpdate,
     scrollToItem,
+    scrollToPosition,
     restoreCache,
     getItemSize,
     getViewStyle,

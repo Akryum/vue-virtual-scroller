@@ -8,6 +8,8 @@ import { matrixSide } from './registry'
 export function createWorkloadState(config: CaseConfig) {
   const state = reactive({
     records: generateRecords(config.workload, config.count, config.seed),
+    /** Explicit column-width invalidation for account content changes. */
+    contentRevision: 0,
     selected: new Set<number>(),
     expanded: new Set<number>(),
     filtered: false,
@@ -50,6 +52,8 @@ export function createWorkloadState(config: CaseConfig) {
   /** Update real reactive records, preserving all unmodified objects. */
   function update() {
     state.records = updateRecords(state.records)
+    // Publish the token with the replacement so the post-flush measure sees new cells.
+    state.contentRevision++
   }
   /** Open or dismiss details using stable record identity. */
   function details(id: number | null) {

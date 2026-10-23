@@ -2,7 +2,7 @@ import type { ComputedRef, CSSProperties, MaybeRefOrGetter, Ref } from 'vue'
 import type { CacheSnapshot, DefaultKeyField, ItemKey, ItemSizeValue, KeyFieldValue, ScrollDirection, ScrollState, ScrollToOptions, SizeEntry, Sizes, ValidKeyField, ValidSizeField, View, ViewNonReactive } from '../types'
 import type { PooledViewPositionMode } from '../utils/viewStyle'
 import type { ScrollerCallbacks, ScrollerOptionCallbacks, ScrollerOptionElements, ScrollerOptionEnabled } from './scrollerOptions'
-import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toValue, watch } from 'vue'
+import { computed, markRaw, nextTick, onActivated, onBeforeUnmount, onMounted, ref, shallowReactive, toRaw, toValue, watch } from 'vue'
 import config from '../config'
 import { buildCacheSnapshot, findPrependOffset, getAlignedScrollOffset, getItemKeys, restoreCacheMap } from '../engine/cache'
 import { resolveItemKey } from '../engine/keyField'
@@ -11,6 +11,7 @@ import { resolveScrollParent } from '../scrollparent'
 import { supportsPassive } from '../utils'
 import { getFixedItemSize, resolveSnapshotItemSize, resolveVariableItemSize } from '../utils/itemSize'
 import { getPooledViewStyle, resolvePooledViewMode } from '../utils/viewStyle'
+import { getDynamicScrollerSequence } from './dynamicScrollerSequence'
 import { normalizeScrollerInputs, resolveScrollerOptions } from './scrollerOptions'
 
 export interface UseRecycleScrollerOptions<TItem = unknown, TSizeField extends string = 'size'> extends ScrollerOptionElements, ScrollerOptionCallbacks, ScrollerOptionEnabled {
@@ -261,9 +262,18 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
   const resolvedOptions = resolveScrollerOptions(options)
   const normalizedInputs = normalizeScrollerInputs(resolvedOptions, el, before, after, callbacks)
+  // Only exact owner arrays with compatible wrapper semantics may skip generic
+  // shallow tracking. Attribute overrides and arbitrary public arrays fall back.
+  const ownedSequence = computed(() => {
+    const opts = getOptions()
+    if (opts.keyField !== 'id' || opts.itemSize !== null || (opts.sizeField ?? 'size') !== 'size' || opts.typeField !== 'type' || opts.gridItems)
+      return undefined
+    return getDynamicScrollerSequence(toValue(opts.items))
+  })
   const items = computed(() => {
     const currentItems = toValue(getOptions().items)
-    trackArrayShallowMutations(currentItems)
+    if (!ownedSequence.value)
+      trackArrayShallowMutations(currentItems)
     return currentItems
   })
 
@@ -366,25 +376,36 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     const fixedItemSize = getFixedItemSize(opts.itemSize)
     if (fixedItemSize === null) {
       const currentItems = items.value
-      const sizes = Array.from({ length: currentItems.length }) as unknown as Sizes
+      const owned = ownedSequence.value
+      if (owned) {
+        void owned.pendingRevision.value
+        owned.flush()
+        void owned.sizeRevision.value
+        void owned.structure.value
+      }
+      const ownedKeys = owned?.structure.value.keys
+      const length = currentItems.length
+      const sizes = Array.from({ length }) as unknown as Sizes
       _variableSizeBaseEntry.accumulator = 0
       sizes[-1] = _variableSizeBaseEntry
       const minItemSize = opts.minItemSize as number
-      const restoredSizes = _restoredSizes.value
+      const restoredSizes = owned ? toRaw(_restoredSizes.value) : _restoredSizes.value
       const isSimpleArray = simpleArray.value
       let computedMinSize = 10000
       let accumulator = 0
       let current: number
-      for (let i = 0, l = currentItems.length; i < l; i++) {
-        const key = isSimpleArray ? i : resolveItemKey(currentItems[i], i, opts.keyField)
-        current = resolveVariableItemSize(
-          currentItems[i],
-          i,
-          opts.itemSize,
-          restoredSizes[key],
-          minItemSize,
-          opts.sizeField,
-        )
+      for (let i = 0; i < length; i++) {
+        const key = ownedKeys ? ownedKeys[i] : isSimpleArray ? i : resolveItemKey(currentItems[i], i, opts.keyField)
+        current = owned
+          ? (restoredSizes[key as ItemKey<TItem, TKeyField>] || owned.measuredSizes[i] || Number(minItemSize) || 0)
+          : resolveVariableItemSize(
+              currentItems[i],
+              i,
+              opts.itemSize,
+              restoredSizes[key],
+              minItemSize,
+              opts.sizeField,
+            )
         if (current < computedMinSize) {
           computedMinSize = current
         }
@@ -397,7 +418,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
         entry.size = current
         sizes[i] = entry
       }
-      _variableSizeEntries.length = currentItems.length
+      _variableSizeEntries.length = length
       _computedMinItemSize = computedMinSize
       return sizes
     }
@@ -433,6 +454,11 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   )
 
   const cacheSnapshot = computed<CacheSnapshot>(() => {
+    const owned = ownedSequence.value
+    if (owned) {
+      void owned.pendingRevision.value
+      owned.flush()
+    }
     const opts = getOptions()
     const keyField = simpleArray.value ? null : opts.keyField
     return buildCacheSnapshot(items.value, keyField, (item, index, key) => {
@@ -1855,21 +1881,23 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     updateVisibleItems(true)
   })
 
-  // Read the raw items ref directly instead of going through the `items`
-  // computed. Upstream wrappers (e.g. `useDynamicScroller`) mutate their
-  // backing array in place and call `triggerRef` to notify subscribers. The
-  // `items` computed then re-evaluates and returns the same array reference,
-  // which Vue dedupes — so any watcher chained through that computed would
-  // never fire. Subscribing to the raw ref guarantees the items watcher runs
-  // on every upstream mutation, even when the array identity is preserved.
-  watch(() => toValue(getOptions().items).slice(), (nextItems, previousItems) => {
+  // Public arrays retain shallow slice tracking, including explicit triggerRef
+  // notifications. Certified dynamic arrays publish membership separately, so a
+  // measured-size batch never clones wrappers or resolves all keys/types again.
+  const itemStructure = computed(() => {
+    const owned = ownedSequence.value
+    return owned ? owned.structure.value : { items: toValue(getOptions().items).slice(), keys: undefined }
+  })
+  watch(itemStructure, (nextStructure, previousStructure) => {
+    const nextItems = nextStructure.items as TItem[]
+    const previousItems = previousStructure?.items as TItem[] | undefined
     if (!isEnabled.value) {
       return
     }
     const opts = getOptions()
     const keyField = simpleArray.value ? null : opts.keyField
-    const nextKeys = getItemKeys(nextItems, keyField)
-    const nextTypes = getItemTypes(nextItems, opts.typeField)
+    const nextKeys = nextStructure.keys ?? getItemKeys(nextItems, keyField)
+    const nextTypes = ownedSequence.value ? Array.from({ length: nextItems.length }) : getItemTypes(nextItems, opts.typeField)
     const previousKeysSnapshot = _previousKeys
     const previousTypesSnapshot = _previousTypes
     const itemsChanged = !hasSameItemIdentitySequence(

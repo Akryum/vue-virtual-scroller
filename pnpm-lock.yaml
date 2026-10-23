@@ -57,6 +57,9 @@ importers:
       playwright:
         specifier: 1.58.2
         version: 1.58.2
+      source-map-js:
+        specifier: 1.2.1
+        version: 1.2.1
       vite:
         specifier: ^6.0.0
         version: 6.4.1(@types/node@25.5.0)(yaml@2.8.2)

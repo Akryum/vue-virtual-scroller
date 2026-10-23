@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url'
 const TYPES = { html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8', svg: 'image/svg+xml', json: 'application/json', png: 'image/png' }
 
 /** Serve production artifacts without libraries installing competing process-exit handlers. */
-export async function startServer() {
-  const root = fileURLToPath(new URL('../dist/', import.meta.url))
+export async function startServer(appRoot) {
+  const root = resolve(appRoot ?? fileURLToPath(new URL('../dist/', import.meta.url)))
   const server = createServer(async (request, response) => {
     if (!['GET', 'HEAD'].includes(request.method)) {
       response.writeHead(405, { Allow: 'GET, HEAD' }).end()

@@ -23,7 +23,8 @@
     "benchmark": "pnpm --filter @vue-virtual-scroller/benchmarks benchmark",
     "benchmark:full": "pnpm benchmark --profile full",
     "benchmark:stress": "pnpm benchmark --profile stress",
-    "benchmark:test": "pnpm --filter @vue-virtual-scroller/benchmarks exec node scripts/check.mjs"
+    "benchmark:test": "pnpm --filter @vue-virtual-scroller/benchmarks exec node scripts/check.mjs",
+    "benchmark:trace": "pnpm --filter @vue-virtual-scroller/benchmarks exec node scripts/tracing/entry.mjs"
   },
   "devDependencies": {
     "@akryum/sheep": "^0.5.2",
