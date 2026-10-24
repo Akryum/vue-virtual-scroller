@@ -421,6 +421,120 @@ describe('useRecycleScroller', () => {
     requestAnimationFrameSpy.mockRestore()
   })
 
+  it('measures scroll geometry during the scroll event instead of in the update frame', async () => {
+    const frames: FrameRequestCallback[] = []
+    const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame')
+    requestAnimationFrameSpy.mockImplementation((callback: FrameRequestCallback) => {
+      frames.push(callback)
+      return frames.length
+    })
+
+    const { vm, onUpdate } = mountHarness({
+      items: Array.from({ length: 20 }, (_, id) => ({ id })),
+    })
+
+    await nextTick()
+    await nextTick()
+    frames.splice(0).forEach(frame => frame(0))
+    onUpdate.mockClear()
+
+    // By the time the frame runs, other code may have mutated the DOM, so any
+    // geometry read there would force a synchronous layout.
+    let layoutReads = 0
+    Object.defineProperty(vm.el, 'scrollTop', {
+      configurable: true,
+      get: () => {
+        layoutReads++
+        return 40
+      },
+    })
+    Object.defineProperty(vm.el, 'clientHeight', {
+      configurable: true,
+      get: () => {
+        layoutReads++
+        return 100
+      },
+    })
+
+    vm.el.dispatchEvent(new Event('scroll'))
+    layoutReads = 0
+    frames.splice(0).forEach(frame => frame(0))
+
+    expect(layoutReads).toBe(0)
+    expect(onUpdate).toHaveBeenCalledTimes(1)
+    expect(vm.visiblePool[0].nr.index).toBe(4)
+
+    requestAnimationFrameSpy.mockRestore()
+  })
+
+  it('measures scroll geometry before the scroller element\'s other scroll listeners run', async () => {
+    const order: string[] = []
+    const Harness = defineComponent({
+      setup() {
+        const el = ref<HTMLElement>()
+        const state = useRecycleScroller(() => ({
+          items: Array.from({ length: 20 }, (_, id) => ({ id })),
+          keyField: 'id' as const,
+          direction: 'vertical' as const,
+          itemSize: 10,
+          minItemSize: null,
+          sizeField: 'size' as const,
+          typeField: 'type',
+          buffer: 0,
+          pageMode: false,
+          shift: false,
+          prerender: 0,
+          emitUpdate: false,
+          disableTransform: false,
+          updateInterval: 0,
+        }), el)
+        // Registered by the template before the composable's own listener, like
+        // a consumer's `@scroll` whose Vue updates would dirty layout first.
+        const onAppScroll = () => order.push('app listener')
+        return { ...state, el, onAppScroll }
+      },
+      template: '<div ref="el" style="height: 100px; overflow-y: auto;" @scroll="onAppScroll" />',
+    })
+    const wrapper = mount(Harness)
+    const el = (wrapper.vm as any).el as HTMLElement
+    await nextTick()
+    Object.defineProperty(el, 'scrollTop', {
+      configurable: true,
+      get: () => {
+        order.push('scroller read')
+        return 40
+      },
+    })
+
+    el.dispatchEvent(new Event('scroll'))
+
+    expect(order[0]).toBe('scroller read')
+    expect(order).toContain('app listener')
+    wrapper.unmount()
+  })
+
+  it('ignores scroll events from nested scrollable content', async () => {
+    const frames: FrameRequestCallback[] = []
+    const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame')
+    requestAnimationFrameSpy.mockImplementation((callback: FrameRequestCallback) => {
+      frames.push(callback)
+      return frames.length
+    })
+    const { vm } = mountHarness({
+      items: Array.from({ length: 20 }, (_, id) => ({ id })),
+    })
+    await nextTick()
+    await nextTick()
+    frames.splice(0)
+
+    const nested = document.createElement('div')
+    vm.el.appendChild(nested)
+    nested.dispatchEvent(new Event('scroll'))
+
+    expect(frames).toHaveLength(0)
+    requestAnimationFrameSpy.mockRestore()
+  })
+
   it('emits updates for large variable-size rows before scrolling a full minItemSize', async () => {
     const { vm, onUpdate } = mountHarness({
       items: [

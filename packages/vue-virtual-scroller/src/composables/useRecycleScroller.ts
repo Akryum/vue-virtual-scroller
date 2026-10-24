@@ -73,6 +73,24 @@ type ViewWithStyleStamp<TItem = unknown, TKey = ItemKey<TItem>> = View<TItem, TK
   _vs_visibilityStamp: number
 }
 
+/**
+ * Element-mode scroll geometry read inside the scroll event, while layout is
+ * still clean, and replayed by the scroll-driven update frame.
+ */
+interface ScrollMeasurements {
+  scrollTop: number
+  /** `scrollLeft` already normalized for RTL, which reads computed style. */
+  scrollLeft: number
+  clientHeight: number
+  clientWidth: number
+  /** Leading slot size along the scroll axis, as `getLeadingSlotSize` reports it. */
+  leadingSlotSize: number
+  /** Leading slot `scrollHeight`, as the range math subtracts it. */
+  beforeHeight: number
+  /** Trailing slot `scrollHeight`, as the range math adds it. */
+  afterHeight: number
+}
+
 let uid = 0
 const EMPTY_SIZES: never[] = []
 
@@ -308,6 +326,10 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   const _views = new Map<ItemKey<TItem, TKeyField>, View<TItem, ItemKey<TItem, TKeyField>>>()
   const _recycledPools = new Map<unknown, Array<View<TItem, ItemKey<TItem, TKeyField>>>>()
   let _scrollDirty = false
+  /** Latest geometry captured by `handleScroll`, waiting for the update frame. */
+  let _pendingScrollMeasurements: ScrollMeasurements | null = null
+  /** Geometry the current scroll-driven update reads instead of the DOM. */
+  let _scrollMeasurements: ScrollMeasurements | null = null
   let _lastUpdateScrollPosition = 0
   let _lastUpdateSecondaryScrollPosition = 0
   let _prerender = false
@@ -316,6 +338,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   let _sortTimer: ReturnType<typeof setTimeout> | null = null
   let _computedMinItemSize = 0
   let _scrollListenerTarget: (Window | Element) | null = null
+  /** Whether the scroll listener sits in the capture phase (element mode). */
+  let _scrollListenerCapture = false
   let _resizeListenerTarget: (Window | Element) | null = null
   let _previousKeys: Array<ItemKey<TItem, TKeyField>> = []
   let _previousTypes: unknown[] = []
@@ -743,6 +767,21 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       updateVisibleItems(false)
   }
 
+  /**
+   * Native scroll listener. In element mode it is registered in the capture
+   * phase, so it runs before the element's other scroll listeners: a
+   * consumer's `@scroll` handler that updates Vue state flushes a DOM patch
+   * right after it returns, which would otherwise dirty layout before the
+   * geometry is read here.
+   */
+  function handleScrollEvent(event: Event) {
+    // Capturing also delivers scroll events from nested scrollable content.
+    if (_scrollListenerCapture && event.target !== _scrollListenerTarget) {
+      return
+    }
+    handleScroll()
+  }
+
   function handleScroll() {
     if (!isEnabled.value) {
       return
@@ -750,6 +789,10 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     if (_shiftAnchor && !_applyingShiftAnchor) {
       clearShiftAnchor()
     }
+
+    // Read geometry now: by the update frame, Vue may have patched the DOM and
+    // the same reads would force a synchronous style and layout pass.
+    _pendingScrollMeasurements = measureScroll()
 
     const opts = getOptions()
     if (!_scrollDirty) {
@@ -759,7 +802,15 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
       const requestUpdate = () => requestFrame(() => {
         _scrollDirty = false
-        const { continuous } = updateVisibleItems(false, true)
+        _scrollMeasurements = _pendingScrollMeasurements
+        _pendingScrollMeasurements = null
+        let continuous: boolean
+        try {
+          continuous = updateVisibleItems(false, true).continuous
+        }
+        finally {
+          _scrollMeasurements = null
+        }
 
         // It seems sometimes chrome doesn't fire scroll event :/
         // When non continuous scrolling is ending, we force a refresh
@@ -809,7 +860,32 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     return (scrollParentTarget.value as Window | Element | undefined) ?? window
   }
 
+  /**
+   * Capture element-mode scroll geometry for the next scroll-driven update.
+   * Page mode measures against the scroll parent with bounding rects instead,
+   * so it keeps reading live.
+   */
+  function measureScroll(): ScrollMeasurements | null {
+    const elValue = normalizedInputs.el.value
+    if (!elValue || getPageMode()) {
+      return null
+    }
+    return {
+      scrollTop: elValue.scrollTop,
+      scrollLeft: normalizeOffset(elValue.scrollLeft, 'horizontal', elValue),
+      clientHeight: elValue.clientHeight,
+      clientWidth: elValue.clientWidth,
+      leadingSlotSize: readLeadingSlotSize(),
+      beforeHeight: normalizedInputs.before.value?.scrollHeight ?? 0,
+      afterHeight: normalizedInputs.after.value?.scrollHeight ?? 0,
+    }
+  }
+
   function getLeadingSlotSize(): number {
+    return _scrollMeasurements ? _scrollMeasurements.leadingSlotSize : readLeadingSlotSize()
+  }
+
+  function readLeadingSlotSize(): number {
     const beforeEl = normalizedInputs.before.value
     if (!beforeEl) {
       return 0
@@ -870,15 +946,19 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       }
     }
     else if (isVertical) {
+      const scrollTop = _scrollMeasurements ? _scrollMeasurements.scrollTop : elValue.scrollTop
+      const clientHeight = _scrollMeasurements ? _scrollMeasurements.clientHeight : elValue.clientHeight
       scrollState = {
-        start: elValue.scrollTop,
-        end: elValue.scrollTop + elValue.clientHeight,
+        start: scrollTop,
+        end: scrollTop + clientHeight,
       }
     }
     else {
+      const clientWidth = _scrollMeasurements ? _scrollMeasurements.clientWidth : elValue.clientWidth
+      const start = _scrollMeasurements ? _scrollMeasurements.scrollLeft : normalizeOffset(elValue.scrollLeft, direction, elValue)
       scrollState = {
-        start: normalizeOffset(elValue.scrollLeft, direction, elValue),
-        end: normalizeOffset(elValue.scrollLeft, direction, elValue) + elValue.clientWidth,
+        start,
+        end: start + clientWidth,
       }
     }
 
@@ -892,17 +972,19 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
     const opts = getOptions()
 
+    const measured = _scrollMeasurements
     if (getDirection(opts) === 'vertical') {
-      const start = normalizeOffset(elValue.scrollLeft, 'horizontal', elValue)
+      const start = measured ? measured.scrollLeft : normalizeOffset(elValue.scrollLeft, 'horizontal', elValue)
       return {
         start,
-        end: start + elValue.clientWidth,
+        end: start + (measured ? measured.clientWidth : elValue.clientWidth),
       }
     }
 
+    const scrollTop = measured ? measured.scrollTop : elValue.scrollTop
     return {
-      start: elValue.scrollTop,
-      end: elValue.scrollTop + elValue.clientHeight,
+      start: scrollTop,
+      end: scrollTop + (measured ? measured.clientHeight : elValue.clientHeight),
     }
   }
 
@@ -1103,9 +1185,12 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
     }
 
     _scrollListenerTarget = scrollTarget
-    _scrollListenerTarget.addEventListener('scroll', handleScroll, supportsPassive()
-      ? { passive: true }
-      : false)
+    // Page mode listens on a shared parent or `window`, where capturing would
+    // also catch every unrelated scroll inside it.
+    _scrollListenerCapture = !getPageMode()
+    _scrollListenerTarget.addEventListener('scroll', handleScrollEvent, supportsPassive()
+      ? { passive: true, capture: _scrollListenerCapture }
+      : _scrollListenerCapture)
 
     // Only `window` dispatches `resize`; DOM elements don't. The scroller's
     // own ResizeObserver already catches root-element size changes, so for
@@ -1118,7 +1203,7 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
 
   function removeListeners() {
     if (_scrollListenerTarget) {
-      _scrollListenerTarget.removeEventListener('scroll', handleScroll)
+      _scrollListenerTarget.removeEventListener('scroll', handleScrollEvent, _scrollListenerCapture)
       _scrollListenerTarget = null
     }
 
@@ -1364,14 +1449,14 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       let beforeSize = 0
       const beforeEl = normalizedInputs.before.value
       if (beforeEl) {
-        beforeSize = beforeEl.scrollHeight
+        beforeSize = _scrollMeasurements ? _scrollMeasurements.beforeHeight : beforeEl.scrollHeight
         scroll.start -= beforeSize
       }
 
       // account for trailing slot
       const afterEl = normalizedInputs.after.value
       if (afterEl) {
-        const afterSize = afterEl.scrollHeight
+        const afterSize = _scrollMeasurements ? _scrollMeasurements.afterHeight : afterEl.scrollHeight
         scroll.end += afterSize
       }
 
