@@ -331,6 +331,8 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   const _variableSizeBaseEntry: SizeEntry = {
     accumulator: 0,
   }
+  /** Last variable-size array, returned again when a recompute yields identical sizes. */
+  let _lastVariableSizes: Sizes | null = null
 
   /**
    * Resolve current option object without collapsing hot-path inputs into one aggregate computed.
@@ -385,9 +387,11 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
       }
       const ownedKeys = owned?.structure.value.keys
       const length = currentItems.length
-      const sizes = Array.from({ length }) as unknown as Sizes
-      _variableSizeBaseEntry.accumulator = 0
-      sizes[-1] = _variableSizeBaseEntry
+      // Any option change (even a recreated but equivalent `itemSize` resolver)
+      // re-runs this computed. Track whether an entry actually moved so an
+      // identical result can return the previous array and keep `watch(sizes)`
+      // from refreshing the visible range for nothing.
+      let changed = _lastVariableSizes === null || length !== _variableSizeEntries.length
       const minItemSize = opts.minItemSize as number
       const restoredSizes = owned ? toRaw(_restoredSizes.value) : _restoredSizes.value
       const isSimpleArray = simpleArray.value
@@ -410,18 +414,32 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
           computedMinSize = current
         }
         accumulator += current
-        const entry = _variableSizeEntries[i] ?? (_variableSizeEntries[i] = {
-          accumulator: 0,
-          size: undefined,
-        })
+        let entry = _variableSizeEntries[i]
+        if (!entry) {
+          entry = _variableSizeEntries[i] = {
+            accumulator: 0,
+            size: undefined,
+          }
+          changed = true
+        }
+        else if (entry.accumulator !== accumulator || entry.size !== current) {
+          changed = true
+        }
         entry.accumulator = accumulator
         entry.size = current
-        sizes[i] = entry
       }
       _variableSizeEntries.length = length
       _computedMinItemSize = computedMinSize
+      if (!changed) {
+        return _lastVariableSizes!
+      }
+      const sizes = _variableSizeEntries.slice() as unknown as Sizes
+      _variableSizeBaseEntry.accumulator = 0
+      sizes[-1] = _variableSizeBaseEntry
+      _lastVariableSizes = sizes
       return sizes
     }
+    _lastVariableSizes = null
     return EMPTY_SIZES
   })
 
@@ -1884,9 +1902,14 @@ export function useRecycleScroller<TOptions extends UseRecycleScrollerOptions<an
   // Public arrays retain shallow slice tracking, including explicit triggerRef
   // notifications. Certified dynamic arrays publish membership separately, so a
   // measured-size batch never clones wrappers or resolves all keys/types again.
+  // Components rebuild their options object on any prop change, but keep the
+  // same `items` handle. Isolating the handle means only the items source
+  // itself (replacement, shallow mutation, triggerRef) re-runs `itemStructure`,
+  // instead of every unrelated prop change recomputing keys and the range.
+  const itemsSource = computed(() => getOptions().items)
   const itemStructure = computed(() => {
     const owned = ownedSequence.value
-    return owned ? owned.structure.value : { items: toValue(getOptions().items).slice(), keys: undefined }
+    return owned ? owned.structure.value : { items: toValue(itemsSource.value).slice(), keys: undefined }
   })
   watch(itemStructure, (nextStructure, previousStructure) => {
     const nextItems = nextStructure.items as TItem[]

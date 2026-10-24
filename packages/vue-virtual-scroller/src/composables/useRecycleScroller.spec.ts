@@ -171,9 +171,15 @@ function mountObjectHarness(initialItems: Array<Record<string, unknown>>) {
   }
 }
 
-function mountFactoryHarness(initialItems: Array<Record<string, unknown>>) {
+function mountFactoryHarness(
+  initialItems: Array<Record<string, unknown>>,
+  initialExtraOptions: Record<string, unknown> = {},
+) {
   const onUpdate = vi.fn()
   const items = ref(initialItems)
+  // Extra options merged last; replacing it rebuilds the whole options object,
+  // like a component that recreates its options on every prop change.
+  const extraOptions = ref(initialExtraOptions)
   const optionsFactory = vi.fn(() => ({
     items: items.value,
     keyField: 'id' as const,
@@ -191,6 +197,7 @@ function mountFactoryHarness(initialItems: Array<Record<string, unknown>>) {
     hiddenPosition: undefined,
     updateInterval: 0,
     onUpdate,
+    ...extraOptions.value,
   }))
 
   const Harness = defineComponent({
@@ -232,6 +239,7 @@ function mountFactoryHarness(initialItems: Array<Record<string, unknown>>) {
     items,
     onUpdate,
     optionsFactory,
+    extraOptions,
   }
 }
 
@@ -338,6 +346,55 @@ describe('useRecycleScroller', () => {
 
     expect(optionsFactory).toHaveBeenCalled()
     expect(vm.visiblePool.slice(0, 2).map((view: View) => (view.item as { id: number }).id)).toEqual([4, 5])
+  })
+
+  it('does not refresh visible items when unrelated options rebuild the options object', async () => {
+    const { items, onUpdate, extraOptions } = mountFactoryHarness([
+      { id: 1 },
+      { id: 2 },
+      { id: 3 },
+    ])
+
+    await nextTick()
+    await nextTick()
+    onUpdate.mockClear()
+
+    extraOptions.value = { prerender: 0 }
+    await nextTick()
+
+    expect(onUpdate).not.toHaveBeenCalled()
+
+    items.value.push({ id: 4 })
+    await nextTick()
+
+    expect(onUpdate).toHaveBeenCalled()
+  })
+
+  it('does not refresh visible items when a recreated itemSize resolver returns the same sizes', async () => {
+    const { vm, onUpdate, extraOptions } = mountFactoryHarness([
+      { id: 1 },
+      { id: 2 },
+      { id: 3 },
+    ], {
+      itemSize: () => 20,
+    })
+
+    await nextTick()
+    await nextTick()
+    const sizes = vm.sizes
+    onUpdate.mockClear()
+
+    extraOptions.value = { itemSize: () => 20 }
+    await nextTick()
+
+    expect(onUpdate).not.toHaveBeenCalled()
+    expect(vm.sizes).toBe(sizes)
+
+    extraOptions.value = { itemSize: () => 30 }
+    await nextTick()
+
+    expect(onUpdate).toHaveBeenCalled()
+    expect(vm.getItemOffset(2)).toBe(60)
   })
 
   it('reacts to native scroll events without exposing a public handler', async () => {
