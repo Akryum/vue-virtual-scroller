@@ -7,6 +7,8 @@ export const WORKLOADS = [
   { id: 'window-feed', name: 'Window news feed', actions: ['jump', 'filter', 'intro'] },
   { id: 'horizontal-cards', name: 'Horizontal projects', actions: ['jump', 'filter', 'expand', 'collapse', 'update'] },
   { id: 'inventory-matrix', name: 'Warehouse inventory', actions: ['jump', 'sort', 'update', 'details'] },
+  { id: 'project-explorer', name: 'Project explorer tree', actions: ['expand', 'collapse', 'filter', 'update', 'select', 'jump'] },
+  { id: 'code-review', name: 'Code review diff', actions: ['jump', 'filter', 'update', 'select'] },
 ] as const
 /** Registered scenario identifier. */
 export type WorkloadId = typeof WORKLOADS[number]['id']

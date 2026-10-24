@@ -63,6 +63,35 @@ td.spacer { padding: 0; box-shadow: none; }
 .matrix-rows small { display: block; font-size: 9px; }
 .inventory { width: 140px; height: 88px; border: 0; border-radius: 0; padding: 8px; display: flex; flex-direction: column; align-items: flex-start; background: #fff; box-shadow: inset -1px 0 #e8ece7, inset 0 -1px #e8ece7; }
 .inventory .badge { font-size: 10px; }
+.sectioned { position: relative; }
+.pinned-captions { position: absolute; top: 0; left: 0; right: 15px; z-index: 2; background: white; box-shadow: 0 6px 12px -10px #25372a60; }
+.section-row { overflow: hidden; }
+.tree-row, .diff-file, .diff-hunk, .diff-line { height: 100%; box-shadow: inset 0 -1px #f0f2ef; }
+.tree-row header, .diff-file header { height: 28px; gap: 8px; padding: 0 12px; white-space: nowrap; }
+.tree-row strong, .diff-file strong { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.tree-project { background: #f6f8f5; }
+.tree-project header, .diff-file header { height: 40px; }
+.tree-group header { height: 32px; padding-left: 28px; }
+.tree-leaf header { padding-left: 44px; }
+.tree-leaf .tree-avatar { width: 20px; height: 20px; flex-basis: 20px; font-size: 9px; }
+.tree-icon { color: #64716a; }
+.tree-actions { margin-left: auto; display: flex; gap: 4px; }
+.tree-actions button { padding: 1px 6px; font-size: 11px; }
+.tree-details { margin: 0; padding: 4px 44px; height: 56px; font-size: 12px; color: #4b5a52; }
+.status-failing { background: #f5e3df; color: #8a3b2d; }
+.status-pending { background: #f4efdc; color: #7a6420; }
+.diff-file { background: #f1f4f0; }
+.diff-hunk { display: flex; align-items: center; padding: 0 12px; background: #eef2f7; color: #4a5a72; font-size: 11px; }
+.diff-line { display: flex; align-items: center; font: 12px/20px ui-monospace, monospace; white-space: pre; }
+.diff-added { background: #eaf6ec; }
+.diff-removed { background: #fbecea; }
+.diff-gutter { flex: 0 0 44px; padding-right: 8px; text-align: right; color: #8a958f; }
+.diff-sign { flex: 0 0 16px; text-align: center; }
+.diff-line code { overflow: hidden; text-overflow: ellipsis; }
+.token-keyword { color: #7a3e9d; }
+.token-string { color: #3a7a3a; }
+.token-number { color: #a0522d; }
+.token-comment { color: #8a958f; }
 .detail { position: fixed; right: 20px; top: 20px; width: 320px; background: #eef3ed; padding: 22px; border-radius: 10px; box-shadow: 0 8px 32px #25372a20; }
 .case-root { padding: 0; width: max-content; }
 .app { max-width: 1320px; margin: 30px auto; padding: 0 24px; }

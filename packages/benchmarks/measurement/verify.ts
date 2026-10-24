@@ -27,7 +27,7 @@ export function verifyContent(model: WorkloadState, checkpoint: Checkpoint) {
     const current = checkpoint.visible[index]
     if (order.get(current.id)! <= order.get(previous.id)!)
       throw new Error('Visible records do not follow expected data order')
-    if (['activity-feed', 'customer-table', 'window-feed', 'issue-inbox'].includes(model.config.workload)
+    if (['activity-feed', 'customer-table', 'window-feed', 'issue-inbox', 'project-explorer', 'code-review'].includes(model.config.workload)
       && current.top < previous.top + previous.height - 3) {
       throw new Error('Visible rows overlap after settling')
     }

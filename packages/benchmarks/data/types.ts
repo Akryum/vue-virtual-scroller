@@ -44,4 +44,8 @@ export interface BenchRecord {
   column: number
   /** Observable revision after a record update. */
   version: number
+  /** Diff line number in the old file, when the line exists there. */
+  oldLine?: number | null
+  /** Diff line number in the new file, when the line exists there. */
+  newLine?: number | null
 }

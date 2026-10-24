@@ -35,6 +35,10 @@ Supported options: `--profile quick|full|stress`, `--browser chromium|firefox|al
 - `window-feed`: editorial previews with known 112/144/176px heights; document scrolling, distant jump, filter, expansion of preceding intro block.
 - `horizontal-cards`: measured project cards with content-driven width changes; jump, owner filter, milestones, progress updates.
 - `inventory-matrix`: 140×88px inventory cells, product/warehouse labels, both scroll axes; jump, row-total sort, updates, details. Matrix counts round up to squares: quick 32×32 = 1,024; full adds 100×100 = 10,000; stress 224×224 = 50,176. Raw report retains requested and actual counts.
+- `project-explorer`: source-control tree of project captions, branch and commit groups, and branch/commit rows (40/32/28px, +56px expanded), each kind its own component; expansion, project filter, updates, selection, deep jump.
+- `code-review`: continuous unified diff of file headers, hunk headers, and syntax-highlighted lines (44/28/20px) rendered through `v-html`; deep jump, file filter, updates, viewed marking.
+
+The two sectioned workloads share a renderer written the way explorer trees and diff viewers commonly are, to cover consumer patterns the other workloads avoid: one `v-if` switch per row kind (pooled with `type-field="kind"`), an inline `item-size` resolver, and a sticky caption overlay derived from the scroll offset in the list component. Every scroll event therefore re-renders that component, and the overlay remounts its caption whenever another project or file takes over. Plain mode shares the same component, overlay, and scroll handler.
 
 Fixtures use shared deterministic RNG, stable IDs, authored domain templates, fixed dates, explicit English currency formatting, and bundled SVG illustrations. No remote images, APIs, fonts, Faker requests, or wall-clock-derived data. Plain mode renders every matching record; no pagination or hidden virtualization.
 

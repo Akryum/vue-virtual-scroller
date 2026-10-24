@@ -2,6 +2,7 @@ import type { WorkloadId } from '../workloads/registry'
 import type { BenchRecord } from './types'
 import { createRng } from '../../shared/random'
 import { matrixSide } from '../workloads/registry'
+import { generateExplorerRecords, generateReviewRecords } from './sections'
 
 const PEOPLE = ['Avery Chen', 'Morgan Patel', 'Riley Garcia', 'Jordan Reed', 'Quinn Okafor', 'Sage Martin']
 const ISSUES = ['Keep draft replies when switching projects', 'Restore keyboard focus after closing search', 'Export invoices with regional tax details', 'Retry interrupted uploads without duplicate files', 'Show deployment history across environments', 'Preserve account filters after navigation']
@@ -14,6 +15,10 @@ const BODY = [
 ]
 /** Build real-shaped, stable business records; no remote services or wall-clock values. */
 export function generateRecords(workload: WorkloadId, count: number, seed: number, firstId = 1): BenchRecord[] {
+  if (workload === 'project-explorer')
+    return generateExplorerRecords(count, seed, firstId)
+  if (workload === 'code-review')
+    return generateReviewRecords(count, seed, firstId)
   const rng = createRng(seed)
   const side = matrixSide(count)
   const total = workload === 'inventory-matrix' ? side * side : count
