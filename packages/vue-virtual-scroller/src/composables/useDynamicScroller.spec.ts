@@ -605,6 +605,29 @@ describe('useDynamicScroller', () => {
     expect(vm.visiblePool.map((view: any) => view.index)).toEqual([0])
   })
 
+  it('does not leave a stale used view after filtering a 2-item list down to 1 (variable size, no flow-mode)', async () => {
+    // Variable-height DynamicScroller (numeric minItemSize, no flowMode) with
+    // key-field=id. When the items array shrinks from [A, B] to [A], the
+    // dropped view must be released — otherwise the pool keeps both views
+    // `used: true` and the DOM still renders two rows.
+    const { vm, options } = mountHarness([
+      { id: 'A' },
+      { id: 'B' },
+    ])
+
+    await nextTick()
+    await nextTick()
+
+    options.items = [{ id: 'A' }]
+    await nextTick()
+    await nextTick()
+
+    const usedKeys = vm.pool
+      .filter((view: any) => view.used)
+      .map((view: any) => view.key)
+    expect(usedKeys).toEqual(['A'])
+  })
+
   it('adjusts scroll position when measured sizes change above the viewport', async () => {
     const { vm, el } = mountHarness([
       { id: 'a', label: 'Alpha' },
