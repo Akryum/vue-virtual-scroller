@@ -81,6 +81,10 @@ Returns used most often:
 - You must provide your own scrollable sizing styles.
 - Render from `pool` and hide inactive views instead of filtering them out when you want normal recycling behavior.
 - Without a stable key field, object-item reuse becomes unreliable.
+- If rows render different components per item kind, set `typeField` to the kind field so reused views keep the same component instead of remounting.
+- Keep option values stable: define an `itemSize` resolver once, because a recreated resolver is re-run over every item.
+- Track per-row hover/active/selected state per item (a `reactive(new Set())` mutated in place), not a collection rebuilt on each change that every row reads.
+- Read scroll geometry in the scroll event handler, not in watchers or rAF callbacks that run after the DOM was patched; those reads force a synchronous layout per frame.
 - `flowMode` only supports vertical single-axis layouts in v1. `gridItems`, horizontal mode, and `hiddenPosition` fall back to standard positioning.
 - If you render a semantic table, pair it with [`useTableColumnWidths`](./use-table-column-widths.md) so native auto layout does not shift between pooled rows.
 - If size must be measured from the DOM after render, move to `useDynamicScroller`.

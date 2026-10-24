@@ -92,8 +92,61 @@ If your items are objects, the scroller needs a stable identifier for each one. 
 - Avoid functional components inside `RecycleScroller`. Because views are reused, they are usually slower here rather than faster.
 - Item components must react correctly when the `item` prop changes without the component being recreated. Computed properties and watchers are usually the right tools for that.
 - You do not need to set `key` on the list content itself, but nested `<img>` elements should still use keys to avoid loading glitches.
+- Do not key nested components by item identity (for example `:key="item.id"` on a tooltip or popover inside the row). Every reuse then unmounts and remounts that subtree, re-running its setup and `onMounted` work, such as data fetches, on every scrolled row. Watch the item instead.
 - Browsers impose size limits on very large DOM elements, so the practical ceiling is still around a few hundred thousand items depending on the browser.
 - Because DOM elements are reused, hover styles should usually rely on the provided `hover` class rather than the `:hover` selector.
+
+## Mixed item kinds
+
+When the list renders different components depending on the item (for example `v-if="item.kind === 'header'"` / `v-else`), tell the scroller which field holds that kind with `typeField`. It keeps one recycled pool per distinct value, so a view that showed a header is only reused for another header.
+
+```vue
+<RecycleScroller
+  :items="rows"
+  :item-size="32"
+  type-field="kind"
+>
+  <template #default="{ item }">
+    <GroupHeader v-if="item.kind === 'group'" :group="item" />
+    <FileRow v-else :file="item" />
+  </template>
+</RecycleScroller>
+```
+
+Without it, every item falls into the same pool (the default `'type'` field is usually missing, so all items share the `undefined` type). Whenever a view is reused for an item of another kind, the `v-if` branch flips and Vue unmounts the old component tree and mounts a new one, which defeats recycling and makes scrolling expensive for rich rows.
+
+## Keep scroller inputs stable
+
+Each time `RecycleScroller` receives new props, it re-reads its options. Avoid creating new values for it on every parent render, especially in components that re-render while scrolling:
+
+- Define an `itemSize` resolver once in `<script setup>` instead of inline in the template. A recreated resolver is re-run over every item, even when the sizes it returns did not change.
+- Do not read parent state that changes on every scroll inside the default slot. The slot is rendered by every visible view, so such state re-renders all of them on each scroll event.
+- Track per-row state read in the slot, such as hovered, active or selected rows, per item. Rebuilding a whole `Set` or array on each change makes every visible row depend on it, and hover changes on every scrolled row as content moves under the pointer. A `reactive(new Set())` mutated in place tracks `has(id)` per key, so only rows whose state changed re-render.
+
+```vue
+<script setup lang="ts">
+const metrics = ref({ header: 40, row: 24 })
+
+// Stable identity; still reactive because it reads `metrics.value` when called.
+function rowSize(row: Row) {
+  return row.kind === 'group' ? metrics.value.header : metrics.value.row
+}
+</script>
+
+<template>
+  <RecycleScroller :items="rows" :item-size="rowSize" type-field="kind">
+    <!-- ... -->
+  </RecycleScroller>
+</template>
+```
+
+## Avoid scroll-time work around the scroller
+
+`RecycleScroller` reads its scroll geometry during the native scroll event, while layout is still clean, and updates views in the next animation frame. Code around it should follow the same rule:
+
+- Read `scrollTop`, `clientHeight` or `getBoundingClientRect()` inside a scroll event handler, not in a watcher, `nextTick`, `requestAnimationFrame` callback or `update` handler. Those run after Vue has patched the DOM, so each read forces a synchronous style and layout pass on every scrolled frame.
+- Watch for global listeners that measure on any scroll. For example, VueUse `useElementBounding` defaults to `windowScroll: true`, which listens to scroll events in capture mode: every scroll inside a virtual list re-measures its target. Pass `{ windowScroll: false }` when the element does not move with scrolling.
+- If you render pinned or sticky copies of rows outside the scroller, such as section headers, key them by their slot (for example `'top'` or `'second'`) rather than by item id. A change then patches the existing row instead of unmounting one row tree and mounting another.
 
 ## How it works
 
@@ -139,7 +192,7 @@ As you scroll, most views are simply moved to new positions and receive updated 
 | `itemSecondarySize` | — | Size in pixels (width in vertical mode, height in horizontal mode) of the items in the grid when `gridItems` is set. Defaults to `itemSize` if not set. |
 | `minItemSize` | — | Minimum size used if the height (or width in horizontal mode) of an item is unknown. |
 | `sizeField` | `'size'` | Field used to get the item's size in variable size mode. |
-| `typeField` | `'type'` | Field used to differentiate different kinds of components in the list. For each distinct type, a pool of recycled items will be created. |
+| `typeField` | `'type'` | Field used to differentiate different kinds of components in the list. For each distinct type, a pool of recycled items will be created. See [Mixed item kinds](#mixed-item-kinds). |
 | `keyField` | `'id'` | Field name or resolver function `(item, index) => string \| number` used to identify items and optimize managing rendered views. |
 | `shift` | `false` | Keep the viewport anchored when items are prepended at the start of the list. Useful for chat-style feeds and reverse timelines. |
 | `cache` | — | Optional cache snapshot returned by `cacheSnapshot` to restore known item sizes after remounting. |
@@ -308,7 +361,7 @@ This mode can be performance heavy with a lot of items. Use with caution.
 
 If `itemSize` is omitted or set to `null`, the scroller switches to variable size mode. In that case, each item must expose a numeric field with its size.
 
-You can also pass `itemSize` as a resolver function with the signature `(item, index) => number` when the size is already available in memory but not stored under a single field name.
+You can also pass `itemSize` as a resolver function with the signature `(item, index) => number` when the size is already available in memory but not stored under a single field name. Define it once rather than inline in the template, see [Keep scroller inputs stable](#keep-scroller-inputs-stable).
 
 ::: warning
 You still need to set the size of the items with CSS correctly (with classes for example).

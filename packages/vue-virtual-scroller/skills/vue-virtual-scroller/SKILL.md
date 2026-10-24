@@ -87,15 +87,24 @@ app.component('WindowScroller', WindowScroller)
 ### Rendering pitfalls
 
 - Reused views mean child components must react when `item` changes; do not assume a fresh instance per row.
+- When the slot picks a different component per item (`v-if` on a kind/type field), set `typeField` to that field. Otherwise every item shares one pool (default `'type'` is usually missing) and reused views unmount and remount their whole row subtree whenever the kind changes.
 - Render from `pool`, not `visiblePool`, on headless paths when you want normal recycling behavior.
 - Only reach for `watchData` when a legacy no-`ResizeObserver` fallback matters.
 - On headless dynamic paths, render from `view.item`. Reach for `view.itemWithSize` only when you need measured metadata.
 - Key nested images, but do not add unnecessary keys to the immediate recycled content.
+- Never key nested components inside a row by item identity (`:key="item.id"` on a tooltip, popover, menu): each reuse remounts that subtree and re-runs its setup and `onMounted` (e.g. a fetch per scrolled row). Watch the item prop instead.
 
 ### Performance guardrails
 
 - `emitUpdate`, `emitResize`, and `watchData` add work; keep them off unless the UI needs them.
 - Variable-size mode in `RecycleScroller` is heavier than fixed-size mode.
+- Define `itemSize` resolvers once in `<script setup>`, not inline in the template: a recreated resolver is re-run over every item on each parent render.
+- Do not read parent state that changes on scroll inside the default slot; every visible view re-renders when it changes.
+- Track per-row state the slot reads (hover, active path, selection) per item: mutate a `reactive(new Set())` in place (`has(id)` is tracked per key) instead of rebuilding a Set/array every row reads. Hover changes on every scrolled row as content moves under the pointer.
+- Keep scroll-driven computeds stable: if one re-runs on every scroll event, return the previous array/object when its content did not change, or the parent and every row re-render per event.
+- Read `scrollTop` / `getBoundingClientRect()` inside the scroll event handler, never in watchers, `nextTick`, rAF callbacks or `@update` handlers that run after the DOM was patched: each such read forces a synchronous layout per frame.
+- Beware global capture-phase scroll listeners that measure, such as VueUse `useElementBounding` with its default `windowScroll: true`; pass `{ windowScroll: false }` when the element does not move with scrolling.
+- Key pinned/sticky copies of rows rendered outside the scroller by slot (`'top'`, `'second'`), not by item id, so changes patch instead of remounting a row tree.
 - `DynamicScroller` is heavier than fixed-size virtualization, so use it only when measurement is necessary.
 - Browsers still impose large-element limits, so extremely large lists can hit practical ceilings.
 

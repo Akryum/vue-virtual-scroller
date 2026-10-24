@@ -178,6 +178,10 @@ scroller.updateVisibleItems(true) // returns { continuous: true }
 
 - You must provide scrollable sizing styles yourself (`height` or `width` + overflow).
 - Use a stable key field for object items (default: `id`).
+- If rows render different components depending on the item, set `typeField` to the field that selects the component. Otherwise reused views flip between components and remount their whole subtree.
+- Keep option values stable: define an `itemSize` resolver once instead of recreating it, because a new resolver is re-run over every item.
+- Track per-row state (hover, active, selected) per item, for example with a `reactive(new Set())` mutated in place, rather than a collection rebuilt on each change that every row reads.
+- Read scroll geometry (`scrollTop`, `getBoundingClientRect()`) in a scroll event handler, not in watchers or animation frames that run after the DOM was patched; those reads force a synchronous layout on every scrolled frame.
 - The composable manages pooling and index mapping, but does not provide built-in markup or CSS.
 - `disableTransform` only changes positioning strategy. You still own the surrounding layout and dimensions.
 - `flowMode` only supports vertical single-axis layouts in v1. `gridItems`, horizontal mode, and `hiddenPosition` fall back to standard positioning.

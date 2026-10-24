@@ -29,6 +29,7 @@ Common props:
 - `direction`
 - `itemSize`
 - `keyField`
+- `typeField` (default `'type'`) to keep one recycled pool per item kind
 - `buffer`
 - `prerender`
 - `shift`
@@ -76,8 +77,15 @@ Documented slot props and helpers:
 
 - Size the scroller element and item elements correctly with CSS.
 - Recycled child components must respond when `item` changes.
+- If the slot renders different components per item kind, set `typeField` to the kind field. Without it, reused views switch kinds and remount their entire row subtree.
+- Define `itemSize` resolvers once instead of inline; a recreated resolver is re-run over every item.
+- Avoid reading scroll-dependent parent state inside the default slot; every visible view re-renders when it changes.
+- Track per-row hover/active/selected state per item (a `reactive(new Set())` mutated in place), not a collection rebuilt on each change that every row reads.
+- Read scroll geometry in the scroll event handler, not in watchers, rAF callbacks or the `update` handler, which run after the DOM was patched and force a synchronous layout.
+- Key pinned or sticky copies of rows rendered outside the scroller by slot, not by item id, so changes patch instead of remounting.
 - Functional components are usually a bad fit inside recycled views.
 - Key nested images, but not the immediate recycled row shell.
+- Do not key nested components by item id; reuse then remounts them and re-runs `onMounted` work such as fetches on every scrolled row.
 - Use the provided `hover` class instead of raw `:hover` selectors on recycled nodes.
 - Variable-size mode is heavier than fixed-size mode.
 - `flowMode` is intentionally limited in v1 to vertical single-axis layouts. `gridItems`, horizontal mode, and `hiddenPosition` fall back to standard positioning.
@@ -99,16 +107,39 @@ Fixed-size rows:
 </RecycleScroller>
 ```
 
-Resolver-based size:
+Resolver-based size (defined once, not inline):
+
+```vue
+<script setup lang="ts">
+function rowSize(item: Row) {
+  return item.compact ? 40 : 56
+}
+</script>
+
+<template>
+  <RecycleScroller
+    :items="rows"
+    :item-size="rowSize"
+    key-field="id"
+  >
+    <template #default="{ item }">
+      {{ item.label }}
+    </template>
+  </RecycleScroller>
+</template>
+```
+
+Mixed item kinds:
 
 ```vue
 <RecycleScroller
   :items="rows"
-  :item-size="(item, index) => item.compact ? 40 : 56"
-  key-field="id"
+  :item-size="32"
+  type-field="kind"
 >
   <template #default="{ item }">
-    {{ item.label }}
+    <GroupHeader v-if="item.kind === 'group'" :group="item" />
+    <FileRow v-else :file="item" />
   </template>
 </RecycleScroller>
 ```
